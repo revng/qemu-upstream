@@ -207,3 +207,6 @@ $(DECTREE_HEADER): $(SRC_PATH)/target/hexagon/dectree.py $(DECTREE_IMPORT)
 	    "GEN", "Hexagon decode tree")
 
 generated-files-y += $(GENERATED_HEXAGON_FILES) $(DECTREE_HEADER)
+
+meta-instructions.csv: $(TARGET_SRC_PATH)/meta-instructions.c $(QEMU_DEF_H)
+	$(CC) $(CFLAGS) -I$(BUILD_USER_DIR) $< -c -E -o- | grep -v '^#' | grep -v '^\s*$$' | sed -En 's/\{(.*)\}/\"\{\1\}\"/p' > $@
