@@ -339,7 +339,8 @@ class Docker(object):
                          (uname, uid, uname))
 
         tmp_df.write("\n")
-        tmp_df.write("LABEL com.qemu.dockerfile-checksum=%s\n" % (checksum))
+        tmp_df.write("LABEL com.qemu.dockerfile-checksum=%s\n" %
+                     _text_checksum(_dockerfile_preprocess(dockerfile)))
         for f, c in extra_files_cksum:
             tmp_df.write("LABEL com.qemu.%s-checksum=%s\n" % (f, c))
 
