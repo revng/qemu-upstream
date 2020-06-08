@@ -70,6 +70,7 @@ fi
 : ${cross_cc_sparc64="sparc64-linux-gnu-gcc"}
 : ${cross_cc_cflags_sparc64="-m64 -mcpu=ultrasparc"}
 : ${cross_cc_x86_64="x86_64-linux-gnu-gcc"}
+: ${cross_cc_hexagon="hexagon-unknown-linux-musl-clang"}
 : ${cross_cc_cflags_x86_64="-m64"}
 
 for target in $target_list; do
@@ -127,6 +128,10 @@ for target in $target_list; do
       container_hosts=x86_64
       container_image=fedora-cris-cross
       container_cross_cc=cris-linux-gnu-gcc
+      ;;
+    hexagon-*)
+      container_image=debian-hexagon-cross
+      container_cross_cc=hexagon-unknown-linux-musl-clang
       ;;
     hppa-*)
       container_hosts=x86_64
