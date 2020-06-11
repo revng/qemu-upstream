@@ -35,35 +35,43 @@ def gen_free_ea_tcg(f):
 
 def genptr_decl(f,regtype,regid,regno):
     regN="%s%sN" % (regtype,regid)
+    regV = "%s%sV" % (regtype, regid)
     macro = "DECL_%sREG_%s" % (regtype, regid)
-    f.write("%s(%s%sV, %s, %d, 0);\n" % \
-        (macro, regtype, regid, regN, regno))
+    f.write("%s(%s, %s, %d, 0);\n" % \
+        (macro, regV, regN, regno))
+    return regV
 
 def genptr_decl_new(f,regtype,regid,regno):
     regN="%s%sX" % (regtype,regid)
+    regV = "%s%sN" % (regtype,regid)
     macro = "DECL_NEW_%sREG_%s" % (regtype, regid)
-    f.write("%s(%s%sN, %s, %d, 0);\n" % \
-        (macro, regtype, regid, regN, regno))
+    f.write("%s(%s, %s, %d, 0);\n" % \
+        (macro, regV, regN, regno))
+    return regV
 
 def genptr_decl_opn(f, tag, regtype, regid, toss, numregs, i):
     if (is_pair(regid)):
-        genptr_decl(f,regtype,regid,i)
+        return genptr_decl(f,regtype,regid,i)
     elif (is_single(regid)):
         if is_old_val(regtype, regid, tag):
-            genptr_decl(f,regtype,regid,i)
+            return genptr_decl(f,regtype,regid,i)
         elif is_new_val(regtype, regid, tag):
-            genptr_decl_new(f,regtype,regid,i)
+            return genptr_decl_new(f,regtype,regid,i)
         else:
             print("Bad register parse: ",regtype,regid,toss,numregs)
     else:
         print("Bad register parse: ",regtype,regid,toss,numregs)
+
+    return None
 
 def genptr_decl_imm(f,immlett):
     if (immlett.isupper()):
         i = 1
     else:
         i = 0
-    f.write("DECL_IMM(%s,%d);\n" % (imm_name(immlett),i))
+    immV = imm_name(immlett)
+    f.write("DECL_IMM(%s,%d);\n" % (immV,i))
+    return immV
 
 def genptr_free(f,regtype,regid,regno):
     macro = "FREE_%sREG_%s" % (regtype, regid)
@@ -199,11 +207,14 @@ def gen_tcg_func(f, tag, regs, imms):
     if need_ea(tag): gen_decl_ea_tcg(f)
     i=0
     ## Declare all the operands (regs and immediates)
+    declared = []
     for regtype,regid,toss,numregs in regs:
-        genptr_decl_opn(f, tag, regtype, regid, toss, numregs, i)
+        declared.append(genptr_decl_opn(f, tag, regtype, regid, toss, numregs, i))
         i += 1
     for immlett,bits,immshift in imms:
-        genptr_decl_imm(f,immlett)
+        declared.append(genptr_decl_imm(f,immlett))
+
+    declared = [name for name in declared if name is not None]
 
     if 'A_PRIV' in attribdict[tag]:
         f.write('fCHECKFORPRIV();\n')
@@ -217,7 +228,9 @@ def gen_tcg_func(f, tag, regs, imms):
         if (is_read(regid)):
             genptr_src_read_opn(f,regtype,regid,tag)
 
-    f.write("#if defined(fGEN_TCG_%s) || defined(fGEN_TCG_ALL)\n" % tag)
+    f.write("#if defined(fAUTO_GEN_TCG_%s)\n" % tag)
+    f.write("emit_%s(%s);\n" % (tag, ", ".join(["ctx"] + declared)))
+    f.write("#elif defined(fGEN_TCG_%s) || defined(fGEN_TCG_ALL)\n" % tag)
     f.write("fGEN_TCG_%s(%s);\n" % (tag, semdict[tag]))
     f.write("#else\n")
     ## Generate the call to the helper

@@ -32,7 +32,8 @@ obj-y += \
     fma_emu.o \
     conv_emu.o \
     mmvec/decode_ext_mmvec.o \
-    mmvec/system_ext_mmvec.o
+    mmvec/system_ext_mmvec.o \
+    auto-tcg.o
 
 #
 #  Step 1
