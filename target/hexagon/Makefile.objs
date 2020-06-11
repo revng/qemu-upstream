@@ -15,6 +15,8 @@
 ##  along with this program; if not, see <http://www.gnu.org/licenses/>.
 ##
 
+TARGET_SRC_PATH = $(SRC_PATH)/target/$(TARGET_BASE_ARCH)
+
 obj-y += \
     cpu.o \
     translate.o \
@@ -38,25 +40,25 @@ obj-y += \
 #
 BUILD_USER_DIR = $(BUILD_DIR)/hexagon-linux-user
 GEN_SEMANTICS = gen_semantics
-GEN_SEMANTICS_SRC = $(SRC_PATH)/target/hexagon/gen_semantics.c
+GEN_SEMANTICS_SRC = $(TARGET_SRC_PATH)/gen_semantics.c
 
 IDEF_FILES = \
-    $(SRC_PATH)/target/hexagon/imported/alu.idef \
-    $(SRC_PATH)/target/hexagon/imported/branch.idef \
-    $(SRC_PATH)/target/hexagon/imported/compare.idef \
-    $(SRC_PATH)/target/hexagon/imported/float.idef \
-    $(SRC_PATH)/target/hexagon/imported/ldst.idef \
-    $(SRC_PATH)/target/hexagon/imported/mpy.idef \
-    $(SRC_PATH)/target/hexagon/imported/shift.idef \
-    $(SRC_PATH)/target/hexagon/imported/subinsns.idef \
-    $(SRC_PATH)/target/hexagon/imported/system.idef \
-    $(SRC_PATH)/target/hexagon/imported/allext.idef \
-    $(SRC_PATH)/target/hexagon/imported/mmvec/ext.idef
+    $(TARGET_SRC_PATH)/imported/alu.idef \
+    $(TARGET_SRC_PATH)/imported/branch.idef \
+    $(TARGET_SRC_PATH)/imported/compare.idef \
+    $(TARGET_SRC_PATH)/imported/float.idef \
+    $(TARGET_SRC_PATH)/imported/ldst.idef \
+    $(TARGET_SRC_PATH)/imported/mpy.idef \
+    $(TARGET_SRC_PATH)/imported/shift.idef \
+    $(TARGET_SRC_PATH)/imported/subinsns.idef \
+    $(TARGET_SRC_PATH)/imported/system.idef \
+    $(TARGET_SRC_PATH)/imported/allext.idef \
+    $(TARGET_SRC_PATH)/imported/mmvec/ext.idef
 DEF_FILES = \
-    $(SRC_PATH)/target/hexagon/imported/allidefs.def \
-    $(SRC_PATH)/target/hexagon/imported/macros.def \
-    $(SRC_PATH)/target/hexagon/imported/allext_macros.def \
-    $(SRC_PATH)/target/hexagon/imported/mmvec/macros.def
+    $(TARGET_SRC_PATH)/imported/allidefs.def \
+    $(TARGET_SRC_PATH)/imported/macros.def \
+    $(TARGET_SRC_PATH)/imported/allext_macros.def \
+    $(TARGET_SRC_PATH)/imported/mmvec/macros.def
 
 $(GEN_SEMANTICS): $(GEN_SEMANTICS_SRC) $(IDEF_FILES) $(DEF_FILES)
 	$(CC) $(CFLAGS) $(GEN_SEMANTICS_SRC) -o $(GEN_SEMANTICS)
@@ -94,11 +96,11 @@ $(SHORTCODE_H): \
     $(SRC_PATH)/target/hexagon/hex_common.py \
     $(SRC_PATH)/target/hexagon/gen_shortcode.py \
     $(SEMANTICS) \
-    $(SRC_PATH)/target/hexagon/attribs_def.h
+    $(TARGET_SRC_PATH)/attribs_def.h
 	$(call quiet-command, \
 	    $(SRC_PATH)/target/hexagon/gen_shortcode.py \
                 $(SEMANTICS) \
-                $(SRC_PATH)/target/hexagon/attribs_def.h, \
+                $(TARGET_SRC_PATH)/attribs_def.h, \
 	    "GEN", "Hexagon shortcode_generated.h")
 
 $(HELPER_PROTOS_H): \
@@ -184,7 +186,7 @@ $(OPCODES_DEF_H): \
 # to create the decode tree
 #
 GEN_DECTREE_IMPORT=gen_dectree_import
-GEN_DECTREE_IMPORT_SRC = $(SRC_PATH)/target/hexagon/gen_dectree_import.c
+GEN_DECTREE_IMPORT_SRC = $(TARGET_SRC_PATH)/gen_dectree_import.c
 
 $(GEN_DECTREE_IMPORT): $(GEN_DECTREE_IMPORT_SRC) $(OPCODES_DEF_H) config-target.h
 	$(CC) $(QEMU_CFLAGS) $(QEMU_INCLUDES) -I$(BUILD_DIR) $(GEN_DECTREE_IMPORT_SRC) -o $(GEN_DECTREE_IMPORT)
@@ -200,7 +202,7 @@ $(DECTREE_IMPORT): $(GEN_DECTREE_IMPORT)
 # We use the dectree.py script to generate the decode tree header file
 #
 DECTREE_HEADER=dectree_generated.h
-$(DECTREE_HEADER): $(SRC_PATH)/target/hexagon/dectree.py $(DECTREE_IMPORT)
+$(DECTREE_HEADER): $(TARGET_SRC_PATH)/dectree.py $(DECTREE_IMPORT)
 	$(call quiet-command, \
 	    PYTHONPATH=$(BUILD_USER_DIR) \
 	    $(PYTHON) $(SRC_PATH)/target/hexagon/dectree.py, \
