@@ -210,5 +210,24 @@ $(DECTREE_HEADER): $(TARGET_SRC_PATH)/dectree.py $(DECTREE_IMPORT)
 
 generated-files-y += $(GENERATED_HEXAGON_FILES) $(DECTREE_HEADER)
 
+#
+# semantics
+#
 meta-instructions.csv: $(TARGET_SRC_PATH)/meta-instructions.c $(QEMU_DEF_H)
 	$(CC) $(CFLAGS) -I$(BUILD_USER_DIR) $< -c -E -o- | grep -v '^#' | grep -v '^\s*$$' | sed -En 's/\{(.*)\}/\"\{\1\}\"/p' > $@
+
+semantics : lex.yy.c semantics.tab.c $(TARGET_SRC_PATH)/semantics/csvparser.c
+	$(call quiet-command,$(HOST_CC) -I$(TARGET_SRC_PATH)/semantics -I. -o $@ $^,"CC","$(TARGET_DIR)semantics")
+
+semantics.tab.c : $(TARGET_SRC_PATH)/semantics/semantics.y $(TARGET_SRC_PATH)/semantics/semantics_struct.h
+	$(call quiet-command,bison --defines=semantics.tab.h --output=semantics.tab.c $<,"BISON","$(TARGET_DIR)semantics.tab.c")
+
+lex.yy.c : $(TARGET_SRC_PATH)/semantics/semantics.lex $(TARGET_SRC_PATH)/semantics/semantics_struct.h
+	$(call quiet-command,flex --outfile=lex.yy.c $<,"FLEX","$(TARGET_DIR)lex.yy.c")
+
+target/hexagon/auto-tcg.c: semantics meta-instructions.csv
+	$(call quiet-command,./semantics meta-instructions.csv temp > $@,"GEN","target/hexagon/auto-tcg.c")
+
+target/hexagon/auto-tcg.o: target/hexagon/auto-tcg.c $(QEMU_DEF_H)
+
+generated-files-y += target/hexagon/auto-tcg.o target/hexagon/auto-tcg.c lex.yy.c semantics.tab.c semantics

@@ -217,7 +217,7 @@ def gen_tcg_func(f, tag, regs, imms):
         if (is_read(regid)):
             genptr_src_read_opn(f,regtype,regid,tag)
 
-    f.write("#ifdef fGEN_TCG_%s\n" % tag)
+    f.write("#if defined(fGEN_TCG_%s) || defined(fGEN_TCG_ALL)\n" % tag)
     f.write("fGEN_TCG_%s(%s);\n" % (tag, semdict[tag]))
     f.write("#else\n")
     ## Generate the call to the helper
