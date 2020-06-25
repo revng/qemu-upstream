@@ -1110,7 +1110,6 @@ t_hex_value gen_extract(context_t *c, t_hex_value *source) {
         int bit_width = (source->bit_width == 64) ? 64 : 32;
         OUT(c, "tcg_gen_extract_i", &bit_width, "(", &res, ", ", source);
         OUT(c, ", ", offset, ", ", &width, ");\n");
-        rvalue_truncate(c, &res);
     }
     /* Handle vectorial+range extraction */
     if (source->is_range) {
@@ -1163,12 +1162,6 @@ void gen_deposit(context_t *c,
         }
     }
     if (dest->type == REGISTER) {
-        /* Handle write to 64 bit registers */
-        if (access.iter_type == NO_ITER && offset_value >= 32) {
-            offset_value -= 32;
-            snprintf(offset_string, OFFSET_STR_LEN, "%d", offset_value);
-            increment = " + 1";
-        }
         /* Handle runtime 64bit register selection by i iterator */
         if (access.iter_type != NO_ITER) {
             // deposit is broken when saving to 64bit registers
@@ -1177,12 +1170,14 @@ void gen_deposit(context_t *c,
             // If width is 32 it is fine, if width is 16 we have to store
             // split up the deposit
             snprintf(increment_string, OFFSET_STR_LEN, "+ %s / (32 / %d)", offset, width);
-            snprintf(offset_string, OFFSET_STR_LEN, "(%s %% (32 / %d)) * %d", offset, width, width);
+            snprintf(offset_string, OFFSET_STR_LEN, "%s * %d", offset, width);
             offset = offset_string;
-            rvalue_truncate(c, value);
+            // If the destination value is 32, truncate the source
+            if (dest->bit_width == 32)
+                rvalue_truncate(c, value);
             rvalue_materialize(c, value);
-            OUT(c, "tcg_gen_deposit_i32(GPR_new[", &(dest->reg.id), increment);
-            OUT(c, "], GPR_new[", &(dest->reg.id), increment, "], ", value);
+            char * bit_suffix = (dest->bit_width == 64) ? "i64" : "i32";
+            OUT(c, "tcg_gen_deposit_", bit_suffix, "(", dest, ", ", dest, ", ", value);
             OUT(c, ", ", offset, ", ", &width, ");\n");
         } else {
             rvalue_truncate(c, value);
@@ -1324,7 +1319,7 @@ t_hex_value gen_zxt_op(context_t *c,
         t_hex_value tmp_mask = gen_bin_op(c, ASHIFTL, &one, source_width);
         one = gen_imm_value(c, 1, source->bit_width);
         t_hex_value mask = gen_bin_op(c, SUBTRACT, &tmp_mask, &one);
-        tmp = gen_bin_op(c, ANDB, &source, &mask);
+        tmp = gen_bin_op(c, ANDB, source, &mask);
     }
     /* 32 bit constants are already zero extended */
     if (target_width->imm.value == 32)

@@ -220,13 +220,16 @@ meta-instructions.csv: $(TARGET_SRC_PATH)/meta-instructions.c $(QEMU_DEF_H)
 semantics : lex.yy.c semantics.tab.c $(TARGET_SRC_PATH)/semantics/csvparser.c
 	$(call quiet-command,$(HOST_CC) -I$(TARGET_SRC_PATH)/semantics -I. -o $@ $^,"CC","$(TARGET_DIR)semantics")
 
+semantics-dbg : lex.yy.c semantics.tab.c $(TARGET_SRC_PATH)/semantics/csvparser.c
+	$(call quiet-command,$(HOST_CC) -I$(TARGET_SRC_PATH)/semantics -DTOKEN_DEBUG -I. -o $@ $^,"CC","$(TARGET_DIR)semantics")
+
 semantics.tab.c : $(TARGET_SRC_PATH)/semantics/semantics.y $(TARGET_SRC_PATH)/semantics/semantics_struct.h
 	$(call quiet-command,bison --defines=semantics.tab.h --output=semantics.tab.c $<,"BISON","$(TARGET_DIR)semantics.tab.c")
 
 lex.yy.c : $(TARGET_SRC_PATH)/semantics/semantics.lex $(TARGET_SRC_PATH)/semantics/semantics_struct.h
 	$(call quiet-command,flex --outfile=lex.yy.c $<,"FLEX","$(TARGET_DIR)lex.yy.c")
 
-target/hexagon/auto-tcg.c: semantics meta-instructions.csv
+target/hexagon/auto-tcg.c: semantics semantics-dbg meta-instructions.csv
 	$(call quiet-command,./semantics meta-instructions.csv auto-tcg.h | indent -linux > $@,"GEN","target/hexagon/auto-tcg.c")
 
 auto-tcg.h: target/hexagon/auto-tcg.c

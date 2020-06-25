@@ -58,8 +58,8 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
 /* Tokens */
 %%
 
-[ \t\f\v]+               { /* Ignore whitespaces. */ }
-[\n\r]+                    { /* Ignore newlines. */ }
+[ \t\f\v]+                { /* Ignore whitespaces. */ }
+[\n\r]+                   { /* Ignore newlines. */ }
 
 "DECL_RREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
@@ -135,7 +135,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return (DCTR); }
-"DECL_EA"                 { return (DEA); }
+"DECL_EA;"                { return (DEA); }
 "READ_RREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N);" {
                            return RREG; }
 "WRITE_RREG_"{REG_ID_32}"(R"{REG_ID_32}"N, R"{REG_ID_32}"V);" {
@@ -170,7 +170,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
 "FREE_NEW_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N);" {
                            return FPRE; }
 "FREE_MREG_u(MuV);"      { return FMEM; }
-"FREE_EA"                { return FEA; }
+"FREE_EA;"               { return FEA; }
 "fGEN_TCG_"{INST_NAME}"(" { return FWRAP; }
 "{"                      { return LBR; }
 "}"                      { return RBR; }
@@ -680,11 +680,11 @@ int main(int argc, char **argv)
         printf("rev.ng Srls Unipersonale\n");
         printf("Author: Niccolò Izzo <n@izzo.sh>\n\n");
         printf("Usage: ./semantics META-INSTRUCTIONS-CSV\n\n");
-        printf("-------------------- LEXER DEBUG MODE -------------------");
+        printf("-------------------- LEXER DEBUG MODE -------------------\n");
         return 1;
     }
 
-    printf("-------------------- LEXER DEBUG MODE -------------------");
+    printf("-------------------- LEXER DEBUG MODE -------------------\n");
     int token;
     CsvParser *csvparser = CsvParser_new(argv[1], ",", 0);
     CsvRow *row;

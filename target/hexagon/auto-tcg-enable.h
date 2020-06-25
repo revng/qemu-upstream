@@ -164,7 +164,7 @@
 //#define fAUTO_GEN_TCG_J2_endloop01
 //#define fAUTO_GEN_TCG_J2_endloop0
 //#define fAUTO_GEN_TCG_J2_endloop1
-//#define fAUTO_GEN_TCG_L2_loadrub_io
+#define fAUTO_GEN_TCG_L2_loadrub_io
 //#define fAUTO_GEN_TCG_L4_loadrub_ur
 //#define fAUTO_GEN_TCG_L4_loadrub_ap
 //#define fAUTO_GEN_TCG_L2_loadrub_pr
@@ -172,7 +172,7 @@
 //#define fAUTO_GEN_TCG_L2_loadrub_pi
 //#define fAUTO_GEN_TCG_L2_loadrub_pci
 //#define fAUTO_GEN_TCG_L2_loadrub_pcr
-//#define fAUTO_GEN_TCG_L2_loadrb_io
+#define fAUTO_GEN_TCG_L2_loadrb_io
 //#define fAUTO_GEN_TCG_L4_loadrb_ur
 //#define fAUTO_GEN_TCG_L4_loadrb_ap
 //#define fAUTO_GEN_TCG_L2_loadrb_pr
@@ -180,7 +180,7 @@
 //#define fAUTO_GEN_TCG_L2_loadrb_pi
 //#define fAUTO_GEN_TCG_L2_loadrb_pci
 //#define fAUTO_GEN_TCG_L2_loadrb_pcr
-//#define fAUTO_GEN_TCG_L2_loadruh_io
+#define fAUTO_GEN_TCG_L2_loadruh_io
 //#define fAUTO_GEN_TCG_L4_loadruh_ur
 //#define fAUTO_GEN_TCG_L4_loadruh_ap
 //#define fAUTO_GEN_TCG_L2_loadruh_pr
@@ -188,7 +188,7 @@
 //#define fAUTO_GEN_TCG_L2_loadruh_pi
 //#define fAUTO_GEN_TCG_L2_loadruh_pci
 //#define fAUTO_GEN_TCG_L2_loadruh_pcr
-//#define fAUTO_GEN_TCG_L2_loadrh_io
+#define fAUTO_GEN_TCG_L2_loadrh_io
 //#define fAUTO_GEN_TCG_L4_loadrh_ur
 //#define fAUTO_GEN_TCG_L4_loadrh_ap
 //#define fAUTO_GEN_TCG_L2_loadrh_pr
@@ -196,7 +196,7 @@
 //#define fAUTO_GEN_TCG_L2_loadrh_pi
 //#define fAUTO_GEN_TCG_L2_loadrh_pci
 //#define fAUTO_GEN_TCG_L2_loadrh_pcr
-//#define fAUTO_GEN_TCG_L2_loadri_io
+#define fAUTO_GEN_TCG_L2_loadri_io
 //#define fAUTO_GEN_TCG_L4_loadri_ur
 //#define fAUTO_GEN_TCG_L4_loadri_ap
 //#define fAUTO_GEN_TCG_L2_loadri_pr
@@ -204,7 +204,7 @@
 //#define fAUTO_GEN_TCG_L2_loadri_pi
 //#define fAUTO_GEN_TCG_L2_loadri_pci
 //#define fAUTO_GEN_TCG_L2_loadri_pcr
-//#define fAUTO_GEN_TCG_L2_loadrd_io
+#define fAUTO_GEN_TCG_L2_loadrd_io
 //#define fAUTO_GEN_TCG_L4_loadrd_ur
 //#define fAUTO_GEN_TCG_L4_loadrd_ap
 //#define fAUTO_GEN_TCG_L2_loadrd_pr
@@ -212,7 +212,7 @@
 //#define fAUTO_GEN_TCG_L2_loadrd_pi
 //#define fAUTO_GEN_TCG_L2_loadrd_pci
 //#define fAUTO_GEN_TCG_L2_loadrd_pcr
-//#define fAUTO_GEN_TCG_L2_loadbzw2_io
+#define fAUTO_GEN_TCG_L2_loadbzw2_io
 //#define fAUTO_GEN_TCG_L4_loadbzw2_ur
 //#define fAUTO_GEN_TCG_L4_loadbzw2_ap
 //#define fAUTO_GEN_TCG_L2_loadbzw2_pr
@@ -220,7 +220,7 @@
 //#define fAUTO_GEN_TCG_L2_loadbzw2_pi
 //#define fAUTO_GEN_TCG_L2_loadbzw2_pci
 //#define fAUTO_GEN_TCG_L2_loadbzw2_pcr
-//#define fAUTO_GEN_TCG_L2_loadbzw4_io
+#define fAUTO_GEN_TCG_L2_loadbzw4_io
 //#define fAUTO_GEN_TCG_L4_loadbzw4_ur
 //#define fAUTO_GEN_TCG_L4_loadbzw4_ap
 //#define fAUTO_GEN_TCG_L2_loadbzw4_pr
@@ -228,7 +228,7 @@
 //#define fAUTO_GEN_TCG_L2_loadbzw4_pi
 //#define fAUTO_GEN_TCG_L2_loadbzw4_pci
 //#define fAUTO_GEN_TCG_L2_loadbzw4_pcr
-//#define fAUTO_GEN_TCG_L2_loadbsw2_io
+#define fAUTO_GEN_TCG_L2_loadbsw2_io
 //#define fAUTO_GEN_TCG_L4_loadbsw2_ur
 //#define fAUTO_GEN_TCG_L4_loadbsw2_ap
 //#define fAUTO_GEN_TCG_L2_loadbsw2_pr
@@ -236,7 +236,7 @@
 //#define fAUTO_GEN_TCG_L2_loadbsw2_pi
 //#define fAUTO_GEN_TCG_L2_loadbsw2_pci
 //#define fAUTO_GEN_TCG_L2_loadbsw2_pcr
-//#define fAUTO_GEN_TCG_L2_loadbsw4_io
+#define fAUTO_GEN_TCG_L2_loadbsw4_io
 //#define fAUTO_GEN_TCG_L4_loadbsw4_ur
 //#define fAUTO_GEN_TCG_L4_loadbsw4_ap
 //#define fAUTO_GEN_TCG_L2_loadbsw4_pr
@@ -244,7 +244,7 @@
 //#define fAUTO_GEN_TCG_L2_loadbsw4_pi
 //#define fAUTO_GEN_TCG_L2_loadbsw4_pci
 //#define fAUTO_GEN_TCG_L2_loadbsw4_pcr
-//#define fAUTO_GEN_TCG_L2_loadalignh_io
+#define fAUTO_GEN_TCG_L2_loadalignh_io
 //#define fAUTO_GEN_TCG_L4_loadalignh_ur
 //#define fAUTO_GEN_TCG_L4_loadalignh_ap
 //#define fAUTO_GEN_TCG_L2_loadalignh_pr
@@ -252,7 +252,7 @@
 //#define fAUTO_GEN_TCG_L2_loadalignh_pi
 //#define fAUTO_GEN_TCG_L2_loadalignh_pci
 //#define fAUTO_GEN_TCG_L2_loadalignh_pcr
-//#define fAUTO_GEN_TCG_L2_loadalignb_io
+#define fAUTO_GEN_TCG_L2_loadalignb_io
 //#define fAUTO_GEN_TCG_L4_loadalignb_ur
 //#define fAUTO_GEN_TCG_L4_loadalignb_ap
 //#define fAUTO_GEN_TCG_L2_loadalignb_pr
@@ -333,7 +333,7 @@
 //#define fAUTO_GEN_TCG_L4_return_fnew_pt
 //#define fAUTO_GEN_TCG_L4_return_tnew_pnt
 //#define fAUTO_GEN_TCG_L4_return_fnew_pnt
-//#define fAUTO_GEN_TCG_L2_loadw_locked
+#define fAUTO_GEN_TCG_L2_loadw_locked
 //#define fAUTO_GEN_TCG_S2_storew_locked
 //#define fAUTO_GEN_TCG_L4_loadd_locked
 //#define fAUTO_GEN_TCG_S4_stored_locked
