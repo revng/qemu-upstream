@@ -25,6 +25,8 @@
 
 typedef struct DisasContext {
     DisasContextBase base;
+    uint32_t pc; // TODO: This has to be properly updated with the pc address
+    uint32_t npc; // TODO: This has to be properly updated with the next pc address
     uint32_t mem_idx;
     int reg_log[REG_WRITES_MAX];
     int reg_log_idx;

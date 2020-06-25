@@ -46,7 +46,7 @@
 void yyerror(yyscan_t scanner __attribute__((unused)),
              context_t *c, const char *s)               
 {                                   
-    fprintf(stderr, "Error: '%s'\n", s);      
+    fprintf(stderr, "WARNING: '%s'\n", s);
     c->error_count++;                  
 }                                   
 
@@ -128,9 +128,11 @@ void extra_print(context_t *c, t_hex_extra *extra) {
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "LPCFG");
             break;
         case LC_T:
+            yyassert(c, false, "TODO: Implement LC control register access\n");
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "LC[%d]", extra->index); 
             break;
         case SA_T:
+            yyassert(c, false, "TODO: Implement SA control register access\n");
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "SA[%d]", extra->index); 
             break;
         case WIDTH_T:
@@ -271,7 +273,7 @@ void commit(context_t *c) {
     puts("#endif\n");
 
     fwrite(c->signature_buffer, sizeof(char), c->signature_c, c->defines_file);
-    fprintf(c->defines_file, ";\n#define fAUTO_GEN_TCG_%s\n", c->inst_name);
+    fprintf(c->defines_file, ";\n");
     c->out_c = 0;
 }
 
@@ -486,6 +488,7 @@ void rvalue_truncate(context_t *c, t_hex_value *rvalue) {
 }
 
 t_hex_value reg_concat(context_t *c, t_hex_value *rvalue) {
+    /* TODO: Implement register concatenation */
     if (rvalue->type == REGISTER) {
         if (rvalue->bit_width == 64) {
             /* In a register pair the first register holds
@@ -1151,6 +1154,7 @@ t_hex_value gen_extract(context_t *c, t_hex_value *source) {
 void gen_deposit(context_t *c,
                  t_hex_value *dest,
                  t_hex_value *value) {
+    /* TODO: Implement register deposit */
     t_hex_vec access = dest->vec;
     int width = access.width;
     /* Generating string containing access offset */
@@ -1811,6 +1815,7 @@ assign_statement  : lvalue ASSIGN rvalue
                   }
                   | PC ASSIGN rvalue
                   {
+                    /* TODO: Implement pc immediate reference */
                     /* Do not assign PC if pc_written is 1 */
                     t_hex_value one = gen_tmp_value(c, "1", 32);
                     rvalue_materialize(c, &$3);
@@ -1895,6 +1900,7 @@ stop_statement : IF DEBUG MODECTL ASSIGN IMM SEMI { /* does nothing */ }
 
 trap_statement    : TRAP0 SEMI
                   {
+                    /* TODO: Implement trap statement */
                     t_hex_value tmp = gen_tmp_value(c, "j", 32);
                     /* Put next program counter in ELR register */
                     OUT(c, "tcg_gen_movi_i32(SR[3], dc->pc + 4);\n");
@@ -1999,6 +2005,7 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | pre
                   {
                     /* Extract predicate value into a temporary */
+                    /* TODO: Implement predicate access */
                     OUT(c, "int pre_index", &c->predicate_count, " = "); /* Get predicate index */
                     OUT(c, &($1.pre.id), ";\n");
                     $$ = gen_tmp(c, 32);

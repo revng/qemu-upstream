@@ -20,11 +20,8 @@
 
 typedef struct DisasContext DisasContext;
 #include "tcg/tcg.h"
-
-void emit_A2_add(DisasContext *dc, TCGv_i32 RdV, TCGv_i32 RsV, TCGv_i32 RtV);
-#define fAUTO_GEN_TCG_A2_add
-void emit_A2_sub(DisasContext *dc, TCGv_i32 RdV, TCGv_i32 RtV, TCGv_i32 RsV);
-#define fAUTO_GEN_TCG_A2_sub
+#include "auto-tcg.h"
+#include "auto-tcg-enable.h"
 
 /*
  * Here is a primer to understand the tag names for load/store instructions
