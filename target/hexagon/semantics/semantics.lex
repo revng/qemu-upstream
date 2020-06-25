@@ -506,6 +506,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.is_const = false;
                            yylval->rvalue.reg.offset = 0;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "C"{REG_ID_32}           { yylval->rvalue.type = REGISTER;
@@ -513,6 +514,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.is_const = false;
                            yylval->rvalue.reg.offset = 0;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "C"{REG_ID_64}           { yylval->rvalue.type = REGISTER;
@@ -520,6 +522,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.is_const = false;
                            yylval->rvalue.reg.offset = 0;
+                           yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            return (REG); }
 "R"{REG_ID_64}"V"        { yylval->rvalue.type = REGISTER;
@@ -527,12 +530,14 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.is_const = false;
                            yylval->rvalue.reg.offset = 0;
+                           yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            return (REG); }
 "N"{LOWER_ID}            { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.offset = 0;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.reg.is_const = false;
                            return (REG); }
 "S"{SYS_ID_32}           { yylval->rvalue.type = REGISTER;
@@ -540,6 +545,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = false;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "S"{SYS_ID_64}           { yylval->rvalue.type = REGISTER;
@@ -547,6 +553,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = false;
+                           yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            return (REG); }
 [rR]{DIGIT}+             { yylval->rvalue.type = REGISTER;
@@ -554,6 +561,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = atoi(yytext + 1);
                            yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = true;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "SGP"{DIGIT}             { yylval->rvalue.type = REGISTER;
@@ -561,6 +569,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = atoi(yytext + 3);
                            yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = true;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "SP"                     { yylval->rvalue.type = REGISTER;
@@ -568,6 +577,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = 29;
                            yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = true;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "FP"                     { yylval->rvalue.type = REGISTER;
@@ -575,6 +585,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = 30;
                            yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = true;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "LR"                     { yylval->rvalue.type = REGISTER;
@@ -582,6 +593,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = 31;
                            yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = true;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "GP"                     { yylval->rvalue.type = REGISTER;
@@ -589,6 +601,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = 11;
                            yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = true;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "MuV"                    { yylval->rvalue.type = REGISTER;
@@ -596,6 +609,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.offset = 6;
                            yylval->rvalue.reg.is_const = false;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "ELR"                    { yylval->rvalue.type = REGISTER;
@@ -603,6 +617,7 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            yylval->rvalue.reg.id = 3;
                            yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = true;
+                           yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 [pP]{DIGIT}              { yylval->rvalue.type = PREDICATE;

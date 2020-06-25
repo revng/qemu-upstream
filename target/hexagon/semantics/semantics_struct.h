@@ -37,6 +37,7 @@ typedef struct t_hex_reg
     bool is_const;
     enum reg_type type;
     int offset;
+    unsigned bit_width;
 } t_hex_reg;
 
 typedef struct t_hex_tmp

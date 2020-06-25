@@ -227,7 +227,7 @@ lex.yy.c : $(TARGET_SRC_PATH)/semantics/semantics.lex $(TARGET_SRC_PATH)/semanti
 	$(call quiet-command,flex --outfile=lex.yy.c $<,"FLEX","$(TARGET_DIR)lex.yy.c")
 
 target/hexagon/auto-tcg.c: semantics meta-instructions.csv
-	$(call quiet-command,./semantics meta-instructions.csv auto-tcg.h > $@,"GEN","target/hexagon/auto-tcg.c")
+	$(call quiet-command,./semantics meta-instructions.csv auto-tcg.h | indent -linux > $@,"GEN","target/hexagon/auto-tcg.c")
 
 auto-tcg.h: target/hexagon/auto-tcg.c
 

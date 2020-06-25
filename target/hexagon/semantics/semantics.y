@@ -76,7 +76,7 @@ void tmp_print(context_t *c __attribute__((unused)), t_hex_tmp *tmp) {
 }
 
 void reg_print(context_t *c, t_hex_reg *reg, bool is_dotnew) {
-  char reg_id[4] = { 0 };
+  char reg_id[5] = { 0 };
 
   yyassert(c, reg->type != SYSTEM || !is_dotnew,
          "System registers can't be .new!");
@@ -92,8 +92,19 @@ void reg_print(context_t *c, t_hex_reg *reg, bool is_dotnew) {
         reg_id[0] = 'S';
         break;
   }
-  reg_id[1] = reg->id;
-  reg_id[2] = (is_dotnew) ? 'V' : 'V';
+  switch (reg->bit_width) {
+    case 32:
+        reg_id[1] = reg->id;
+        reg_id[2] = 'V';
+        break;
+    case 64:
+        reg_id[1] = reg->id;
+        reg_id[2] = reg->id;
+        reg_id[3] = 'V';
+        break;
+    default:
+        yyassert(c, false, "Unhandled register bit width!\n");
+  }
   c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%s", reg_id);
 }
 
@@ -485,40 +496,6 @@ void rvalue_truncate(context_t *c, t_hex_value *rvalue) {
             *rvalue = tmp;
         }
     }
-}
-
-t_hex_value reg_concat(context_t *c, t_hex_value *rvalue) {
-    /* TODO: Implement register concatenation */
-    if (rvalue->type == REGISTER) {
-        if (rvalue->bit_width == 64) {
-            /* In a register pair the first register holds
-               the lower 32 bits, the next one holds the upper
-               32 bits */
-            const char * reg_prefix;
-            switch (rvalue->reg.type) {
-              case GENERAL_PURPOSE: reg_prefix = "GPR["; break;
-              case CONTROL: reg_prefix = "CR["; break;
-              case SYSTEM: reg_prefix = "SR["; break;
-            }
-            t_hex_value res = gen_tmp(c, 64);
-            if (rvalue->reg.offset != 0) {
-                OUT(c, "tcg_gen_concat_i32_i64(", &res, ", ");
-                OUT(c, reg_prefix, &(rvalue->reg.offset), " + ");
-                OUT(c, &(rvalue->reg.id), "], ");
-                OUT(c, reg_prefix, &(rvalue->reg.offset), " + ");
-                OUT(c, &(rvalue->reg.id), " + 1]);\n");
-            } else {
-                OUT(c, "tcg_gen_concat_i32_i64(", &res, ", ", rvalue, ", ");
-                OUT(c, reg_prefix, &(rvalue->reg.id), " + 1]);\n");
-            }
-            res.vec = rvalue->vec;
-            res.is_unsigned = rvalue->is_unsigned;
-            res.is_dotnew = rvalue->is_dotnew;
-            res.is_vectorial = rvalue->is_vectorial;
-            return res;
-        }
-    }
-    return *rvalue;
 }
 
 void ea_free(context_t *c) {
@@ -1122,10 +1099,9 @@ t_hex_value gen_extract(context_t *c, t_hex_value *source) {
             snprintf(offset_string, OFFSET_STR_LEN, "%d", offset_value);
             increment = " + 1";
         } else {
-            char * dotnew = (source->is_dotnew) ? "_new" : "";
-            OUT(c, "tcg_gen_extract_i32(", &res, ", GPR", dotnew);
-            OUT(c, "[", &(source->reg.id), increment);
-            OUT(c, "], ", offset, ", ", &width, ");\n");
+            OUT(c, "tcg_gen_extract_i32(", &res, ", R");
+            OUT(c, &(source->reg.id), "V", increment);
+            OUT(c, ", ", offset, ", ", &width, ");\n");
         }
     } else {
         if (source->bit_width == 64)
@@ -1281,12 +1257,7 @@ void gen_assign(context_t *c, t_hex_value *dest, t_hex_value *value) {
         rvalue_materialize(c, value);
         yyassert(c, value->bit_width == 64,
                "Bit width mismatch in assignment!");
-        OUT(c, "tcg_gen_extrl_i64_i32(");
-        t_hex_value reg_new = *dest;
-        if (dest->reg.type != SYSTEM)
-            reg_new.is_dotnew = true;
-        OUT(c, &reg_new, ", ", value, ");\n", "tcg_gen_extrh_i64_i32(GPR_new[");
-        OUT(c, &(dest->reg.id), " + 1], ", value, ");\n");
+        OUT(c, "tcg_gen_mov_i64(", dest, ", ", value, ");\n");
         /* TODO assert that no one is using this value as Nt */
     } else if (dest->bit_width == 32){
         if (value->type == IMMEDIATE)
@@ -1349,12 +1320,11 @@ t_hex_value gen_zxt_op(context_t *c,
         *source_width = gen_cast_op(c, source_width, source->bit_width);
         rvalue_materialize(c, source_width);
         /* First zero-out unwanted bits */
-        t_hex_value reg = reg_concat(c, source);
         t_hex_value one = gen_imm_value(c, 1, source->bit_width);
         t_hex_value tmp_mask = gen_bin_op(c, ASHIFTL, &one, source_width);
         one = gen_imm_value(c, 1, source->bit_width);
         t_hex_value mask = gen_bin_op(c, SUBTRACT, &tmp_mask, &one);
-        tmp = gen_bin_op(c, ANDB, &reg, &mask);
+        tmp = gen_bin_op(c, ANDB, &source, &mask);
     }
     /* 32 bit constants are already zero extended */
     if (target_width->imm.value == 32)
@@ -1645,50 +1615,43 @@ assign_statement  : lvalue ASSIGN rvalue
                   }
                   | lvalue INC rvalue
                   {
-                    t_hex_value reg = reg_concat(c, &$1);
-                    t_hex_value tmp = gen_bin_op(c, ADD, &reg, &$3);
+                    t_hex_value tmp = gen_bin_op(c, ADD, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
                   | lvalue DEC rvalue
                   {
-                    t_hex_value reg = reg_concat(c, &$1);
-                    t_hex_value tmp = gen_bin_op(c, SUBTRACT, &reg, &$3);
+                    t_hex_value tmp = gen_bin_op(c, SUBTRACT, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
                   | lvalue INCDECA rvalue
                   {
-                    t_hex_value reg = reg_concat(c, &$1);
-                    t_hex_value tmp = gen_bin_op(c, ADDSUB, &reg, &$3);
+                    t_hex_value tmp = gen_bin_op(c, ADDSUB, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
                   | lvalue ANDA rvalue
                   {
-                    t_hex_value reg = reg_concat(c, &$1);
-                    t_hex_value tmp = gen_bin_op(c, ANDB, &reg, &$3);
+                    t_hex_value tmp = gen_bin_op(c, ANDB, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
                   | lvalue ORA rvalue
                   {
-                    t_hex_value reg = reg_concat(c, &$1);
-                    t_hex_value tmp = gen_bin_op(c, ORB, &reg, &$3);
+                    t_hex_value tmp = gen_bin_op(c, ORB, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
                   | lvalue XORA rvalue
                   {
-                    t_hex_value reg = reg_concat(c, &$1);
-                    t_hex_value tmp = gen_bin_op(c, XORB, &reg, &$3);
+                    t_hex_value tmp = gen_bin_op(c, XORB, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
                   | lvalue ANDORA rvalue
                   {
-                    t_hex_value reg = reg_concat(c, &$1);
-                    t_hex_value tmp = gen_bin_op(c, ANDORB, &reg, &$3);
+                    t_hex_value tmp = gen_bin_op(c, ANDORB, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
@@ -1991,7 +1954,6 @@ if_stmt      : IF
 rvalue            : assign_statement            { /* does nothing */ }
                   | reg
                   {
-                    $1 = reg_concat(c, &$1);
                     $$ = gen_extract(c, &$1);
                   }
                   | IMM
