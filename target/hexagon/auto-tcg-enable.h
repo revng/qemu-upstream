@@ -177,7 +177,7 @@
 //#define fAUTO_GEN_TCG_L4_return_fnew_pt
 //#define fAUTO_GEN_TCG_L4_return_tnew_pnt
 //#define fAUTO_GEN_TCG_L4_return_fnew_pnt
-#define fAUTO_GEN_TCG_L2_loadw_locked
+//#define fAUTO_GEN_TCG_L2_loadw_locked
 //#define fAUTO_GEN_TCG_S2_storew_locked
 //#define fAUTO_GEN_TCG_L4_loadd_locked
 //#define fAUTO_GEN_TCG_S4_stored_locked
