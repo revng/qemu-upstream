@@ -1990,15 +1990,19 @@ rvalue            : assign_statement            { /* does nothing */ }
                   }
                   | PC
                   {
-                    t_hex_value rvalue;
-                    rvalue.type = IMMEDIATE;
-                    rvalue.imm.type = IMM_PC;
-                    rvalue.is_unsigned = true;
-                    rvalue.is_dotnew = false;
-                    rvalue.is_vectorial = false;
-                    rvalue.is_range = false;
-                    rvalue.is_symbol = false;
-                    $$ = rvalue;
+                    /* TODO: get PC as immediate from DisasContext */
+                    //t_hex_value rvalue;
+                    //rvalue.type = IMMEDIATE;
+                    //rvalue.imm.type = IMM_PC;
+                    //rvalue.is_unsigned = true;
+                    //rvalue.is_dotnew = false;
+                    //rvalue.is_vectorial = false;
+                    //rvalue.is_range = false;
+                    //rvalue.is_symbol = false;
+                    //$$ = rvalue;
+                    /* Meanwhile we are reading it from the CR */
+                    $$ = gen_tmp(c, 32);
+                    OUT(c, "tcg_gen_mov_i32(", &$$, ", hex_gpr[HEX_REG_PC]);\n");
                   }
                   | NPC
                   {
