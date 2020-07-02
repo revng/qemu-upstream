@@ -223,6 +223,9 @@ semantics : lex.yy.c semantics.tab.c $(TARGET_SRC_PATH)/semantics/csvparser.c
 semantics-dbg : lex.yy.c semantics.tab.c $(TARGET_SRC_PATH)/semantics/csvparser.c
 	$(call quiet-command,$(HOST_CC) -I$(TARGET_SRC_PATH)/semantics -DTOKEN_DEBUG -I. -o $@ $^,"CC","$(TARGET_DIR)semantics")
 
+semantics.output : $(TARGET_SRC_PATH)/semantics/semantics.y $(TARGET_SRC_PATH)/semantics/semantics_struct.h
+	$(call quiet-command,bison --defines=semantics.tab.h --output=semantics.tab.c -r all $<,"BISON","$(TARGET_DIR)semantics.output")
+
 semantics.tab.c : $(TARGET_SRC_PATH)/semantics/semantics.y $(TARGET_SRC_PATH)/semantics/semantics_struct.h
 	$(call quiet-command,bison --defines=semantics.tab.h --output=semantics.tab.c $<,"BISON","$(TARGET_DIR)semantics.tab.c")
 
