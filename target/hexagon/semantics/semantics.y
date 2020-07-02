@@ -1448,6 +1448,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
     t_hex_vec vec;
     t_hex_cast cast;
     t_hex_range range;
+    bool is_unsigned;
     int index;
 }
 
@@ -1467,7 +1468,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token ANDL ORL NOTL OPTNOTL
 %token COMMA FOR I ICIRC IF
 %token MAPPED EXT FSCR FCHK TLB IPEND DEBUG MODECTL
-%token SXT ZXT NEW OPTNEW ZEROONE CONSTEXT LOCNT BREV U64
+%token SXT ZXT NEW OPTNEW ZEROONE CONSTEXT LOCNT BREV U64 SIGN
 %token HASH EA PC FP GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL
 %token TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP QMARK TRAP0 TRAP1 CAUSE EX INT NOP
 %token DCKILL DCLEAN DCINVA DZEROA DFETCH ICKILL L2KILL ISYNC BRKPT SYNCHT LOCK
@@ -1493,8 +1494,11 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %type <rvalue> extra
 %type <index> if_stmt
 %type <index> IF
+%type <is_unsigned> SIGN
 
 /* Operator Precedences */
+%left MIN MAX
+%left LPAR
 %right CAST
 %right INT
 %left COMMA
@@ -1528,7 +1532,8 @@ code  : LBR
       {
           c->signature_c += snprintf(c->signature_buffer + c->signature_c,
                                      SIGNATURE_BUF_LEN,
-                                     "void emit_%s(DisasContext *dc",
+                                     "void emit_%s(DisasContext *dc, "
+                                     "insn_t *insn, packet_t *pkt",
                                      c->inst_name);
       }
       decls
@@ -2309,24 +2314,21 @@ rvalue            : assign_statement            { /* does nothing */ }
                   {
                     $$ = $2;
                   }
-                  | STAREA /* Load primitive */
+                  | LPAR rvalue SIGN RPAR STAREA /* Load primitive */
                   {
-                    int bit_width = (c->mem_size == MEM_DOUBLE) ? 64 : 32;
-                    char *sign_suffix = "", *size_suffix;
-                    if (c->mem_size != MEM_DOUBLE)
-                        sign_suffix = c->mem_unsigned ? "u" : "s";
+                    /* memop width and sign are propagated from instruction description */
+                    int bit_width = ($2.imm.value > 4) ? 64 : 32;
+                    char *sign_suffix = ($2.imm.value > 4) ? "" : (($3) ? "u" : "s");
+                    char *helper_suffix = ($3) ? "u" : "s";
+                    char size_suffix[4] = { 0 };
+                    snprintf(size_suffix, 4, "%d", $2.imm.value * 8);
                     t_hex_value tmp = gen_tmp(c, bit_width);
-                    /* Select memop width according to rvalue bit width */
-                    switch(c->mem_size) {
-                        case MEM_BYTE: size_suffix = "8"; break;
-                        case MEM_HALF: size_suffix = "16"; break;
-                        case MEM_WORD: size_suffix = "32"; break;
-                        case MEM_DOUBLE: size_suffix = "64"; break;
-                        default: yyassert(c, false, "Wrong load size!");
-                    }
                     OUT(c, "tcg_gen_qemu_ld", size_suffix, sign_suffix);
-                    /* If signed perform 32 or 64 bit sign extension */
                     OUT(c, "(", &tmp, ", EA, 0);\n");
+                    OUT(c, "if (insn->slot == 0 && pkt->pkt_has_store_s1) {\n");
+                    OUT(c, "gen_helper_merge_inflight_store", &$2.imm.value);
+                    OUT(c, helper_suffix, "(", &tmp, ", cpu_env, EA, ", &tmp, ");\n");
+                    OUT(c, "}\n");
                     $$ = tmp;
                   }
                   | LPAR rvalue RPAR
@@ -2662,6 +2664,8 @@ int main(int argc, char **argv)
     assert(defines_file != NULL);
     fputs("#ifndef TCG_AUTO_GEN\n", defines_file);
     fputs("#define TCG_AUTO_GEN\n", defines_file);
+    fputs("\n", defines_file);
+    fputs("#include \"insn.h\"\n\n", defines_file);
 
     int total_insn = 0, implemented_insn = 0;
     CsvParser *csvparser = CsvParser_new(argv[1], ",", 0);

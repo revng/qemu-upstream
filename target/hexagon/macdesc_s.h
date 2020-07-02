@@ -252,7 +252,7 @@
 #define fMMU(ADDR) ADDR
 #define fcirc_add(REG,INCR,IMMED) REG=circ_add(REG,INCR,IMMED)
 #define fbrev(REG) REG.h[1] | brev(REG.h[0])
-#define fLOAD(NUM,SIZE,SIGN,EA,DST) DST = *EA
+#define fLOAD(NUM,SIZE,SIGN,EA,DST) DST = (SIZE SIGN) *EA
 #define fMEMOP(NUM,SIZE,SIGN,EA,FNTYPE,VALUE) DST = *EA
 #define fGET_FRAMEKEY() FRAMEKEY
 #define fFRAME_SCRAMBLE(VAL) frame_scramble(VAL)

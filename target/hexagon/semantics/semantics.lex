@@ -54,6 +54,7 @@ UPPER_IMM_S              S|M|R
 ZERO_ONE                 0|1
 IMM_ID                   r|s|S|u|U
 VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
+SIGN_ID                  s|u
 
 /* Tokens */
 %%
@@ -644,6 +645,9 @@ VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
                            return (IMM); }
 "prod"{DIGIT}            { return (-1); }
 "acc"{DIGIT}+            { return (-1); }
+{SIGN_ID}                { yylval->is_unsigned = (yytext[0] == 'u');
+                           return (SIGN);
+                         }
 {DIGIT}+                 { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.imm.type = VALUE;

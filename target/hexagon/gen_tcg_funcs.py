@@ -229,7 +229,7 @@ def gen_tcg_func(f, tag, regs, imms):
             genptr_src_read_opn(f,regtype,regid,tag)
 
     f.write("#if defined(fAUTO_GEN_TCG_%s)\n" % tag)
-    f.write("emit_%s(%s);\n" % (tag, ", ".join(["ctx"] + declared)))
+    f.write("emit_%s(%s);\n" % (tag, ", ".join(["ctx", "insn", "pkt"] + declared)))
     f.write("#elif defined(fGEN_TCG_%s) || defined(fGEN_TCG_ALL)\n" % tag)
     f.write("fGEN_TCG_%s(%s);\n" % (tag, semdict[tag]))
     f.write("#else\n")
