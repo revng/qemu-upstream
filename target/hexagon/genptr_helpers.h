@@ -18,7 +18,9 @@
 #ifndef HEXAGON_GENPTR_HELPERS_H
 #define HEXAGON_GENPTR_HELPERS_H
 
+#define QEMU_GENERATE
 #include "tcg/tcg.h"
+#include "macros.h"
 
 static inline TCGv gen_zero(TCGv result)
 {

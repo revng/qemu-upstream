@@ -1792,14 +1792,8 @@ assign_statement  : lvalue ASSIGN rvalue
                   }
                   | PC ASSIGN rvalue
                   {
-                    /* TODO: Implement pc immediate reference */
-                    /* Do not assign PC if pc_written is 1 */
-                    t_hex_value one = gen_tmp_value(c, "1", 32);
                     rvalue_materialize(c, &$3);
-                    OUT(c, "tcg_gen_movcond_i32(");
-                    OUT(c, "TCG_COND_EQ, CR[CR_PC], PC_written, ", &one, ", CR[CR_PC]");
-                    OUT(c, ", ", &$3, ");\n");
-                    OUT(c, "tcg_gen_addi_i32(PC_written, PC_written, 1);\n");
+                    OUT(c, "gen_write_new_pc(", &$3, ");\n");
                     rvalue_free(c, &$3); /* Free temporary value */
                   }
                   | STAREA ASSIGN rvalue /* Store primitive */
@@ -2657,6 +2651,7 @@ int main(int argc, char **argv)
     puts("#include \"insn.h\"");
     puts("#include \"opcodes.h\"");
     puts("#include \"translate.h\"");
+    puts("#include \"genptr_helpers.h\"");
 
     FILE *defines_file = fopen(argv[2], "w");
     assert(defines_file != NULL);
