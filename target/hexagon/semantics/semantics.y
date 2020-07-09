@@ -75,6 +75,15 @@ void tmp_print(context_t *c __attribute__((unused)), t_hex_tmp *tmp) {
     c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%d", tmp->index);
 }
 
+void pre_print(context_t *c, t_hex_pre *pre, bool is_dotnew) {
+    char suffix = is_dotnew ? 'N' : 'V';
+    c->out_c += snprintf(c->out_buffer+c->out_c,
+                         OUT_BUF_LEN,
+                         "P%c%c",
+                         pre->id,
+                         suffix);
+}
+
 void reg_print(context_t *c, t_hex_reg *reg, bool is_dotnew) {
   char reg_id[5] = { 0 };
 
@@ -226,6 +235,9 @@ void rvalue_out(context_t *c, void *pointer) {
           break;
       case VARID:
           var_print(c, &rvalue->var);
+          break;
+      case PREDICATE:
+          pre_print(c, &rvalue->pre, rvalue->is_dotnew);
           break;
       default:
           yyassert(c, false, "Cannot print this expression!");
@@ -1966,27 +1978,7 @@ rvalue            : assign_statement            { /* does nothing */ }
                   }
                   | pre
                   {
-                    /* Extract predicate value into a temporary */
-                    /* TODO: Implement predicate access */
-                    OUT(c, "int pre_index", &c->predicate_count, " = "); /* Get predicate index */
-                    OUT(c, &($1.pre.id), ";\n");
-                    $$ = gen_tmp(c, 32);
-                    char * dotnew = ($1.is_dotnew) ? "_new" : "";
-                    OUT(c, "TCGv p_reg", &c->p_reg_count);
-                    OUT(c, " = (GET_WRITTEN_PRE(dc, pre_index");
-                    OUT(c, &c->predicate_count, ")) ? ");
-                    OUT(c, "CR_new[CR_P] : CR", dotnew, "[CR_P];\n");
-                    OUT(c, "tcg_gen_mov_i32(", &$$, ", ", "p_reg", &c->p_reg_count, ");\n");
-                    c->p_reg_count++;
-                    if ($1.is_dotnew) 
-                        OUT(c, "SET_READ_PRE(dc, pre_index", &c->predicate_count, ");\n");
-                    
-                    /* Shift to select predicate */
-                    OUT(c, "tcg_gen_shri_i32(", &$$, ", ", &$$, ", 8 * pre_index",
-                        &c->predicate_count, ");\n");
-                    /* Extract first 8 bits */
-                    OUT(c, "tcg_gen_andi_i32(", &$$, ", ", &$$, ", 0xff);\n");
-                    c->predicate_count++;
+                    $$ = $1;
                   }
                   | PC
                   {
