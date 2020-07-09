@@ -626,10 +626,17 @@ SIGN_ID                  s|u
                            yylval->rvalue.pre.is_bit_iter = false;
                            yylval->rvalue.bit_width = 8;
                            return (PRE); }
-"P"{LOWER_PRE}[NV]       { yylval->rvalue.type = PREDICATE;
+"P"{LOWER_PRE}N          { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[1];
                            yylval->rvalue.pre.is_bit_iter = false;
                            yylval->rvalue.bit_width = 8;
+                           yylval->rvalue.is_dotnew = true;
+                           return (PRE); }
+"P"{LOWER_PRE}V          { yylval->rvalue.type = PREDICATE;
+                           yylval->rvalue.pre.id = yytext[1];
+                           yylval->rvalue.pre.is_bit_iter = false;
+                           yylval->rvalue.bit_width = 8;
+                           yylval->rvalue.is_dotnew = false;
                            return (PRE); }
 "P"                      { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.bit_width = 8;

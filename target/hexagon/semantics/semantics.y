@@ -1585,10 +1585,12 @@ decl  : DREG
       }
       | DPRE
       {
+          char suffix = $1.is_dotnew ? 'N' : 'V';
           c->signature_c += snprintf(c->signature_buffer + c->signature_c,
                                      SIGNATURE_BUF_LEN,
-                                     ", TCGv P%cV",
-                                     $1.pre.id);
+                                     ", TCGv P%c%c",
+                                     $1.pre.id,
+                                     suffix);
       }
       | DMEM
       | DEA
