@@ -2313,7 +2313,7 @@ rvalue            : assign_statement            { /* does nothing */ }
                     char *sign_suffix = ($2.imm.value > 4) ? "" : (($3) ? "u" : "s");
                     char *helper_suffix = ($3) ? "u" : "s";
                     char size_suffix[4] = { 0 };
-                    snprintf(size_suffix, 4, "%d", $2.imm.value * 8);
+                    snprintf(size_suffix, 4, "%" PRIu64, $2.imm.value * 8);
                     t_hex_value tmp = gen_tmp(c, bit_width);
                     OUT(c, "tcg_gen_qemu_ld", size_suffix, sign_suffix);
                     OUT(c, "(", &tmp, ", EA, 0);\n");
