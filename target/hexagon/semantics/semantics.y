@@ -1134,6 +1134,8 @@ t_hex_value gen_extract(context_t *c, t_hex_value *source) {
     }
     rvalue_free(c, source);
     /* Apply source properties */
+    res.vec = source->vec;
+    res.is_vectorial = source->is_vectorial;
     res.is_unsigned = source->is_unsigned;
     return res;
 }
@@ -1184,9 +1186,11 @@ void gen_deposit(context_t *c,
             snprintf(increment_string, OFFSET_STR_LEN, "+ %s / (32 / %d)", offset, width);
             snprintf(offset_string, OFFSET_STR_LEN, "%s * %d", offset, width);
             offset = offset_string;
-            // If the destination value is 32, truncate the source
+            // If the destination value is 32, truncate the source, otherwise extend
             if (dest->bit_width == 32)
                 rvalue_truncate(c, value);
+            else
+                rvalue_extend(c, value);
             rvalue_materialize(c, value);
             char * bit_suffix = (dest->bit_width == 64) ? "i64" : "i32";
             OUT(c, "tcg_gen_deposit_", bit_suffix, "(", dest, ", ", dest, ", ", value);
@@ -1228,6 +1232,8 @@ void gen_assign(context_t *c, t_hex_value *dest, t_hex_value *value) {
     if (dest->type == EXTRA) {
         if (dest->bit_width == 64)
             rvalue_extend(c, value);
+        else
+            rvalue_truncate(c, value);
         if (dest->extra.temp) {
             yyassert(c, !(dest->extra.type == EA_T && c->is_extra_created[EA_T]),
                    "EA assigned multiple times!");
@@ -1544,7 +1550,7 @@ code  : LBR
       {
           c->signature_c += snprintf(c->signature_buffer + c->signature_c,
                                      SIGNATURE_BUF_LEN,
-                                     "void emit_%s(DisasContext *dc, "
+                                     "void emit_%s(DisasContext *ctx, "
                                      "insn_t *insn, packet_t *pkt",
                                      c->inst_name);
       }
@@ -1798,21 +1804,13 @@ assign_statement  : lvalue ASSIGN rvalue
                   }
                   | STAREA ASSIGN rvalue /* Store primitive */
                   {
-                    rvalue_materialize(c, &$3);
-                    char *size_suffix;
                     /* Select memop width according to rvalue bit width */
-                    switch(c->mem_size) {
-                        case MEM_BYTE: size_suffix = "8"; break;
-                        case MEM_HALF: size_suffix = "16"; break;
-                        case MEM_WORD: size_suffix = "32"; break;
-                        case MEM_DOUBLE: size_suffix = "64"; break;
-                        default: yyassert(c, false, "Wrong load size!");
-                    }
-                    if (c->mem_size != MEM_DOUBLE)
-                        rvalue_truncate(c, &$3);
-                    OUT(c, "tcg_gen_qemu_st", size_suffix);
-                    OUT(c, "(", &$3, ", EA, 0);\n");
-                    rvalue_free(c, &$3); /* Free temporary value */
+                    int mem_width = ($3.is_vectorial) ? $3.vec.width/8 :
+                        $3.bit_width/8;
+                    rvalue_materialize(c, &$3);
+                    OUT(c, "gen_store", &mem_width, "(cpu_env, EA, ", &$3);
+                    OUT(c, ", ctx, insn->slot);\n");
+                    rvalue_free(c, &$3);
                   }
                   | CAUSE ASSIGN IMM
                   {
