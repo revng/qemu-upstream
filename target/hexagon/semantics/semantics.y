@@ -2319,6 +2319,7 @@ rvalue            : assign_statement            { /* does nothing */ }
                     OUT(c, "gen_helper_merge_inflight_store", &$2.imm.value);
                     OUT(c, helper_suffix, "(", &tmp, ", cpu_env, EA, ", &tmp, ");\n");
                     OUT(c, "}\n");
+                    tmp.is_unsigned = $3;
                     $$ = tmp;
                   }
                   | LPAR rvalue RPAR
