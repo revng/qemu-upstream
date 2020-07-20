@@ -121,12 +121,12 @@ SIGN_ID                  s|u
                            return (DPRE); }
 "DECL_MREG_u(MuV, MuN, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
-                           yylval->rvalue.reg.type = CONTROL;
+                           yylval->rvalue.reg.type = MODIFIER;
                            yylval->rvalue.reg.id = 'u';
-                           yylval->rvalue.reg.offset = 6;
+                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = false;
                            yylval->rvalue.bit_width = 32;
-                           return (DMEM); }
+                           return (DMOD); }
 "DECL_CREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
@@ -161,7 +161,7 @@ SIGN_ID                  s|u
                            return WPRE; }
 "READ_NEW_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N, P"{LOWER_PRE}"X);" {
                            return RPRE; }
-"READ_MREG_u(MuV, MuN);"      { return RMEM; }
+"READ_MREG_u(MuV, MuN);"      { return RMOD; }
 "READ_CREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N);" {
                            return RCTR; }
 "FREE_CREG_"{LOWER_PRE}"(R"{REG_ID_32}"V);" {
@@ -170,7 +170,7 @@ SIGN_ID                  s|u
                            return FPRE; }
 "FREE_NEW_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N);" {
                            return FPRE; }
-"FREE_MREG_u(MuV);"      { return FMEM; }
+"FREE_MREG_u(MuV);"      { return FMOD; }
 "FREE_EA;"               { return FEA; }
 "fGEN_TCG_"{INST_NAME}"(" { return FWRAP; }
 "{"                      { return LBR; }
@@ -606,13 +606,14 @@ SIGN_ID                  s|u
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "MuV"                    { yylval->rvalue.type = REGISTER;
-                           yylval->rvalue.reg.type = CONTROL;
+                           yylval->rvalue.reg.type = MODIFIER;
                            yylval->rvalue.reg.id = yytext[1];
-                           yylval->rvalue.reg.offset = 6;
+                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.is_const = false;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
+"MuN"                    { return (MUN); }
 "ELR"                    { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = SYSTEM;
                            yylval->rvalue.reg.id = 3;

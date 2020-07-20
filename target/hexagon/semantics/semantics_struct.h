@@ -28,7 +28,7 @@
 #define OUT_BUF_LEN 1024 * 1024
 #define SIGNATURE_BUF_LEN 1024
 
-enum reg_type {GENERAL_PURPOSE, CONTROL, SYSTEM};
+enum reg_type {GENERAL_PURPOSE, CONTROL, SYSTEM, MODIFIER};
 
 /* Semantic Records */
 typedef struct t_hex_reg

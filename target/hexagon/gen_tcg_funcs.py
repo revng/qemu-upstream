@@ -215,6 +215,11 @@ def gen_tcg_func(f, tag, regs, imms):
         declared.append(genptr_decl_imm(f,immlett))
 
     declared = [name for name in declared if name is not None]
+    ## When M.V is passed, pass also M.N
+    for i, name in enumerate(declared[:]):
+        match = re.search("M.V", name)
+        if match is not None:
+            declared.insert(i+1, match.string.replace("V", "N"))
 
     if 'A_PRIV' in attribdict[tag]:
         f.write('fCHECKFORPRIV();\n')

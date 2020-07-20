@@ -100,6 +100,8 @@ void reg_print(context_t *c, t_hex_reg *reg, bool is_dotnew) {
     case SYSTEM:
         reg_id[0] = 'S';
         break;
+    case MODIFIER:
+        reg_id[0] = 'M';
   }
   switch (reg->bit_width) {
     case 32:
@@ -1389,33 +1391,19 @@ t_hex_value gen_convround(context_t *c, t_hex_value *source, t_hex_value *round_
     return res;
 }
 
-/* Circular buffer operation */
+/* Circular addressing mode with auto-increment */
 t_hex_value gen_circ_op(context_t *c,
                         t_hex_value *addr,
                         t_hex_value *increment,
-                        t_hex_value *slot) {
-    /* Circular addressing mode with auto-increment */
-    /* Extract iteration variables */
-    t_hex_value I = gen_tmp(c, 32);
-    t_hex_value K = gen_tmp(c, 32);
-    t_hex_value Length = gen_tmp(c, 32);
-    t_hex_value tmp = gen_tmp(c, 32);
-    t_hex_value delta = gen_tmp(c, 32);
-    /* Assume that CS0 is populated, since it's required by the ISA reference manual */
-    OUT(c, "tcg_gen_extract_i32(", &I, ", ", slot, ", 17, 7);\n");
-    OUT(c, "tcg_gen_extract_i32(", &K, ", ", slot, ", 24, 3);\n");
-    OUT(c, "tcg_gen_extract_i32(", &Length, ", ", slot, ", 0, 16);\n");
-    OUT(c, "tcg_gen_extract_i32(", &tmp, ", ", slot, ", 28, 4);\n");
-    OUT(c, "tcg_gen_deposit_i32(", &I, ", ", &I, ", ", &tmp);
-    OUT(c, ", 7, 4);\n");
-    /* The increment must become modulo Length */
-    t_hex_value res = gen_bin_op(c, ADD, addr, increment);
-    OUT(c, "tcg_gen_sub_i32(", &delta, ", ", &res);
-    OUT(c, ", CR[12 + ", &(slot->reg.id), "]);");
-    res = gen_bin_op(c, MODULO, &delta, &Length);
-    OUT(c, "tcg_gen_add_i32(", &res, ", CR[12 + ", &(slot->reg.id));
-    OUT(c, "], ", &res, ");");
-    return res;
+                        t_hex_value *modifier) {
+    t_hex_value cs = gen_tmp(c, 32);
+    rvalue_materialize(c, increment);
+    OUT(c, "READ_REG(", &cs, ", HEX_REG_CS0 + MuN);\n");
+    OUT(c, "gen_fcircadd(", addr, ", ", increment, ", ", modifier);
+    OUT(c, ", ", &cs, ");\n");
+    rvalue_free(c, &cs);
+    rvalue_free(c, increment);
+    return *addr;
 }
 
 t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
@@ -1477,14 +1465,14 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 //%expect 1
 
 %token DREG DIMM DPRE DEA RREG WREG FREG FIMM RPRE WPRE FPRE FWRAP FEA
-%token DMEM RMEM FMEM DCTR RCTR FCTR PREDUSE USCORE VAR
+%token DMOD RMOD FMOD DCTR RCTR FCTR PREDUSE USCORE VAR
 %token LBR RBR LPAR RPAR LSQ RSQ LARR
 %token SEMI COLON PLUS MINUS PMINUS MUL POW DIV MOD ABS CROUND ROUND CIRCADD
 %token AND OR ANDOR XOR NOT OPTSHIFT NSHIFT
 %token ASSIGN INC DEC INCDECA ANDA ORA XORA ANDORA PLUSPLUS
 %token LT GT ASL ASR LSR ROL EQ NEQ OPTEQ LTE GTE MIN MAX
 %token ANDL ORL NOTL OPTNOTL
-%token COMMA FOR I ICIRC IF
+%token COMMA FOR I ICIRC IF MUN
 %token MAPPED EXT FSCR FCHK TLB IPEND DEBUG MODECTL
 %token SXT ZXT NEW OPTNEW ZEROONE CONSTEXT LOCNT BREV U64 SIGN
 %token HASH EA PC FP GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL
@@ -1509,6 +1497,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %type <rvalue> DREG
 %type <rvalue> DIMM
 %type <rvalue> DPRE
+%type <rvalue> DMOD
 %type <rvalue> extra
 %type <index> if_stmt
 %type <index> IF
@@ -1598,15 +1587,22 @@ decl  : DREG
                                      $1.pre.id,
                                      suffix);
       }
-      | DMEM
+      | DMOD
+      {
+          c->signature_c += snprintf(c->signature_buffer + c->signature_c,
+                                     SIGNATURE_BUF_LEN,
+                                     ", TCGv M%cV, int M%cN",
+                                     $1.reg.id, $1.reg.id);
+      }
       | DEA
       | RREG
+      | RMOD
       | WREG
       | FREG
       | FIMM
       | RPRE
       | FPRE
-      | FMEM
+      | FMOD
       | FEA
 ;
 
