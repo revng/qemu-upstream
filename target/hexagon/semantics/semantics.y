@@ -1150,9 +1150,7 @@ void gen_deposit(context_t *c,
     int width = access.width;
     /* Generating string containing access offset */
     char offset_string[OFFSET_STR_LEN] = { 0 };
-    char increment_string[OFFSET_STR_LEN] = { 0 };
     char * offset = offset_string;
-    char * increment = increment_string;
     int offset_value = access.index * width;
     snprintf(offset_string, OFFSET_STR_LEN, "%d", offset_value);
     if (access.iter_type != NO_ITER) {
@@ -1177,38 +1175,10 @@ void gen_deposit(context_t *c,
                 yyassert(c, false, "Unhandled iterator enum type!\n");
         }
     }
-    if (dest->type == REGISTER) {
-        /* Handle runtime 64bit register selection by i iterator */
-        if (access.iter_type != NO_ITER) {
-            // deposit is broken when saving to 64bit registers
-            // Algorithm is: offset = <iterator> % (32 / width)
-            //            increment = <iterator> / (32 / width)
-            // If width is 32 it is fine, if width is 16 we have to store
-            // split up the deposit
-            snprintf(increment_string, OFFSET_STR_LEN, "+ %s / (32 / %d)", offset, width);
-            snprintf(offset_string, OFFSET_STR_LEN, "%s * %d", offset, width);
-            offset = offset_string;
-            // If the destination value is 32, truncate the source, otherwise extend
-            if (dest->bit_width == 32)
-                rvalue_truncate(c, value);
-            else
-                rvalue_extend(c, value);
-            rvalue_materialize(c, value);
-            char * bit_suffix = (dest->bit_width == 64) ? "i64" : "i32";
-            OUT(c, "tcg_gen_deposit_", bit_suffix, "(", dest, ", ", dest, ", ", value);
-            OUT(c, ", ", offset, ", ", &width, ");\n");
-        } else {
-            rvalue_truncate(c, value);
-            rvalue_materialize(c, value);
-            OUT(c, "if (GET_USED_REG(regs, ", &(dest->reg.id), increment, "))\n");
-            OUT(c, "tcg_gen_deposit_i32(GPR_new[", &(dest->reg.id), increment);
-            OUT(c, "], GPR_new[", &(dest->reg.id), increment, "], ", value);
-            OUT(c, ", ", offset, ", ", &width, ");\n");
-            OUT(c, "else\n");
-            OUT(c, "tcg_gen_deposit_i32(GPR_new[", &(dest->reg.id), increment);
-            OUT(c, "], GPR[", &(dest->reg.id), increment, "], ", value);
-            OUT(c, ", ", offset, ", ", &width, ");\n");
-        }
+    /* Handle runtime 64bit deposit by i iterator */
+    if (dest->type == REGISTER && access.iter_type != NO_ITER) {
+        snprintf(offset_string, OFFSET_STR_LEN, "%s * %d", offset, width);
+        offset = offset_string;
     } else {
         if (dest->extra.temp) {
             if (!c->is_extra_created[dest->extra.type]) {
@@ -1216,9 +1186,16 @@ void gen_deposit(context_t *c,
                     " = tcg_temp_new_i", &dest->bit_width, "();\n");
             }
         }
-        OUT(c, "tcg_gen_deposit_i32(", dest, ", ", dest, ", ");
-        OUT(c, value, ", ", offset, ", ", &width, ");\n");
     }
+    // If the destination value is 32, truncate the source, otherwise extend
+    if (dest->bit_width == 32)
+        rvalue_truncate(c, value);
+    else
+        rvalue_extend(c, value);
+    rvalue_materialize(c, value);
+    char * bit_suffix = (dest->bit_width == 64) ? "i64" : "i32";
+    OUT(c, "tcg_gen_deposit_", bit_suffix, "(", dest, ", ", dest, ", ", value);
+    OUT(c, ", ", offset, ", ", &width, ");\n");
     rvalue_free(c, value);
 }
 
