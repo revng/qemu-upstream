@@ -1596,7 +1596,7 @@
 //#define fAUTO_GEN_TCG_SA1_setin1
 //#define fAUTO_GEN_TCG_SA1_clrtnew
 //#define fAUTO_GEN_TCG_SA1_clrfnew
-//#define fAUTO_GEN_TCG_SA1_clrt
+#define fAUTO_GEN_TCG_SA1_clrt
 //#define fAUTO_GEN_TCG_SA1_clrf
 //#define fAUTO_GEN_TCG_SA1_addsp
 //#define fAUTO_GEN_TCG_SA1_inc

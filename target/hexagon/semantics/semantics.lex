@@ -42,7 +42,7 @@ DIGIT                    [0-9]
 LOWER_ID                 [a-z]
 UPPER_ID                 [A-Z]
 ID                       LOWER_ID|UPPER_ID
-INST_NAME                [A-Z][0-9]_([a-z]|[0-9]|_)+ 
+INST_NAME                [A-Z]+[0-9]_([a-z]|[0-9]|_)+
 HEX_DIGIT                [0-9a-fA-F]
 REG_ID_32                e|s|d|t|u|v|x|y
 REG_ID_64                ee|ss|dd|tt|uu|vv|xx|yy
