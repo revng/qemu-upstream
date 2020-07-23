@@ -153,7 +153,6 @@ typedef struct context_t {
     bool ea_declared;
     bool is_jump;
     bool is_stop;
-    bool mem_unsigned;
     enum mem_type mem_size; 
     char written_regs[MAX_WRITTEN_REGS];
     int written_index;

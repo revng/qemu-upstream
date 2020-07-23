@@ -2081,55 +2081,39 @@ rvalue            : assign_statement            { /* does nothing */ }
                   }
                   | rvalue LT rvalue
                   {
+                    yyassert(c, $1.is_unsigned == $3.is_unsigned,
+                             "Different signedness of comparison operands");
                     if ($1.is_unsigned && $3.is_unsigned)
                         $$ = gen_bin_cmp(c, LTU_OP, &$1, &$3);
-                    else if (!$1.is_unsigned && !$3.is_unsigned)
+                    else
                         $$ = gen_bin_cmp(c, LT_OP, &$1, &$3);
-                    else {
-                        if (c->mem_unsigned)
-                            $$ = gen_bin_cmp(c, LTU_OP, &$1, &$3);
-                        else
-                            $$ = gen_bin_cmp(c, LT_OP, &$1, &$3);
-                    }
                   }
                   | rvalue GT rvalue
                   {
+                    yyassert(c, $1.is_unsigned == $3.is_unsigned,
+                             "Different signedness of comparison operands");
                     if ($1.is_unsigned && $3.is_unsigned)
                         $$ = gen_bin_cmp(c, GTU_OP, &$1, &$3);
-                    else if (!$1.is_unsigned && !$3.is_unsigned)
+                    else
                         $$ = gen_bin_cmp(c, GT_OP, &$1, &$3);
-                    else {
-                        if (c->mem_unsigned)
-                            $$ = gen_bin_cmp(c, GTU_OP, &$1, &$3);
-                        else
-                            $$ = gen_bin_cmp(c, GT_OP, &$1, &$3);
-                    }
                   }
                   | rvalue LTE rvalue
                   {
+                    yyassert(c, $1.is_unsigned == $3.is_unsigned,
+                             "Different signedness of comparison operands");
                     if ($1.is_unsigned && $3.is_unsigned)
                         $$ = gen_bin_cmp(c, LEU_OP, &$1, &$3);
-                    else if (!$1.is_unsigned && !$3.is_unsigned)
+                    else
                         $$ = gen_bin_cmp(c, LTE_OP, &$1, &$3);
-                    else {
-                        if (c->mem_unsigned)
-                            $$ = gen_bin_cmp(c, LEU_OP, &$1, &$3);
-                        else
-                            $$ = gen_bin_cmp(c, LTE_OP, &$1, &$3);
-                    }
                   }
                   | rvalue GTE rvalue
                   {
+                    yyassert(c, $1.is_unsigned == $3.is_unsigned,
+                             "Different signedness of comparison operands");
                     if ($1.is_unsigned && $3.is_unsigned)
                         $$ = gen_bin_cmp(c, GEU_OP, &$1, &$3);
-                    else if (!$1.is_unsigned && !$3.is_unsigned)
+                    else
                         $$ = gen_bin_cmp(c, GTE_OP, &$1, &$3);
-                    else {
-                        if (c->mem_unsigned)
-                            $$ = gen_bin_cmp(c, GEU_OP, &$1, &$3);
-                        else
-                            $$ = gen_bin_cmp(c, GTE_OP, &$1, &$3);
-                    }
                   }
                   | rvalue QMARK rvalue COLON rvalue
                   {
