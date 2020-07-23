@@ -138,7 +138,7 @@ void imm_print(context_t *c, t_hex_imm *imm) {
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "dc->pc");
             break;
         case IMM_CONSTEXT:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "dc->extender_present");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "insn->extension_valid");
             break;
         default:
             yyassert(c, false, "Cannot print this expression!");
