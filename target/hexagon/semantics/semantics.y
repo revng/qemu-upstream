@@ -2161,7 +2161,9 @@ rvalue            : assign_statement            { /* does nothing */ }
                     t_hex_value key = gen_tmp(c, 64);
                     t_hex_value res = gen_tmp(c, 64);
                     rvalue_extend(c, &$3);
-                    OUT(c, "tcg_gen_concat_i32_i64(", &key,", CR[17], CR[17]);\n");
+                    t_hex_value frame_key = gen_tmp(c, 32);
+                    OUT(c, "READ_REG(", &frame_key, ", HEX_REG_FRAMEKEY);\n");
+                    OUT(c, "tcg_gen_concat_i32_i64(", &key,", ", &frame_key, ", ", &frame_key, ");\n");
                     OUT(c, "tcg_gen_xor_i64(", &res, ", ", &$3,", ", &key, ");\n");
                     $$ = res;
                   }
