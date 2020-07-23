@@ -57,6 +57,10 @@ void yyerror(yyscan_t scanner __attribute__((unused)),
     }
 #endif
 
+bool is_direct_predicate(t_hex_value *value) {
+    return value->pre.id >= '0' && value->pre.id <= '3';
+}
+
 /* Print functions */
 void str_print(context_t *c  __attribute__((unused)), char *string) {
     c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%s", string);
@@ -1596,7 +1600,7 @@ statements  : statements statement         { /* does nothing */ }
 // check that if-then-else statements semantics are preserved
 /* Statements can be assignment, control or memory statements */
 statement   : control_statement            { /* does nothing */ }
-            | rvalue SEMI                  { /* does nothing */ }
+            | rvalue SEMI                  { rvalue_free(c, &$1); }
             | code_block                   { /* does nothing */ }
 ;
 
@@ -1650,44 +1654,23 @@ assign_statement  : lvalue ASSIGN rvalue
                   }
                   | pre ASSIGN rvalue
                   {
-                    /* Write to predicate register */
-                    OUT(c, "int pre_index", &c->predicate_count, " = "); /* Get predicate index */
-                    OUT(c, &($1.pre.id), ";\n");
+                    /* Extract predicate TCGv */
+                    if (is_direct_predicate(&$1)) {
+                        $1 = gen_tmp_value(c, "0", 32);
+                    }
                     rvalue_truncate(c, &$3);
                     rvalue_materialize(c, &$3);
-                    if (!c->no_track_regs) {
-                        OUT(c, "TCGv p_reg", &c->p_reg_count);
-                        OUT(c, " = (GET_WRITTEN_ANY_PRE(dc)) ? ");
-                        OUT(c, "CR_new[CR_P] : CR[CR_P];\n");
-                    }
                     /* Bitwise predicate assignment */
                     if ($1.pre.is_bit_iter) {
                          /* Extract lsb */
                          OUT(c, "tcg_gen_andi_i32(", &$3, ", ", &$3, ", 1);\n");
-                         /* Shift to reach predicate and bit offset */
-                         OUT(c, "tcg_gen_shli_i32(", &$3, ", ", &$3, ", 8 * pre_index",
-                             &c->predicate_count, " + i);\n");
-                         /* Clear previous predicate value */
-                         t_hex_value mask = gen_tmp(c, 32);
-                         t_hex_value one = gen_tmp_value(c, "1", 32);
-                         OUT(c, "tcg_gen_shli_i32(", &mask);
-                         OUT(c, ", ", &one, ", 8 * pre_index", &c->predicate_count, " + i);\n");
-                         OUT(c, "tcg_gen_not_i32(", &mask, ", ", &mask, ");\n");
-                         OUT(c, "tcg_gen_and_i32(CR_new[CR_P], p_reg", &c->p_reg_count, ", ",
-                              &mask, ");\n");
-                         c->p_reg_count++;
+                         /* Shift to reach bit offset */
+                         OUT(c, "tcg_gen_shli_i32(", &$3, ", ", &$3, ", i);\n");
                          /* Store new predicate value */
-                         if (c->no_track_regs) {
-                            if ($3.type == IMMEDIATE)
-                                OUT(c, "tcg_gen_ori_i32(CR[CR_P], CR[CR_P], ", &$3, ");\n");
-                            else
-                                OUT(c, "tcg_gen_or_i32(CR[CR_P], CR[CR_P], ", &$3, ");\n");
-                         } else {
-                            if ($3.type == IMMEDIATE)
-                                OUT(c, "tcg_gen_ori_i32(CR_new[CR_P], CR_new[CR_P], ", &$3, ");\n");
-                            else
-                                OUT(c, "tcg_gen_or_i32(CR_new[CR_P], CR_new[CR_P], ", &$3, ");\n");
-                         }
+                         if ($3.type == IMMEDIATE)
+                             OUT(c, "tcg_gen_ori_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
+                         else
+                             OUT(c, "tcg_gen_or_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
                     /* Range-based predicate assignment */
                     } else if ($1.is_range) {
                         /* (bool) ? 0xff : 0x00 */
@@ -1701,62 +1684,27 @@ assign_statement  : lvalue ASSIGN rvalue
                         int begin = $1.range.begin;
                         int end = $1.range.end;
                         int width = end - begin + 1;
-                        OUT(c, "tcg_gen_deposit_i32(CR_new[CR_P], p_reg");
-                        OUT(c, &c->p_reg_count, ", ");
-                        c->p_reg_count++;
-                        OUT(c, &tmp, ", 8 * pre_index", &c->predicate_count, " + ");
-                        OUT(c, &begin, ", ", &width, ");\n");
+                        OUT(c, "tcg_gen_deposit_i32(", &$1, ", ", &$1, ", ");
+                        OUT(c, &tmp, ", ", &begin, ", ", &width, ");\n");
                         rvalue_free(c, &zero);
                         rvalue_free(c, &ff);
                         rvalue_free(c, &tmp);
                     /* Standard bytewise predicate assignment */
                     } else {
-                         
-                         /* Extract first 8 bits */
-                         OUT(c, "tcg_gen_andi_i32(", &$3, ", ", &$3, ", 0xff);\n");
-                         /* Shift to reach predicate */
-                         OUT(c, "tcg_gen_shli_i32(", &$3, ", ", &$3, ", 8 * pre_index",
-                             &c->predicate_count, ");\n");
-                        if (!c->no_track_regs) {
-                            /* If predicate was already assigned just perform
-                               the logical AND between the two assignments */
-                            OUT(c, "if (GET_WRITTEN_PREV_PRE(dc, pre_index0)) {");
-                            /* Filter out other predicate bytes */
-                            OUT(c, "tcg_gen_ori_i32(", &$3, ", ", &$3, ", ");
-                            OUT(c, "pred_whitening[pre_index", &c->predicate_count, "]);\n");
-                            if ($3.type == IMMEDIATE)
-                                OUT(c, "tcg_gen_andi_i32(CR_new[CR_P], p_reg", &c->p_reg_count, ", ", &$3, ");\n");
-                            else
-                                OUT(c, "tcg_gen_and_i32(CR_new[CR_P], p_reg", &c->p_reg_count, ", ", &$3, ");\n");
-                            /* Otherwise replace the old value completely */
-                            OUT(c, "} else {\n");
-                            /* Clear previous predicate value */
-                            OUT(c, "tcg_gen_andi_i32(CR_new[CR_P], p_reg", &c->p_reg_count, ", "
-                                    "pred_whitening[pre_index", &c->predicate_count, "]);\n");
-                            c->p_reg_count++;
-                            /* Store new predicate value */
-                            if ($3.type == IMMEDIATE)
-                                OUT(c, "tcg_gen_ori_i32(CR_new[CR_P], CR_new[CR_P], ", &$3, ");\n");
-                            else
-                                OUT(c, "tcg_gen_or_i32(CR_new[CR_P], CR_new[CR_P], ", &$3, ");\n");
-                                OUT(c, "}\n");
-                        /* endloop0 special handling */
-                        } else {
-                            /* Clear previous predicate value */
-                            OUT(c, "tcg_gen_andi_i32(CR[CR_P], CR[CR_P], "
-                                "pred_whitening[pre_index", &c->predicate_count, "]);\n");
-                            /* Store new predicate value */
-                            if ($3.type == IMMEDIATE)
-                                OUT(c, "tcg_gen_ori_i32(CR[CR_P], CR[CR_P], ", &$3, ");\n");
-                            else
-                                OUT(c, "tcg_gen_or_i32(CR[CR_P], CR[CR_P], ", &$3, ");\n");
-                        }
+                        t_hex_value ff = gen_tmp_value(c, "0xff", 32);
+                        /* Extract first 8 bits */
+                        OUT(c, "tcg_gen_andi_i32(", &$1, ", ", &$3, ", 0xff);\n");
+                        /* Store new predicate value */
+                        if ($3.type == IMMEDIATE)
+                            OUT(c, "tcg_gen_ori_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
+                        else
+                            OUT(c, "tcg_gen_or_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
+                        OUT(c, "}\n");
                     }
-                    if (!c->no_track_regs) {
-                        OUT(c, "SET_WRITTEN_PRE(dc, pre_index", &c->predicate_count, ");\n");
+                    if (is_direct_predicate(&$1)) {
+                        OUT(c, "LOG_PRED_WRITE(", &$1, ", ", &$1.pre.id, ")");
                     }
                     rvalue_free(c, &$3);  /* Free temporary value */
-                    c->predicate_count++;
                     $$ = $1;
                   }
                   | IMM ASSIGN rvalue
@@ -1945,6 +1893,11 @@ rvalue            : assign_statement            { /* does nothing */ }
                   }
                   | pre
                   {
+                    if(is_direct_predicate(&$1)) {
+                        char predicate_id = $1.pre.id;
+                        $1 = gen_tmp_value(c, "0", 32);
+                        OUT(c, "READ_PREG(", &$1, ", ", &predicate_id, ");\n");
+                    }
                     $$ = $1;
                   }
                   | PC

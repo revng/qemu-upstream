@@ -149,7 +149,6 @@ typedef struct context_t {
     int highlow_count;
     int p_reg_count;
     int if_count;
-    bool no_track_regs;
     bool is_extra_created[TMP_T - EA_T + 1];
     bool ea_declared;
     bool is_jump;

@@ -627,7 +627,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.pre.is_bit_iter = false;
                            yylval->rvalue.bit_width = 8;
                            return (PRE); }
-"P"{LOWER_PRE}N          { yylval->rvalue.type = PREDICATE;
+"P"{LOWER_PRE}N.new      { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[1];
                            yylval->rvalue.pre.is_bit_iter = false;
                            yylval->rvalue.bit_width = 8;
