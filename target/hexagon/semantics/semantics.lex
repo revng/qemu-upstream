@@ -484,8 +484,6 @@ SIGN_ID                  s|u
 "PC"                     { return PC; }
 "NPC"                    { return NPC; }
 "*EA"                    { return STAREA; }
-"TRAP \"0\""             { return TRAP0; }
-"TRAP \"1\""             { return TRAP0; }
 "USR.LPCFG"              { return LPCFG; }
 "SSR.CAUSE"              { return CAUSE; }
 "SSR.SSR_EX"             { return EX; }

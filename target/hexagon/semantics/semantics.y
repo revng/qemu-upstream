@@ -1457,7 +1457,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token MAPPED EXT FSCR FCHK TLB IPEND DEBUG MODECTL
 %token SXT ZXT NEW OPTNEW ZEROONE CONSTEXT LOCNT BREV U64 SIGN
 %token HASH EA PC FP GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL
-%token TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP QMARK TRAP0 TRAP1 CAUSE EX INT NOP
+%token TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP QMARK CAUSE EX INT NOP
 %token DCKILL DCLEAN DCINVA DZEROA DFETCH ICKILL L2KILL ISYNC BRKPT SYNCHT LOCK
 
 %token <index> SA
@@ -1752,7 +1752,6 @@ control_statement : frame_check          { /* does nothing */ }
                   | tlb_write            { /* does nothing */ }
                   | clear_interrupts     { /* does nothing */ }
                   | stop_statement       { /* does nothing */ }
-                  | trap_statement       { /* does nothing */ }
                   | if_statement         { /* does nothing */ }
                   | for_statement        { /* does nothing */ }
                   | ISYNC SEMI           { /* does nothing */ }
@@ -1786,33 +1785,6 @@ clear_interrupts : IPEND ANDA rvalue SEMI { /* does nothing */ }
 ;
 
 stop_statement : IF DEBUG MODECTL ASSIGN IMM SEMI { /* does nothing */ }
-;
-
-trap_statement    : TRAP0 SEMI
-                  {
-                    /* TODO: Implement trap statement */
-                    t_hex_value tmp = gen_tmp_value(c, "j", 32);
-                    /* Put next program counter in ELR register */
-                    OUT(c, "tcg_gen_movi_i32(SR[3], dc->pc + 4);\n");
-                    /* Jump to interrupt handler */
-                    t_hex_value handler_pc = gen_tmp(c, 32);
-                    OUT(c, "tcg_gen_addi_i32(", &handler_pc, ", SR[16], 0x1c);\n");
-                    OUT(c, "tcg_gen_mov_i32(CR[CR_PC], ", &handler_pc, ");\n");
-                    OUT(c, "gen_helper_handle_trap(cpu_env, ", &tmp, ");\n");
-                    rvalue_free(c, &tmp);
-                  }
-                  | TRAP1 SEMI
-                  {
-                    t_hex_value tmp = gen_tmp_value(c, "j", 32);
-                    /* Put next program counter in ELR register */
-                    OUT(c, "tcg_gen_movi_i32(SR[3], dc->pc + 4);\n");
-                    /* Jump to interrupt handler */
-                    t_hex_value handler_pc = gen_tmp(c, 32);
-                    OUT(c, "tcg_gen_addi_i32(", &handler_pc, ", SR[16], 0x20);\n");
-                    OUT(c, "tcg_gen_mov_i32(CR[CR_PC], ", &handler_pc, ");\n");
-                    OUT(c, "gen_helper_handle_trap(cpu_env, ", &tmp, ");\n");
-                    rvalue_free(c, &tmp);
-                  }
 ;
 
 if_statement : if_stmt
