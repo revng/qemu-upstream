@@ -251,12 +251,6 @@ void cmp_out(context_t *c, void *pointer) {
         case NEQ_OP:
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_NE");
             break;
-        case OPTEQ_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "not");
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%d", c->not_count);
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, " ? TCG_COND_NE : TCG_COND_EQ");
-            c->not_count++;
-            break;
         case LT_OP:
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_LT");
             break;
@@ -1440,14 +1434,14 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token DREG DIMM DPRE DEA RREG WREG FREG FIMM RPRE WPRE FPRE FWRAP FEA
 %token DMOD RMOD FMOD DCTR RCTR FCTR PREDUSE USCORE VAR
 %token LBR RBR LPAR RPAR LSQ RSQ LARR
-%token SEMI COLON PLUS MINUS PMINUS MUL POW DIV MOD ABS CROUND ROUND CIRCADD
-%token AND OR ANDOR XOR NOT OPTSHIFT NSHIFT
-%token ASSIGN INC DEC INCDECA ANDA ORA XORA ANDORA PLUSPLUS
-%token LT GT ASL ASR LSR ROL EQ NEQ OPTEQ LTE GTE MIN MAX
-%token ANDL ORL NOTL OPTNOTL
+%token SEMI COLON PLUS MINUS MUL POW DIV MOD ABS CROUND ROUND CIRCADD
+%token AND OR XOR NOT
+%token ASSIGN INC DEC ANDA ORA XORA PLUSPLUS
+%token LT GT ASL ASR LSR ROL EQ NEQ LTE GTE MIN MAX
+%token ANDL ORL NOTL
 %token COMMA FOR I ICIRC IF MUN
 %token MAPPED EXT FSCR FCHK TLB IPEND DEBUG MODECTL
-%token SXT ZXT NEW OPTNEW ZEROONE CONSTEXT LOCNT BREV U64 SIGN
+%token SXT ZXT NEW CONSTEXT LOCNT BREV U64 SIGN
 %token HASH EA PC FP GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL
 %token TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP QMARK CAUSE EX INT NOP
 %token DCKILL DCLEAN DCINVA DZEROA DFETCH ICKILL L2KILL ISYNC BRKPT SYNCHT LOCK
@@ -1482,24 +1476,24 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %left COMMA
 %left ASSIGN
 %right CIRCADD
-%right INC DEC INCDECA ANDA ORA XORA ANDORA
+%right INC DEC ANDA ORA XORA
 %left QMARK COLON
 %left ORL
 %left ANDL
 %left OR
 %left XOR ANDOR
 %left AND
-%left EQ NEQ OPTEQ
+%left EQ NEQ
 %left LT GT LTE GTE
 %left ASL ASR LSR ROL
 %right ABS CROUND
-%left MINUS PLUS PMINUS
+%left MINUS PLUS
 %left POW
 %left MUL DIV MOD
-%right NOT NOTL OPTNOTL
+%right NOT NOTL
 %left LSQ
-%left NEW OPTNEW ZEROONE
-%left VEC OPTSHIFT NSHIFT
+%left NEW
+%left VEC
 %right EXT LOCNT BREV
 
 /* Bison Grammar */
@@ -1612,12 +1606,6 @@ assign_statement  : lvalue ASSIGN rvalue
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
-                  | lvalue INCDECA rvalue
-                  {
-                    t_hex_value tmp = gen_bin_op(c, ADDSUB, &$1, &$3);
-                    gen_assign(c, &$1, &tmp);
-                    $$ = $1;
-                  }
                   | lvalue ANDA rvalue
                   {
                     t_hex_value tmp = gen_bin_op(c, ANDB, &$1, &$3);
@@ -1633,12 +1621,6 @@ assign_statement  : lvalue ASSIGN rvalue
                   | lvalue XORA rvalue
                   {
                     t_hex_value tmp = gen_bin_op(c, XORB, &$1, &$3);
-                    gen_assign(c, &$1, &tmp);
-                    $$ = $1;
-                  }
-                  | lvalue ANDORA rvalue
-                  {
-                    t_hex_value tmp = gen_bin_op(c, ANDORB, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
@@ -1909,10 +1891,6 @@ rvalue            : assign_statement            { /* does nothing */ }
                   {
                     $$ = gen_bin_op(c, SUBTRACT, &$1, &$3);
                   }
-                  | rvalue PMINUS rvalue
-                  {
-                    $$ = gen_bin_op(c, ADDSUB, &$1, &$3);
-                  }
                   | rvalue MUL rvalue
                   {
                     $$ = gen_bin_op(c, MULTIPLY, &$1, &$3);
@@ -1959,10 +1937,6 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | rvalue OR rvalue
                   {
                     $$ = gen_bin_op(c, ORB, &$1, &$3);
-                  }
-                  | rvalue ANDOR rvalue
-                  {
-                    $$ = gen_bin_op(c, ANDORB, &$1, &$3);
                   }
                   | rvalue XOR rvalue
                   {
@@ -2030,21 +2004,6 @@ rvalue            : assign_statement            { /* does nothing */ }
                         $$ = res;
                     }
                   }
-                  | OPTNOTL rvalue
-                  {
-                    char * bit_suffix = ($2.bit_width == 64) ? "i64" : "i32";
-                    OUT(c, "if (not", &c->not_count, ") {\n");
-                    t_hex_value zero = gen_tmp_value(c, "0", 32);
-                    t_hex_value one = gen_tmp_value(c, "0xff", 32);
-                    OUT(c, "tcg_gen_movcond_", bit_suffix);
-                    OUT(c, "(TCG_COND_EQ, ", &$2, ", ", &$2, ", ", &zero);
-                    OUT(c, ", ", &one, ", ", &zero, ");\n");
-                    rvalue_free(c, &zero);
-                    rvalue_free(c, &one);
-                    OUT(c, "}\n");
-                    c->not_count++;
-                    $$ = $2;
-                  }
                   | VEC rvalue
                   {
                     $2.vec = $1;
@@ -2074,10 +2033,6 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | rvalue NEQ rvalue
                   {
                     $$ = gen_bin_cmp(c, NEQ_OP, &$1, &$3);
-                  }
-                  | rvalue OPTEQ rvalue
-                  {
-                    $$ = gen_bin_cmp(c, OPTEQ_OP, &$1, &$3);
                   }
                   | rvalue LT rvalue
                   {
@@ -2281,18 +2236,6 @@ rvalue            : assign_statement            { /* does nothing */ }
                         rvalue_free(c, &$2);
                         $$ = res;
                     }
-                  }
-                  | rvalue OPTSHIFT
-                  {
-                    char * bit_suffix = ($1.bit_width == 64) ? "i64" : "i32";
-                    OUT(c, "if (opt_shift) {\n");
-                    OUT(c, "tcg_gen_shli_", bit_suffix, "(", &$1, ", ", &$1, ", 1);\n");
-                    OUT(c, "}\n");
-                  }
-                  | rvalue NSHIFT
-                  {
-                    t_hex_value N = gen_tmp_value(c, "N", 32);
-                    $$ = gen_bin_op(c, ASHIFTL, &$1, &N);
                   }
                   | CIRCADD LPAR rvalue COMMA rvalue COMMA rvalue RPAR
                   {
@@ -2530,8 +2473,6 @@ int main(int argc, char **argv)
     CsvRow *row;
     while ((row = CsvParser_getRow(csvparser)) ) {
         context_t context = { 0 };
-        // TODO: Set here sane defaults for all the instruction modifiers
-        context.mem_size = MEM_DOUBLE;
         context.defines_file = defines_file;
         total_insn++;
         const char **rowFields = CsvParser_getFields(row);

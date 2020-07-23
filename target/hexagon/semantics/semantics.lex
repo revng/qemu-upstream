@@ -184,7 +184,6 @@ SIGN_ID                  s|u
 "+"                      { return PLUS; }
 "-"                      { return MINUS; }
 "_"                      { return USCORE; }
-"[+-]"                   { return PMINUS; }
 "*"                      { return MUL; }
 "**"                     { return POW; }
 "/"                      { return DIV; }
@@ -192,19 +191,14 @@ SIGN_ID                  s|u
 "&"                      { return AND; }
 "|"                      { return OR; }
 "^"                      { return XOR; }
-"[|&]"                   { return ANDOR; }
-"[<<1]"                  { return OPTSHIFT; }
-"[<<N]"                  { return NSHIFT; }
 "~"                      { return NOT; }
 "="                      { return ASSIGN; }
 "+="                     { return INC; }
 "-="                     { return DEC; }
 "++"                     { return PLUSPLUS; }
-"[+-]="                  { return INCDECA; }
 "&="                     { return ANDA; }
 "|="                     { return ORA; }
 "^="                     { return XORA; }
-"[|&]="                  { return ANDORA; }
 "<"                      { return LT; }
 ">"                      { return GT; }
 "<<"                     { return ASL; }
@@ -212,7 +206,6 @@ SIGN_ID                  s|u
 "<<R"                    { return ROL; }
 ">>>"                    { return LSR; }
 "=="                     { return EQ; }
-"[!]="                   { return OPTEQ; }
 "!="                     { return NEQ; }
 "<="                     { return LTE; }
 ">="                     { return GTE; }
@@ -275,9 +268,6 @@ SIGN_ID                  s|u
 "round"                  { return ROUND; }
 "circ_add"               { return CIRCADD; }
 ".new"                   { return NEW; }
-"[.new]"                 { return OPTNEW; }
-"[!]"                    { return OPTNOTL; }
-"[01]"                   { return ZEROONE; }
 "sat"{DIGIT}+            { yylval->vec.width = atoi(yytext + 3);
                            yylval->vec.index = 0;
                            yylval->vec.is_unsigned = false;
@@ -288,22 +278,12 @@ SIGN_ID                  s|u
                            yylval->vec.is_unsigned = false;
                            yylval->vec.iter_type = NO_ITER;
                            return (VEC); }
-"[sat"{DIGIT}+"]"        { yylval->vec.width = atoi(yytext + 4);
-                           yylval->vec.index = 0;
-                           yylval->vec.is_unsigned = false;
-                           yylval->vec.iter_type = NO_ITER;
-                           return (VEC); }
 "usat"{DIGIT}+           { yylval->vec.width = atoi(yytext + 4);
                            yylval->vec.index = 0;
                            yylval->vec.is_unsigned = true;
                            yylval->vec.iter_type = NO_ITER;
                            return (VEC); }
 "usat_"{DIGIT}+           { yylval->vec.width = atoi(yytext + 5);
-                           yylval->vec.index = 0;
-                           yylval->vec.is_unsigned = true;
-                           yylval->vec.iter_type = NO_ITER;
-                           return (VEC); }
-"[usat"{DIGIT}+"]"       { yylval->vec.width = atoi(yytext + 5);
                            yylval->vec.index = 0;
                            yylval->vec.is_unsigned = true;
                            yylval->vec.iter_type = NO_ITER;
@@ -698,8 +678,6 @@ int main(int argc, char **argv)
         context_t context = { 0 };
         YYSTYPE val = { 0 };
         YYSTYPE* yylvalp = &val;
-        // TODO: Set here sane default for all the instruction modifiers
-        context.mem_size = MEM_DOUBLE;
         const char **rowFields = CsvParser_getFields(row);
         if (CsvParser_getNumFields(row) < 2) {
             printf("Error: malformed csv!\n");

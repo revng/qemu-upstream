@@ -143,19 +143,8 @@ typedef struct context_t {
     void *scanner; // reentrant parser state pointer
     int tmp_count;
     int qemu_tmp_count;
-    int not_count;
-    int zeroone_count;
-    int predicate_count;
-    int highlow_count;
-    int p_reg_count;
     int if_count;
     bool is_extra_created[TMP_T - EA_T + 1];
-    bool ea_declared;
-    bool is_jump;
-    bool is_stop;
-    enum mem_type mem_size; 
-    char written_regs[MAX_WRITTEN_REGS];
-    int written_index;
     const char *inst_name;
     const char *inst_code;
     int error_count;
