@@ -496,10 +496,6 @@ SIGN_ID                  s|u
 "NOP"                    { return NOP; }
 "PREDUSE_TIMING"         { return PREDUSE; }
 
-"SA"{ZERO_ONE}           { yylval->index = atoi(yytext);
-                           return SA; }
-"LC"{ZERO_ONE}           { yylval->index = atoi(yytext);
-                           return LC; }
 "R"{REG_ID_32}"V"        { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[1];

@@ -153,14 +153,6 @@ void extra_print(context_t *c, t_hex_extra *extra) {
         case LPCFG_T:
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "LPCFG");
             break;
-        case LC_T:
-            yyassert(c, false, "TODO: Implement LC control register access\n");
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "LC[%d]", extra->index); 
-            break;
-        case SA_T:
-            yyassert(c, false, "TODO: Implement SA control register access\n");
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "SA[%d]", extra->index); 
-            break;
         case WIDTH_T:
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "width");
             break;
@@ -1460,8 +1452,6 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP QMARK CAUSE EX INT NOP
 %token DCKILL DCLEAN DCINVA DZEROA DFETCH ICKILL L2KILL ISYNC BRKPT SYNCHT LOCK
 
-%token <index> SA
-%token <index> LC
 %token <rvalue> REG
 %token <rvalue> IMM
 %token <rvalue> PRE
@@ -2419,14 +2409,6 @@ reg               : REG
 extra             : LPCFG
                   {
                     $$ = gen_extra(c, LPCFG_T, 0, false);
-                  }
-                  | LC
-                  {
-                    $$ = gen_extra(c, LC_T, $1, false);
-                  }
-                  | SA
-                  {
-                    $$ = gen_extra(c, SA_T, $1, false);
                   }
                   | EA
                   {
