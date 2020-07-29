@@ -1046,10 +1046,10 @@ t_hex_value gen_bin_cmp(context_t *c,
 }
 
 t_hex_value gen_extract(context_t *c, t_hex_value *source) {
+    int bit_width = (source->bit_width == 64) ? 64 : 32;
     if (!source->is_vectorial) {
         /* Handle range extraction */
         if (source->is_range) {
-            int bit_width = (source->bit_width == 64) ? 64 : 32;
             int begin = source->range.begin;
             int end = source->range.end;
             int width = end - begin + 1;
@@ -1096,17 +1096,8 @@ t_hex_value gen_extract(context_t *c, t_hex_value *source) {
     /* Sanity check that offset is positive */
     yyassert(c, offset[0] != '-', "Offset is negative, fix lexer!\n");
     if (source->type == REGISTER) {
-        char * increment = "";
-        /* Handle write to 64 bit registers */
-        if (offset_value >= 32) {
-            offset_value -= 32;
-            snprintf(offset_string, OFFSET_STR_LEN, "%d", offset_value);
-            increment = " + 1";
-        } else {
-            OUT(c, "tcg_gen_extract_i32(", &res, ", R");
-            OUT(c, &(source->reg.id), "V", increment);
-            OUT(c, ", ", offset, ", ", &width, ");\n");
-        }
+        OUT(c, "tcg_gen_extract_i", &bit_width, "(", &res, ", ");
+        OUT(c, source, ", ", offset, ", ", &width, ");\n");
     } else {
         if (source->bit_width == 64)
             rvalue_extend(c, source);
@@ -1566,6 +1557,7 @@ decl  : DREG
       | FREG
       | FIMM
       | RPRE
+      | WPRE
       | FPRE
       | FMOD
       | FEA
@@ -1630,19 +1622,19 @@ assign_statement  : lvalue ASSIGN rvalue
                     if (is_direct_predicate(&$1)) {
                         $1 = gen_tmp_value(c, "0", 32);
                     }
-                    rvalue_truncate(c, &$3);
                     rvalue_materialize(c, &$3);
-                    /* Bitwise predicate assignment */
+                    rvalue_truncate(c, &$3);
+                    /* Bitwise predicate assignment in for loop */
                     if ($1.pre.is_bit_iter) {
-                         /* Extract lsb */
-                         OUT(c, "tcg_gen_andi_i32(", &$3, ", ", &$3, ", 1);\n");
-                         /* Shift to reach bit offset */
-                         OUT(c, "tcg_gen_shli_i32(", &$3, ", ", &$3, ", i);\n");
-                         /* Store new predicate value */
-                         if ($3.type == IMMEDIATE)
+                         /* Extract lsb, shift to reach offset and or with pred */
+                         if ($3.type == IMMEDIATE) {
+                             OUT(c, &$3, " = (", &$3, " & 1) << i;\n");
                              OUT(c, "tcg_gen_ori_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
-                         else
+                         } else {
+                             OUT(c, "tcg_gen_andi_i32(", &$3, ", ", &$3, ", 1);\n");
+                             OUT(c, "tcg_gen_shli_i32(", &$3, ", ", &$3, ", i);\n");
                              OUT(c, "tcg_gen_or_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
+                         }
                     /* Range-based predicate assignment */
                     } else if ($1.is_range) {
                         /* (bool) ? 0xff : 0x00 */
@@ -1663,15 +1655,14 @@ assign_statement  : lvalue ASSIGN rvalue
                         rvalue_free(c, &tmp);
                     /* Standard bytewise predicate assignment */
                     } else {
-                        t_hex_value ff = gen_tmp_value(c, "0xff", 32);
-                        /* Extract first 8 bits */
-                        OUT(c, "tcg_gen_andi_i32(", &$1, ", ", &$3, ", 0xff);\n");
-                        /* Store new predicate value */
-                        if ($3.type == IMMEDIATE)
+                        /* Extract first 8 bits, and store new predicate value */
+                        if ($3.type == IMMEDIATE) {
+                            OUT(c, &$3, " = (", &$3, " & 0xff) << i;\n");
                             OUT(c, "tcg_gen_ori_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
-                        else
+                        } else {
+                            OUT(c, "tcg_gen_andi_i32(", &$1, ", ", &$3, ", 0xff);\n");
                             OUT(c, "tcg_gen_or_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
-                        OUT(c, "}\n");
+                        }
                     }
                     if (is_direct_predicate(&$1)) {
                         OUT(c, "LOG_PRED_WRITE(", &$1, ", ", &$1.pre.id, ")");
@@ -2280,9 +2271,20 @@ pre               : PRE
                   }
                   | pre VEC
                   {
-                    yyassert(c, $2.width == 1, "Not-bitwise access to predicate!");
-                    $$ = $1;
-                    $$.pre.is_bit_iter = true;
+                    /* Bitwise access to the predicate register */
+                    if ($2.width == 0) {
+                        $2.width = 1;
+                        $1.vec = $2;
+                        $$ = gen_extract(c, &$1);
+                        $$.is_dotnew = $1.is_dotnew;
+                    } else {
+                    /* Bitwise access in for loop with i iterator */
+                        yyassert(c, !is_direct_predicate(&$1), "Unhandled bitwise access to P0!");
+                        yyassert(c, $2.width == 1, "Not-bitwise access to predicate!");
+                        $$ = $1;
+                        $$.pre.is_bit_iter = true;
+                        $$.is_dotnew = $1.is_dotnew;
+                    }
                   }
                   | pre RANGE
                   {

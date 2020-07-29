@@ -304,6 +304,11 @@ SIGN_ID                  s|u
                            yylval->vec.is_unsigned = false;
                            yylval->vec.iter_type = I2PLUS1_ITER;
                            return (VEC); }
+"["{DIGIT}"]"            { yylval->vec.width = 0;
+                           yylval->vec.index = atoi(yytext + 1);
+                           yylval->vec.is_unsigned = false;
+                           yylval->vec.iter_type = NO_ITER;
+                           return (VEC); }
 ".b["{DIGIT}"]"          { yylval->vec.width = 8;
                            yylval->vec.index = atoi(yytext + 3);
                            yylval->vec.is_unsigned = false;
@@ -601,6 +606,11 @@ SIGN_ID                  s|u
                            yylval->rvalue.pre.is_bit_iter = false;
                            yylval->rvalue.bit_width = 8;
                            return (PRE); }
+[pP]{DIGIT}              { yylval->rvalue.type = PREDICATE;
+                           yylval->rvalue.pre.id = yytext[1];
+                           yylval->rvalue.pre.is_bit_iter = false;
+                           yylval->rvalue.bit_width = 8;
+                           return (PRE); }
 "P"{LOWER_PRE}N.new      { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[1];
                            yylval->rvalue.pre.is_bit_iter = false;
@@ -612,9 +622,6 @@ SIGN_ID                  s|u
                            yylval->rvalue.pre.is_bit_iter = false;
                            yylval->rvalue.bit_width = 8;
                            yylval->rvalue.is_dotnew = false;
-                           return (PRE); }
-"P"                      { yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.bit_width = 8;
                            return (PRE); }
 {IMM_ID}"iV"             { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.is_unsigned = false;
