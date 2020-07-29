@@ -1483,8 +1483,8 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %left MUL DIV MOD
 %right NOT NOTL
 %left LSQ
-%left NEW
 %left VEC
+%left NEW
 %right EXT LOCNT BREV
 
 /* Bison Grammar */
@@ -1829,9 +1829,14 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | pre
                   {
                     if(is_direct_predicate(&$1)) {
+                        bool is_dotnew = $1.is_dotnew;
                         char predicate_id = $1.pre.id;
                         $1 = gen_tmp_value(c, "0", 32);
-                        OUT(c, "READ_PREG(", &$1, ", ", &predicate_id, ");\n");
+                        if (is_dotnew) {
+                            OUT(c, &$1, " = hex_new_pred_value[", &predicate_id, "];\n");
+                        } else {
+                            OUT(c, "gen_read_preg(", &$1, ", ", &predicate_id, ");\n");
+                        }
                     }
                     $$ = $1;
                   }
