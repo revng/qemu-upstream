@@ -259,8 +259,8 @@ SIGN_ID                  s|u
 "y1"                     { return Y1; }
 "prod0"                  { return PROD0; }
 "prod1"                  { return PROD1; }
-"sxt"                    { return SXT; }
-"zxt"                    { return ZXT; }
+"sxt_"                   { return SXT; }
+"zxt_"                   { return ZXT; }
 "min"                    { return MIN; }
 "max"                    { return MAX; }
 "ABS"                    { return ABS; }

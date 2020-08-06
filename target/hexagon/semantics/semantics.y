@@ -2102,20 +2102,20 @@ rvalue            : assign_statement            { /* does nothing */ }
                     OUT(c, "tcg_gen_xor_i64(", &res, ", ", &$3,", ", &key, ");\n");
                     $$ = res;
                   }
-                  | SXT IMM LARR IMM LPAR rvalue RPAR
+                  | SXT LBR IMM LARR IMM RBR rvalue
                   {
                     /* Handle weird destination widths */
-                    if ($4.imm.value > 32)
-                        $4.imm.value = 64;
+                    if ($5.imm.value > 32)
+                        $5.imm.value = 64;
                     /* 32 bit constants are already sign extended */
-                    if ($4.imm.value == 32)
-                        $$ = $6;
-                    else if ($4.imm.value == 64) {
-                        $6.is_unsigned = false;
-                        rvalue_extend(c, &$6);
+                    if ($5.imm.value == 32)
+                        $$ = $7;
+                    else if ($5.imm.value == 64) {
+                        $7.is_unsigned = false;
+                        rvalue_extend(c, &$7);
                     } else
                         yyassert(c, false, "Unhandled destination bit width!");
-                    $$ = $6;
+                    $$ = $7;
                   }
                   | ZXT USCORE LBR rvalue LARR IMM RBR LPAR rvalue RPAR
                   {
