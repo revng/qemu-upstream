@@ -1717,6 +1717,13 @@ assign_statement  : lvalue ASSIGN rvalue
                     OUT(c, "LOG_REG_WRITE(HEX_REG_LR, ", &$3, ");\n");
                     rvalue_free(c, &$3);
                   }
+                  | GP ASSIGN rvalue
+                  {
+                    rvalue_truncate(c, &$3);
+                    rvalue_materialize(c, &$3);
+                    OUT(c, "LOG_REG_WRITE(HEX_REG_GP, ", &$3, ");\n");
+                    rvalue_free(c, &$3);
+                  }
                   | CAUSE ASSIGN IMM
                   {
                     /* TODO: Sync PC and flags between translator and runtime */
@@ -2301,6 +2308,11 @@ rvalue            : assign_statement            { /* does nothing */ }
                   {
                     $$ = gen_tmp_value(c, "0", 32);
                     OUT(c, "READ_REG(", &$$, ", HEX_REG_LR);\n");
+                  }
+                  | GP
+                  {
+                    $$ = gen_tmp_value(c, "0", 32);
+                    OUT(c, "READ_REG(", &$$, ", HEX_REG_GP);\n");
                   }
 ;
 

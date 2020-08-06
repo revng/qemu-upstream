@@ -555,14 +555,7 @@ SIGN_ID                  s|u
 "SP"                     { return (SP); }
 "FP"                     { return (FP); }
 "LR"                     { return (LR); }
-"GP"                     { yylval->rvalue.type = REGISTER;
-                           yylval->rvalue.reg.type = CONTROL;
-                           yylval->rvalue.reg.id = 11;
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = true;
-                           yylval->rvalue.reg.bit_width = 32;
-                           yylval->rvalue.bit_width = 32;
-                           return (REG); }
+"GP"                     { return (GP); }
 "MuV"                    { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = MODIFIER;
                            yylval->rvalue.reg.id = yytext[1];
