@@ -1682,6 +1682,7 @@ assign_statement  : lvalue ASSIGN rvalue
                   }
                   | PC ASSIGN rvalue
                   {
+                    rvalue_truncate(c, &$3);
                     rvalue_materialize(c, &$3);
                     OUT(c, "gen_write_new_pc(", &$3, ");\n");
                     rvalue_free(c, &$3); /* Free temporary value */
