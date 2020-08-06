@@ -1879,6 +1879,9 @@ rvalue            : assign_statement            { /* does nothing */ }
                   }
                   | NPC
                   {
+                    // TODO: Implement npc read from DisasContext
+                    yyassert(c, 1 == 0,
+                             "Reading npc from disascontext is still not supported\n");
                     /* Extract program counter into a temporary */
                     $$ = gen_tmp(c, 32);
                     t_hex_value pc = gen_tmp_value(c, "dc->npc", 32);
