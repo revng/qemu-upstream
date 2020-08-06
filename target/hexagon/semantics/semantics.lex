@@ -552,30 +552,9 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
-"SP"                     { yylval->rvalue.type = REGISTER;
-                           yylval->rvalue.reg.type = GENERAL_PURPOSE;
-                           yylval->rvalue.reg.id = 29;
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = true;
-                           yylval->rvalue.reg.bit_width = 32;
-                           yylval->rvalue.bit_width = 32;
-                           return (REG); }
-"FP"                     { yylval->rvalue.type = REGISTER;
-                           yylval->rvalue.reg.type = GENERAL_PURPOSE;
-                           yylval->rvalue.reg.id = 30;
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = true;
-                           yylval->rvalue.reg.bit_width = 32;
-                           yylval->rvalue.bit_width = 32;
-                           return (REG); }
-"LR"                     { yylval->rvalue.type = REGISTER;
-                           yylval->rvalue.reg.type = GENERAL_PURPOSE;
-                           yylval->rvalue.reg.id = 31;
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = true;
-                           yylval->rvalue.reg.bit_width = 32;
-                           yylval->rvalue.bit_width = 32;
-                           return (REG); }
+"SP"                     { return (SP); }
+"FP"                     { return (FP); }
+"LR"                     { return (LR); }
 "GP"                     { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = 11;

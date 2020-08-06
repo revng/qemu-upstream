@@ -1434,7 +1434,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token MAPPED EXT FSCR FCHK TLB IPEND DEBUG MODECTL
 %token SXT ZXT NEW CONSTEXT LOCNT BREV U64 SIGN
 %token HASH EA PC FP GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL
-%token TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP QMARK CAUSE EX INT NOP
+%token SP FP LR TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP QMARK CAUSE EX INT NOP
 %token DCKILL DCLEAN DCINVA DZEROA DFETCH ICKILL L2KILL ISYNC BRKPT SYNCHT LOCK
 
 %token <rvalue> REG
@@ -1694,6 +1694,27 @@ assign_statement  : lvalue ASSIGN rvalue
                     rvalue_materialize(c, &$3);
                     OUT(c, "gen_store", &mem_width, "(cpu_env, EA, ", &$3);
                     OUT(c, ", ctx, insn->slot);\n");
+                    rvalue_free(c, &$3);
+                  }
+                  | SP ASSIGN rvalue
+                  {
+                    rvalue_truncate(c, &$3);
+                    rvalue_materialize(c, &$3);
+                    OUT(c, "LOG_REG_WRITE(HEX_REG_SP, ", &$3, ");\n");
+                    rvalue_free(c, &$3);
+                  }
+                  | FP ASSIGN rvalue
+                  {
+                    rvalue_truncate(c, &$3);
+                    rvalue_materialize(c, &$3);
+                    OUT(c, "LOG_REG_WRITE(HEX_REG_FP, ", &$3, ");\n");
+                    rvalue_free(c, &$3);
+                  }
+                  | LR ASSIGN rvalue
+                  {
+                    rvalue_truncate(c, &$3);
+                    rvalue_materialize(c, &$3);
+                    OUT(c, "LOG_REG_WRITE(HEX_REG_LR, ", &$3, ");\n");
                     rvalue_free(c, &$3);
                   }
                   | CAUSE ASSIGN IMM
@@ -2262,6 +2283,21 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | LOCK
                   {
                     $$ = gen_tmp_value(c, "true", 32);
+                  }
+                  | SP
+                  {
+                    $$ = gen_tmp_value(c, "0", 32);
+                    OUT(c, "READ_REG(", &$$, ", HEX_REG_SP);\n");
+                  }
+                  | FP
+                  {
+                    $$ = gen_tmp_value(c, "0", 32);
+                    OUT(c, "READ_REG(", &$$, ", HEX_REG_FP);\n");
+                  }
+                  | LR
+                  {
+                    $$ = gen_tmp_value(c, "0", 32);
+                    OUT(c, "READ_REG(", &$$, ", HEX_REG_LR);\n");
                   }
 ;
 
