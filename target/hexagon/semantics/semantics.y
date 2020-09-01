@@ -74,6 +74,10 @@ void int_print(context_t *c __attribute__((unused)), int *num) {
     c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%d", *num);
 }
 
+void unsigned_print(context_t *c __attribute__((unused)), unsigned *num) {
+    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%d", *num);
+}
+
 void tmp_print(context_t *c __attribute__((unused)), t_hex_tmp *tmp) {
     c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "tmp_");
     c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%d", tmp->index);
@@ -300,6 +304,8 @@ void commit(context_t *c) {
       uint64_print((c), (uint64_t *) x);                                     \
     else if (__builtin_types_compatible_p (typeof (*x), int))           \
       int_print((c), (int *) x);                                             \
+    else if (__builtin_types_compatible_p (typeof (*x), unsigned))           \
+      unsigned_print((c), (unsigned *) x);                                             \
     else if (__builtin_types_compatible_p (typeof (*x), t_hex_value))     \
       rvalue_out((c), (t_hex_value *) x);                                         \
     else if (__builtin_types_compatible_p (typeof (*x), enum cmp_type)) \
@@ -1161,7 +1167,7 @@ void gen_deposit(context_t *c,
         snprintf(offset_string, OFFSET_STR_LEN, "%s * %d", offset, width);
         offset = offset_string;
     } else {
-        if (dest->extra.temp) {
+        if (dest->type == EXTRA && dest->extra.temp) {
             if (!c->is_extra_created[dest->extra.type]) {
                 OUT(c, "TCGv_i", &dest->bit_width, " ", dest,
                     " = tcg_temp_new_i", &dest->bit_width, "();\n");
@@ -1433,7 +1439,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token COMMA FOR I ICIRC IF MUN
 %token MAPPED EXT FSCR FCHK TLB IPEND DEBUG MODECTL
 %token SXT ZXT NEW CONSTEXT LOCNT BREV U64 SIGN
-%token HASH EA PC FP GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL
+%token HASH EA PC GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL
 %token SP FP LR TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP QMARK CAUSE EX INT NOP
 %token DCKILL DCLEAN DCINVA DZEROA DFETCH ICKILL L2KILL ISYNC BRKPT SYNCHT LOCK
 
