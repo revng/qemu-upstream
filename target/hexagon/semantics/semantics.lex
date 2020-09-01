@@ -66,8 +66,6 @@ SIGN_ID                  s|u
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[10];
-                           yylval->rvalue.reg.is_const = false;
-                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return (DREG); }
@@ -75,8 +73,6 @@ SIGN_ID                  s|u
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[14];
-                           yylval->rvalue.reg.is_const = false;
-                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
                            return (DREG); }
@@ -84,8 +80,6 @@ SIGN_ID                  s|u
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[10];
-                           yylval->rvalue.reg.is_const = false;
-                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = false;
                            return (DREG); }
@@ -93,8 +87,6 @@ SIGN_ID                  s|u
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[15];
-                           yylval->rvalue.reg.is_const = false;
-                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = true;
                            return (DREG); }
@@ -123,16 +115,12 @@ SIGN_ID                  s|u
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = MODIFIER;
                            yylval->rvalue.reg.id = 'u';
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = false;
                            yylval->rvalue.bit_width = 32;
                            return (DMOD); }
 "DECL_CREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = yytext[10];
-                           yylval->rvalue.reg.is_const = false;
-                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return (DCTR); }
@@ -484,71 +472,53 @@ SIGN_ID                  s|u
 "R"{REG_ID_32}"V"        { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[1];
-                           yylval->rvalue.reg.is_const = false;
-                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "C"{REG_ID_32}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = yytext[1];
-                           yylval->rvalue.reg.is_const = false;
-                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "C"{REG_ID_64}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = yytext[1];
-                           yylval->rvalue.reg.is_const = false;
-                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            return (REG); }
 "R"{REG_ID_64}"V"        { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[1];
-                           yylval->rvalue.reg.is_const = false;
-                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            return (REG); }
 "N"{LOWER_ID}            { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[1];
-                           yylval->rvalue.reg.offset = 0;
                            yylval->rvalue.reg.bit_width = 32;
-                           yylval->rvalue.reg.is_const = false;
                            return (REG); }
 "S"{SYS_ID_32}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = SYSTEM;
                            yylval->rvalue.reg.id = yytext[1];
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = false;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "S"{SYS_ID_64}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = SYSTEM;
                            yylval->rvalue.reg.id = yytext[1];
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = false;
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            return (REG); }
 [rR]{DIGIT}+             { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = atoi(yytext + 1);
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = true;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
 "SGP"{DIGIT}             { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = SYSTEM;
                            yylval->rvalue.reg.id = atoi(yytext + 3);
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = true;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
@@ -559,8 +529,6 @@ SIGN_ID                  s|u
 "MuV"                    { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = MODIFIER;
                            yylval->rvalue.reg.id = yytext[1];
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = false;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }
@@ -568,8 +536,6 @@ SIGN_ID                  s|u
 "ELR"                    { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = SYSTEM;
                            yylval->rvalue.reg.id = 3;
-                           yylval->rvalue.reg.offset = 0;
-                           yylval->rvalue.reg.is_const = true;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return (REG); }

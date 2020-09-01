@@ -34,9 +34,7 @@ enum reg_type {GENERAL_PURPOSE, CONTROL, SYSTEM, MODIFIER};
 typedef struct t_hex_reg
 {
     char id;
-    bool is_const;
     enum reg_type type;
-    int offset;
     unsigned bit_width;
 } t_hex_reg;
 
@@ -134,7 +132,7 @@ typedef struct t_hex_value
 enum op_type {ADD, SUBTRACT, ADDSUB, MULTIPLY, DIVIDE,
               ASHIFTL, ASHIFTR, LSHIFTR, ROTATE, ANDB, ORB, ANDORB, XORB,
               MINI, MAXI, MODULO};
-enum cmp_type {EQ_OP, NEQ_OP, OPTEQ_OP, LT_OP, LTU_OP, GT_OP, GTU_OP,
+enum cmp_type {EQ_OP, NEQ_OP, LT_OP, LTU_OP, GT_OP, GTU_OP,
                LTE_OP, LEU_OP, GTE_OP, GEU_OP};
 enum mem_type {MEM_BYTE, MEM_HALF, MEM_WORD, MEM_DOUBLE};
 
