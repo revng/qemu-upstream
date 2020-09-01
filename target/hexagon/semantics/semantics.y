@@ -63,26 +63,26 @@ bool is_direct_predicate(t_hex_value *value) {
 
 /* Print functions */
 void str_print(context_t *c  __attribute__((unused)), char *string) {
-    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%s", string);
+    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%s", string);
 }
 
 void uint64_print(context_t *c __attribute__((unused)), uint64_t *num) {
-    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%" PRIu64, *num);
+    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%" PRIu64, *num);
 }
 
 void int_print(context_t *c __attribute__((unused)), int *num) {
-    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%d", *num);
+    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%d", *num);
 }
 
 void tmp_print(context_t *c __attribute__((unused)), t_hex_tmp *tmp) {
-    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "tmp_");
-    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%d", tmp->index);
+    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "tmp_");
+    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%d", tmp->index);
 }
 
 void pre_print(context_t *c, t_hex_pre *pre, bool is_dotnew) {
     char suffix = is_dotnew ? 'N' : 'V';
     c->out_c += snprintf(c->out_buffer+c->out_c,
-                         OUT_BUF_LEN,
+                         OUT_BUF_LEN-c->out_c,
                          "P%c%c",
                          pre->id,
                          suffix);
@@ -120,25 +120,25 @@ void reg_print(context_t *c, t_hex_reg *reg, bool is_dotnew) {
     default:
         yyassert(c, false, "Unhandled register bit width!\n");
   }
-  c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%s", reg_id);
+  c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%s", reg_id);
 }
 
 void imm_print(context_t *c, t_hex_imm *imm) {
     switch(imm->type) {
         case VARIABLE:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%ciV", imm->id);
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%ciV", imm->id);
             break;
         case VALUE:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%" PRIu64, imm->value);
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%" PRIu64, imm->value);
             break;
         case QEMU_TMP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "qemu_tmp_%" PRIu64, imm->index);
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "qemu_tmp_%" PRIu64, imm->index);
             break;
         case IMM_PC:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "dc->pc");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "dc->pc");
             break;
         case IMM_CONSTEXT:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "insn->extension_valid");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "insn->extension_valid");
             break;
         default:
             yyassert(c, false, "Cannot print this expression!");
@@ -148,64 +148,64 @@ void imm_print(context_t *c, t_hex_imm *imm) {
 void extra_print(context_t *c, t_hex_extra *extra) {
     switch (extra->type) {
         case EA_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "EA");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "EA");
             break;
         case LPCFG_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "LPCFG");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "LPCFG");
             break;
         case WIDTH_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "width");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "width");
             break;
         case OFFSET_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "offset");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "offset");
             break;
         case SHAMT_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "shamt");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "shamt");
             break;
         case ADDR_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "addr");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "addr");
             break;
         case SUMR_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "sumr");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "sumr");
             break;
         case SUMI_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "sumi");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "sumi");
             break;
         case CTRL_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "control");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "control");
             break;
         case TMPR_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "tmpr");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "tmpr");
             break;
         case TMPI_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "tmpi");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "tmpi");
             break;
         case X0_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "x0");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "x0");
             break;
         case X1_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "x1");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "x1");
             break;
         case Y0_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "y0");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "y0");
             break;
         case Y1_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "y1");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "y1");
             break;
         case PROD0_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "prod0");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "prod0");
             break;
         case PROD1_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "prod1");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "prod1");
             break;
         case MAX_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "max");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "max");
             break;
         case MIN_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "min");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "min");
             break;
         case TMP_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "tmp");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "tmp");
             break;
         default:
             yyassert(c, false, "Malformed extra type!");
@@ -213,7 +213,7 @@ void extra_print(context_t *c, t_hex_extra *extra) {
 }
 
 void var_print(context_t *c, t_hex_var *var) {
-    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "%s", var->name);
+    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%s", var->name);
 }
 
 void rvalue_out(context_t *c, void *pointer) {
@@ -246,34 +246,34 @@ void cmp_out(context_t *c, void *pointer) {
     enum cmp_type *type = (enum cmp_type *) pointer;
     switch(*type) {
         case EQ_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_EQ");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_EQ");
             break;
         case NEQ_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_NE");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_NE");
             break;
         case LT_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_LT");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_LT");
             break;
         case LTU_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_LTU");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_LTU");
             break;
         case GT_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_GT");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_GT");
             break;
         case GTU_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_GTU");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_GTU");
             break;
         case LTE_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_LE");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_LE");
             break;
         case LEU_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_LEU");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_LEU");
             break;
         case GTE_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_GE");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_GE");
             break;
         case GEU_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "TCG_COND_GEU");
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_GEU");
             break;
         default:
             yyassert(c, false, "Unhandled comparison operator!");
@@ -2491,12 +2491,12 @@ extra             : LPCFG
 
 #ifndef TOKEN_DEBUG
 void emit_header(context_t *c) {
-    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "/* %s */\n", c->inst_name);
-    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "/* %s */\n", c->inst_code);
+    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "/* %s */\n", c->inst_name);
+    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "/* %s */\n", c->inst_code);
 }
 
 void emit_footer(context_t *c) {
-    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN, "}\n");
+    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "}\n");
 }
 
 int main(int argc, char **argv)
@@ -2561,7 +2561,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "Parsing of instruction %s generated %d errors!\n",
                     context.inst_name,
                     context.error_count);
-            context.out_c += snprintf(context.out_buffer+context.out_c, OUT_BUF_LEN,
+            context.out_c += snprintf(context.out_buffer+context.out_c, OUT_BUF_LEN-context.out_c,
                 "assert(false && \"This instruction is not implemented!\");");
         } else {
             implemented_insn++;
