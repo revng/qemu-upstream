@@ -1213,7 +1213,7 @@ void gen_assign(context_t *c, t_hex_value *dest, t_hex_value *value) {
     } else if (dest->type == VARID) {
         /* Declare TCGv variable if it has not been previously declared */
         bool already_alloc = false;
-        for (int i = 0; i < ALLOC_LIST; i++) {
+        for (int i = 0; i < ALLOC_LIST_LEN; i++) {
             already_alloc |= (strncmp(dest->var.name,
                                       c->allocated[i],
                                       VAR_BUF_LEN) == 0);
@@ -1454,6 +1454,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %type <rvalue> DIMM
 %type <rvalue> DPRE
 %type <rvalue> DMOD
+%type <rvalue> RREG
 %type <rvalue> extra
 %type <index> if_stmt
 %type <index> IF
@@ -1505,6 +1506,18 @@ code  : LBR
                                      SIGNATURE_BUF_LEN,
                                      ")");
           OUT(c, "\n{");
+
+          /* Initialize declared but uninitialized registers */
+          for (int i = 0; i < c->init_count; i++) {
+              bool is64 = c->init_list[i].bit_width == 64;
+              const char *type = is64 ? "i64" : "i32";
+              char buffer[3] = { c->init_list[i].id,
+                                 is64 ? c->init_list[i].id : 0 , 0 };
+              c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c,
+                                   "tcg_gen_movi_%s(R%sV, 0);\n",
+                                   type,
+                                   buffer);
+          }
       }
       FWRAP statements RPAR SEMI decls RBR
       {
@@ -1526,6 +1539,9 @@ decl  : DREG
                                      ", %s R%sV",
                                      type,
                                      buffer);
+          /* Enqueue register into initialization list */
+          c->init_list[c->init_count] = $1.reg;
+          c->init_count++;
       }
       | DIMM
       {
@@ -1552,6 +1568,16 @@ decl  : DREG
       }
       | DEA
       | RREG
+      {
+          /* Remove register from initialization list */
+          int iter_count = c->init_count;
+          for (int i = 0; i < iter_count; i++) {
+              if (!memcmp(&($1), &(c->init_list[i]), sizeof(t_hex_reg))) {
+                  c->init_list[i] = c->init_list[c->init_count-1];
+                  c->init_count--;
+              }
+          }
+      }
       | RMOD
       | WREG
       | FREG
