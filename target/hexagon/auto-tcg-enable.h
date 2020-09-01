@@ -604,10 +604,3 @@
 #define fAUTO_GEN_TCG_SS2_storeh_io
 #define fAUTO_GEN_TCG_SS2_storewi0
 #define fAUTO_GEN_TCG_SS2_storewi1
-#define fAUTO_GEN_TCG_Y2_barrier
-#define fAUTO_GEN_TCG_Y2_dccleana
-#define fAUTO_GEN_TCG_Y2_dccleaninva
-#define fAUTO_GEN_TCG_Y2_dcfetchbo
-#define fAUTO_GEN_TCG_Y2_dcinva
-#define fAUTO_GEN_TCG_Y2_isync
-#define fAUTO_GEN_TCG_Y2_syncht

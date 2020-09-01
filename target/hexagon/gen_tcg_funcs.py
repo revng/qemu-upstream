@@ -235,8 +235,13 @@ def gen_tcg_func(f, tag, regs, imms):
 
     f.write("#if defined(fAUTO_GEN_TCG_%s)\n" % tag)
     f.write("emit_%s(%s);\n" % (tag, ", ".join(["ctx", "insn", "pkt"] + declared)))
-    f.write("#elif defined(fGEN_TCG_%s) || defined(fGEN_TCG_ALL)\n" % tag)
+    f.write("#elif defined(fGEN_TCG_%s)\n" % tag)
     f.write("fGEN_TCG_%s(%s);\n" % (tag, semdict[tag]))
+    f.write("#elif defined(fGEN_TCG_ALL)\n")
+    if (not tag.endswith("_locked")
+        and not tag.startswith("J2_trap")
+        and not tag.startswith("Y")):
+        f.write("fGEN_TCG_%s(%s);\n" % (tag, semdict[tag]))
     f.write("#else\n")
     ## Generate the call to the helper
     f.write("do {\n")
