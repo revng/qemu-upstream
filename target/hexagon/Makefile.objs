@@ -214,7 +214,7 @@ generated-files-y += $(GENERATED_HEXAGON_FILES) $(DECTREE_HEADER)
 #
 # semantics
 #
-meta-instructions.csv: $(TARGET_SRC_PATH)/meta-instructions.c $(QEMU_DEF_H)
+meta-instructions.csv: $(TARGET_SRC_PATH)/meta-instructions.c $(TCG_FUNCS_H)
 	$(CC) $(CFLAGS) -I$(BUILD_USER_DIR) $< -c -E -o- | grep -v '^#' | grep -v '^\s*$$' | sed -En 's/\{(.*)\}/\"\{\1\}\"/p' > $@
 
 semantics : lex.yy.c semantics.tab.c $(TARGET_SRC_PATH)/semantics/csvparser.c
