@@ -32,6 +32,17 @@
 #include "lex.yy.h"
 #include "csvparser.h"
 
+const char *COND_EQ = "TCG_COND_EQ";
+const char *COND_NE = "TCG_COND_NE";
+const char *COND_GT = "TCG_COND_GT";
+const char *COND_LT = "TCG_COND_LT";
+const char *COND_GE = "TCG_COND_GE";
+const char *COND_LE = "TCG_COND_LE";
+const char *COND_GTU = "TCG_COND_GTU";
+const char *COND_LTU = "TCG_COND_LTU";
+const char *COND_GEU = "TCG_COND_GEU";
+const char *COND_LEU = "TCG_COND_LEU";
+
 // TODO: Use this instead of void* declaration when we'll compile with std=c11
 // Break circular header dependency
 //typedef void* yyscan_t;
@@ -71,10 +82,6 @@ void uint64_print(context_t *c __attribute__((unused)), uint64_t *num) {
 }
 
 void int_print(context_t *c __attribute__((unused)), int *num) {
-    c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%d", *num);
-}
-
-void unsigned_print(context_t *c __attribute__((unused)), unsigned *num) {
     c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "%d", *num);
 }
 
@@ -246,44 +253,6 @@ void rvalue_out(context_t *c, void *pointer) {
   }
 }
 
-void cmp_out(context_t *c, void *pointer) {
-    enum cmp_type *type = (enum cmp_type *) pointer;
-    switch(*type) {
-        case EQ_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_EQ");
-            break;
-        case NEQ_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_NE");
-            break;
-        case LT_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_LT");
-            break;
-        case LTU_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_LTU");
-            break;
-        case GT_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_GT");
-            break;
-        case GTU_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_GTU");
-            break;
-        case LTE_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_LE");
-            break;
-        case LEU_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_LEU");
-            break;
-        case GTE_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_GE");
-            break;
-        case GEU_OP:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "TCG_COND_GEU");
-            break;
-        default:
-            yyassert(c, false, "Unhandled comparison operator!");
-    }
-}
-
 /* Copy output code buffer into stdout */
 void commit(context_t *c) {
     printf("#ifdef fAUTO_GEN_TCG_%s\n", c->inst_name);
@@ -296,22 +265,18 @@ void commit(context_t *c) {
     c->out_c = 0;
 }
 
-#define OUT_IMPL(c, x)                                                     \
+#define OUT_IMPL(c, x)                                                  \
   do {                                                                  \
     if (__builtin_types_compatible_p (typeof (*x), char))               \
-      str_print((c), (char *) x);                                            \
+      str_print((c), (char *) x);                                       \
     else if (__builtin_types_compatible_p (typeof (*x), uint64_t))      \
-      uint64_print((c), (uint64_t *) x);                                     \
+      uint64_print((c), (uint64_t *) x);                                \
     else if (__builtin_types_compatible_p (typeof (*x), int))           \
-      int_print((c), (int *) x);                                             \
-    else if (__builtin_types_compatible_p (typeof (*x), unsigned))           \
-      unsigned_print((c), (unsigned *) x);                                             \
-    else if (__builtin_types_compatible_p (typeof (*x), t_hex_value))     \
-      rvalue_out((c), (t_hex_value *) x);                                         \
-    else if (__builtin_types_compatible_p (typeof (*x), enum cmp_type)) \
-      cmp_out((c), (enum cmp_type *) x);                                     \
+      int_print((c), (int *) x);                                        \
+    else if (__builtin_types_compatible_p (typeof (*x), t_hex_value))   \
+      rvalue_out((c), (t_hex_value *) x);                               \
     else                                                                \
-      yyassert(c, false, "Unhandled print type!");                         \
+      yyassert(c, false, "Unhandled print type!");                      \
   } while(0);
 
 // Make a FOREACH macro
@@ -345,42 +310,29 @@ void commit(context_t *c) {
 
 #define OUT(c, ...) FOR_EACH((c), OUT_IMPL, __VA_ARGS__)
 
-enum cmp_type cmp_swap(context_t *c, enum cmp_type type) {
-    switch(type) {
-        case EQ_OP:
-            return EQ_OP;
-            break;
-        case NEQ_OP:
-            return NEQ_OP;
-            break;
-        case LT_OP:
-            return GT_OP;
-            break;
-        case LTU_OP:
-            return GTU_OP;
-            break;
-        case GT_OP:
-            return LT_OP;
-            break;
-        case GTU_OP:
-            return LTU_OP;
-            break;
-        case LTE_OP:
-            return GTE_OP;
-            break;
-        case LEU_OP:
-            return GEU_OP;
-            break;
-        case GTE_OP:
-            return LTE_OP;
-            break;
-        case GEU_OP:
-            return LEU_OP;
-            break;
-        default:
-            yyassert(c, false, "Unhandled comparison swap!");
-    }
-    return 0;
+const char *cmp_swap(context_t *c, const char *type) {
+    if (type == COND_EQ)
+         return COND_EQ;
+    if (type == COND_NE)
+         return COND_NE;
+    if (type == COND_GT)
+         return COND_LT;
+    if (type == COND_LT)
+         return COND_GT;
+    if (type == COND_GE)
+         return COND_LE;
+    if (type == COND_LE)
+         return COND_GE;
+    if (type == COND_GTU)
+         return COND_LTU;
+    if (type == COND_LTU)
+         return COND_GTU;
+    if (type == COND_GEU)
+         return COND_LEU;
+    if (type == COND_LEU)
+         return COND_GEU;
+    yyassert(c, false, "Unhandled comparison swap!");
+    return NULL;
 }
 
 t_hex_value gen_extra(context_t *c __attribute__((unused)), enum rvalue_extra_type type, int index, bool temp) {
@@ -970,7 +922,7 @@ t_hex_value gen_bin_op(context_t *c,
 }
 
 t_hex_value gen_bin_cmp(context_t *c,
-                        enum cmp_type type,
+                        const char *type,
                         t_hex_value *op1,
                         t_hex_value *op2)
 {
@@ -1023,13 +975,13 @@ t_hex_value gen_bin_cmp(context_t *c,
         case REG_IMM:
         {
             OUT(c, "tcg_gen_setcondi_", bit_suffix, "(");
-            OUT(c, &type, ", ", &res, ", ", op1, ", ", op2, ");\n");
+            OUT(c, type, ", ", &res, ", ", op1, ", ", op2, ");\n");
             break;
         }
         case REG_REG:
         {
             OUT(c, "tcg_gen_setcond_", bit_suffix, "(");
-            OUT(c, &type, ", ", &res, ", ", op1, ", ", op2, ");\n");
+            OUT(c, type, ", ", &res, ", ", op1, ", ", op2, ");\n");
             break;
         }
         default:
@@ -2088,47 +2040,47 @@ rvalue            : assign_statement            { /* does nothing */ }
                   }
                   | rvalue EQ rvalue
                   {
-                    $$ = gen_bin_cmp(c, EQ_OP, &$1, &$3);
+                    $$ = gen_bin_cmp(c, "TCG_COND_EQ", &$1, &$3);
                   }
                   | rvalue NEQ rvalue
                   {
-                    $$ = gen_bin_cmp(c, NEQ_OP, &$1, &$3);
+                    $$ = gen_bin_cmp(c, "TCG_COND_NE", &$1, &$3);
                   }
                   | rvalue LT rvalue
                   {
                     yyassert(c, $1.is_unsigned == $3.is_unsigned,
                              "Different signedness of comparison operands");
                     if ($1.is_unsigned && $3.is_unsigned)
-                        $$ = gen_bin_cmp(c, LTU_OP, &$1, &$3);
+                        $$ = gen_bin_cmp(c, "TCG_COND_LTU", &$1, &$3);
                     else
-                        $$ = gen_bin_cmp(c, LT_OP, &$1, &$3);
+                        $$ = gen_bin_cmp(c, "TCG_COND_LT", &$1, &$3);
                   }
                   | rvalue GT rvalue
                   {
                     yyassert(c, $1.is_unsigned == $3.is_unsigned,
                              "Different signedness of comparison operands");
                     if ($1.is_unsigned && $3.is_unsigned)
-                        $$ = gen_bin_cmp(c, GTU_OP, &$1, &$3);
+                        $$ = gen_bin_cmp(c, "TCG_COND_GTU", &$1, &$3);
                     else
-                        $$ = gen_bin_cmp(c, GT_OP, &$1, &$3);
+                        $$ = gen_bin_cmp(c, "TCG_COND_GT", &$1, &$3);
                   }
                   | rvalue LTE rvalue
                   {
                     yyassert(c, $1.is_unsigned == $3.is_unsigned,
                              "Different signedness of comparison operands");
                     if ($1.is_unsigned && $3.is_unsigned)
-                        $$ = gen_bin_cmp(c, LEU_OP, &$1, &$3);
+                        $$ = gen_bin_cmp(c, "TCG_COND_LEU", &$1, &$3);
                     else
-                        $$ = gen_bin_cmp(c, LTE_OP, &$1, &$3);
+                        $$ = gen_bin_cmp(c, "TCG_COND_LE", &$1, &$3);
                   }
                   | rvalue GTE rvalue
                   {
                     yyassert(c, $1.is_unsigned == $3.is_unsigned,
                              "Different signedness of comparison operands");
                     if ($1.is_unsigned && $3.is_unsigned)
-                        $$ = gen_bin_cmp(c, GEU_OP, &$1, &$3);
+                        $$ = gen_bin_cmp(c, "TCG_COND_GEU", &$1, &$3);
                     else
-                        $$ = gen_bin_cmp(c, GTE_OP, &$1, &$3);
+                        $$ = gen_bin_cmp(c, "TCG_COND_GE", &$1, &$3);
                   }
                   | rvalue QMARK rvalue COLON rvalue
                   {

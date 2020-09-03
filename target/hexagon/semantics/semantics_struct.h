@@ -133,8 +133,6 @@ typedef struct t_hex_value
 enum op_type {ADD, SUBTRACT, ADDSUB, MULTIPLY, DIVIDE,
               ASHIFTL, ASHIFTR, LSHIFTR, ROTATE, ANDB, ORB, ANDORB, XORB,
               MINI, MAXI, MODULO};
-enum cmp_type {EQ_OP, NEQ_OP, LT_OP, LTU_OP, GT_OP, GTU_OP,
-               LTE_OP, LEU_OP, GTE_OP, GEU_OP};
 enum mem_type {MEM_BYTE, MEM_HALF, MEM_WORD, MEM_DOUBLE};
 
 /* Translation Context */
