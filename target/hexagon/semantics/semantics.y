@@ -1465,7 +1465,10 @@ code  : LBR
                                      ")");
           OUT(c, "\n{");
 
-          /* Initialize declared but uninitialized registers */
+          /* Initialize declared but uninitialized registers,
+             but only for non-conditional instructions */
+          if (c->init_count != 0)
+              OUT(c, "if (!GET_ATTRIB(insn->opcode, A_CONDEXEC)) {\n");
           for (int i = 0; i < c->init_count; i++) {
               bool is64 = c->init_list[i].bit_width == 64;
               const char *type = is64 ? "i64" : "i32";
@@ -1476,6 +1479,8 @@ code  : LBR
                                    type,
                                    buffer);
           }
+          if (c->init_count != 0)
+              OUT(c, "}\n");
       }
       FWRAP statements RPAR SEMI decls RBR
       {
