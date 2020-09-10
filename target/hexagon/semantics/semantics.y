@@ -1609,8 +1609,11 @@ assign_statement  : lvalue ASSIGN rvalue
                   }
                   | pre ASSIGN rvalue
                   {
+                    bool is_direct = is_direct_predicate(&$1);
+                    char direct_pre_id = ' ';
                     /* Extract predicate TCGv */
-                    if (is_direct_predicate(&$1)) {
+                    if (is_direct) {
+                        direct_pre_id = $1.pre.id;
                         $1 = gen_tmp_value(c, "0", 32);
                     }
                     rvalue_materialize(c, &$3);
@@ -1655,8 +1658,8 @@ assign_statement  : lvalue ASSIGN rvalue
                             OUT(c, "tcg_gen_or_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
                         }
                     }
-                    if (is_direct_predicate(&$1)) {
-                        OUT(c, "LOG_PRED_WRITE(", &$1, ", ", &$1.pre.id, ")");
+                    if (is_direct) {
+                        OUT(c, "LOG_PRED_WRITE(", &direct_pre_id, ", ", &$1, ");\n");
                     }
                     rvalue_free(c, &$3);  /* Free temporary value */
                     $$ = $1;
