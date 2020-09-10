@@ -161,9 +161,6 @@ void extra_print(context_t *c, t_hex_extra *extra) {
         case EA_T:
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "EA");
             break;
-        case LPCFG_T:
-            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "LPCFG");
-            break;
         case WIDTH_T:
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "width");
             break;
@@ -1390,7 +1387,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token ANDL ORL NOTL
 %token COMMA FOR I ICIRC IF MUN
 %token MAPPED EXT FSCR FCHK TLB IPEND DEBUG MODECTL
-%token SXT ZXT NEW CONSTEXT LOCNT BREV U64 SIGN
+%token SXT ZXT NEW CONSTEXT LOCNT BREV U64 SIGN LC SA
 %token HASH EA PC GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL
 %token SP FP LR TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP QMARK CAUSE EX INT NOP
 %token DCKILL DCLEAN DCINVA DZEROA DFETCH ICKILL L2KILL ISYNC BRKPT SYNCHT LOCK
@@ -1416,6 +1413,8 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %type <rvalue> extra
 %type <index> if_stmt
 %type <index> IF
+%type <index> LC
+%type <index> SA
 %type <is_unsigned> SIGN
 
 /* Operator Precedences */
@@ -1712,6 +1711,27 @@ assign_statement  : lvalue ASSIGN rvalue
                     rvalue_truncate(c, &$3);
                     rvalue_materialize(c, &$3);
                     OUT(c, "LOG_REG_WRITE(HEX_REG_GP, ", &$3, ");\n");
+                    rvalue_free(c, &$3);
+                  }
+                  | LC ASSIGN rvalue
+                  {
+                    rvalue_truncate(c, &$3);
+                    rvalue_materialize(c, &$3);
+                    OUT(c, "LOG_REG_WRITE(HEX_REG_LC", &$1, ", ", &$3, ");\n");
+                    rvalue_free(c, &$3);
+                  }
+                  | SA ASSIGN rvalue
+                  {
+                    rvalue_truncate(c, &$3);
+                    rvalue_materialize(c, &$3);
+                    OUT(c, "LOG_REG_WRITE(HEX_REG_SA", &$1, ", ", &$3, ");\n");
+                    rvalue_free(c, &$3);
+                  }
+                  | LPCFG ASSIGN rvalue
+                  {
+                    rvalue_truncate(c, &$3);
+                    rvalue_materialize(c, &$3);
+                    OUT(c, "SET_USR_FIELD(USR_LPCFG, ", &$3, ");\n");
                     rvalue_free(c, &$3);
                   }
                   | CAUSE ASSIGN IMM
@@ -2304,6 +2324,23 @@ rvalue            : assign_statement            { /* does nothing */ }
                     $$ = gen_tmp_value(c, "0", 32);
                     OUT(c, "READ_REG(", &$$, ", HEX_REG_GP);\n");
                   }
+                  | LC
+                  {
+                    $$ = gen_tmp_value(c, "0", 32);
+                    OUT(c, "READ_REG(", &$$, ", HEX_REG_LC", &$1, ");\n");
+                  }
+                  | SA
+                  {
+                    $$ = gen_tmp_value(c, "0", 32);
+                    OUT(c, "READ_REG(", &$$, ", HEX_REG_SA", &$1, ");\n");
+                  }
+                  | LPCFG
+                  {
+                    $$ = gen_tmp_value(c, "0", 32);
+                    OUT(c, "tcg_gen_extract_tl(", &$$, ", hex_gpr[HEX_REG_USR], ");
+                    OUT(c, "reg_field_info[USR_LPCFG].offset, ");
+                    OUT(c, "reg_field_info[USR_LPCFG].width);\n");
+                  }
 ;
 
 pre               : PRE
@@ -2383,11 +2420,7 @@ reg               : REG
                   }
 ;
 
-extra             : LPCFG
-                  {
-                    $$ = gen_extra(c, LPCFG_T, 0, false);
-                  }
-                  | EA
+extra             : EA
                   {
                     $$ = gen_extra(c, EA_T, 0, true);
                   }

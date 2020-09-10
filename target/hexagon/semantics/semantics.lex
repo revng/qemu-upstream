@@ -484,6 +484,10 @@ SIGN_ID                  s|u
 "USR.LPCFG"              { return LPCFG; }
 "SSR.CAUSE"              { return CAUSE; }
 "SSR.SSR_EX"             { return EX; }
+"LC"{ZERO_ONE}           { yylval->index = atoi(yytext + 2);
+                           return (LC); }
+"SA"{ZERO_ONE}           { yylval->index = atoi(yytext + 2);
+                           return (SA); }
 "TLB"                    { return TLB; }
 "IPEND"                  { return IPEND; }
 "xv"                     { return TMP; }

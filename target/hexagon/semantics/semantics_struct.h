@@ -63,10 +63,9 @@ typedef struct t_hex_pre
     bool is_bit_iter;
 } t_hex_pre;
 
-enum rvalue_extra_type {EA_T, LPCFG_T, LC_T, SA_T, WIDTH_T, OFFSET_T,
-                        SHAMT_T, ADDR_T, SUMR_T, SUMI_T, CTRL_T, TMPR_T,
-                        TMPI_T, X0_T, X1_T, Y0_T, Y1_T, PROD0_T, PROD1_T,
-                        MAX_T, MIN_T, TMP_T};
+enum rvalue_extra_type {EA_T, WIDTH_T, OFFSET_T, SHAMT_T, ADDR_T, SUMR_T,
+                        SUMI_T, CTRL_T, TMPR_T, TMPI_T, X0_T, X1_T, Y0_T,
+                        Y1_T, PROD0_T, PROD1_T, MAX_T, MIN_T, TMP_T, RND_T};
 
 typedef struct t_hex_extra
 {
