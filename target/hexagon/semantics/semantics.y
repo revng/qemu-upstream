@@ -2151,6 +2151,17 @@ rvalue            : assign_statement            { /* does nothing */ }
                   }
                   | SXT LBR IMM LARR IMM RBR rvalue
                   {
+                    /* Implement sign extension with source width < 32 bit,
+                       as arithmetic shift left then shift right */
+                    if ($3.imm.value < 32) {
+                        // (x << 32 - source) >> 32 - source
+                        OUT(c, "tcg_gen_shli_i32(", &$7, ", ", &$7);
+                        OUT(c, ", 32 - ", &$3.imm.value, ");\n");
+                        OUT(c, "tcg_gen_sari_i32(", &$7, ", ", &$7);
+                        OUT(c, ", 32 - ", &$3.imm.value, ");\n");
+                    } else {
+                        yyassert(c, $3.imm.value == 64, "Unhandled sign extension!");
+                    }
                     /* Handle weird destination widths */
                     if ($5.imm.value > 32)
                         $5.imm.value = 64;
