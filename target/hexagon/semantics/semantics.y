@@ -215,6 +215,9 @@ void extra_print(context_t *c, t_hex_extra *extra) {
         case TMP_T:
             c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "tmp");
             break;
+        case RND_T:
+            c->out_c += snprintf(c->out_buffer+c->out_c, OUT_BUF_LEN-c->out_c, "rnd");
+            break;
         default:
             yyassert(c, false, "Malformed extra type!");
     }
@@ -1389,7 +1392,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token MAPPED EXT FSCR FCHK TLB IPEND DEBUG MODECTL
 %token SXT ZXT NEW CONSTEXT LOCNT BREV U64 SIGN LC SA
 %token HASH EA PC GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL
-%token SP FP LR TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP QMARK CAUSE EX INT NOP
+%token SP FP LR TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP RND QMARK CAUSE EX INT NOP
 %token DCKILL DCLEAN DCINVA DZEROA DFETCH ICKILL L2KILL ISYNC BRKPT SYNCHT LOCK
 
 %token <rvalue> REG
@@ -2387,6 +2390,8 @@ lvalue            : reg
                   }
                   | VAR
                   {
+                    // TODO: Keep track to avoid double declarations
+                    //OUT(c, "TCGv_i32 ", &$1, " = tcg_temp_local_new_i32();\n");
                     $$ = $1;
                   }
 ;
@@ -2495,6 +2500,10 @@ extra             : EA
                   | TMP
                   {
                     $$ = gen_extra(c, TMP_T, 0, true);
+                  }
+                  | RND
+                  {
+                    $$ = gen_extra(c, RND_T, 0, true);
                   }
                   | extra VEC
                   {

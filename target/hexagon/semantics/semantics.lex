@@ -264,6 +264,7 @@ SIGN_ID                  s|u
 "tmpi"                   { return TMPI; }
 "tmp"                    { return TMP; }
 "tmpV"                   { return TMP; }
+"rnd"                    { return RND; }
 "src"                    { return TMP; }
 "x0"                     { return X0; }
 "x1"                     { return X1; }
@@ -473,7 +474,7 @@ SIGN_ID                  s|u
                            yylval->cast.is_unsigned = ((yytext[6]) == 'u');
                            return CAST; }
 "(size16"[us]"_t)"         { yylval->cast.width = 16;
-                           yylval->cast.is_unsigned = ((yytext[6]) == 'u');
+                           yylval->cast.is_unsigned = ((yytext[7]) == 'u');
                            return CAST; }
 "#"                      { return HASH; }
 "?"                      { return QMARK; }
