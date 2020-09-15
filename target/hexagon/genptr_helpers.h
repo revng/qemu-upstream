@@ -1099,4 +1099,17 @@ static inline void gen_cancel(TCGv slot)
     tcg_temp_free(one);
     tcg_temp_free(mask);
 }
+
+static inline TCGv gen_read_ireg(TCGv tmp, TCGv val, int shift)
+{
+    /*
+     *  #define fREAD_IREG(VAL) \
+     *      (fSXTN(11, 64, (((VAL) & 0xf0000000)>>21) | ((VAL >> 17) & 0x7f)))
+     */
+    tcg_gen_sari_tl(tmp, val, 17);
+    tcg_gen_andi_tl(tmp, tmp, 0x7f);
+    tcg_gen_shli_tl(tmp, tmp, shift);
+    return tmp;
+}
+
 #endif

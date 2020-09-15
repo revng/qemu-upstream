@@ -2299,16 +2299,14 @@ rvalue            : assign_statement            { /* does nothing */ }
                         $$ = res;
                     }
                   }
+                  | ICIRC LPAR rvalue RPAR ASL IMM
+                  {
+                    $$ = gen_tmp(c, 32);
+                    OUT(c, "gen_read_ireg(", &$$, ", ", &$3, ", ", &$6, ");\n");
+                  }
                   | CIRCADD LPAR rvalue COMMA rvalue COMMA rvalue RPAR
                   {
                     $$ = gen_circ_op(c, &$3, &$5, &$7);
-                  }
-                  | CIRCADD LPAR rvalue COMMA ICIRC ASL IMM COMMA rvalue RPAR
-                  {
-                    t_hex_value I = gen_tmp(c, 32);
-                    OUT(c, "tcg_gen_extract_i32(", &I, ", ", &$9, ", 17, 7);\n");
-                    I = gen_bin_op(c, ASHIFTL, &I, &$7);
-                    $$ = gen_circ_op(c, &$3, &I, &$9);
                   }
                   | LOCNT LPAR rvalue RPAR
                   {

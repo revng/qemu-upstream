@@ -229,7 +229,7 @@ SIGN_ID                  s|u
 "else"                   { return ELSE; }
 "for"                    { return FOR; }
 "i"                      { return I; }
-"I"                      { return ICIRC; }
+"fREAD_IREG"             { return ICIRC; }
 "if"                     { return IF; }
 "Assembler mapped to:"   { return MAPPED; }
 "apply_extension"        { return EXT; }
@@ -279,7 +279,8 @@ SIGN_ID                  s|u
 "ABS"                    { return ABS; }
 "convround"              { return CROUND; }
 "round"                  { return ROUND; }
-"circ_add"               { return CIRCADD; }
+"fPM_CIRI"               { return CIRCADD; }
+"fPM_CIRR"               { return CIRCADD; }
 ".new"                   { return NEW; }
 "sat"{DIGIT}+            { yylval->vec.width = atoi(yytext + 3);
                            yylval->vec.index = 0;

@@ -50,7 +50,7 @@
 #define fPCALIGN(IMM) IMM=IMM & ~PCALIGN_MASK
 #define fGET_EXTENSION extension
 #define fVERIFICATION_REGWRITE_NOTE(THREADID,REGNO)
-#define fREAD_IREG(VAL) I
+//#define fREAD_IREG(VAL) I
 #define fREAD_R0() R0
 #define fREAD_LR() LR
 #define fREAD_SSR() SSR
@@ -165,8 +165,8 @@
 #define fEA_GPI(IMM) EA=fREAD_GP()+IMM
 #define fPM_I(REG,IMM) REG=REG+IMM
 #define fPM_M(REG,MVAL) REG=REG+MVAL
-#define fPM_CIRI(REG,IMM,MVAL) REG=fcirc_add(REG,IMM,MVAL)
-#define fPM_CIRR(REG,VAL,MVAL) REG=fcirc_add(REG,VAL,MVAL)
+//#define fPM_CIRI(REG,IMM,MVAL) REG=fcirc_add(REG,IMM,MVAL)
+//#define fPM_CIRR(REG,VAL,MVAL) REG=fcirc_add(REG,VAL,MVAL)
 #define fMODCIRCU(N,P) N modulo 2^P
 #define fSCALE(N,A) A<<N
 #define fVSATW(A) sat_32(A)
