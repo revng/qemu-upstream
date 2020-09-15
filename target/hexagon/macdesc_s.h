@@ -5,9 +5,9 @@
 #define LOAD_CANCEL(EA) NOP
 #define STORE_CANCEL(EA) NOP
 //#define IS_CANCELLED(SLOT)
-#define fMAX(A,B) max(A,B)
-#define fMIN(A,B) min(A,B)
-#define fABS(A) ABS(A)
+//#define fMAX(A,B) max(A,B)
+//#define fMIN(A,B) min(A,B)
+//#define fABS(A) ABS(A)
 #define fINSERT_BITS(REG,WIDTH,OFFSET,INVAL) REG[(WIDTH-1+OFFSET):OFFSET]=INVAL
 #define fEXTRACTU_BITS(INREG,WIDTH,OFFSET) INREG[(WIDTH+OFFSET-1):OFFSET]
 #define fEXTRACTU_BIDIR(INREG,WIDTH,OFFSET) INREG[(WIDTH+OFFSET-1):OFFSET]
@@ -34,7 +34,7 @@
 #define fSXTN(N,M,VAL) sxt_{N->M}(VAL)
 #define fSATN(N,VAL) sat_##N(VAL)
 #define fVSATN(N,VAL) sat_##N(VAL)
-#define fADDSAT64(DST,A,B) DST=sat64(A+B)
+//#define fADDSAT64(DST,A,B) DST=sat64(A+B)
 #define fVSATUN(N,VAL) usat_##N(VAL)
 #define fSATUN(N,VAL) usat_##N(VAL)
 #define fSATH(VAL) sat_16(VAL)
@@ -45,11 +45,11 @@
 #define fSATB(VAL) sat_8(VAL)
 #define fVSATUB(VAL) usat_8(VAL)
 #define fVSATB(VAL) sat_8(VAL)
-#define fIMMEXT(IMM) apply_extension(IMM)
-#define fMUST_IMMEXT(IMM) apply_extension(IMM)
-#define fPCALIGN(IMM) IMM=IMM & ~PCALIGN_MASK
-#define fGET_EXTENSION extension
-#define fVERIFICATION_REGWRITE_NOTE(THREADID,REGNO)
+#define fIMMEXT(IMM) IMM
+#define fMUST_IMMEXT(IMM) IMM
+#define fPCALIGN(IMM) IMM=IMM & ~3
+//#define fGET_EXTENSION extension
+//#define fVERIFICATION_REGWRITE_NOTE(THREADID,REGNO)
 //#define fREAD_IREG(VAL) I
 #define fREAD_R0() R0
 #define fREAD_LR() LR
@@ -58,13 +58,13 @@
 #define fWRITE_LR(A) LR=A
 #define fWRITE_FP(A) FP=A
 #define fWRITE_SP(A) SP=A
-#define fWRITE_GOSP(A) GOSP=A
+//#define fWRITE_GOSP(A) GOSP=A
 #define fWRITE_GP(A) GP=A
 #define fREAD_SP() SP
-#define fREAD_GOSP() GOSP
+//#define fREAD_GOSP() GOSP
 #define fREAD_GELR() GELR
 #define fREAD_GEVB() GEVB
-#define fREAD_CSREG(N) CS N
+//#define fREAD_CSREG(N) CS N
 #define fREAD_LC0 LC0
 #define fREAD_LC1 LC1
 #define fREAD_SA0 SA0
@@ -75,19 +75,19 @@
 #define fREAD_NPC() NPC
 #define fREAD_P0() P0
 #define fREAD_P3() P3
-#define fNOATTRIB_READ_P3() P3
-#define fINVALID() Invalid instruction!
+//#define fNOATTRIB_READ_P3() P3
+//#define fINVALID() Invalid instruction!
 #define fCHECK_PCALIGN(A)
-#define fCUREXT()
-#define fCUREXT_WRAP(EXT_NO)
-#define fWRITE_NPC(A) PC=A
-#define fLOOPSTATS(A)
-#define fCOF_CALLBACK(LOC,TYPE)
+//#define fCUREXT()
+//#define fCUREXT_WRAP(EXT_NO)
+//#define fWRITE_NPC(A) PC=A
+//#define fLOOPSTATS(A)
+//#define fCOF_CALLBACK(LOC,TYPE)
 #define fBRANCH(LOC,TYPE) PC=LOC
 #define fTIME_JUMPR(REGNO,TARGET,TYPE)
 #define fJUMPR(REGNO,TARGET,TYPE) PC=TARGET
 #define fHINTJR(TARGET)
-#define fBP_RAS_CALL(A)
+//#define fBP_RAS_CALL(A)
 #define fCALL(A) fWRITE_LR(fREAD_NPC()); fWRITE_NPC(A);
 #define fCALLR(A) fWRITE_LR(fREAD_NPC()); fWRITE_NPC(A);
 #define fWRITE_LOOP_REGS0(START,COUNT) SA0=START; LC0=COUNT

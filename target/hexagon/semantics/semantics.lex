@@ -232,7 +232,6 @@ SIGN_ID                  s|u
 "fREAD_IREG"             { return ICIRC; }
 "if"                     { return IF; }
 "Assembler mapped to:"   { return MAPPED; }
-"apply_extension"        { return EXT; }
 "dcache_inv_all"         { return DCKILL; }
 "dcache_clean_addr"      { return DCLEAN; }
 "dcache_cleaninv_addr"   { return DCINVA; }
@@ -274,9 +273,9 @@ SIGN_ID                  s|u
 "prod1"                  { return PROD1; }
 "sxt_"                   { return SXT; }
 "zxt_"                   { return ZXT; }
-"min"                    { return MIN; }
-"max"                    { return MAX; }
-"ABS"                    { return ABS; }
+"fMAX"                   { return MAX; }
+"fMIN"                   { return MIN; }
+"fABS"                   { return ABS; }
 "convround"              { return CROUND; }
 "round"                  { return ROUND; }
 "fPM_CIRI"               { return CIRCADD; }

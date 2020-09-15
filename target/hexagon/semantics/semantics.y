@@ -1389,7 +1389,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token LT GT ASL ASR LSR ROL EQ NEQ LTE GTE MIN MAX
 %token ANDL ORL NOTL
 %token COMMA FOR I ICIRC IF MUN
-%token MAPPED EXT FSCR FCHK TLB IPEND DEBUG MODECTL
+%token MAPPED FSCR FCHK TLB IPEND DEBUG MODECTL
 %token SXT ZXT NEW CONSTEXT LOCNT BREV U64 SIGN LC SA
 %token HASH EA PC GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL CANC
 %token SP FP LR TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP RND QMARK CAUSE EX INT NOP
@@ -1446,7 +1446,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %left LSQ
 %left VEC
 %left NEW
-%right EXT LOCNT BREV
+%right LOCNT BREV
 
 /* Bison Grammar */
 %%
@@ -2186,10 +2186,6 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | ZXT USCORE LBR rvalue LARR IMM RBR LPAR rvalue RPAR
                   {
                     $$ = gen_zxt_op(c, &$9, &$4, &$6);
-                  }
-                  | EXT LPAR IMM RPAR
-                  {
-                    $$ = $3;
                   }
                   | INT rvalue
                   {
