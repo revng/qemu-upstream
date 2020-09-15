@@ -1,10 +1,10 @@
 #define LIKELY(X) X
 #define UNLIKELY(X) X
-#define CANCEL NOP
+//#define CANCEL NOP
 #define STORE_ZERO Zero Store
 #define LOAD_CANCEL(EA) NOP
 #define STORE_CANCEL(EA) NOP
-#define IS_CANCELLED(SLOT)
+//#define IS_CANCELLED(SLOT)
 #define fMAX(A,B) max(A,B)
 #define fMIN(A,B) min(A,B)
 #define fABS(A) ABS(A)

@@ -1391,7 +1391,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token COMMA FOR I ICIRC IF MUN
 %token MAPPED EXT FSCR FCHK TLB IPEND DEBUG MODECTL
 %token SXT ZXT NEW CONSTEXT LOCNT BREV U64 SIGN LC SA
-%token HASH EA PC GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL
+%token HASH EA PC GP NPC LPCFG STAREA WIDTH OFFSET SHAMT ADDR SUMR SUMI CTRL CANC
 %token SP FP LR TMPR TMPI X0 X1 Y0 Y1 PROD0 PROD1 TMP RND QMARK CAUSE EX INT NOP
 %token DCKILL DCLEAN DCINVA DZEROA DFETCH ICKILL L2KILL ISYNC BRKPT SYNCHT LOCK
 
@@ -1759,6 +1759,7 @@ control_statement : frame_check          { /* does nothing */ }
                   | tlb_write            { /* does nothing */ }
                   | clear_interrupts     { /* does nothing */ }
                   | stop_statement       { /* does nothing */ }
+                  | cancel_statement     { /* does nothing */ }
                   | if_statement         { /* does nothing */ }
                   | for_statement        { /* does nothing */ }
                   | ISYNC SEMI           { /* does nothing */ }
@@ -1792,6 +1793,13 @@ clear_interrupts : IPEND ANDA rvalue SEMI { /* does nothing */ }
 ;
 
 stop_statement : IF DEBUG MODECTL ASSIGN IMM SEMI { /* does nothing */ }
+;
+
+cancel_statement : CANC
+                 {
+                   t_hex_value slot = gen_tmp_value(c, "insn->slot", 32);
+                   OUT(c, "gen_cancel(", &slot, ");\n");
+                 }
 ;
 
 if_statement : if_stmt

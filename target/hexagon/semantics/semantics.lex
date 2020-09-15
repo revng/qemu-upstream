@@ -496,6 +496,7 @@ SIGN_ID                  s|u
 "tv"                     { return TMP; }
 "(int)"                  { return INT; }
 "NOP"                    { return NOP; }
+"CANCEL"                 { return CANC; }
 "PREDUSE_TIMING"         { return PREDUSE; }
 
 "R"{REG_ID_32}"V"        { yylval->rvalue.type = REGISTER;

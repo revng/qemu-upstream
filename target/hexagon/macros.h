@@ -478,16 +478,6 @@
 #endif
 
 #ifdef QEMU_GENERATE
-static inline void gen_cancel(TCGv slot)
-{
-    TCGv one = tcg_const_tl(1);
-    TCGv mask = tcg_temp_new();
-    tcg_gen_shl_tl(mask, one, slot);
-    tcg_gen_or_tl(hex_slot_cancelled, hex_slot_cancelled, mask);
-    tcg_temp_free(one);
-    tcg_temp_free(mask);
-}
-
 #define CANCEL gen_cancel(slot);
 #else
 #define CANCEL cancel_slot(env, slot)

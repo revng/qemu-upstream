@@ -1090,4 +1090,13 @@ static inline void gen_log_qreg_write(TCGv_ptr var, int num, int vnew,
     tcg_temp_free(cancelled);
 }
 
+static inline void gen_cancel(TCGv slot)
+{
+    TCGv one = tcg_const_tl(1);
+    TCGv mask = tcg_temp_new();
+    tcg_gen_shl_tl(mask, one, slot);
+    tcg_gen_or_tl(hex_slot_cancelled, hex_slot_cancelled, mask);
+    tcg_temp_free(one);
+    tcg_temp_free(mask);
+}
 #endif
