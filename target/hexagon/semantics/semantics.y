@@ -1238,34 +1238,38 @@ t_hex_value gen_cast_op(context_t *c,
     }
 }
 
-t_hex_value gen_zxt_op(context_t *c,
-                       t_hex_value *source,
-                       t_hex_value *source_width,
-                       t_hex_value *target_width) {
-    /* Handle weird destination widths */
-    if (target_width->imm.value > 32)
-        target_width->imm.value = 64;
-    t_hex_value tmp = *source;
-    if (source_width->type != IMMEDIATE || source_width->imm.value != source->bit_width) {
-        // Cast source_width width to source bit width
-        *source_width = gen_cast_op(c, source_width, source->bit_width);
-        rvalue_materialize(c, source_width);
-        /* First zero-out unwanted bits */
-        t_hex_value one = gen_imm_value(c, 1, source->bit_width);
-        t_hex_value tmp_mask = gen_bin_op(c, ASHIFTL, &one, source_width);
-        one = gen_imm_value(c, 1, source->bit_width);
-        t_hex_value mask = gen_bin_op(c, SUBTRACT, &tmp_mask, &one);
-        tmp = gen_bin_op(c, ANDB, source, &mask);
+t_hex_value gen_extend_op(context_t *c,
+                          t_hex_value *src_width,
+                          t_hex_value *dst_width,
+                          t_hex_value *value,
+                          bool is_unsigned) {
+    /* Select destination TCGv type, if destination > 32 then tcgv = 64 */
+    int op_width = (dst_width->imm.value > 32) ? 64 : 32;
+    t_hex_value res = gen_tmp(c, op_width);
+    /* Cast and materialize immediate operands and source value */
+    *value = gen_cast_op(c, value, op_width);
+    /* Shift left of tcgv width - source width */
+    OUT(c, "tcg_gen_shli_i", &op_width, "(", &res, ", ", value);
+    OUT(c, ", ", &op_width, " - ", &src_width->imm.value, ");\n");
+    /* Shift Right (arithmetic if sign extension, logic if zero extension) */
+    if (is_unsigned) {
+        OUT(c, "tcg_gen_shri_i", &op_width, "(", &res, ", ", &res);
+        OUT(c, ", ", &op_width, " - ", &src_width->imm.value, ");\n");
+    } else {
+        OUT(c, "tcg_gen_sari_i", &op_width, "(", &res, ", ", &res);
+        OUT(c, ", ", &op_width, " - ", &src_width->imm.value, ");\n");
     }
-    /* 32 bit constants are already zero extended */
-    if (target_width->imm.value == 32)
-        return tmp;
-    else if (target_width->imm.value == 64) {
-        tmp.is_unsigned = true;
-        rvalue_extend(c, &tmp);
-    } else
-        yyassert(c, false, "Unhandled destination bit width!");
-    return tmp;
+    /* Zero-out unwanted bits */
+    if (dst_width->imm.value != op_width) {
+        t_hex_value one = gen_tmp_value(c, "1", op_width);
+        t_hex_value tmp_mask = gen_bin_op(c, ASHIFTL, &one, dst_width);
+        one = gen_tmp_value(c, "1", op_width);
+        t_hex_value mask = gen_bin_op(c, SUBTRACT, &tmp_mask, &one);
+        res = gen_bin_op(c, ANDB, &res, &mask);
+    }
+    /* Set destination signedness */
+    res.is_unsigned = is_unsigned;
+    return res;
 }
 
 t_hex_value gen_convround(context_t *c, t_hex_value *source, t_hex_value *round_bit) {
@@ -2157,35 +2161,13 @@ rvalue            : assign_statement            { /* does nothing */ }
                     OUT(c, "tcg_gen_xor_i64(", &res, ", ", &$3,", ", &key, ");\n");
                     $$ = res;
                   }
-                  | SXT LBR IMM LARR IMM RBR rvalue
+                  | SXT LPAR IMM COMMA IMM COMMA rvalue RPAR
                   {
-                    /* Implement sign extension with source width < 32 bit,
-                       as arithmetic shift left then shift right */
-                    if ($3.imm.value < 32) {
-                        // (x << 32 - source) >> 32 - source
-                        OUT(c, "tcg_gen_shli_i32(", &$7, ", ", &$7);
-                        OUT(c, ", 32 - ", &$3.imm.value, ");\n");
-                        OUT(c, "tcg_gen_sari_i32(", &$7, ", ", &$7);
-                        OUT(c, ", 32 - ", &$3.imm.value, ");\n");
-                    } else {
-                        yyassert(c, $3.imm.value == 64, "Unhandled sign extension!");
-                    }
-                    /* Handle weird destination widths */
-                    if ($5.imm.value > 32)
-                        $5.imm.value = 64;
-                    /* 32 bit constants are already sign extended */
-                    if ($5.imm.value == 32)
-                        $$ = $7;
-                    else if ($5.imm.value == 64) {
-                        $7.is_unsigned = false;
-                        rvalue_extend(c, &$7);
-                    } else
-                        yyassert(c, false, "Unhandled destination bit width!");
-                    $$ = $7;
+                    $$ = gen_extend_op(c, &$3, &$5, &$7, false);
                   }
-                  | ZXT USCORE LBR rvalue LARR IMM RBR LPAR rvalue RPAR
+                  | ZXT LPAR IMM COMMA IMM COMMA rvalue RPAR
                   {
-                    $$ = gen_zxt_op(c, &$9, &$4, &$6);
+                    $$ = gen_extend_op(c, &$3, &$5, &$7, true);
                   }
                   | INT rvalue
                   {
