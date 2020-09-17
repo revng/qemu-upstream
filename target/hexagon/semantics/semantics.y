@@ -476,6 +476,7 @@ t_hex_value gen_bin_op(context_t *c,
 #define REG_REG 3
 
     int op_types = (op1->type != IMMEDIATE) << 1 | (op2->type != IMMEDIATE);
+    int op_signedness = op1->is_unsigned << 1 | op2->is_unsigned;
 
     /* Find bit width of the two operands,
        if at least one is 64 bit use a 64bit operation,
@@ -490,7 +491,7 @@ t_hex_value gen_bin_op(context_t *c,
         op_is64bit = true;
     char * bit_suffix = op_is64bit ? "i64" : "i32";
     int bit_width = (op_is64bit) ? 64 : 32;
-    /* TODO: Handle signedness */
+    /* Handle bit width */
     if (op_is64bit) {
         switch(op_types) {
             case IMM_REG:
@@ -512,7 +513,6 @@ t_hex_value gen_bin_op(context_t *c,
         res.type = TEMP;
     } else {
         res.type = IMMEDIATE;
-        res.is_unsigned = false;
         res.is_dotnew = false;
         res.is_vectorial = false;
         res.is_range = false;
@@ -520,6 +520,8 @@ t_hex_value gen_bin_op(context_t *c,
         res.imm.type = QEMU_TMP;
         res.imm.index = c->qemu_tmp_count;
     }
+    /* Handle signedness, if both unsigned -> result is unsigned, else signed */
+    res.is_unsigned = op1->is_unsigned && op2->is_unsigned;
 
     switch(type) {
         case ADD:
