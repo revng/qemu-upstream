@@ -230,6 +230,7 @@ SIGN_ID                  s|u
 "for"                    { return FOR; }
 "i"                      { return I; }
 "fREAD_IREG"             { return ICIRC; }
+"fPART1"                 { return PART1; }
 "if"                     { return IF; }
 "Assembler mapped to:"   { return MAPPED; }
 "dcache_inv_all"         { return DCKILL; }

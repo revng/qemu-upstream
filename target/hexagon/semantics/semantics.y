@@ -1393,7 +1393,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 
 //%expect 1
 
-%token DREG DIMM DPRE DEA RREG WREG FREG FIMM RPRE WPRE FPRE FWRAP FEA
+%token DREG DIMM DPRE DEA RREG WREG FREG FIMM RPRE WPRE FPRE FWRAP FEA PART1
 %token DMOD RMOD FMOD DCTR RCTR FCTR PREDUSE USCORE VAR
 %token LBR RBR LPAR RPAR LSQ RSQ LARR
 %token SEMI COLON PLUS MINUS MUL POW DIV MOD ABS CROUND ROUND CIRCADD
@@ -1581,7 +1581,7 @@ statements  : statements statement         { /* does nothing */ }
 // check that if-then-else statements semantics are preserved
 /* Statements can be assignment, control or memory statements */
 statement   : control_statement            { /* does nothing */ }
-            | rvalue SEMI                  { rvalue_free(c, &$1); }
+            | rvalue                       { rvalue_free(c, &$1); }
             | code_block                   { /* does nothing */ }
 ;
 
@@ -1776,6 +1776,7 @@ control_statement : frame_check          { /* does nothing */ }
                   | cancel_statement     { /* does nothing */ }
                   | if_statement         { /* does nothing */ }
                   | for_statement        { /* does nothing */ }
+                  | fpart1_statement     { /* does nothing */ }
                   | ISYNC SEMI           { /* does nothing */ }
                   | BRKPT SEMI           { /* does nothing */ }
                   | SYNCHT SEMI          { /* does nothing */ }
@@ -1856,6 +1857,12 @@ for_statement : FOR LPAR I ASSIGN IMM SEMI I LT IMM SEMI I INC IMM RPAR
               {
                 OUT(c, "}\n");
               }
+;
+
+fpart1_statement : PART1
+                 {
+                    OUT(c, "if (insn->part1) { return; }\n");
+                 } LPAR statements RPAR
 ;
 
 if_stmt      : IF
