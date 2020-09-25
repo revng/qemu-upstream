@@ -9,42 +9,43 @@
 //#define fMIN(A,B) min(A,B)
 //#define fABS(A) ABS(A)
 #define fINSERT_BITS(REG,WIDTH,OFFSET,INVAL) REG[(WIDTH-1+OFFSET):OFFSET]=INVAL
-#define fEXTRACTU_BITS(INREG,WIDTH,OFFSET) INREG[(WIDTH+OFFSET-1):OFFSET]
-#define fEXTRACTU_BIDIR(INREG,WIDTH,OFFSET) INREG[(WIDTH+OFFSET-1):OFFSET]
-#define fEXTRACTU_RANGE(INREG,HIBIT,LOWBIT) INREG[HIBIT:LOWBIT]
-#define fINSERT_RANGE(INREG,HIBIT,LOWBIT,INVAL) INREG[HIBIT:LOWBIT]=INVAL
-#define f8BITSOF(VAL) VAL ? 0xff : 0x00
-#define fLSBOLD(VAL) VAL[0]
-#define fLSBNEW(PNUM) PNUM.new[0]
-#define fLSBNEW0 P0.new[0]
-#define fLSBNEW1 P1.new[0]
-#define fLSBOLDNOT(VAL) !VAL[0]
-#define fLSBNEWNOT(PNUM) !PNUM.new[0]
-#define fLSBNEW0NOT !P0.new[0]
-#define fLSBNEW1NOT P1.new[0]
-#define fNEWREG(RNUM) RNUM.new
-#define fNEWREG_ST(RNUM) RNUM.new
-#define fMEMZNEW(RNUM) RNUM.new == 0
-#define fMEMNZNEW(RNUM) RNUM.new != 0
-#define fVSATUVALN(N,VAL) N-Bit Unsigned Saturation Value for sign of VAL
-#define fSATUVALN(N,VAL) N-Bit Unsigned Saturation Value for sign of VAL
-#define fSATVALN(N,VAL) N-Bit Saturation Value for sign of VAL
-#define fVSATVALN(N,VAL) N-Bit Saturation Value for sign of VAL
-#define fZXTN(N,M,VAL) zxt_{N->M}(VAL)
-#define fSXTN(N,M,VAL) sxt_{N->M}(VAL)
-#define fSATN(N,VAL) sat_##N(VAL)
-#define fVSATN(N,VAL) sat_##N(VAL)
+#define fEXTRACTU_BITS(INREG,WIDTH,OFFSET) (INREG[(WIDTH+OFFSET-1):OFFSET])
+#define fEXTRACTU_BIDIR(INREG,WIDTH,OFFSET) (INREG[(WIDTH+OFFSET-1):OFFSET])
+#define fEXTRACTU_RANGE(INREG,HIBIT,LOWBIT) (INREG[HIBIT:LOWBIT])
+#define fINSERT_RANGE(INREG,HIBIT,LOWBIT,INVAL) (INREG[HIBIT:LOWBIT]=INVAL)
+#define f8BITSOF(VAL) (VAL ? 0xff : 0x00)
+#define fLSBOLD(VAL) (VAL[0])
+#define fLSBNEW(PNUM) (PNUM.new[0])
+#define fLSBNEW0 (P0.new[0])
+#define fLSBNEW1 (P1.new[0])
+#define fLSBOLDNOT(VAL) (!VAL[0])
+#define fLSBNEWNOT(PNUM) (!PNUM.new[0])
+#define fLSBNEW0NOT (!P0.new[0])
+#define fLSBNEW1NOT (P1.new[0])
+#define fNEWREG(RNUM) (RNUM.new)
+#define fNEWREG_ST(RNUM) (RNUM.new)
+#define fMEMZNEW(RNUM) (RNUM.new == 0)
+#define fMEMNZNEW(RNUM) (RNUM.new != 0)
+//#define fVSATUVALN(N,VAL) N-Bit Unsigned Saturation Value for sign of VAL
+//#define fSATUVALN(N,VAL) N-Bit Unsigned Saturation Value for sign of VAL
+//#define fSATVALN(N,VAL) N-Bit Saturation Value for sign of VAL
+//#define fVSATVALN(N,VAL) N-Bit Saturation Value for sign of VAL
+//#define fZXTN(N,M,VAL) zxt_{N->M}(VAL)
+//#define fSXTN(N,M,VAL) sxt_{N->M}(VAL)
+//#define fSATN(N,VAL) sat_##N(VAL)
+//#define fVSATN(N,VAL) sat_##N(VAL)
 //#define fADDSAT64(DST,A,B) DST=sat64(A+B)
-#define fVSATUN(N,VAL) usat_##N(VAL)
-#define fSATUN(N,VAL) usat_##N(VAL)
-#define fSATH(VAL) sat_16(VAL)
-#define fSATUH(VAL) usat_16(VAL)
-#define fVSATH(VAL) sat_16(VAL)
-#define fVSATUH(VAL) usat_16(VAL)
-#define fSATUB(VAL) usat_8(VAL)
-#define fSATB(VAL) sat_8(VAL)
-#define fVSATUB(VAL) usat_8(VAL)
-#define fVSATB(VAL) sat_8(VAL)
+//#define fVSATUN(N,VAL) usat_##N(VAL)
+//#define fSATUN(N,VAL) usat_##N(VAL)
+/* All the saturate macros are implemented using f[V]SAT[U]N(N, VAL) */
+#define fSATH(VAL) fSATN(16, VAL)
+#define fSATUH(VAL) fSATUN(16, VAL)
+#define fVSATH(VAL) fVSATN(16, VAL)
+#define fVSATUH(VAL) fVSATUN(16, VAL)
+#define fSATUB(VAL) fSATUN(8, VAL)
+#define fSATB(VAL) fSATN(8, VAL)
+#define fVSATUB(VAL) fVSATUN(8, VAL)
+#define fVSATB(VAL) fVSATN(8, VAL)
 #define fIMMEXT(IMM) IMM
 #define fMUST_IMMEXT(IMM) IMM
 #define fPCALIGN(IMM) IMM=IMM & ~3
@@ -167,12 +168,12 @@
 #define fPM_M(REG,MVAL) REG=REG+MVAL
 //#define fPM_CIRI(REG,IMM,MVAL) REG=fcirc_add(REG,IMM,MVAL)
 //#define fPM_CIRR(REG,VAL,MVAL) REG=fcirc_add(REG,VAL,MVAL)
-#define fMODCIRCU(N,P) N modulo 2^P
-#define fSCALE(N,A) A<<N
-#define fVSATW(A) sat_32(A)
-#define fSATW(A) sat_32(A)
-#define fVSAT(A) sat_32(A)
-#define fSAT(A) sat_32(A)
+#define fMODCIRCU(N,P) (N modulo 2^P)
+#define fSCALE(N,A) (A<<N)
+#define fVSATW(A) fVSATN(32, fCAST8_8s(A))
+#define fSATW(A) fSATN(32, fCAST8_8s(A))
+#define fVSAT(A) fVSATN(32, A)
+#define fSAT(A) fSATN(32, A)
 #define fSAT_ORIG_SHL(A,ORIG_REG) sat_32(A)
 #define fPASS(A) A
 #define fRND(A) ((A)+1)>>1

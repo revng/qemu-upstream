@@ -77,6 +77,12 @@ typedef struct t_hex_extra
 enum iterable_type {NO_ITER, I_ITER, I2_ITER, IPLUS1_ITER, IPLUS4_ITER,
                     I2PLUS1_ITER, IMM_ITER};
 
+typedef struct t_hex_sat
+{
+    bool set_overflow;
+    bool is_unsigned;
+} t_hex_sat;
+
 typedef struct t_hex_vec
 {
     char id;

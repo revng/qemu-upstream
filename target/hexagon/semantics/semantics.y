@@ -1005,6 +1005,72 @@ t_hex_value gen_bin_cmp(context_t *c,
 #undef REG_REG
 }
 
+t_hex_value gen_cast_op(context_t *c,
+                        t_hex_value *source,
+                        unsigned target_width) {
+    // Bit width sanity check
+    //yyassert(c, (source->bit_width == 32 || source->bit_width == 64) &&
+    //       (target_width == 32 || target_width == 64),
+    //       "Unhandled cast operation!");
+    if (source->bit_width == target_width)
+        return *source;
+    else if (source->type == IMMEDIATE) {
+        source->bit_width = target_width;
+        source->imm.value %= target_width;
+        return *source;
+    } else {
+        t_hex_value res = gen_tmp(c, target_width);
+        // Truncate
+        if (source->bit_width > target_width)
+            OUT(c, "tcg_gen_trunc_i64_tl(", &res, ", ", source, ");\n");
+        // Extend unsigned
+        else if (source->is_unsigned)
+            OUT(c, "tcg_gen_extu_i32_i64(", &res, ", ", source, ");\n");
+        // Extend signed
+        else
+            OUT(c, "tcg_gen_ext_i32_i64(", &res, ", ", source, ");\n");
+        rvalue_free(c, source);
+        return res;
+    }
+}
+
+t_hex_value gen_extend_op(context_t *c,
+                          t_hex_value *src_width,
+                          t_hex_value *dst_width,
+                          t_hex_value *value,
+                          bool is_unsigned) {
+    /* Select destination TCGv type, if destination > 32 then tcgv = 64 */
+    int op_width = (dst_width->imm.value > 32) ? 64 : 32;
+    t_hex_value res = gen_tmp(c, op_width);
+    /* Cast and materialize immediate operands and source value */
+    *value = gen_cast_op(c, value, op_width);
+    /* Shift left of tcgv width - source width */
+    OUT(c, "tcg_gen_shli_i", &op_width, "(", &res, ", ", value);
+    OUT(c, ", ", &op_width, " - ", &src_width->imm.value, ");\n");
+    /* Shift Right (arithmetic if sign extension, logic if zero extension) */
+    if (is_unsigned) {
+        OUT(c, "tcg_gen_shri_i", &op_width, "(", &res, ", ", &res);
+        OUT(c, ", ", &op_width, " - ", &src_width->imm.value, ");\n");
+    } else {
+        OUT(c, "tcg_gen_sari_i", &op_width, "(", &res, ", ", &res);
+        OUT(c, ", ", &op_width, " - ", &src_width->imm.value, ");\n");
+    }
+    /* Zero-out unwanted bits */
+    if (dst_width->imm.value != op_width) {
+        t_hex_value one = gen_tmp_value(c, "1", op_width);
+        t_hex_value tmp_mask = gen_bin_op(c, ASHIFTL, &one, dst_width);
+        one = gen_tmp_value(c, "1", op_width);
+        t_hex_value mask = gen_bin_op(c, SUBTRACT, &tmp_mask, &one);
+        res = gen_bin_op(c, ANDB, &res, &mask);
+    }
+    /* Set destination signedness */
+    res.is_unsigned = is_unsigned;
+    rvalue_free(c, src_width);
+    rvalue_free(c, dst_width);
+    rvalue_free(c, value);
+    return res;
+}
+
 t_hex_value gen_extract(context_t *c, t_hex_value *source) {
     int bit_width = (source->bit_width == 64) ? 64 : 32;
     if (!source->is_vectorial) {
@@ -1023,7 +1089,7 @@ t_hex_value gen_extract(context_t *c, t_hex_value *source) {
     }
     t_hex_vec access = source->vec;
     int width = access.width;
-    t_hex_value res = gen_tmp(c, source->bit_width);
+    t_hex_value tmp = gen_tmp(c, source->bit_width);
     /* Generating string containing access offset */
     char offset_string[OFFSET_STR_LEN];
     int offset_value = access.index * width;
@@ -1056,14 +1122,14 @@ t_hex_value gen_extract(context_t *c, t_hex_value *source) {
     /* Sanity check that offset is positive */
     yyassert(c, offset[0] != '-', "Offset is negative, fix lexer!\n");
     if (source->type == REGISTER) {
-        OUT(c, "tcg_gen_extract_i", &bit_width, "(", &res, ", ");
+        OUT(c, "tcg_gen_extract_i", &bit_width, "(", &tmp, ", ");
         OUT(c, source, ", ", offset, ", ", &width, ");\n");
     } else {
         if (source->bit_width == 64)
             rvalue_extend(c, source);
         rvalue_materialize(c, source);
         int bit_width = (source->bit_width == 64) ? 64 : 32;
-        OUT(c, "tcg_gen_extract_i", &bit_width, "(", &res, ", ", source);
+        OUT(c, "tcg_gen_extract_i", &bit_width, "(", &tmp, ", ", source);
         OUT(c, ", ", offset, ", ", &width, ");\n");
     }
     /* Handle vectorial+range extraction */
@@ -1072,9 +1138,13 @@ t_hex_value gen_extract(context_t *c, t_hex_value *source) {
         int begin = source->range.begin;
         int end = source->range.end;
         int width = end - begin + 1;
-        OUT(c, "tcg_gen_extract_i", &bit_width, "(", &res, ", ", &res);
+        OUT(c, "tcg_gen_extract_i", &bit_width, "(", &tmp, ", ", &tmp);
         OUT(c, ", ", &begin, ", ", &width, ");\n");
     }
+    int dst_bit = (access.width < 64) ? 32 : 64;
+    t_hex_value src_width = gen_imm_value(c, access.width, 32);
+    t_hex_value dst_width = gen_imm_value(c, dst_bit, 32);
+    t_hex_value res = gen_extend_op(c, &src_width, &dst_width, &tmp, source->is_unsigned);
     rvalue_free(c, source);
     /* Apply source properties */
     res.vec = source->vec;
@@ -1210,70 +1280,6 @@ void gen_assign(context_t *c, t_hex_value *dest, t_hex_value *value) {
     rvalue_free(c, value);
 }
 
-
-t_hex_value gen_cast_op(context_t *c,
-                        t_hex_value *source,
-                        unsigned target_width) {
-    // Bit width sanity check
-    //yyassert(c, (source->bit_width == 32 || source->bit_width == 64) &&
-    //       (target_width == 32 || target_width == 64),
-    //       "Unhandled cast operation!");
-    if (source->bit_width == target_width)
-        return *source;
-    else if (source->type == IMMEDIATE) {
-        source->bit_width = target_width;
-        source->imm.value %= target_width;
-        return *source;
-    } else {
-        t_hex_value res = gen_tmp(c, target_width);
-        // Truncate
-        if (source->bit_width > target_width)
-            OUT(c, "tcg_gen_trunc_i64_tl(", &res, ", ", source, ");\n");
-        // Extend unsigned
-        else if (source->is_unsigned)
-            OUT(c, "tcg_gen_extu_i32_i64(", &res, ", ", source, ");\n");
-        // Extend signed
-        else
-            OUT(c, "tcg_gen_ext_i32_i64(", &res, ", ", source, ");\n");
-        rvalue_free(c, source);
-        return res;
-    }
-}
-
-t_hex_value gen_extend_op(context_t *c,
-                          t_hex_value *src_width,
-                          t_hex_value *dst_width,
-                          t_hex_value *value,
-                          bool is_unsigned) {
-    /* Select destination TCGv type, if destination > 32 then tcgv = 64 */
-    int op_width = (dst_width->imm.value > 32) ? 64 : 32;
-    t_hex_value res = gen_tmp(c, op_width);
-    /* Cast and materialize immediate operands and source value */
-    *value = gen_cast_op(c, value, op_width);
-    /* Shift left of tcgv width - source width */
-    OUT(c, "tcg_gen_shli_i", &op_width, "(", &res, ", ", value);
-    OUT(c, ", ", &op_width, " - ", &src_width->imm.value, ");\n");
-    /* Shift Right (arithmetic if sign extension, logic if zero extension) */
-    if (is_unsigned) {
-        OUT(c, "tcg_gen_shri_i", &op_width, "(", &res, ", ", &res);
-        OUT(c, ", ", &op_width, " - ", &src_width->imm.value, ");\n");
-    } else {
-        OUT(c, "tcg_gen_sari_i", &op_width, "(", &res, ", ", &res);
-        OUT(c, ", ", &op_width, " - ", &src_width->imm.value, ");\n");
-    }
-    /* Zero-out unwanted bits */
-    if (dst_width->imm.value != op_width) {
-        t_hex_value one = gen_tmp_value(c, "1", op_width);
-        t_hex_value tmp_mask = gen_bin_op(c, ASHIFTL, &one, dst_width);
-        one = gen_tmp_value(c, "1", op_width);
-        t_hex_value mask = gen_bin_op(c, SUBTRACT, &tmp_mask, &one);
-        res = gen_bin_op(c, ANDB, &res, &mask);
-    }
-    /* Set destination signedness */
-    res.is_unsigned = is_unsigned;
-    return res;
-}
-
 t_hex_value gen_convround(context_t *c, t_hex_value *source, t_hex_value *round_bit) {
     round_bit->is_symbol = true;
     /* Round bit is given in one hot encoding */
@@ -1373,6 +1379,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 
 %union {
     t_hex_value rvalue;
+    t_hex_sat sat;
     t_hex_vec vec;
     t_hex_cast cast;
     t_hex_range range;
@@ -1405,6 +1412,7 @@ t_hex_value gen_bitcnt_op(context_t *c, t_hex_value *source,
 %token <rvalue> IMM
 %token <rvalue> PRE
 %token <index> ELSE
+%token <sat> SAT
 %token <vec> VEC
 %token <cast> CAST
 %token <range> RANGE
@@ -2060,6 +2068,18 @@ rvalue            : assign_statement            { /* does nothing */ }
                         rvalue_free(c, &one);
                         $$ = res;
                     }
+                  }
+                  | SAT LPAR IMM COMMA rvalue RPAR
+                  {
+                    yyassert(c, $3.imm.value < $5.bit_width, "To compute overflow, "
+                             "source width must be greater than saturation width!");
+                    t_hex_value res = gen_tmp(c, $5.bit_width);
+                    const char *bit_suffix = ($5.bit_width == 64) ? "i64" : "i32";
+                    const char *overflow_str = ($1.set_overflow) ? "true" : "false";
+                    const char *unsigned_str = ($1.is_unsigned) ? "u" : "";
+                    OUT(c, "gen_sat", unsigned_str, "_", bit_suffix, "(", &res, ", ");
+                    OUT(c, &$5, ", ", &$3.imm.value, ", ", overflow_str, ");\n");
+                    $$ = res;
                   }
                   | VEC rvalue
                   {

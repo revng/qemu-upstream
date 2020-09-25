@@ -281,26 +281,18 @@ SIGN_ID                  s|u
 "fPM_CIRI"               { return CIRCADD; }
 "fPM_CIRR"               { return CIRCADD; }
 ".new"                   { return NEW; }
-"sat"{DIGIT}+            { yylval->vec.width = atoi(yytext + 3);
-                           yylval->vec.index = 0;
-                           yylval->vec.is_unsigned = false;
-                           yylval->vec.iter_type = NO_ITER;
-                           return (VEC); }
-"sat_"{DIGIT}+           { yylval->vec.width = atoi(yytext + 4);
-                           yylval->vec.index = 0;
-                           yylval->vec.is_unsigned = false;
-                           yylval->vec.iter_type = NO_ITER;
-                           return (VEC); }
-"usat"{DIGIT}+           { yylval->vec.width = atoi(yytext + 4);
-                           yylval->vec.index = 0;
-                           yylval->vec.is_unsigned = true;
-                           yylval->vec.iter_type = NO_ITER;
-                           return (VEC); }
-"usat_"{DIGIT}+           { yylval->vec.width = atoi(yytext + 5);
-                           yylval->vec.index = 0;
-                           yylval->vec.is_unsigned = true;
-                           yylval->vec.iter_type = NO_ITER;
-                           return (VEC); }
+"fSATN"                  { yylval->sat.set_overflow = false;
+                           yylval->sat.is_unsigned = false;
+                           return (SAT); }
+"fVSATN"                 { yylval->sat.set_overflow = true;
+                           yylval->sat.is_unsigned = false;
+                           return (SAT); }
+"fSATUN"                 { yylval->sat.set_overflow = false;
+                           yylval->sat.is_unsigned = true;
+                           return (SAT); }
+"fVSATUN"                { yylval->sat.set_overflow = true;
+                           yylval->sat.is_unsigned = true;
+                           return (SAT); }
 ".u64"                   { return (U64); }
 ".i"                     { yylval->vec.width = 1;
                            yylval->vec.index = -1;
