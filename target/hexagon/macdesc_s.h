@@ -1,5 +1,5 @@
-#define LIKELY(X) X
-#define UNLIKELY(X) X
+#define LIKELY(X) (X)
+#define UNLIKELY(X) (X)
 //#define CANCEL NOP
 #define STORE_ZERO Zero Store
 #define LOAD_CANCEL(EA) NOP
@@ -48,19 +48,19 @@
 #define fVSATB(VAL) fVSATN(8, VAL)
 #define fIMMEXT(IMM) IMM
 #define fMUST_IMMEXT(IMM) IMM
-#define fPCALIGN(IMM) IMM=IMM & ~3
+#define fPCALIGN(IMM) (IMM=IMM & ~3)
 //#define fGET_EXTENSION extension
 //#define fVERIFICATION_REGWRITE_NOTE(THREADID,REGNO)
 //#define fREAD_IREG(VAL) I
 #define fREAD_R0() R0
 #define fREAD_LR() LR
 #define fREAD_SSR() SSR
-#define fWRITE_R0(A) R0=A
-#define fWRITE_LR(A) LR=A
-#define fWRITE_FP(A) FP=A
-#define fWRITE_SP(A) SP=A
+#define fWRITE_R0(A) (R0=A)
+#define fWRITE_LR(A) (LR=A)
+#define fWRITE_FP(A) (FP=A)
+#define fWRITE_SP(A) (SP=A)
 //#define fWRITE_GOSP(A) GOSP=A
-#define fWRITE_GP(A) GP=A
+#define fWRITE_GP(A) (GP=A)
 #define fREAD_SP() SP
 //#define fREAD_GOSP() GOSP
 #define fREAD_GELR() GELR
@@ -84,22 +84,22 @@
 //#define fWRITE_NPC(A) PC=A
 //#define fLOOPSTATS(A)
 //#define fCOF_CALLBACK(LOC,TYPE)
-#define fBRANCH(LOC,TYPE) PC=LOC
+#define fBRANCH(LOC,TYPE) (PC=LOC)
 #define fTIME_JUMPR(REGNO,TARGET,TYPE)
-#define fJUMPR(REGNO,TARGET,TYPE) PC=TARGET
+#define fJUMPR(REGNO,TARGET,TYPE) (PC=TARGET)
 #define fHINTJR(TARGET)
 //#define fBP_RAS_CALL(A)
 #define fCALL(A) fWRITE_LR(fREAD_NPC()); fWRITE_NPC(A);
 #define fCALLR(A) fWRITE_LR(fREAD_NPC()); fWRITE_NPC(A);
-#define fWRITE_LOOP_REGS0(START,COUNT) SA0=START; LC0=COUNT
-#define fWRITE_LOOP_REGS1(START,COUNT) SA1=START; LC1=COUNT
-#define fWRITE_LC0(VAL) LC0=VAL
-#define fWRITE_LC1(VAL) LC1=VAL
+#define fWRITE_LOOP_REGS0(START,COUNT) SA0=START; (LC0=COUNT)
+#define fWRITE_LOOP_REGS1(START,COUNT) SA1=START; (LC1=COUNT)
+#define fWRITE_LC0(VAL) (LC0=VAL)
+#define fWRITE_LC1(VAL) (LC1=VAL)
 #define fCARRY_FROM_ADD(A,B,C) carry_from_add(A,B,C)
-#define fSETCV_ADD(A,B,CARRY) SR[CV]=FLAGS(A+B)
-#define fSETCV_SUB(A,B,CARRY) SR[CV]=FLAGS(A-B)
-#define fSET_OVERFLOW() USR.OVF=1
-#define fSET_LPCFG(VAL) USR.LPCFG=VAL
+#define fSETCV_ADD(A,B,CARRY) (SR[CV]=FLAGS(A+B))
+#define fSETCV_SUB(A,B,CARRY) (SR[CV]=FLAGS(A-B))
+#define fSET_OVERFLOW() (USR.OVF=1)
+#define fSET_LPCFG(VAL) (USR.LPCFG=VAL)
 #define fGET_LPCFG USR.LPCFG
 #define fWRITE_P0(VAL) P0=VAL
 #define fWRITE_P1(VAL) P1=VAL
@@ -144,28 +144,28 @@
 #define fMPY3216SS(A,B) (A * B)
 #define fMPY3216SU(A,B) (A * B)
 #define fROUND(A) round(A)
-#define fCLIP(DST,SRC,U) DST=MIN((1<<U)-1,MAX(SRC,-(1<<U)))
+#define fCLIP(DST,SRC,U) (DST=MIN((1<<U)-1,MAX(SRC,-(1<<U))))
 #define fCRND(A) convround(A)
-#define fRNDN(A,N) (N==0)?(A):round(A,2**(N-1))
-#define fCRNDN(A,N) (N==0)?A:convround(A,2**(N-1))>>N
-#define fCRNDN64(A,N) (N==0)?A:convround(A,2**(N-1))>>N
-#define fADD128(A,B) A+B
-#define fSUB128(A,B) A-B
+#define fRNDN(A,N) ((N==0)?(A):round(A,2**(N-1)))
+#define fCRNDN(A,N) ((N==0)?A:convround(A,2**(N-1))>>N)
+#define fCRNDN64(A,N) ((N==0)?A:convround(A,2**(N-1))>>N)
+#define fADD128(A,B) (A+B)
+#define fSUB128(A,B) (A-B)
 #define fSHIFTR128(A,B) (size8s_t) (A >> B)
 #define fSHIFTL128(A,B) (A << B)
 #define fAND128(A,B) (A & B)
 #define fCAST8S_16S(A) sxt_{64->128}(A)
 #define fCAST16S_8S(A) sxt_{128->64}(A)
 #define fCAST16S_4S(A) sxt_{128->32}(A)
-#define fEA_RI(REG,IMM) EA=REG+IMM
-#define fEA_RRs(REG,REG2,SCALE) EA=REG+(REG2<<SCALE)
-#define fEA_IRs(IMM,REG,SCALE) EA=IMM+(REG<<SCALE)
-#define fEA_IMM(IMM) EA=IMM
-#define fEA_REG(REG) EA=REG
-#define fEA_BREVR(REG) EA=fbrev(REG)
-#define fEA_GPI(IMM) EA=fREAD_GP()+IMM
-#define fPM_I(REG,IMM) REG=REG+IMM
-#define fPM_M(REG,MVAL) REG=REG+MVAL
+#define fEA_RI(REG,IMM) (EA=REG+IMM)
+#define fEA_RRs(REG,REG2,SCALE) (EA=REG+(REG2<<SCALE))
+#define fEA_IRs(IMM,REG,SCALE) (EA=IMM+(REG<<SCALE))
+#define fEA_IMM(IMM) (EA=IMM)
+#define fEA_REG(REG) (EA=REG)
+#define fEA_BREVR(REG) (EA=fbrev(REG))
+#define fEA_GPI(IMM) (EA=fREAD_GP()+IMM)
+#define fPM_I(REG,IMM) (REG=REG+IMM)
+#define fPM_M(REG,MVAL) (REG=REG+MVAL)
 //#define fPM_CIRI(REG,IMM,MVAL) REG=fcirc_add(REG,IMM,MVAL)
 //#define fPM_CIRR(REG,VAL,MVAL) REG=fcirc_add(REG,VAL,MVAL)
 #define fMODCIRCU(N,P) (N modulo 2^P)
@@ -176,20 +176,20 @@
 #define fSAT(A) fSATN(32, A)
 #define fSAT_ORIG_SHL(A,ORIG_REG) sat_32(A)
 #define fPASS(A) A
-#define fRND(A) ((A)+1)>>1
+#define fRND(A) (((A)+1)>>1)
 #define fBIDIR_SHIFTL(SRC,SHAMT,REGSTYPE) bidir_shiftl(SRC,SHAMT)
-#define fBIDIR_ASHIFTL(SRC,SHAMT,REGSTYPE) (SHAMT>0)?(fCAST##REGSTYPE##s(SRC)<<SHAMT):(fCAST##REGSTYPE##s(SRC)>>SHAMT)
-#define fBIDIR_LSHIFTL(SRC,SHAMT,REGSTYPE) (SHAMT>0)?(fCAST##REGSTYPE##u(SRC)<<SHAMT):(fCAST##REGSTYPE##u(SRC)>>>SHAMT)
+#define fBIDIR_ASHIFTL(SRC,SHAMT,REGSTYPE) ((SHAMT>0)?(fCAST##REGSTYPE##s(SRC)<<SHAMT):(fCAST##REGSTYPE##s(SRC)>>SHAMT))
+#define fBIDIR_LSHIFTL(SRC,SHAMT,REGSTYPE) ((SHAMT>0)?(fCAST##REGSTYPE##u(SRC)<<SHAMT):(fCAST##REGSTYPE##u(SRC)>>>SHAMT))
 #define fBIDIR_ASHIFTL_SAT(SRC,SHAMT,REGSTYPE) bidir_shiftl(SRC,SHAMT)
 #define fBIDIR_SHIFTR(SRC,SHAMT,REGSTYPE) bidir_shiftr(SRC,SHAMT)
-#define fBIDIR_ASHIFTR(SRC,SHAMT,REGSTYPE) (SHAMT>0)?(fCAST##REGSTYPE##s(SRC)>>SHAMT):(fCAST##REGSTYPE##s(SRC)<<SHAMT)
-#define fBIDIR_LSHIFTR(SRC,SHAMT,REGSTYPE) (SHAMT>0)?(fCAST##REGSTYPE##u(SRC)>>>SHAMT):(fCAST##REGSTYPE##u(SRC)<<SHAMT)
+#define fBIDIR_ASHIFTR(SRC,SHAMT,REGSTYPE) ((SHAMT>0)?(fCAST##REGSTYPE##s(SRC)>>SHAMT):(fCAST##REGSTYPE##s(SRC)<<SHAMT))
+#define fBIDIR_LSHIFTR(SRC,SHAMT,REGSTYPE) ((SHAMT>0)?(fCAST##REGSTYPE##u(SRC)>>>SHAMT):(fCAST##REGSTYPE##u(SRC)<<SHAMT))
 #define fBIDIR_ASHIFTR_SAT(SRC,SHAMT,REGSTYPE) bidir_shiftr(SRC,SHAMT)
-#define fASHIFTR(SRC,SHAMT,REGSTYPE) SRC >> SHAMT
-#define fLSHIFTR(SRC,SHAMT,REGSTYPE) SRC >>> SHAMT
-#define fROTL(SRC,SHAMT,REGSTYPE) SRC <<_{R} SHAMT
-#define fROTR(SRC,SHAMT,REGSTYPE) SRC >>_{R} SHAMT
-#define fASHIFTL(SRC,SHAMT,REGSTYPE) fCAST##REGSTYPE##s(SRC) << SHAMT
+#define fASHIFTR(SRC,SHAMT,REGSTYPE) (SRC >> SHAMT)
+#define fLSHIFTR(SRC,SHAMT,REGSTYPE) (SRC >>> SHAMT)
+#define fROTL(SRC,SHAMT,REGSTYPE) (SRC <<_{R} SHAMT)
+#define fROTR(SRC,SHAMT,REGSTYPE) (SRC >>_{R} SHAMT)
+#define fASHIFTL(SRC,SHAMT,REGSTYPE) (fCAST##REGSTYPE##s(SRC) << SHAMT)
 #define fFLOAT(A) A
 #define fUNFLOAT(A) A
 #define fHALF(A) A
@@ -197,28 +197,28 @@
 #define fHF_BIAS() 15
 #define fHF_MANTBITS() 10
 #define fSFNANVAL() NaN
-#define fSFINFVAL(A) sign(A) * Inf
-#define fSFONEVAL(A) sign(A) * 1.0
+#define fSFINFVAL(A) (sign(A) * Inf)
+#define fSFONEVAL(A) (sign(A) * 1.0)
 #define fCHECKSFNAN(DST,A) if (isnan(A)) DST = NaN;
 #define fCHECKSFNAN3(DST,A,B,C) if (isnan(A) || isnan(B) || isnan(C)) DST = NaN;
 #define fSF_BIAS() 127
 #define fSF_MANTBITS() 23
 #define fSF_RECIP_LOOKUP(IDX) recip_lut[IDX]
 #define fSF_INVSQRT_LOOKUP(IDX) invsqrt_lut[IDX]
-#define fSF_MUL_POW2(A,B) A * 2**B
+#define fSF_MUL_POW2(A,B) (A * 2**B)
 #define fSF_GETEXP(A) exponent(A)
 #define fSF_MAXEXP() 254
-#define fSF_RECIP_COMMON(N,D,O,A) (N,D,O,A)=recip_common(N,D)
-#define fSF_INVSQRT_COMMON(N,O,A) (N,O,A)=invsqrt_common(N)
-#define fFMAFX(A,B,C,ADJ) fmaf(A,B,C) * 2**(ADJ)
+#define fSF_RECIP_COMMON(N,D,O,A) ((N,D,O,A)=recip_common(N,D))
+#define fSF_INVSQRT_COMMON(N,O,A) ((N,O,A)=invsqrt_common(N))
+#define fFMAFX(A,B,C,ADJ) (fmaf(A,B,C) * 2**(ADJ))
 #define fFMAF(A,B,C) fmaf(A,B,C)
-#define fSFMPY(A,B) A*B
-#define fMAKESF(SIGN,EXP,MANT) -1**SIGN * 1.MANT * 2**(EXP-BIAS)
+#define fSFMPY(A,B) (A*B)
+#define fMAKESF(SIGN,EXP,MANT) (-1**SIGN * 1.MANT * 2**(EXP-BIAS))
 #define fDOUBLE(A) A
 #define fUNDOUBLE(A) A
 #define fDFNANVAL() NaN
-#define fDFINFVAL(A) sign(A) * Inf
-#define fDFONEVAL(A) sign(A) * 1.0
+#define fDFINFVAL(A) (sign(A) * Inf)
+#define fDFONEVAL(A) (sign(A) * 1.0)
 #define fCHECKDFNAN(DST,A) if (isnan(A)) DST = NaN;
 #define fCHECKDFNAN3(DST,A,B,C) if (isnan(A) || isnan(B) || isnan(C)) DST = NaN;
 #define fDF_BIAS() 1023
@@ -228,16 +228,16 @@
 #define fDF_MANTBITS() 52
 #define fDF_RECIP_LOOKUP(IDX) recip_lut[IDX]
 #define fDF_INVSQRT_LOOKUP(IDX) invsqrt_lut[IDX]
-#define fDF_MUL_POW2(A,B) A * 2**B
+#define fDF_MUL_POW2(A,B) (A * 2**B)
 #define fDF_GETEXP(A) exponent(A)
 #define fDF_MAXEXP() 2046
 #define fDF_RECIP_COMMON(N,D,O,A) (N,D,O,A)=recip_common(N,D)
 #define fDF_INVSQRT_COMMON(N,O,A) (N,O,A)=invsqrt_common(N)
 #define fFMA(A,B,C) fma(A,B,C)
-#define fDFMPY(A,B) A*B
+#define fDFMPY(A,B) (A*B)
 #define fDF_MPY_HH(A,B,ACC) A*B with partial product ACC
-#define fFMAX(A,B,C,ADJ) fma(A,B,C)*2**(2*ADJ)
-#define fMAKEDF(SIGN,EXP,MANT) -1**SIGN * 1.MANT * 2**(EXP-BIAS)
+#define fFMAX(A,B,C,ADJ) (fma(A,B,C)*2**(2*ADJ))
+#define fMAKEDF(SIGN,EXP,MANT) (-1**SIGN * 1.MANT * 2**(EXP-BIAS))
 #define fFPOP_START() fpop_start
 #define fFPOP_END() fpop_end
 #define fFPSETROUND_NEAREST() round_to_nearest()
@@ -251,36 +251,36 @@
 #define fSF_MAX(A,B) fmaxf(A,B)
 #define fSF_MIN(A,B) fmin(A,B)
 #define fMMU(ADDR) ADDR
-#define fcirc_add(REG,INCR,IMMED) REG=circ_add(REG,INCR,IMMED)
+#define fcirc_add(REG,INCR,IMMED) (REG=circ_add(REG,INCR,IMMED))
 #define fbrev(REG) REG.h[1] | brev(REG.h[0])
 #define fLOAD(NUM,SIZE,SIGN,EA,DST) DST = (SIZE SIGN) *EA
-#define fMEMOP(NUM,SIZE,SIGN,EA,FNTYPE,VALUE) DST = *EA
+#define fMEMOP(NUM,SIZE,SIGN,EA,FNTYPE,VALUE) (DST = *EA)
 #define fGET_FRAMEKEY() FRAMEKEY
 #define fFRAME_SCRAMBLE(VAL) frame_scramble(VAL)
 #define fFRAME_UNSCRAMBLE(VAL) frame_unscramble(VAL)
 #define fFRAMECHECK(ADDR,EA) frame_check_limit(ADDR)
-#define fLOAD_LOCKED(NUM,SIZE,SIGN,EA,DST) DST = *EA;
-#define fLOAD_PHYS(NUM,SIZE,SIGN,SRC1,SRC2,DST) DST = *((SRC1&0x7ff) | (SRC2<<11))
-#define fSTORE(NUM,SIZE,EA,SRC) *EA = SRC
-#define fSTORE_DMA(NUM,SIZE,EA,SRC) *EA = SRC
+#define fLOAD_LOCKED(NUM,SIZE,SIGN,EA,DST) (DST = *EA;)
+#define fLOAD_PHYS(NUM,SIZE,SIGN,SRC1,SRC2,DST) (DST = *((SRC1&0x7ff) | (SRC2<<11)))
+#define fSTORE(NUM,SIZE,EA,SRC) (*EA = SRC)
+#define fSTORE_DMA(NUM,SIZE,EA,SRC) (*EA = SRC)
 #define fSTORE_LOCKED(NUM,SIZE,EA,SRC,PRED) if (lock_valid) { *EA = SRC; PRED = 0xff; lock_valid = 0; } else { PRED = 0; }
 #define fVTCM_MEMCPY(DST,SRC,SIZE) for (i = 0; i <= SIZE; i++) { *(DST + i) = *(SRC + i); }
 #define fPERMUTEH(SRC0,SRC1,CTRL) permute(SRC0,SRC1,CTRL)
 #define fPERMUTEB(SRC0,SRC1,CTRL) permute(SRC0,SRC1,CTRL)
 #define fGETBYTE(N,SRC) SRC.b[N]
 #define fGETUBYTE(N,SRC) SRC.ub[N]
-#define fSETBYTE(N,DST,VAL) DST.b[N]=VAL
+#define fSETBYTE(N,DST,VAL) (DST.b[N]=VAL)
 #define fGETHALF(N,SRC) SRC.h[N]
 #define fGETUHALF(N,SRC) SRC.uh[N]
-#define fSETHALF(N,DST,VAL) DST.h[N]=VAL
+#define fSETHALF(N,DST,VAL) (DST.h[N]=VAL)
 #define fGETWORD(N,SRC) SRC.w[N]
 #define fGETUWORD(N,SRC) SRC.uw[N]
-#define fSETWORD(N,DST,VAL) DST.w[N]=VAL
+#define fSETWORD(N,DST,VAL) (DST.w[N]=VAL)
 #define fACC()
 #define fEXTENSION_AUDIO(A) A
-#define fSETBIT(N,DST,VAL) DST.N = VAL
+#define fSETBIT(N,DST,VAL) (DST.N = VAL)
 #define fGETBIT(N,SRC) SRC.N
-#define fSETBITS(HI,LO,DST,VAL) DST[HI:LO] = VAL
+#define fSETBITS(HI,LO,DST,VAL) (DST[HI:LO] = VAL)
 #define fUNDEFINED() UNDEFINED
 #define fCOUNTONES_2(VAL) count_ones(VAL)
 #define fCOUNTONES_4(VAL) count_ones(VAL)
@@ -307,16 +307,16 @@
 #define THREAD_IS_ON(PROC,TNUM) THREAD IS ENABLE
 #define THREAD_EN_MASK(PROC) THREAD IS ENABLE MASK
 #define READ_IMASK(TH) IMASK[TH]
-#define WRITE_IMASK(TH,VAL) IMASK[TH]=VAL
-#define WRITE_PRIO(TH,VAL) TID[TH].PRIO=VAL
+#define WRITE_IMASK(TH,VAL) (IMASK[TH]=VAL)
+#define WRITE_PRIO(TH,VAL) (TID[TH].PRIO=VAL)
 #define DO_IASSIGNW(REG) IASSIGNW(REG)
 #define fDO_NMI(SREG) Raise NMI on threads
 #define fDO_TRACE(SREG) Send value to ETM trace
-#define DO_IASSIGNR(SREG,DREG) DREG=IASSIGNR(SREG)
-#define DO_SWI(REG) IPEND |= REG
-#define DO_CSWI(REG) IPEND &= ~REG
-#define DO_CIAD(VAL) IAD &= ~VAL
-#define DO_SIAD(VAL) IAD |= VAL
+#define DO_IASSIGNR(SREG,DREG) (DREG=IASSIGNR(SREG))
+#define DO_SWI(REG) (IPEND |= REG)
+#define DO_CSWI(REG) (IPEND &= ~REG)
+#define DO_CIAD(VAL) (IAD &= ~VAL)
+#define DO_SIAD(VAL) (IAD |= VAL)
 #define fBREAK() Enter Debug mode
 #define fGP_DOCHKPAGECROSS(BASE,SUM)
 #define fDOCHKPAGECROSS(BASE,SUM)
@@ -324,41 +324,41 @@
 #define fPAUSE(IMM) Pause for IMM cycles
 #define fTRAP(TRAPTYPE,IMM) SSR.CAUSE = IMM; TRAP # TRAPTYPE
 #define fINTERNAL_CLEAR_SAMEPAGE()
-#define fCLEAR_RTE_EX() SSR.SSR_EX = 0
-#define fTLB_LOCK_AVAILABLE() SYSCFG.TLBLOCK == 0
-#define fK0_LOCK_AVAILABLE() SYSCFG.K0LOCK == 0
+#define fCLEAR_RTE_EX() (SSR.SSR_EX = 0)
+#define fTLB_LOCK_AVAILABLE() (SYSCFG.TLBLOCK == 0)
+#define fK0_LOCK_AVAILABLE() (SYSCFG.K0LOCK == 0)
 #define fSET_TLB_LOCK() if (can_aquire_tlb_lock) {SYSCFG.TLBLOCK = 1;} else {sleep_until_available;}
 #define fSET_K0_LOCK() if (can_aquire_k0_lock) {SYSCFG.K0LOCK = 1;} else {sleep_until_available;}
-#define fCLEAR_TLB_LOCK() SYSCFG.TLBLOCK = 0
-#define fCLEAR_K0_LOCK() SYSCFG.K0LOCK = 0
-#define fWRITE_REG_FIELD(REG,FIELD,VAL) REG.FIELD = VAL
-#define fALIGN_REG_FIELD_VALUE(FIELD,VAL) VAL << FIELD.OFFSET
-#define fGET_REG_FIELD_MASK(FIELD) VAL << FIELD.OFFSET
-#define fLOG_REG_FIELD(REG,FIELD,VAL) REG.FIELD = VAL
-#define fWRITE_GLOBAL_REG_FIELD(REG,FIELD,VAL) REG.FIELD = VAL
-#define fLOG_GLOBAL_REG_FIELD(REG,FIELD,VAL) REG.FIELD = VAL
+#define fCLEAR_TLB_LOCK() (SYSCFG.TLBLOCK = 0)
+#define fCLEAR_K0_LOCK() (SYSCFG.K0LOCK = 0)
+#define fWRITE_REG_FIELD(REG,FIELD,VAL) (REG.FIELD = VAL)
+#define fALIGN_REG_FIELD_VALUE(FIELD,VAL) (VAL << FIELD.OFFSET)
+#define fGET_REG_FIELD_MASK(FIELD) (VAL << FIELD.OFFSET)
+#define fLOG_REG_FIELD(REG,FIELD,VAL) (REG.FIELD = VAL)
+#define fWRITE_GLOBAL_REG_FIELD(REG,FIELD,VAL) (REG.FIELD = VAL)
+#define fLOG_GLOBAL_REG_FIELD(REG,FIELD,VAL) (REG.FIELD = VAL)
 #define fREAD_REG_FIELD(REG,FIELD) REG.FIELD
 #define fREAD_GLOBAL_REG_FIELD(REG,FIELD) REG.FIELD
 #define fGET_FIELD(VAL,FIELD) VAL.FIELD
 #define fSET_FIELD(VAL,FIELD,NEWVAL) VAL.FIELD
-#define fSET_RUN_MODE_NOW(TNUM) modectl[TNUM] = 1
+#define fSET_RUN_MODE_NOW(TNUM) (modectl[TNUM] = 1)
 #define fIN_DEBUG_MODE(TNUM) in_debug_mode
 #define fIN_DEBUG_MODE_NO_ISDB(TNUM) in_debug_mode
 #define fIN_DEBUG_MODE_WARN(TNUM)
-#define fCLEAR_RUN_MODE(TNUM) modectl[TNUM] = 0
-#define fCLEAR_RUN_MODE_NOW(TNUM) modectl[TNUM] = 0
+#define fCLEAR_RUN_MODE(TNUM) (modectl[TNUM] = 0)
+#define fCLEAR_RUN_MODE_NOW(TNUM) (modectl[TNUM] = 0)
 #define fGET_RUN_MODE(TNUM) modectl[TNUM]
-#define fSET_WAIT_MODE(TNUM) modectl[(TNUM+16)] = 1
-#define fCLEAR_WAIT_MODE(TNUM) modectl[(TNUM+16)] = 0
+#define fSET_WAIT_MODE(TNUM) (modectl[(TNUM+16)] = 1)
+#define fCLEAR_WAIT_MODE(TNUM) (modectl[(TNUM+16)] = 0)
 #define fGET_WAIT_MODE(TNUM) modectl[(TNUM+16)]
 #define fRESET_THREAD(T,NUM) reset_thread(NUM)
 #define fREAD_CURRENT_EVB() EVB
 #define fREAD_ELR() ELR
 #define fPOW2_HELP_ROUNDUP(VAL) helper for pow2_roundup
 #define fPOW2_ROUNDUP(VAL) pow2_roundup(VAL)
-#define fTLB_IDXMASK(INDEX) INDEX % TLBSIZE
-#define fTLB_NONPOW2WRAP(INDEX) INDEX % TLBSIZE
-#define fTLBW(INDEX,VALUE) TLB[INDEX] = VALUE
+#define fTLB_IDXMASK(INDEX) (INDEX % TLBSIZE)
+#define fTLB_NONPOW2WRAP(INDEX) (INDEX % TLBSIZE)
+#define fTLBW(INDEX,VALUE) (TLB[INDEX] = VALUE)
 #define fTLB_ENTRY_OVERLAP(VALUE) CHECK_TLB_OVERLAP(VALUE)
 #define fTLB_ENTRY_OVERLAP_IDX(VALUE) GET_OVERLAPPING_IDX(VALUE)
 #define fTLBR(INDEX) TLB[INDEX]
@@ -367,10 +367,10 @@
 #define READ_SGP1() SGP1
 #define READ_SGP10() SGP
 #define READ_UGP() UGP
-#define WRITE_SGP0(VAL) SGP0 = VAL
-#define WRITE_SGP1(VAL) SGP1 = VAL
-#define WRITE_SGP10(VAL) SGP = VAL
-#define WRITE_UGP(VAL) UGP = VAL
+#define WRITE_SGP0(VAL) (SGP0 = VAL)
+#define WRITE_SGP1(VAL) (SGP1 = VAL)
+#define WRITE_SGP10(VAL) (SGP = VAL)
+#define WRITE_UGP(VAL) (UGP = VAL)
 #define fSTART(REG) start(REG)
 #define fRESUME(REG) resume(REG)
 #define fGET_TNUM() TNUM
@@ -412,17 +412,17 @@
 #define fL2FETCH(ADDR,HEIGHT,WIDTH,STRIDE,FLAGS) l2fetch(ADDR,INFO)
 #define fDMSTART(NEWPTR) DM0[31:4] = Rs[31:0];DMA start
 #define fDMLINK(CURPTR, NEWPTR) CURPTR->Next = NEWPTR;if (DM0 == 0);  DMA Start
-#define fDMPOLL(DST) DST = DM0
-#define fDMWAIT(DST) DST = DM0
-#define fDMSYNCHT(DST) DST = DM0
-#define fDMTLBSYNCH(DST) DST = DM0
+#define fDMPOLL(DST) (DST = DM0)
+#define fDMWAIT(DST) (DST = DM0)
+#define fDMSYNCHT(DST) (DST = DM0)
+#define fDMTLBSYNCH(DST) (DST = DM0)
 #define fDMPAUSE(DST) DST = DM0;DMA = Idle
 #define fDMRESUME(PTR) DST = DM0;Restart DMA
 #define fDMWAITDESCRIPTOR(SRC,DST) dma_waitdescriptor()
-#define fDMCFGRD(DMANUM,DST) DST = DM0
+#define fDMCFGRD(DMANUM,DST) (DST = DM0)
 #define fDMCFGWR(DMANUM,DATA) DM[DMANUM]=DATA
 #define fL2TAGR(INDEX, DST, DSTREG) l2cache_tag_read(INDEX)
-#define fL2LOCKA(VA,DST,PREGDST) DST=l2locka(VA)
+#define fL2LOCKA(VA,DST,PREGDST) (DST=l2locka(VA))
 #define fL2UNLOCKA(VA) l2unlocka(VA)
 #define fL2TAGW(INDEX,PART2) l2cache_tag_write(INDEX,PART2)
 #define fDCCLEANIDX(REG) dcache_clean_idx(REG)
