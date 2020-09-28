@@ -1624,10 +1624,9 @@ assign_statement  : lvalue ASSIGN rvalue
                   | pre ASSIGN rvalue
                   {
                     bool is_direct = is_direct_predicate(&$1);
-                    char direct_pre_id = ' ';
+                    char pre_id = $1.pre.id;
                     /* Extract predicate TCGv */
                     if (is_direct) {
-                        direct_pre_id = $1.pre.id;
                         $1 = gen_tmp_value(c, "0", 32);
                     }
                     rvalue_materialize(c, &$3);
@@ -1668,15 +1667,15 @@ assign_statement  : lvalue ASSIGN rvalue
                             OUT(c, &$3, " = (", &$3, " & 0xff) << i;\n");
                             OUT(c, "tcg_gen_ori_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
                         } else {
-                            OUT(c, "tcg_gen_andi_i32(", &$1, ", ", &$3, ", 0xff);\n");
                             OUT(c, "tcg_gen_or_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
+                            OUT(c, "tcg_gen_andi_i32(", &$1, ", ", &$1, ", 0xff);\n");
                         }
                     }
                     if (is_direct) {
-                        OUT(c, "LOG_PRED_WRITE(", &direct_pre_id, ", ", &$1, ");\n");
+                        OUT(c, "LOG_PRED_WRITE(", &pre_id, ", ", &$1, ");\n");
+                        rvalue_free(c, &$1); 
                     }
                     rvalue_free(c, &$3);  /* Free temporary value */
-                    $$ = $1;
                   }
                   | IMM ASSIGN rvalue
                   {
@@ -1906,7 +1905,8 @@ rvalue            : assign_statement            { /* does nothing */ }
                         char predicate_id = $1.pre.id;
                         $1 = gen_tmp_value(c, "0", 32);
                         if (is_dotnew) {
-                            OUT(c, &$1, " = hex_new_pred_value[", &predicate_id, "];\n");
+                            OUT(c, "tcg_gen_mov_i32(", &$1, ", hex_new_pred_value[");
+                            OUT(c, &predicate_id, "]);\n");
                         } else {
                             OUT(c, "gen_read_preg(", &$1, ", ", &predicate_id, ");\n");
                         }
