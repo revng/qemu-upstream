@@ -1860,8 +1860,12 @@ for_statement : FOR LPAR I ASSIGN IMM SEMI I LT IMM SEMI I INC IMM RPAR
 
 fpart1_statement : PART1
                  {
-                    OUT(c, "if (insn->part1) { return; }\n");
-                 } LPAR statements RPAR
+                    OUT(c, "if (insn->part1) {\n");
+                 }
+                 LPAR statements RPAR
+                 {
+                    OUT(c, "return; }\n");
+                 }
 ;
 
 if_stmt      : IF
