@@ -1044,6 +1044,7 @@ t_hex_value gen_extend_op(context_t *c,
     t_hex_value res = gen_tmp(c, op_width);
     /* Cast and materialize immediate operands and source value */
     *value = gen_cast_op(c, value, op_width);
+    rvalue_materialize(c, value);
     /* Shift left of tcgv width - source width */
     OUT(c, "tcg_gen_shli_i", &op_width, "(", &res, ", ", value);
     OUT(c, ", ", &op_width, " - ", &src_width->imm.value, ");\n");
