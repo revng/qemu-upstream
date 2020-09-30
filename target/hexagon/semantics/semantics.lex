@@ -105,14 +105,14 @@ SIGN_ID                  s|u
                            yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[10];
                            yylval->rvalue.pre.is_bit_iter = false;
-                           yylval->rvalue.bit_width = 8;
+                           yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return (DPRE); }
 "DECL_NEW_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N, P"{LOWER_PRE}"X, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[14];
                            yylval->rvalue.pre.is_bit_iter = false;
-                           yylval->rvalue.bit_width = 8;
+                           yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
                            return (DPRE); }
 "DECL_MREG_u(MuV, MuN, "[0-9]", "[0-9]");" {
@@ -565,23 +565,23 @@ SIGN_ID                  s|u
 [pP]{DIGIT}              { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[1];
                            yylval->rvalue.pre.is_bit_iter = false;
-                           yylval->rvalue.bit_width = 8;
+                           yylval->rvalue.bit_width = 32;
                            return (PRE); }
 [pP]{DIGIT}              { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[1];
                            yylval->rvalue.pre.is_bit_iter = false;
-                           yylval->rvalue.bit_width = 8;
+                           yylval->rvalue.bit_width = 32;
                            return (PRE); }
 "P"{LOWER_PRE}N.new      { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[1];
                            yylval->rvalue.pre.is_bit_iter = false;
-                           yylval->rvalue.bit_width = 8;
+                           yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
                            return (PRE); }
 "P"{LOWER_PRE}V          { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[1];
                            yylval->rvalue.pre.is_bit_iter = false;
-                           yylval->rvalue.bit_width = 8;
+                           yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return (PRE); }
 {IMM_ID}"iV"             { yylval->rvalue.type = IMMEDIATE;
