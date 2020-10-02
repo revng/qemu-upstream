@@ -610,7 +610,12 @@ SIGN_ID                  s|u
                            return (IMM); }
 {VAR_ID}                 { /* Variable name, we adopt the C names convention */
                            yylval->rvalue.type = VARID;
-                           strncpy(yylval->rvalue.var.name, yytext, VAR_BUF_LEN);
+                           yylval->rvalue.var.name = strndup(yytext, ALLOC_NAME_SIZE);
+                           if (yylval->rvalue.var.name == NULL) {
+                             fprintf(stderr, "Error: failed to duplicate var name: \"%s\"\n", yytext);
+                             error_count++;
+                             return (-1); /* invalid token */
+                           }
                            return (VAR); }
 .                        { fprintf(stderr, "Error: unexpected token \"%s\"\n", yytext);
                            error_count++;

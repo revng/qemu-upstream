@@ -1242,18 +1242,7 @@ void gen_assign(context_t *c, t_hex_value *dest, t_hex_value *value) {
         rvalue_free(c, value); /* Free temporary value */
         return;
     } else if (dest->type == VARID) {
-        /* Declare TCGv variable if it has not been previously declared */
-        bool already_alloc = false;
-        for (int i = 0; i < ALLOC_LIST_LEN; i++) {
-            already_alloc |= (strncmp(dest->var.name,
-                                      c->allocated[i],
-                                      VAR_BUF_LEN) == 0);
-        }
-        /* TODO: output something like TCGv_i32 varname = tcg_temp_local_new_i32();
-                                       tcg_gen_movi_i32(varname, value); */
-        if (!already_alloc) {
-            ;
-        }
+        OUT(c, "tcg_gen_movi_i32(", dest, ", ", value, ");\n");
         return;
     }
     if (dest->bit_width == 64) {
@@ -2093,11 +2082,6 @@ rvalue            : assign_statement            { /* does nothing */ }
                     OUT(c, &$5, ", ", &$3.imm.value, ", ", overflow_str, ");\n");
                     $$ = res;
                   }
-                  | VEC rvalue
-                  {
-                    $2.vec = $1;
-                    $$ = $2;
-                  }
                   | CAST rvalue
                   {
                     /* Assign target signedness */
@@ -2376,6 +2360,13 @@ rvalue            : assign_statement            { /* does nothing */ }
                     OUT(c, "reg_field_info[USR_LPCFG].offset, ");
                     OUT(c, "reg_field_info[USR_LPCFG].width);\n");
                   }
+                  | VAR VEC
+                  {
+                    $$ = $1;
+                    $$.vec = $2;
+                    $$.is_vectorial = true;
+                    $$.is_unsigned = $2.is_unsigned;
+                  }
 ;
 
 pre               : PRE
@@ -2422,8 +2413,23 @@ lvalue            : reg
                   }
                   | VAR
                   {
-                    // TODO: Keep track to avoid double declarations
-                    //OUT(c, "TCGv_i32 ", &$1, " = tcg_temp_local_new_i32();\n");
+                    /* Create (if not present) and assign to temporary variable */
+                    bool found = false;
+                    const char *name = $1.var.name;
+                    yyassert(c, c->allocated_count < ALLOC_LIST_LEN,
+                             "Too many automatic variables required!");
+                    for(int i = 0; i < c->allocated_count; i++) {
+                        if(!strncmp(name, c->allocated[i], ALLOC_NAME_SIZE)) {
+                            found = true;
+                            free((char *) name);
+                            name = c->allocated[i];
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        OUT(c, "TCGv_i32 ", &$1, " = tcg_temp_local_new_i32();\n");
+                        c->allocated[c->allocated_count++] = name;
+                    }
                     $$ = $1;
                   }
 ;
@@ -2638,6 +2644,9 @@ int main(int argc, char **argv)
         free(in_buffer);
         free(out_buffer);
         free(signature_buffer);
+        for(int i = 0; i < context.allocated_count; i++) {
+            free((char *)context.allocated[i]);
+        }
     }
     CsvParser_destroy(csvparser);
     fprintf(stderr, "%d/%d meta instructions have been implemented!\n", implemented_insn, total_insn);

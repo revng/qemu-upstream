@@ -23,8 +23,8 @@
 #define TCGV_NAME_SIZE 7
 #define MAX_WRITTEN_REGS 32
 #define OFFSET_STR_LEN 32
-#define VAR_BUF_LEN 32
-#define ALLOC_LIST_LEN 5
+#define ALLOC_LIST_LEN 32
+#define ALLOC_NAME_SIZE 32
 #define INIT_LIST_LEN 16
 #define OUT_BUF_LEN 1024 * 1024
 #define SIGNATURE_BUF_LEN 1024
@@ -107,7 +107,7 @@ typedef struct t_hex_range
 
 typedef struct t_hex_var
 {
-    char name[VAR_BUF_LEN];
+    const char *name;
 } t_hex_var;
 
 enum rvalue_union_tag {REGISTER, TEMP, IMMEDIATE, PREDICATE, EXTRA, VARID};
@@ -155,7 +155,8 @@ typedef struct context_t {
     int out_c;
     char *signature_buffer;
     int signature_c;
-    const char allocated[ALLOC_LIST_LEN][VAR_BUF_LEN];
+    const char *allocated[ALLOC_LIST_LEN];
+    int allocated_count;
     t_hex_reg init_list[INIT_LIST_LEN];
     int init_count;
     FILE *defines_file;
