@@ -1145,9 +1145,9 @@ static inline void gen_satu_i32(TCGv dest, TCGv source, int width, bool set_over
 static inline void gen_sat_i64(TCGv_i64 dest, TCGv_i64 source, int width, bool set_overflow) {
     TCGv_i64 max_val = tcg_const_i64((1 << (width - 1)) - 1);
     TCGv_i64 min_val = tcg_const_i64(-(1 << (width - 1)));
-    TCGv_i64 sat_val = tcg_const_i64((1 << (width - 1)));
+    TCGv_i64 sat_min_val = tcg_const_i64((1 << (width - 1)));
     tcg_gen_movcond_i64(TCG_COND_GT, dest, source, max_val, max_val, source);
-    tcg_gen_movcond_i64(TCG_COND_LT, dest, source, min_val, sat_val, source);
+    tcg_gen_movcond_i64(TCG_COND_LT, dest, source, min_val, sat_min_val, dest);
     // Set Overflow Bit
     if (set_overflow) {
         TCGv ovf = tcg_temp_new();
