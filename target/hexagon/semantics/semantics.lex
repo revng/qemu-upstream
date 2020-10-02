@@ -295,6 +295,16 @@ SIGN_ID                  s|u
                            yylval->sat.is_unsigned = true;
                            return (SAT); }
 ".u64"                   { return (U64); }
+".sb["{DIGIT}+"]"        { yylval->vec.width = 1;
+                           yylval->vec.index = atoi(yytext + 4);
+                           yylval->vec.is_unsigned = false;
+                           yylval->vec.iter_type = NO_ITER;
+                           return (VEC); }
+".sb[i]"                 { yylval->vec.width = 1;
+                           yylval->vec.index = -1;
+                           yylval->vec.is_unsigned = false;
+                           yylval->vec.iter_type = I_ITER;
+                           return (VEC); }
 ".i"                     { yylval->vec.width = 1;
                            yylval->vec.index = -1;
                            yylval->vec.is_unsigned = false;
@@ -327,10 +337,6 @@ SIGN_ID                  s|u
                            return (VEC); }
 ".h["{DIGIT}"]"          { yylval->vec.width = 16;
                            yylval->vec.index = atoi(yytext + 3);
-                           yylval->vec.is_unsigned = false;
-                           yylval->vec.iter_type = NO_ITER;
-                           return (VEC); }
-".h[01]"                 { yylval->vec.width = 16;
                            yylval->vec.is_unsigned = false;
                            yylval->vec.iter_type = NO_ITER;
                            return (VEC); }

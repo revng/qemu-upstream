@@ -279,7 +279,7 @@
 #define fACC()
 #define fEXTENSION_AUDIO(A) A
 #define fSETBIT(N,DST,VAL) (DST.N = VAL)
-#define fGETBIT(N,SRC) SRC.N
+#define fGETBIT(N,SRC) SRC.sb[N]
 #define fSETBITS(HI,LO,DST,VAL) (DST[HI:LO] = VAL)
 #define fUNDEFINED() UNDEFINED
 #define fCOUNTONES_2(VAL) count_ones(VAL)
