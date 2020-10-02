@@ -135,9 +135,8 @@ typedef struct t_hex_value
     char *name;
 } t_hex_value;
 
-enum op_type {ADD, SUBTRACT, ADDSUB, MULTIPLY, DIVIDE,
-              ASHIFTL, ASHIFTR, LSHIFTR, ROTATE, ANDB, ORB, ANDORB, XORB,
-              MINI, MAXI, MODULO};
+enum op_type {ADD_OP, SUB_OP, MUL_OP, DIV_OP, ASL_OP, ASR_OP, LSR_OP, ROL_OP,
+              ANDB_OP, ORB_OP, XORB_OP, ANDL_OP, MINI_OP, MAXI_OP, MOD_OP};
 enum mem_type {MEM_BYTE, MEM_HALF, MEM_WORD, MEM_DOUBLE};
 
 /* Translation Context */

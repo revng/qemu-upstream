@@ -464,465 +464,6 @@ void ea_free(context_t *c) {
     OUT(c, "tcg_temp_free(EA);\n");
 }
 
-/* Code generation functions */
-t_hex_value gen_bin_op(context_t *c,
-                       enum op_type type,
-                       t_hex_value *op1,
-                       t_hex_value *op2)
-{
-#define IMM_IMM 0
-#define IMM_REG 1
-#define REG_IMM 2
-#define REG_REG 3
-
-    int op_types = (op1->type != IMMEDIATE) << 1 | (op2->type != IMMEDIATE);
-    int op_signedness = op1->is_unsigned << 1 | op2->is_unsigned;
-
-    /* Find bit width of the two operands,
-       if at least one is 64 bit use a 64bit operation,
-       eventually extend 32bit operands. */
-    bool op_is64bit = op1->bit_width == 64 || op2->bit_width == 64;
-    /* Multiplication is always 64 bits wide */
-    if (type == MULTIPLY)
-        op_is64bit = true;
-    /* Shift greater than 32 are 64 bits wide */
-    if (type == ASHIFTL && op2->type == IMMEDIATE &&
-        op2->imm.type == VALUE && op2->imm.value >= 32)
-        op_is64bit = true;
-    char * bit_suffix = op_is64bit ? "i64" : "i32";
-    int bit_width = (op_is64bit) ? 64 : 32;
-    /* Handle bit width */
-    if (op_is64bit) {
-        switch(op_types) {
-            case IMM_REG:
-                rvalue_extend(c, op2);
-                break;
-            case REG_IMM:
-                rvalue_extend(c, op1);
-                break;
-            case REG_REG:
-                rvalue_extend(c, op1);
-                rvalue_extend(c, op2);
-                break;
-        }
-    }
-    t_hex_value res;
-    if (op_types != IMM_IMM) {
-        /* TODO: If one of the operands is a temp reuse it and don't free it */
-        res = gen_tmp(c, bit_width);
-        res.type = TEMP;
-    } else {
-        res.type = IMMEDIATE;
-        res.is_dotnew = false;
-        res.is_vectorial = false;
-        res.is_range = false;
-        res.is_symbol = false;
-        res.imm.type = QEMU_TMP;
-        res.imm.index = c->qemu_tmp_count;
-    }
-    /* Handle signedness, if both unsigned -> result is unsigned, else signed */
-    res.is_unsigned = op1->is_unsigned && op2->is_unsigned;
-
-    switch(type) {
-        case ADD:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " + ", op2, ";\n");
-                    break;
-                case IMM_REG:
-                    OUT(c, "tcg_gen_addi_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "tcg_gen_addi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case REG_REG:
-                    OUT(c, "tcg_gen_add_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case SUBTRACT:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " - ", op2, ";\n");
-                    break;
-                case IMM_REG:
-                    OUT(c, "tcg_gen_subfi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "tcg_gen_subi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case REG_REG:
-                    OUT(c, "tcg_gen_sub_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case ADDSUB:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = plus_minus ? (");
-                    OUT(c, op1, " + ", op2, ") : (", op1, " - ", op2, ");\n");
-                    break;
-                case IMM_REG:
-                    OUT(c, "if (plus_minus)\n");
-                    OUT(c, "tcg_gen_addi_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
-                    OUT(c, "else\n");
-                    OUT(c, "tcg_gen_subi_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "if (plus_minus)\n");
-                    OUT(c, "tcg_gen_addi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    OUT(c, "else\n");
-                    OUT(c, "tcg_gen_subi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case REG_REG:
-                    OUT(c, "if (plus_minus)\n");
-                    OUT(c, "tcg_gen_add_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    OUT(c, "else\n");
-                    OUT(c, "tcg_gen_sub_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case MULTIPLY:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int64_t ", &res, " = ", op1, " * ", op2, ";\n");
-                    break;
-                case IMM_REG:
-                    rvalue_extend(c, op2);
-                    OUT(c, "tcg_gen_muli_i64(", &res, ", ", op2, ", (int64_t)", op1, ");\n");
-                    break;
-                case REG_IMM:
-                    rvalue_extend(c, op1);
-                    OUT(c, "tcg_gen_muli_i64(", &res, ", ", op1, ", (int64_t)", op2, ");\n");
-                    break;
-                case REG_REG:
-                    rvalue_extend(c, op1);
-                    rvalue_extend(c, op2);
-                    OUT(c, "tcg_gen_mul_i64(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case DIVIDE:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int64_t ", &res, " = ", op1, " / ", op2, ";\n");
-                    break;
-                case IMM_REG:
-                case REG_IMM:
-                case REG_REG:
-                    OUT(c, &res, " = gen_helper_divu(cpu_env, ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case ASHIFTL:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " << ", op2, ";\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "tcg_gen_shli_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case IMM_REG:
-                    rvalue_materialize(c, op1);
-                    /* fallthrough */
-                case REG_REG:
-                    OUT(c, "tcg_gen_shl_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            if (op_types != IMM_IMM) {
-                /* Handle left shift by 64 which hexagon-sim expects to clear out register */
-                t_hex_value edge = gen_tmp_value(c, "64", bit_width);
-                t_hex_value zero = gen_tmp_value(c, "0", bit_width);
-                if (op_is64bit)
-                    rvalue_extend(c, op2);
-                rvalue_materialize(c, op1);
-                rvalue_materialize(c, op2);
-                op2->is_symbol = true;
-                rvalue_materialize(c, &edge);
-                OUT(c, "tcg_gen_movcond_i", &bit_width);
-                if (op_types == REG_REG || op_types == IMM_REG)
-                    OUT(c, "(TCG_COND_EQ, ", &res, ", ", op2, ", ", &edge);
-                else
-                    OUT(c, "(TCG_COND_EQ, ", &res, ", ", op2, ", ", &edge);
-                OUT(c, ", ", &zero, ", ", &res, ");\n");
-                rvalue_free(c, &edge);
-                rvalue_free(c, &zero);
-            }
-            break;
-        }
-        case ASHIFTR:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " >> ", op2, ";\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "tcg_gen_sari_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case IMM_REG:
-                    rvalue_materialize(c, op1);
-                    /* fallthrough */
-                case REG_REG:
-                    OUT(c, "tcg_gen_sar_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case LSHIFTR:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " >> ", op2, ";\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "tcg_gen_shri_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case IMM_REG:
-                    rvalue_materialize(c, op1);
-                    /* fallthrough */
-                case REG_REG:
-                    OUT(c, "tcg_gen_shr_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case ROTATE:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " >> ", op2, ";\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "tcg_gen_rotli_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case IMM_REG:
-                    rvalue_materialize(c, op1);
-                    /* fallthrough */
-                case REG_REG:
-                    OUT(c, "tcg_gen_rotl_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case ANDB:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " & ", op2, ";\n");
-                    break;
-                case IMM_REG:
-                    OUT(c, "tcg_gen_andi_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "tcg_gen_andi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case REG_REG:
-                    OUT(c, "tcg_gen_and_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case ORB:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " & ", op2, ";\n");
-                    break;
-                case IMM_REG:
-                    OUT(c, "tcg_gen_ori_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "tcg_gen_ori_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case REG_REG:
-                    OUT(c, "tcg_gen_or_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case ANDORB:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = and_or ? (");
-                    OUT(c, op1, " & ", op2, ") : (", op1, " | ", op2, ");\n");
-                    break;
-                case IMM_REG:
-                    OUT(c, "if (and_or)\n");
-                    OUT(c, "tcg_gen_andi_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
-                    OUT(c, "else\n");
-                    OUT(c, "tcg_gen_ori_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "if (and_or)\n");
-                    OUT(c, "tcg_gen_andi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    OUT(c, "else\n");
-                    OUT(c, "tcg_gen_ori_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case REG_REG:
-                    OUT(c, "if (and_or)\n");
-                    OUT(c, "tcg_gen_and_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    OUT(c, "else\n");
-                    OUT(c, "tcg_gen_or_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case XORB:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " & ", op2, ";\n");
-                    break;
-                case IMM_REG:
-                    OUT(c, "tcg_gen_xori_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
-                    break;
-                case REG_IMM:
-                    OUT(c, "tcg_gen_xori_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case REG_REG:
-                    OUT(c, "tcg_gen_xor_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case MINI:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = (", op1, " <= ");
-                    OUT(c, op2, ") ? ", op1, " : ", op2, ";\n");
-                    break;
-                case IMM_REG:
-                    rvalue_materialize(c, op1);
-                    OUT(c, "tcg_gen_movcond_i", &bit_width);
-                    OUT(c, "(TCG_COND_LE, ", &res, ", ", op1, ", ", op2);
-                    OUT(c, ", ", op1, ", ", op2, ");\n");
-                    break;
-                case REG_IMM:
-                    rvalue_materialize(c, op2);
-                    /* Fallthrough */
-                case REG_REG:
-                    OUT(c, "tcg_gen_movcond_i", &bit_width);
-                    OUT(c, "(TCG_COND_LE, ", &res, ", ", op1, ", ", op2);
-                    OUT(c, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case MAXI:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int", &bit_width, "_t ", &res, " = (", op1, " <= ");
-                    OUT(c, op2, ") ? ", op2, " : ", op1, ";\n");
-                    break;
-                case IMM_REG:
-                    rvalue_materialize(c, op1);
-                    OUT(c, "tcg_gen_movcond_i", &bit_width);
-                    OUT(c, "(TCG_COND_LE, ", &res, ", ", op1, ", ", op2);
-                    OUT(c, ", ", op2, ", ", op1, ");\n");
-                    break;
-                case REG_IMM:
-                    rvalue_materialize(c, op2);
-                    /* Fallthrough */
-                case REG_REG:
-                    OUT(c, "tcg_gen_movcond_i", &bit_width);
-                    OUT(c, "(TCG_COND_LE, ", &res, ", ", op1, ", ", op2);
-                    OUT(c, ", ", op2, ", ", op1, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-        case MODULO:
-        {
-            switch(op_types) {
-                case IMM_IMM:
-                    OUT(c, "int64_t ", &res, " = ", op1, " % ", op2, ";\n");
-                    break;
-                case IMM_REG:
-                case REG_IMM:
-                case REG_REG:
-                    OUT(c, "gen_helper_mod(", &res, ", ", op1, ", ", op2, ");\n");
-                    break;
-                default:
-                    fprintf(stderr, "Error in evalutating immediateness!");
-                    abort();
-            }
-            break;
-        }
-    }
-    /* Free operands only if they are unnamed */
-    if (!op1->is_symbol)
-        rvalue_free(c, op1);
-    if (!op2->is_symbol)
-        rvalue_free(c, op2);
-    if (op_types == IMM_IMM)
-        c->qemu_tmp_count++;
-    return res;
-
-#undef IMM_IMM
-#undef IMM_REG
-#undef REG_IMM
-#undef REG_REG
-}
-
 t_hex_value gen_bin_cmp(context_t *c,
                         const char *type,
                         t_hex_value *op1,
@@ -1005,6 +546,440 @@ t_hex_value gen_bin_cmp(context_t *c,
 #undef REG_REG
 }
 
+/* Code generation functions */
+t_hex_value gen_bin_op(context_t *c,
+                       enum op_type type,
+                       t_hex_value *op1,
+                       t_hex_value *op2)
+{
+#define IMM_IMM 0
+#define IMM_REG 1
+#define REG_IMM 2
+#define REG_REG 3
+
+    int op_types = (op1->type != IMMEDIATE) << 1 | (op2->type != IMMEDIATE);
+    int op_signedness = op1->is_unsigned << 1 | op2->is_unsigned;
+
+    /* Find bit width of the two operands,
+       if at least one is 64 bit use a 64bit operation,
+       eventually extend 32bit operands. */
+    bool op_is64bit = op1->bit_width == 64 || op2->bit_width == 64;
+    /* Multiplication is always 64 bits wide */
+    if (type == MUL_OP)
+        op_is64bit = true;
+    /* Shift greater than 32 are 64 bits wide */
+    if (type == ASL_OP && op2->type == IMMEDIATE &&
+        op2->imm.type == VALUE && op2->imm.value >= 32)
+        op_is64bit = true;
+    char * bit_suffix = op_is64bit ? "i64" : "i32";
+    int bit_width = (op_is64bit) ? 64 : 32;
+    /* Handle bit width */
+    if (op_is64bit) {
+        switch(op_types) {
+            case IMM_REG:
+                rvalue_extend(c, op2);
+                break;
+            case REG_IMM:
+                rvalue_extend(c, op1);
+                break;
+            case REG_REG:
+                rvalue_extend(c, op1);
+                rvalue_extend(c, op2);
+                break;
+        }
+    }
+    t_hex_value res;
+    if (op_types != IMM_IMM) {
+        /* TODO: If one of the operands is a temp reuse it and don't free it */
+        res = gen_tmp(c, bit_width);
+        res.type = TEMP;
+    } else {
+        res.type = IMMEDIATE;
+        res.is_dotnew = false;
+        res.is_vectorial = false;
+        res.is_range = false;
+        res.is_symbol = false;
+        res.imm.type = QEMU_TMP;
+        res.imm.index = c->qemu_tmp_count;
+    }
+    /* Handle signedness, if both unsigned -> result is unsigned, else signed */
+    res.is_unsigned = op1->is_unsigned && op2->is_unsigned;
+
+    switch(type) {
+        case ADD_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " + ", op2, ";\n");
+                    break;
+                case IMM_REG:
+                    OUT(c, "tcg_gen_addi_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
+                    break;
+                case REG_IMM:
+                    OUT(c, "tcg_gen_addi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case REG_REG:
+                    OUT(c, "tcg_gen_add_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case SUB_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " - ", op2, ";\n");
+                    break;
+                case IMM_REG:
+                    OUT(c, "tcg_gen_subfi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case REG_IMM:
+                    OUT(c, "tcg_gen_subi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case REG_REG:
+                    OUT(c, "tcg_gen_sub_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case MUL_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int64_t ", &res, " = ", op1, " * ", op2, ";\n");
+                    break;
+                case IMM_REG:
+                    rvalue_extend(c, op2);
+                    OUT(c, "tcg_gen_muli_i64(", &res, ", ", op2, ", (int64_t)", op1, ");\n");
+                    break;
+                case REG_IMM:
+                    rvalue_extend(c, op1);
+                    OUT(c, "tcg_gen_muli_i64(", &res, ", ", op1, ", (int64_t)", op2, ");\n");
+                    break;
+                case REG_REG:
+                    rvalue_extend(c, op1);
+                    rvalue_extend(c, op2);
+                    OUT(c, "tcg_gen_mul_i64(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case DIV_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int64_t ", &res, " = ", op1, " / ", op2, ";\n");
+                    break;
+                case IMM_REG:
+                case REG_IMM:
+                case REG_REG:
+                    OUT(c, &res, " = gen_helper_divu(cpu_env, ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case ASL_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " << ", op2, ";\n");
+                    break;
+                case REG_IMM:
+                    OUT(c, "tcg_gen_shli_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case IMM_REG:
+                    rvalue_materialize(c, op1);
+                    /* fallthrough */
+                case REG_REG:
+                    OUT(c, "tcg_gen_shl_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            if (op_types != IMM_IMM) {
+                /* Handle left shift by 64 which hexagon-sim expects to clear out register */
+                t_hex_value edge = gen_tmp_value(c, "64", bit_width);
+                t_hex_value zero = gen_tmp_value(c, "0", bit_width);
+                if (op_is64bit)
+                    rvalue_extend(c, op2);
+                rvalue_materialize(c, op1);
+                rvalue_materialize(c, op2);
+                op2->is_symbol = true;
+                rvalue_materialize(c, &edge);
+                OUT(c, "tcg_gen_movcond_i", &bit_width);
+                if (op_types == REG_REG || op_types == IMM_REG)
+                    OUT(c, "(TCG_COND_EQ, ", &res, ", ", op2, ", ", &edge);
+                else
+                    OUT(c, "(TCG_COND_EQ, ", &res, ", ", op2, ", ", &edge);
+                OUT(c, ", ", &zero, ", ", &res, ");\n");
+                rvalue_free(c, &edge);
+                rvalue_free(c, &zero);
+            }
+            break;
+        }
+        case ASR_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " >> ", op2, ";\n");
+                    break;
+                case REG_IMM:
+                    OUT(c, "tcg_gen_sari_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case IMM_REG:
+                    rvalue_materialize(c, op1);
+                    /* fallthrough */
+                case REG_REG:
+                    OUT(c, "tcg_gen_sar_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case LSR_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " >> ", op2, ";\n");
+                    break;
+                case REG_IMM:
+                    OUT(c, "tcg_gen_shri_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case IMM_REG:
+                    rvalue_materialize(c, op1);
+                    /* fallthrough */
+                case REG_REG:
+                    OUT(c, "tcg_gen_shr_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case ROL_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " >> ", op2, ";\n");
+                    break;
+                case REG_IMM:
+                    OUT(c, "tcg_gen_rotli_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case IMM_REG:
+                    rvalue_materialize(c, op1);
+                    /* fallthrough */
+                case REG_REG:
+                    OUT(c, "tcg_gen_rotl_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case ANDB_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " & ", op2, ";\n");
+                    break;
+                case IMM_REG:
+                    OUT(c, "tcg_gen_andi_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
+                    break;
+                case REG_IMM:
+                    OUT(c, "tcg_gen_andi_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case REG_REG:
+                    OUT(c, "tcg_gen_and_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case ORB_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " & ", op2, ";\n");
+                    break;
+                case IMM_REG:
+                    OUT(c, "tcg_gen_ori_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
+                    break;
+                case REG_IMM:
+                    OUT(c, "tcg_gen_ori_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case REG_REG:
+                    OUT(c, "tcg_gen_or_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case XORB_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " & ", op2, ";\n");
+                    break;
+                case IMM_REG:
+                    OUT(c, "tcg_gen_xori_", bit_suffix, "(", &res, ", ", op2, ", ", op1, ");\n");
+                    break;
+                case REG_IMM:
+                    OUT(c, "tcg_gen_xori_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case REG_REG:
+                    OUT(c, "tcg_gen_xor_", bit_suffix, "(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case ANDL_OP:
+        {
+            t_hex_value zero, tmp1, tmp2;
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = ", op1, " && ", op2, ";\n");
+                    break;
+                case IMM_REG:
+                    zero = gen_tmp_value(c, "0", 32);
+                    tmp2 = gen_bin_cmp(c, "TCG_COND_NE", op2, &zero);
+                    OUT(c, "tcg_gen_andi_", bit_suffix, "(", &res, ", ", op1, " != 0 , ", &tmp2, ");\n");
+                    rvalue_free(c, &zero);
+                    rvalue_free(c, &tmp2);
+                    break;
+                case REG_IMM:
+                    zero = gen_tmp_value(c, "0", 32);
+                    tmp1 = gen_bin_cmp(c, "TCG_COND_NE", op1, &zero);
+                    OUT(c, "tcg_gen_andi_", bit_suffix, "(", &res, ", ", &tmp1, ", ", op2, " != 0);\n");
+                    rvalue_free(c, &zero);
+                    rvalue_free(c, &tmp1);
+                    break;
+                case REG_REG:
+                    zero = gen_tmp_value(c, "0", 32);
+                    tmp1 = gen_bin_cmp(c, "TCG_COND_NE", op1, &zero);
+                    tmp2 = gen_bin_cmp(c, "TCG_COND_NE", op2, &zero);
+                    OUT(c, "tcg_gen_and_", bit_suffix, "(", &res, ", ", &tmp1, ", ", &tmp2, ");\n");
+                    rvalue_free(c, &zero);
+                    rvalue_free(c, &tmp1);
+                    rvalue_free(c, &tmp2);
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+
+        }
+        case MINI_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = (", op1, " <= ");
+                    OUT(c, op2, ") ? ", op1, " : ", op2, ";\n");
+                    break;
+                case IMM_REG:
+                    rvalue_materialize(c, op1);
+                    OUT(c, "tcg_gen_movcond_i", &bit_width);
+                    OUT(c, "(TCG_COND_LE, ", &res, ", ", op1, ", ", op2);
+                    OUT(c, ", ", op1, ", ", op2, ");\n");
+                    break;
+                case REG_IMM:
+                    rvalue_materialize(c, op2);
+                    /* Fallthrough */
+                case REG_REG:
+                    OUT(c, "tcg_gen_movcond_i", &bit_width);
+                    OUT(c, "(TCG_COND_LE, ", &res, ", ", op1, ", ", op2);
+                    OUT(c, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case MAXI_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int", &bit_width, "_t ", &res, " = (", op1, " <= ");
+                    OUT(c, op2, ") ? ", op2, " : ", op1, ";\n");
+                    break;
+                case IMM_REG:
+                    rvalue_materialize(c, op1);
+                    OUT(c, "tcg_gen_movcond_i", &bit_width);
+                    OUT(c, "(TCG_COND_LE, ", &res, ", ", op1, ", ", op2);
+                    OUT(c, ", ", op2, ", ", op1, ");\n");
+                    break;
+                case REG_IMM:
+                    rvalue_materialize(c, op2);
+                    /* Fallthrough */
+                case REG_REG:
+                    OUT(c, "tcg_gen_movcond_i", &bit_width);
+                    OUT(c, "(TCG_COND_LE, ", &res, ", ", op1, ", ", op2);
+                    OUT(c, ", ", op2, ", ", op1, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+        case MOD_OP:
+        {
+            switch(op_types) {
+                case IMM_IMM:
+                    OUT(c, "int64_t ", &res, " = ", op1, " % ", op2, ";\n");
+                    break;
+                case IMM_REG:
+                case REG_IMM:
+                case REG_REG:
+                    OUT(c, "gen_helper_mod(", &res, ", ", op1, ", ", op2, ");\n");
+                    break;
+                default:
+                    fprintf(stderr, "Error in evalutating immediateness!");
+                    abort();
+            }
+            break;
+        }
+    }
+    /* Free operands only if they are unnamed */
+    if (!op1->is_symbol)
+        rvalue_free(c, op1);
+    if (!op2->is_symbol)
+        rvalue_free(c, op2);
+    if (op_types == IMM_IMM)
+        c->qemu_tmp_count++;
+    return res;
+
+#undef IMM_IMM
+#undef IMM_REG
+#undef REG_IMM
+#undef REG_REG
+}
+
 t_hex_value gen_cast_op(context_t *c,
                         t_hex_value *source,
                         unsigned target_width) {
@@ -1059,10 +1034,10 @@ t_hex_value gen_extend_op(context_t *c,
     /* Zero-out unwanted bits */
     if (dst_width->imm.value != op_width) {
         t_hex_value one = gen_tmp_value(c, "1", op_width);
-        t_hex_value tmp_mask = gen_bin_op(c, ASHIFTL, &one, dst_width);
+        t_hex_value tmp_mask = gen_bin_op(c, ASL_OP, &one, dst_width);
         one = gen_tmp_value(c, "1", op_width);
-        t_hex_value mask = gen_bin_op(c, SUBTRACT, &tmp_mask, &one);
-        res = gen_bin_op(c, ANDB, &res, &mask);
+        t_hex_value mask = gen_bin_op(c, SUB_OP, &tmp_mask, &one);
+        res = gen_bin_op(c, ANDB_OP, &res, &mask);
     }
     /* Set destination signedness */
     res.is_unsigned = is_unsigned;
@@ -1282,10 +1257,10 @@ t_hex_value gen_convround(context_t *c, t_hex_value *source, t_hex_value *round_
     t_hex_value zero = gen_tmp_value(c, "0", 32);
     t_hex_value one = gen_imm_value(c, 1, 32);
     t_hex_value two = gen_imm_value(c, 2, 32);
-    t_hex_value remainder = gen_bin_op(c, ANDB, source, round_bit);
-    t_hex_value tmp_mask = gen_bin_op(c, ASHIFTL, round_bit, &two);
-    t_hex_value mask = gen_bin_op(c, SUBTRACT, &tmp_mask, &one);
-    t_hex_value masked_value = gen_bin_op(c, ANDB, source, &mask);
+    t_hex_value remainder = gen_bin_op(c, ANDB_OP, source, round_bit);
+    t_hex_value tmp_mask = gen_bin_op(c, ASL_OP, round_bit, &two);
+    t_hex_value mask = gen_bin_op(c, SUB_OP, &tmp_mask, &one);
+    t_hex_value masked_value = gen_bin_op(c, ANDB_OP, source, &mask);
     rvalue_materialize(c, &masked_value);
     rvalue_materialize(c, round_bit);
     /* If value is even and == .5 do not round */
@@ -1293,13 +1268,13 @@ t_hex_value gen_convround(context_t *c, t_hex_value *source, t_hex_value *round_
     OUT(c, "tcg_gen_movcond_i32(TCG_COND_EQ, ", &new_remainder);
     OUT(c, ", ", &masked_value, ", ", round_bit, ", ");
     OUT(c, &zero, ", ", &remainder, ");\n");
-    t_hex_value res = gen_bin_op(c, ADD, source, &new_remainder);
+    t_hex_value res = gen_bin_op(c, ADD_OP, source, &new_remainder);
     /* Zero out trailing bits */
-    mask = gen_bin_op(c, ASHIFTL, round_bit, &one);
-    mask = gen_bin_op(c, SUBTRACT, &mask, &one);
+    mask = gen_bin_op(c, ASL_OP, round_bit, &one);
+    mask = gen_bin_op(c, SUB_OP, &mask, &one);
     t_hex_value new_mask = gen_tmp(c, 32);
     OUT(c, "tcg_gen_not_i32(", &new_mask, ", ", &mask, ");\n");
-    res = gen_bin_op(c, ANDB, &res, &new_mask);
+    res = gen_bin_op(c, ANDB_OP, &res, &new_mask);
     rvalue_free(c, &remainder);
     rvalue_free(c, &masked_value);
     rvalue_free(c, &mask);
@@ -1583,31 +1558,31 @@ assign_statement  : lvalue ASSIGN rvalue
                   }
                   | lvalue INC rvalue
                   {
-                    t_hex_value tmp = gen_bin_op(c, ADD, &$1, &$3);
+                    t_hex_value tmp = gen_bin_op(c, ADD_OP, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
                   | lvalue DEC rvalue
                   {
-                    t_hex_value tmp = gen_bin_op(c, SUBTRACT, &$1, &$3);
+                    t_hex_value tmp = gen_bin_op(c, SUB_OP, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
                   | lvalue ANDA rvalue
                   {
-                    t_hex_value tmp = gen_bin_op(c, ANDB, &$1, &$3);
+                    t_hex_value tmp = gen_bin_op(c, ANDB_OP, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
                   | lvalue ORA rvalue
                   {
-                    t_hex_value tmp = gen_bin_op(c, ORB, &$1, &$3);
+                    t_hex_value tmp = gen_bin_op(c, ORB_OP, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
                   | lvalue XORA rvalue
                   {
-                    t_hex_value tmp = gen_bin_op(c, XORB, &$1, &$3);
+                    t_hex_value tmp = gen_bin_op(c, XORB_OP, &$1, &$3);
                     gen_assign(c, &$1, &tmp);
                     $$ = $1;
                   }
@@ -1951,15 +1926,15 @@ rvalue            : assign_statement            { /* does nothing */ }
                   }
                   | rvalue PLUS rvalue
                   {
-                    $$ = gen_bin_op(c, ADD, &$1, &$3);
+                    $$ = gen_bin_op(c, ADD_OP, &$1, &$3);
                   }
                   | rvalue MINUS rvalue
                   {
-                    $$ = gen_bin_op(c, SUBTRACT, &$1, &$3);
+                    $$ = gen_bin_op(c, SUB_OP, &$1, &$3);
                   }
                   | rvalue MUL rvalue
                   {
-                    $$ = gen_bin_op(c, MULTIPLY, &$1, &$3);
+                    $$ = gen_bin_op(c, MUL_OP, &$1, &$3);
                   }
                   | rvalue POW rvalue
                   {
@@ -1967,54 +1942,58 @@ rvalue            : assign_statement            { /* does nothing */ }
                     yyassert(c, $1.type == IMMEDIATE && $1.imm.value == 2,
                            "Exponentiation is not a left shift!\n");
                     t_hex_value one = gen_imm_value(c, 1, 32);
-                    t_hex_value shift = gen_bin_op(c, SUBTRACT, &$3, &one);
-                    $$ = gen_bin_op(c, ASHIFTL, &$1, &shift);
+                    t_hex_value shift = gen_bin_op(c, SUB_OP, &$3, &one);
+                    $$ = gen_bin_op(c, ASL_OP, &$1, &shift);
                     rvalue_free(c, &one);
                     rvalue_free(c, &shift);
                   }
                   | rvalue DIV rvalue
                   {
-                    $$ = gen_bin_op(c, DIVIDE, &$1, &$3);
+                    $$ = gen_bin_op(c, DIV_OP, &$1, &$3);
                   }
                   | rvalue MOD rvalue
                   {
-                    $$ = gen_bin_op(c, MODULO, &$1, &$3);
+                    $$ = gen_bin_op(c, MOD_OP, &$1, &$3);
                   }
                   | rvalue ASL rvalue
                   {
-                    $$ = gen_bin_op(c, ASHIFTL, &$1, &$3);
+                    $$ = gen_bin_op(c, ASL_OP, &$1, &$3);
                   }
                   | rvalue ASR rvalue
                   {
-                    $$ = gen_bin_op(c, ASHIFTR, &$1, &$3);
+                    $$ = gen_bin_op(c, ASR_OP, &$1, &$3);
                   }
                   | rvalue LSR rvalue
                   {
-                    $$ = gen_bin_op(c, LSHIFTR, &$1, &$3);
+                    $$ = gen_bin_op(c, LSR_OP, &$1, &$3);
                   }
                   | rvalue ROL rvalue
                   {
-                    $$ = gen_bin_op(c, ROTATE, &$1, &$3);
+                    $$ = gen_bin_op(c, ROL_OP, &$1, &$3);
                   }
                   | rvalue AND rvalue
                   {
-                    $$ = gen_bin_op(c, ANDB, &$1, &$3);
+                    $$ = gen_bin_op(c, ANDB_OP, &$1, &$3);
                   }
                   | rvalue OR rvalue
                   {
-                    $$ = gen_bin_op(c, ORB, &$1, &$3);
+                    $$ = gen_bin_op(c, ORB_OP, &$1, &$3);
                   }
                   | rvalue XOR rvalue
                   {
-                    $$ = gen_bin_op(c, XORB, &$1, &$3);
+                    $$ = gen_bin_op(c, XORB_OP, &$1, &$3);
+                  }
+                  | rvalue ANDL rvalue
+                  {
+                    $$ = gen_bin_op(c, ANDL_OP, &$1, &$3);
                   }
                   | MIN LPAR rvalue COMMA rvalue RPAR
                   {
-                    $$ = gen_bin_op(c, MINI, &$3, &$5);
+                    $$ = gen_bin_op(c, MINI_OP, &$3, &$5);
                   }
                   | MAX LPAR rvalue COMMA rvalue RPAR
                   {
-                    $$ = gen_bin_op(c, MAXI, &$3, &$5);
+                    $$ = gen_bin_op(c, MAXI_OP, &$3, &$5);
                   }
                   | NOT rvalue
                   {
@@ -2096,8 +2075,8 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | rvalue LSQ rvalue RSQ
                   {
                     t_hex_value one = gen_imm_value(c, 1, $3.bit_width);
-                    t_hex_value tmp = gen_bin_op(c, ASHIFTR, &$1, &$3);
-                    $$ = gen_bin_op(c, ANDB, &tmp, &one);
+                    t_hex_value tmp = gen_bin_op(c, ASR_OP, &$1, &$3);
+                    $$ = gen_bin_op(c, ANDB_OP, &tmp, &one);
                   }
                   | rvalue EQ rvalue
                   {
@@ -2258,14 +2237,14 @@ rvalue            : assign_statement            { /* does nothing */ }
                     yyassert(c, $3.bit_width <= 32,
                            "Convround not implemented for bit widths > 32!");
                     t_hex_value one = gen_imm_value(c, 1, 32);
-                    t_hex_value remainder = gen_bin_op(c, ANDB, &$3, &$5);
-                    t_hex_value res = gen_bin_op(c, ADD, &$3, &remainder);
+                    t_hex_value remainder = gen_bin_op(c, ANDB_OP, &$3, &$5);
+                    t_hex_value res = gen_bin_op(c, ADD_OP, &$3, &remainder);
                     /* Zero out trailing bits */
-                    t_hex_value mask = gen_bin_op(c, ASHIFTL, &$5, &one);
-                    mask = gen_bin_op(c, SUBTRACT, &mask, &one);
+                    t_hex_value mask = gen_bin_op(c, ASL_OP, &$5, &one);
+                    mask = gen_bin_op(c, SUB_OP, &mask, &one);
                     rvalue_materialize(c, &mask);
                     OUT(c, "tcg_gen_not_i32(", &mask, ", ", &mask, ");\n");
-                    res = gen_bin_op(c, ANDB, &res, &mask);
+                    res = gen_bin_op(c, ANDB_OP, &res, &mask);
                     rvalue_free(c, &$3);
                     rvalue_free(c, &$5);
                     $$ = res;
