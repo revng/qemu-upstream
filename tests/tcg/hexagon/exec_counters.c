@@ -19,6 +19,7 @@
  *  Check the instruction counters in qemu
  */
 #include <stdio.h>
+#ifdef __HEXMSGABI_3_SUPPORTED__
 
 int err;
 
@@ -32,7 +33,7 @@ static void check(const char *name, int val, int expect)
 
 int main()
 {
-  int pkt, insn;
+  int pkt, insn, hvx;
 
   asm volatile("r2 = #0\n\t"
                "c23 = r2\n\t"
@@ -42,16 +43,22 @@ int main()
                "r2 = #7\n\t"
                "loop0(1f, #3)\n\t"
                "1:\n\t"
+               "    v0.b = vadd(v0.b, v0.b)\n\t"
                "    { p0 = cmp.eq(r2,#5); if (p0.new) jump:nt 2f }\n\t"
                "    {r0 = r1; r1 = r0 }:endloop0\n\t"
                "2:\n\t"
                "%[pkt] = c20\n\t"
                "%[insn] = c21\n\t"
-               : [pkt] "=r"(pkt), [insn] "=r"(insn)
-               : : "r0", "r1", "r2", "sa0", "lc0", "p0");
+               "%[hvx] = c22\n\t"
+               : [pkt] "=r"(pkt), [insn] "=r"(insn), [hvx] "=r"(hvx)
+               : : "r0", "r1", "r2", "sa0", "lc0", "v0", "p0");
 
-  check("Packet", pkt, 9);
-  check("Instruction", insn, 14);
+  check("Packet", pkt, 12);
+  check("Instruction", insn, 17);
+  check("HVX", hvx, 3);
   puts(err ? "FAIL" : "PASS");
   return err;
 }
+#else
+int main () {puts ("NOT RUN"); return 0;}
+#endif
