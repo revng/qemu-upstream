@@ -1,0 +1,27 @@
+#include "qemu/osdep.h"
+#include "qemu/log.h"
+#include "cpu.h"
+#include "internal.h"
+#include "tcg/tcg-op.h"
+#include "insn.h"
+#include "opcodes.h"
+#include "translate.h"
+#include "genptr_helpers.h"
+
+#include "auto-tcg.h"
+
+void
+emit_J2_jump (DisasContext * ctx, Insn * insn, Packet * pkt, int riV)	/* J2_jump */
+/* { DECL_IMM(riV,0); fGEN_TCG_J2_jump({fIMMEXT(riV); (riV=riV & ~3); (PC=fREAD_PC()+riV);}); FREE_IMM(riV); } */
+{
+  int32_t qemu_tmp_0 = ~3;
+  int32_t qemu_tmp_1 = riV & qemu_tmp_0;
+  riV = qemu_tmp_1;
+  TCGv_i32 tmp_0 = tcg_temp_new_i32 ();
+  tcg_gen_mov_i32 (tmp_0, hex_gpr[HEX_REG_PC]);
+  TCGv_i32 tmp_1 = tcg_temp_new_i32 ();
+  tcg_gen_addi_i32 (tmp_1, tmp_0, riV);
+  tcg_temp_free_i32 (tmp_0);
+  gen_write_new_pc (tmp_1);
+  tcg_temp_free_i32 (tmp_1);
+}

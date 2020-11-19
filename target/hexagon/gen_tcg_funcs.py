@@ -441,7 +441,29 @@ def gen_tcg_func(f, tag, regs, imms):
         if (is_read(regid)):
             genptr_src_read_opn(f,regtype,regid,tag)
 
-    if ( skip_qemu_helper(tag) ):
+    if is_semantics_enabled(tag):
+        declared = []
+        ## Handle registers
+        for regtype,regid,toss,numregs in regs:
+            if is_pair(regid) or (is_single(regid) and is_old_val(regtype, regid, tag)):
+                declared.append("%s%sV" % (regtype, regid))
+                if regtype == "M":
+                    declared.append("%s%sN" % (regtype, regid))
+            elif is_new_val(regtype, regid, tag):
+                if regtype == "N":
+                    declared.append("%s%sX" % (regtype,regid))
+                else:
+                    declared.append("%s%sN" % (regtype,regid))
+            else:
+                print("Bad register parse: ",regtype,regid,toss,numregs)
+
+        ## Handle immediates
+        for immlett,bits,immshift in imms:
+            declared.append(imm_name(immlett))
+
+        f.write("    emit_%s(%s);\n" % (tag, ", ".join(["ctx", "insn", "pkt"] + declared)))
+
+    elif ( skip_qemu_helper(tag) ):
         f.write("    fGEN_TCG_%s(%s);\n" % (tag, semdict[tag]))
     else:
         ## Generate the call to the helper
@@ -501,6 +523,7 @@ def main():
     read_semantics_file(sys.argv[1])
     read_attribs_file(sys.argv[2])
     read_overrides_file(sys.argv[3])
+    read_semantics_enabled_file(sys.argv[4])
     calculate_attribs()
     tagregs = get_tagregs()
     tagimms = get_tagimms()
@@ -509,6 +532,8 @@ def main():
 
     f.write("#ifndef HEXAGON_TCG_FUNCS_H\n")
     f.write("#define HEXAGON_TCG_FUNCS_H\n\n")
+
+    f.write("#include \"auto-tcg.h\"\n\n")
 
     for tag in tags:
         ## Skip the priv instructions
@@ -529,7 +554,7 @@ def main():
 
     f.write("#endif    /* HEXAGON_TCG_FUNCS_H */\n")
 
-    realf = open(sys.argv[4], 'w')
+    realf = open(sys.argv[5], 'w')
     realf.write(f.getvalue())
     realf.close()
     f.close()
