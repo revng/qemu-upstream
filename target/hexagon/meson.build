@@ -22,6 +22,8 @@ prog_python = import('python').find_installation('python3')
 hex_common_py = 'hex_common.py'
 attribs_def_h = meson.current_source_dir() / 'attribs_def.h'
 gen_tcg_h = meson.current_source_dir() / 'gen_tcg.h'
+semantics_dir = meson.current_source_dir() / 'semantics'
+semantics_enabled = semantics_dir / 'enabled'
 
 #
 #  Step 1
@@ -73,7 +75,7 @@ tcg_funcs_h = custom_target(
     output: 'tcg_funcs_generated.h',
     input: 'gen_tcg_funcs.py',
     depend_files: [hex_common_py],
-    command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, '@OUTPUT@'],
+    command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, semantics_enabled, '@OUTPUT@'],
 )
 hexagon_ss.add(tcg_funcs_h)
 
@@ -176,5 +178,68 @@ hexagon_ss.add(files(
     'mmvec/decode_ext_mmvec.c',
     'mmvec/system_ext_mmvec.c',
 ))
+
+# TODO: change name
+tcg_funcs2_h = custom_target(
+    'tcg_funcs_generated2.h',
+    output: 'tcg_funcs_generated2.h',
+    input: 'gen_tcg_funcs_2.py',
+    depend_files: [hex_common_py],
+    command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, '@OUTPUT@'],
+)
+
+tcg_funcs2_h_prep = custom_target(
+    'tcg_funcs_generated2.prep.h',
+    output: 'tcg_funcs_generated2.prep.h',
+    input: tcg_funcs2_h,
+    capture: true,
+    depend_files: [hex_common_py],
+    command: ['@CURRENT_SOURCE_DIR@/semantics/prepare', '@INPUT@', '-I@CURRENT_SOURCE_DIR@/semantics/'],
+)
+
+flex = generator(find_program('flex'),
+                 output: '@PLAINNAME@.yy.c',
+                 arguments: ['-o', '@OUTPUT@', '@INPUT@'])
+
+bison = generator(find_program('bison'),
+                  output: ['@BASENAME@.tab.c', '@BASENAME@.tab.h'],
+                  arguments: ['@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@'])
+
+semantics = executable('semantics',
+                       [bison.process('semantics/semantics.y'),
+                        flex.process('semantics/semantics.lex'),
+                        'semantics/csvparser.c',
+                        'semantics/semantics_helpers.c'],
+                       include_directories: 'semantics')
+
+# @nizzo: uncomment this
+# auto_tcg = custom_target(
+#     'auto-tcg.c',
+#     output: ['auto-tcg.c', 'auto-tcg.h'],
+#     input: tcg_funcs2_h_prep,
+#     depend_files: [hex_common_py],
+#     command: [semantics, '@INPUT@', '@OUTPUT1@'],
+# )
+
+# @nizzo: comment this and...
+auto_tcg_h = custom_target(
+    'auto-tcg.h',
+    output: ['auto-tcg.h'],
+    input: tcg_funcs2_h_prep,
+    depend_files: [hex_common_py],
+    command: ['cp', semantics_dir / 'auto-tcg.h.original', '@OUTPUT@'],
+)
+
+# @nizzo: ...this
+auto_tcg_c = custom_target(
+    'auto-tcg.c',
+    output: ['auto-tcg.c'],
+    input: tcg_funcs2_h_prep,
+    depend_files: [hex_common_py],
+    depends: [auto_tcg_h],
+    command: ['cp', semantics_dir / 'auto-tcg.c.original', '@OUTPUT@'],
+)
+
+hexagon_ss.add(auto_tcg_c)
 
 target_arch += {'hexagon': hexagon_ss}

@@ -29,6 +29,7 @@ macros = {}           # macro -> macro information...
 attribinfo = {}       # Register information and misc
 tags = []             # list of all tags
 overrides = {}        # tags with helper overrides
+semantics_enabled = {} # tags enabled for semantics
 
 # We should do this as a hash for performance,
 # but to keep order let's keep it as a list.
@@ -189,6 +190,9 @@ def need_ea(tag):
 def skip_qemu_helper(tag):
     return tag in overrides.keys()
 
+def is_semantics_enabled(tag):
+    return tag in semantics_enabled
+
 def imm_name(immlett):
     return "%siV" % immlett
 
@@ -220,3 +224,9 @@ def read_overrides_file(name):
             continue
         tag = overridere.findall(line)[0]
         overrides[tag] = True
+
+def read_semantics_enabled_file(name):
+    global semantics_enabled
+    with open(name, "r") as semantics_enabled_file:
+        lines = semantics_enabled_file.read().strip().split("\n")
+        semantics_enabled = set(lines)

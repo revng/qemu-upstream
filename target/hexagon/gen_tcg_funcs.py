@@ -597,7 +597,29 @@ def gen_tcg_func(f, tag, regs, imms):
         if (hex_common.is_read(regid)):
             genptr_src_read_opn(f,regtype,regid,tag)
 
-    if ( hex_common.skip_qemu_helper(tag) ):
+    if is_semantics_enabled(tag):
+        declared = []
+        ## Handle registers
+        for regtype,regid,toss,numregs in regs:
+            if is_pair(regid) or (is_single(regid) and is_old_val(regtype, regid, tag)):
+                declared.append("%s%sV" % (regtype, regid))
+                if regtype == "M":
+                    declared.append("%s%sN" % (regtype, regid))
+            elif is_new_val(regtype, regid, tag):
+                if regtype == "N":
+                    declared.append("%s%sX" % (regtype,regid))
+                else:
+                    declared.append("%s%sN" % (regtype,regid))
+            else:
+                print("Bad register parse: ",regtype,regid,toss,numregs)
+
+        ## Handle immediates
+        for immlett,bits,immshift in imms:
+            declared.append(imm_name(immlett))
+
+        f.write("    emit_%s(%s);\n" % (tag, ", ".join(["ctx", "insn", "pkt"] + declared)))
+
+    elif ( hex_common.skip_qemu_helper(tag) ):
         f.write("    fGEN_TCG_%s(%s);\n" % (tag, hex_common.semdict[tag]))
     else:
         ## Generate the call to the helper
@@ -669,6 +691,7 @@ def main():
     hex_common.read_attribs_file(sys.argv[2])
     hex_common.read_overrides_file(sys.argv[3])
     hex_common.calculate_attribs()
+    read_semantics_enabled_file(sys.argv[4])
     tagregs = hex_common.get_tagregs()
     tagimms = hex_common.get_tagimms()
 
@@ -676,6 +699,8 @@ def main():
 
     f.write("#ifndef HEXAGON_TCG_FUNCS_H\n")
     f.write("#define HEXAGON_TCG_FUNCS_H\n\n")
+
+    f.write("#include \"auto-tcg.h\"\n\n")
 
     for tag in hex_common.tags:
         ## Skip the priv instructions
@@ -696,7 +721,7 @@ def main():
 
     f.write("#endif    /* HEXAGON_TCG_FUNCS_H */\n")
 
-    realf = open(sys.argv[4], 'w')
+    realf = open(sys.argv[5], 'w')
     realf.write(f.getvalue())
     realf.close()
     f.close()
