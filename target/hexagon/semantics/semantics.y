@@ -360,8 +360,8 @@ assign_statement  : lvalue ASSIGN rvalue
                     @1.last_column = @12.last_column;
                     /* Memop width is specified in the load macro */
                     int bit_width = ($5.imm.value > 4) ? 64 : 32;
-                    char *sign_suffix = ($5.imm.value > 4) ? "" : (($7) ? "u" : "s");
-                    char *helper_suffix = ($7) ? "u" : "s";
+                    const char *sign_suffix = ($5.imm.value > 4) ? "" : (($7) ? "u" : "s");
+                    const char *helper_suffix = ($7) ? "u" : "s";
                     char size_suffix[4] = { 0 };
                     /* Create temporary variable (if not present) */
                     if ($11.type == VARID)
@@ -535,7 +535,7 @@ if_stmt      : IF
              {
                @1.last_column = @3.last_column;
                rvalue_materialize(c, &@1, &$4);
-               char *bit_suffix = ($4.bit_width == 64) ? "i64" : "i32";
+               const char *bit_suffix = ($4.bit_width == 64) ? "i64" : "i32";
                OUT(c, &@1, "tcg_gen_brcondi_", bit_suffix, "(TCG_COND_EQ, ", &$4,
                    ", 0, if_label_", &c->inst.if_count, ");\n");
                rvalue_free(c, &@1, &$4);
@@ -732,7 +732,7 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | NOT rvalue
                   {
                     @1.last_column = @2.last_column;
-                    char * bit_suffix = ($2.bit_width == 64) ? "i64" : "i32";
+                    const char * bit_suffix = ($2.bit_width == 64) ? "i64" : "i32";
                     int bit_width = ($2.bit_width == 64) ? 64 : 32;
                     t_hex_value res;
                     res.is_unsigned = $2.is_unsigned;
@@ -755,7 +755,7 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | NOTL rvalue
                   {
                     @1.last_column = @2.last_column;
-                    char * bit_suffix = ($2.bit_width == 64) ? "i64" : "i32";
+                    const char * bit_suffix = ($2.bit_width == 64) ? "i64" : "i32";
                     int bit_width = ($2.bit_width == 64) ? 64 : 32;
                     t_hex_value res;
                     res.is_unsigned = $2.is_unsigned;
@@ -905,7 +905,7 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | ABS rvalue
                   {
                     @1.last_column = @2.last_column;
-                    char * bit_suffix = ($2.bit_width == 64) ? "i64" : "i32";
+                    const char * bit_suffix = ($2.bit_width == 64) ? "i64" : "i32";
                     int bit_width = ($2.bit_width == 64) ? 64 : 32;
                     t_hex_value res;
                     res.is_unsigned = $2.is_unsigned;
@@ -964,7 +964,7 @@ rvalue            : assign_statement            { /* does nothing */ }
                   | MINUS rvalue
                   {
                     @1.last_column = @2.last_column;
-                    char * bit_suffix = ($2.bit_width == 64) ? "i64" : "i32";
+                    const char * bit_suffix = ($2.bit_width == 64) ? "i64" : "i32";
                     int bit_width = ($2.bit_width == 64) ? 64 : 32;
                     t_hex_value res;
                     res.is_unsigned = $2.is_unsigned;
@@ -1122,7 +1122,11 @@ int main(int argc, char **argv)
     long input_size = ftell(input_file);
     context.input_buffer = (char *) calloc(input_size+1, sizeof(char));
     fseek(input_file, 0L, SEEK_SET);
-    fread(context.input_buffer, sizeof(char), input_size, input_file);
+    size_t read_chars = fread(context.input_buffer, sizeof(char), input_size, input_file);
+    if (read_chars != input_size) {
+        fprintf(stderr, "Error: an error occurred while reading input file!\n");
+        return -1;
+    }
     yylex_init(&context.scanner);
     YY_BUFFER_STATE buffer;
     buffer = yy_scan_string(context.input_buffer, context.scanner);
