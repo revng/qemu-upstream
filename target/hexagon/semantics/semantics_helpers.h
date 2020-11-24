@@ -191,13 +191,13 @@ t_hex_value gen_extend_op(context_t *c,
                           t_hex_value *value,
                           bool is_unsigned);
 
-t_hex_value gen_rdeposit_op(context_t *c,
+void gen_rdeposit_op(context_t *c,
                            YYLTYPE *locp,
                            t_hex_value *dest,
                            t_hex_value *value,
                            t_hex_range *range);
 
-t_hex_value gen_deposit_op(context_t *c,
+void gen_deposit_op(context_t *c,
                            YYLTYPE *locp,
                            t_hex_value *dest,
                            t_hex_value *value,
@@ -217,7 +217,7 @@ t_hex_value gen_extract_op(context_t *c,
 
 t_hex_value gen_read_creg(context_t *c, YYLTYPE *locp, t_hex_value *reg);
 
-t_hex_value gen_write_creg(context_t *c,
+void gen_write_creg(context_t *c,
                            YYLTYPE *locp,
                            t_hex_value *reg,
                            t_hex_value *value);

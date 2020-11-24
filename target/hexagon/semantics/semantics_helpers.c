@@ -117,6 +117,8 @@ void reg_compose(context_t *c, YYLTYPE *locp, t_hex_reg *reg, char reg_id[5]) {
       case MODIFIER:
           reg_id[0] = 'M';
           break;
+      default:
+          ; /* The DOTNEW case is managed by the upper level function */
     }
     switch (reg->bit_width) {
       case 32:
@@ -295,7 +297,7 @@ t_hex_value gen_imm_value(context_t *c __attribute__((unused)), YYLTYPE *locp, i
 
 void rvalue_free(context_t *c, YYLTYPE *locp, t_hex_value *rvalue) {
     if (rvalue->type == TEMP) {
-        char * bit_suffix = (rvalue->bit_width == 64) ? "i64" : "i32";
+        const char * bit_suffix = (rvalue->bit_width == 64) ? "i64" : "i32";
         OUT(c, locp, "tcg_temp_free_", bit_suffix, "(", rvalue, ");\n");
     }
 }
@@ -303,7 +305,7 @@ void rvalue_free(context_t *c, YYLTYPE *locp, t_hex_value *rvalue) {
 void rvalue_materialize(context_t *c, YYLTYPE *locp, t_hex_value *rvalue) {
     if (rvalue->type == IMMEDIATE) {
         t_hex_value tmp = gen_tmp(c, locp, rvalue->bit_width);
-        char * bit_suffix = (rvalue->bit_width == 64) ? "i64" : "i32";
+        const char * bit_suffix = (rvalue->bit_width == 64) ? "i64" : "i32";
         OUT(c, locp, "tcg_gen_movi_", bit_suffix, "(", &tmp, ", ", rvalue, ");\n");
         tmp.is_symbol = rvalue->is_symbol;
         rvalue_free(c, locp, rvalue);
@@ -317,7 +319,7 @@ void rvalue_extend(context_t *c, YYLTYPE *locp, t_hex_value *rvalue) {
     else {
         if (rvalue->bit_width == 32) {
             t_hex_value tmp = gen_tmp(c, locp, 64);
-            char * sign_suffix = (rvalue->is_unsigned) ? "u" : "";
+            const char * sign_suffix = (rvalue->is_unsigned) ? "u" : "";
             OUT(c, locp, "tcg_gen_ext", sign_suffix, "_i32_i64(", &tmp, ", ", rvalue, ");\n");
             rvalue_free(c, locp, rvalue);
             *rvalue = tmp;
@@ -385,7 +387,7 @@ t_hex_value gen_bin_cmp(context_t *c,
        if at least one is 64 bit use a 64bit operation,
        eventually extend 32bit operands. */
     bool op_is64bit = op1->bit_width == 64 || op2->bit_width == 64;
-    char * bit_suffix = op_is64bit ? "i64" : "i32";
+    const char * bit_suffix = op_is64bit ? "i64" : "i32";
     int bit_width = (op_is64bit) ? 64 : 32;
     if (op_is64bit) {
         switch(op_types) {
@@ -466,7 +468,6 @@ t_hex_value gen_bin_op(context_t *c,
     t_hex_value op2 = *operand2;
 
     int op_types = (op1.type != IMMEDIATE) << 1 | (op2.type != IMMEDIATE);
-    int op_signedness = op1.is_unsigned << 1 | op2.is_unsigned;
 
     /* Find bit width of the two operands,
        if at least one is 64 bit use a 64bit operation,
@@ -476,7 +477,7 @@ t_hex_value gen_bin_op(context_t *c,
     if (type == ASL_OP && op2.type == IMMEDIATE &&
         op2.imm.type == VALUE && op2.imm.value >= 32)
         op_is64bit = true;
-    char * bit_suffix = op_is64bit ? "i64" : "i32";
+    const char * bit_suffix = op_is64bit ? "i64" : "i32";
     int bit_width = (op_is64bit) ? 64 : 32;
     /* Handle bit width */
     if (op_is64bit) {
@@ -925,11 +926,11 @@ t_hex_value gen_extend_op(context_t *c,
     return res;
 }
 
-t_hex_value gen_rdeposit_op(context_t *c,
-                           YYLTYPE *locp,
-                           t_hex_value *dest,
-                           t_hex_value *value,
-                           t_hex_range *range) {
+void gen_rdeposit_op(context_t *c,
+                     YYLTYPE *locp,
+                     t_hex_value *dest,
+                     t_hex_value *value,
+                     t_hex_range *range) {
     int bit_width = (dest->bit_width == 64) ? 64 : 32;
     int begin = range->begin;
     int end = range->end;
@@ -955,12 +956,12 @@ t_hex_value gen_rdeposit_op(context_t *c,
     rvalue_free(c, locp, value);
 }
 
-t_hex_value gen_deposit_op(context_t *c,
-                           YYLTYPE *locp,
-                           t_hex_value *dest,
-                           t_hex_value *value,
-                           t_hex_value *index,
-                           t_hex_cast *cast) {
+void gen_deposit_op(context_t *c,
+                    YYLTYPE *locp,
+                    t_hex_value *dest,
+                    t_hex_value *value,
+                    t_hex_value *index,
+                    t_hex_cast *cast) {
     yyassert(c, locp, index->type == IMMEDIATE,
              "Deposit index must be immediate!\n");
     int bit_width = (dest->bit_width == 64) ? 64 : 32;
@@ -1018,10 +1019,10 @@ t_hex_value gen_read_creg(context_t *c, YYLTYPE *locp, t_hex_value *reg) {
     return *reg;
 }
 
-t_hex_value gen_write_creg(context_t *c,
-                           YYLTYPE *locp,
-                           t_hex_value *reg,
-                           t_hex_value *value) {
+void gen_write_creg(context_t *c,
+                    YYLTYPE *locp,
+                    t_hex_value *reg,
+                    t_hex_value *value) {
     rvalue_truncate(c, locp, value);
     rvalue_materialize(c, locp, value);
     OUT(c, locp, "LOG_REG_WRITE(", creg_str[(uint8_t)reg->reg.id], ", ", value, ");\n");
@@ -1108,7 +1109,7 @@ t_hex_value gen_bitcnt_op(context_t *c, YYLTYPE *locp, t_hex_value *source,
                           bool negate,
                           bool reverse)
 {
-    char * bit_suffix = source->bit_width == 64 ? "64" : "32";
+    const char * bit_suffix = source->bit_width == 64 ? "64" : "32";
     t_hex_value res = gen_tmp(c, locp, source->bit_width == 64 ? 64 : 32);
     res.type = TEMP;
     rvalue_materialize(c, locp, source);
@@ -1138,7 +1139,7 @@ t_hex_value gen_bitcnt_op(context_t *c, YYLTYPE *locp, t_hex_value *source,
 
 t_hex_value gen_ctpop_op(context_t *c, YYLTYPE *locp, t_hex_value *source)
 {
-    char * bit_suffix = source->bit_width == 64 ? "64" : "32";
+    const char * bit_suffix = source->bit_width == 64 ? "64" : "32";
     t_hex_value res = gen_tmp(c, locp, source->bit_width == 64 ? 64 : 32);
     res.type = TEMP;
     rvalue_materialize(c, locp, source);

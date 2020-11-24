@@ -188,8 +188,8 @@ typedef struct t_hex_value
  * gen_bin_op() function, which in turn will generate the correct code to
  * execute the operation between the two rvalues
  */
-enum op_type {ADD_OP, SUB_OP, MUL_OP, DIV_OP, ASL_OP, ASR_OP, LSR_OP, ROL_OP,
-              ANDB_OP, ORB_OP, XORB_OP, ANDL_OP, MINI_OP, MAXI_OP, MOD_OP};
+enum op_type {ADD_OP, SUB_OP, MUL_OP, DIV_OP, ASL_OP, ASR_OP, LSR_OP, ANDB_OP,
+              ORB_OP, XORB_OP, ANDL_OP, MINI_OP, MAXI_OP, MOD_OP};
 
 /**
  * Data structure including instruction specific information, to be cleared
