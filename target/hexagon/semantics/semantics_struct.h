@@ -29,9 +29,9 @@
 #define OFFSET_STR_LEN 32
 #define ALLOC_LIST_LEN 32
 #define ALLOC_NAME_SIZE 32
-#define INIT_LIST_LEN 16
+#define INIT_LIST_LEN 32
 #define OUT_BUF_LEN 1024 * 1024
-#define SIGNATURE_BUF_LEN 1024
+#define SIGNATURE_BUF_LEN 128 * 1024
 
 /**
  * Type of register, assigned to the t_hex_reg.type field
@@ -192,29 +192,42 @@ enum op_type {ADD_OP, SUB_OP, MUL_OP, DIV_OP, ASL_OP, ASR_OP, LSR_OP, ROL_OP,
               ANDB_OP, ORB_OP, XORB_OP, ANDL_OP, MINI_OP, MAXI_OP, MOD_OP};
 
 /**
- * Data structure representing the whole translation context, which in a
- * reentrant flex/bison parser just like ours is passed between the scanner
- * and the parser, holding all the necessary information to perform the
- * parsing
- *
+ * Data structure including instruction specific information, to be cleared
+ * out after the compilation of each instruction
  */
-typedef struct context_t {
-    void *scanner;                /**< Reentrant parser state pointer        */
+typedef struct inst_t {
+    char *name;                   /**< Name of the compiled instruction      */
+    char *code_begin;             /**< Beginning of instruction input code   */
+    char *code_end;               /**< End of instruction input code         */
     int tmp_count;                /**< Index of the last declared TCGv temp  */
     int qemu_tmp_count;           /**< Index of the last declared int temp   */
     int if_count;                 /**< Index of the last declared if label   */
-    const char *inst_name;        /**< Name of the compiled instruction      */
-    const char *inst_code;        /**< Input description of the instruction  */
     int error_count;              /**< Number of generated errors            */
-    char *out_buffer;             /**< Buffer containing the output code     */
-    int out_c;                    /**< Characters emitted into out_buffer    */
-    char *signature_buffer;       /**< Buffer containing the signatures code */
-    int signature_c;              /**< Characters emitted into sig..._buffer */
     t_var allocated[ALLOC_LIST_LEN]; /**< Allocated VARID automatic vars     */
     int allocated_count;          /**< Elements contained in allocated[]     */
     t_hex_value init_list[INIT_LIST_LEN]; /**< List of initialized registers */
     int init_count;               /**< Number of members of init_list        */
+} inst_t;
+
+/**
+ * Data structure representing the whole translation context, which in a
+ * reentrant flex/bison parser just like ours is passed between the scanner
+ * and the parser, holding all the necessary information to perform the
+ * parsing, this data structure survives between the compilation of different
+ * instructions
+ *
+ */
+typedef struct context_t {
+    void *scanner;                /**< Reentrant parser state pointer        */
+    char *input_buffer;           /**< Buffer containing the input code      */
+    char *out_buffer;             /**< Buffer containing the output code     */
+    int out_c;                    /**< Characters emitted into out_buffer    */
+    char *signature_buffer;       /**< Buffer containing the signatures code */
+    int signature_c;              /**< Characters emitted into sig..._buffer */
     FILE *defines_file;           /**< File struct of the generated header   */
+    int total_insn;               /**< Number of instructions in input file  */
+    int implemented_insn;         /**< Instruction compiled without errors   */
+    inst_t inst;                  /**< Parsing data of the current inst      */
 } context_t;
 
 #endif /* SEMANTICS_STRUCT_H */

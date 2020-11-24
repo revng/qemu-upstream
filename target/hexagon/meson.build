@@ -210,34 +210,15 @@ semantics = executable('semantics',
                         'semantics/semantics_helpers.c'],
                        include_directories: 'semantics')
 
-# @nizzo: uncomment this
-# auto_tcg = custom_target(
-#     'auto-tcg.c',
-#     output: ['auto-tcg.c', 'auto-tcg.h'],
-#     input: tcg_funcs2_h_prep,
-#     depend_files: [hex_common_py],
-#     command: [semantics, '@INPUT@', '@OUTPUT1@'],
-# )
-
-# @nizzo: comment this and...
-auto_tcg_h = custom_target(
-    'auto-tcg.h',
-    output: ['auto-tcg.h'],
-    input: tcg_funcs2_h_prep,
-    depend_files: [hex_common_py],
-    command: ['cp', semantics_dir / 'auto-tcg.h.original', '@OUTPUT@'],
-)
-
-# @nizzo: ...this
-auto_tcg_c = custom_target(
+auto_tcg = custom_target(
     'auto-tcg.c',
     output: ['auto-tcg.c'],
     input: tcg_funcs2_h_prep,
+    capture: true,
     depend_files: [hex_common_py],
-    depends: [auto_tcg_h],
-    command: ['cp', semantics_dir / 'auto-tcg.c.original', '@OUTPUT@'],
+    command: [semantics, '@INPUT@', 'auto-tcg.h'],
 )
 
-hexagon_ss.add(auto_tcg_c)
+hexagon_ss.add(auto_tcg)
 
 target_arch += {'hexagon': hexagon_ss}
