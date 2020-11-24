@@ -48,32 +48,31 @@ void yyerror(YYLTYPE *locp,
              context_t *c,
              const char *s)
 {
-    const char *code_ptr = c->inst_code;
+    const char *code_ptr = c->input_buffer;
+
     fprintf(stderr, "WARNING: '%s'\n", s);
 
     fprintf(stderr, "Problematic range: ");
-    for(int i = 0; i < locp->last_column - locp->first_column; i++)
-        fprintf(stderr, "%c", code_ptr[locp->first_column + i - 1]);
+    for(int i = locp->first_column; i < locp->last_column; i++) {
+        if (code_ptr[i] != '\n')
+            fprintf(stderr, "%c", code_ptr[i]);
+    }
     fprintf(stderr, "\n");
 
-    if(locp->first_column > 40) {
-        for(int i = 0; i < 80 && code_ptr[i] != '\0'; i++)
-            fprintf(stderr, "%c", code_ptr[locp->first_column - ERR_LINE_CONTEXT + i]);
-        fprintf(stderr, "\n");
-        for(int i = 0; i < ERR_LINE_CONTEXT - 1; i++)
-            fprintf(stderr, " ");
-    } else {
-        for(int i = 0; i < 80 && code_ptr[i] != '\0'; i++)
-            fprintf(stderr, "%c", code_ptr[i]);
-        fprintf(stderr, "\n");
-        for(int i = 0; i < locp->first_column - 1; i++)
-            fprintf(stderr, " ");
-    }
+    for(int i = 0;
+            i < 80 &&
+            code_ptr[locp->first_column-10+i] != '\0' &&
+            code_ptr[locp->first_column-10+i] != '\n';
+            i++)
+        fprintf(stderr, "%c", code_ptr[locp->first_column-10+i]);
+    fprintf(stderr, "\n");
+    for(int i = 0; i < 9; i++)
+        fprintf(stderr, " ");
     fprintf(stderr, "^");
     for(int i = 0; i < (locp->last_column - locp->first_column) - 1; i++)
         fprintf(stderr, "~");
     fprintf(stderr, "\n");
-    c->error_count++;
+    c->inst.error_count++;
 }
 
 bool is_direct_predicate(t_hex_value *value) {
@@ -198,14 +197,18 @@ void rvalue_out(context_t *c, YYLTYPE *locp, void *pointer) {
 
 /* Copy output code buffer into stdout */
 void commit(context_t *c) {
-    printf("#ifdef fAUTO_GEN_TCG_%s\n", c->inst_name);
+    /* Emit instruction pseudocode */
+    EMIT_SIG("\n/* ");
+    for(char *x = c->inst.code_begin; x < c->inst.code_end; x++)
+        EMIT_SIG("%c", *x);
+    EMIT_SIG(" */\n");
+
+    /* Commit instruction code to output file */
     fwrite(c->signature_buffer, sizeof(char), c->signature_c, stdout);
     fwrite(c->out_buffer, sizeof(char), c->out_c, stdout);
-    puts("#endif\n");
 
     fwrite(c->signature_buffer, sizeof(char), c->signature_c, c->defines_file);
     fprintf(c->defines_file, ";\n");
-    c->out_c = 0;
 }
 
 const char *cmp_swap(context_t *c, YYLTYPE *locp, const char *type) {
@@ -242,10 +245,10 @@ t_hex_value gen_tmp(context_t *c, YYLTYPE *locp, int bit_width) {
     rvalue.is_unsigned = false;
     rvalue.is_dotnew = false;
     rvalue.is_symbol = false;
-    rvalue.tmp.index = c->tmp_count;
-    OUT(c, locp, "TCGv_i", &bit_width, " tmp_", &c->tmp_count, " = tcg_temp_new_i",
+    rvalue.tmp.index = c->inst.tmp_count;
+    OUT(c, locp, "TCGv_i", &bit_width, " tmp_", &c->inst.tmp_count, " = tcg_temp_new_i",
         &bit_width, "();\n");
-    c->tmp_count++;
+    c->inst.tmp_count++;
     return rvalue;
 }
 
@@ -257,24 +260,24 @@ t_hex_value gen_local_tmp(context_t *c, YYLTYPE *locp, int bit_width) {
     rvalue.is_unsigned = false;
     rvalue.is_dotnew = false;
     rvalue.is_symbol = false;
-    rvalue.tmp.index = c->tmp_count;
-    OUT(c, locp, "TCGv_i", &bit_width, " tmp_", &c->tmp_count, " = tcg_temp_local_new_i",
+    rvalue.tmp.index = c->inst.tmp_count;
+    OUT(c, locp, "TCGv_i", &bit_width, " tmp_", &c->inst.tmp_count, " = tcg_temp_local_new_i",
         &bit_width, "();\n");
-    c->tmp_count++;
+    c->inst.tmp_count++;
     return rvalue;
 }
 
-t_hex_value gen_tmp_value(context_t *c, YYLTYPE *locp, char * value, int bit_width) {
+t_hex_value gen_tmp_value(context_t *c, YYLTYPE *locp, const char * value, int bit_width) {
     t_hex_value rvalue;
     rvalue.type = TEMP;
     rvalue.bit_width = bit_width;
     rvalue.is_unsigned = false;
     rvalue.is_dotnew = false;
     rvalue.is_symbol = false;
-    rvalue.tmp.index = c->tmp_count;
-    OUT(c, locp, "TCGv_i", &bit_width, " tmp_", &c->tmp_count, " = tcg_const_i", &bit_width, "(",
+    rvalue.tmp.index = c->inst.tmp_count;
+    OUT(c, locp, "TCGv_i", &bit_width, " tmp_", &c->inst.tmp_count, " = tcg_const_i", &bit_width, "(",
         value, ");\n");
-    c->tmp_count++;
+    c->inst.tmp_count++;
     return rvalue;
 }
 
@@ -338,26 +341,26 @@ void rvalue_truncate(context_t *c, YYLTYPE *locp, t_hex_value *rvalue) {
 void varid_allocate(context_t *c, YYLTYPE *locp, t_hex_value *varid, int width, bool is_unsigned) {
     bool found = false;
     varid->bit_width = width;
-    char * bit_suffix = width == 64 ? "64" : "32";
-    yyassert(c, locp, c->allocated_count < ALLOC_LIST_LEN,
+    const char * bit_suffix = width == 64 ? "64" : "32";
+    yyassert(c, locp, c->inst.allocated_count < ALLOC_LIST_LEN,
              "Too many automatic variables required!");
-    for(int i = 0; i < c->allocated_count; i++) {
-        if(!strcmp(varid->var.name, c->allocated[i].name)) {
+    for(int i = 0; i < c->inst.allocated_count; i++) {
+        if(!strcmp(varid->var.name, c->inst.allocated[i].name)) {
             found = true;
             free((char *) varid->var.name);
-            varid->var.name = c->allocated[i].name;
-            varid->bit_width = c->allocated[i].bit_width;
-            varid->is_unsigned = c->allocated[i].is_unsigned;
+            varid->var.name = c->inst.allocated[i].name;
+            varid->bit_width = c->inst.allocated[i].bit_width;
+            varid->is_unsigned = c->inst.allocated[i].is_unsigned;
             break;
         }
     }
     if (!found) {
         OUT(c, locp, "TCGv_i", bit_suffix, " ", varid);
         OUT(c, locp, " = tcg_temp_local_new_i", bit_suffix, "();\n");
-        c->allocated[c->allocated_count].name = varid->var.name;
-        c->allocated[c->allocated_count].bit_width = width;
-        c->allocated[c->allocated_count].is_unsigned = is_unsigned;
-        c->allocated_count++;
+        c->inst.allocated[c->inst.allocated_count].name = varid->var.name;
+        c->inst.allocated[c->inst.allocated_count].bit_width = width;
+        c->inst.allocated[c->inst.allocated_count].is_unsigned = is_unsigned;
+        c->inst.allocated_count++;
     }
 }
 
@@ -499,7 +502,7 @@ t_hex_value gen_bin_op(context_t *c,
         res.is_dotnew = false;
         res.is_symbol = false;
         res.imm.type = QEMU_TMP;
-        res.imm.index = c->qemu_tmp_count;
+        res.imm.index = c->inst.qemu_tmp_count;
     }
     /* Handle signedness, if both unsigned -> result is unsigned, else signed */
     res.is_unsigned = op1.is_unsigned && &op2.is_unsigned;
@@ -845,7 +848,7 @@ t_hex_value gen_bin_op(context_t *c,
     if (!op2.is_symbol)
         rvalue_free(c, locp, &op2);
     if (op_types == IMM_IMM)
-        c->qemu_tmp_count++;
+        c->inst.qemu_tmp_count++;
     return res;
 
 #undef IMM_IMM
@@ -1009,7 +1012,7 @@ t_hex_value gen_extract_op(context_t *c,
 t_hex_value gen_read_creg(context_t *c, YYLTYPE *locp, t_hex_value *reg) {
     if (reg->reg.type == CONTROL) {
         t_hex_value tmp = gen_tmp_value(c, locp, "0", 32);
-        OUT(c, locp, "READ_REG(", &tmp, ", ", creg_str[reg->reg.id], ");\n");
+        OUT(c, locp, "READ_REG(", &tmp, ", ", creg_str[(uint8_t)reg->reg.id], ");\n");
         return tmp;
     }
     return *reg;
@@ -1021,7 +1024,7 @@ t_hex_value gen_write_creg(context_t *c,
                            t_hex_value *value) {
     rvalue_truncate(c, locp, value);
     rvalue_materialize(c, locp, value);
-    OUT(c, locp, "LOG_REG_WRITE(", creg_str[reg->reg.id], ", ", value, ");\n");
+    OUT(c, locp, "LOG_REG_WRITE(", creg_str[(uint8_t)reg->reg.id], ", ", value, ");\n");
     rvalue_free(c, locp, value);
 }
 
@@ -1163,10 +1166,12 @@ bool rvalue_equal(t_hex_value *v1, t_hex_value *v2) {
 }
 
 void emit_header(context_t *c) {
-    EMIT("/* %s */\n", c->inst_name);
-    EMIT("/* %s */\n", c->inst_code);
+    EMIT_SIG("/* %s */\n", c->inst.name);
+    EMIT_SIG("void emit_%s(DisasContext *ctx, Insn *insn, Packet *pkt",
+             c->inst.name);
 }
 
 void emit_footer(context_t *c) {
     EMIT("}\n");
+    EMIT("\n");
 }

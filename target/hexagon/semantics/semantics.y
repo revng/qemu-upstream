@@ -18,7 +18,6 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "csvparser.h"
 #include "semantics_struct.h"
 #include "semantics_helpers.h"
 #include "semantics.tab.h"
@@ -38,6 +37,7 @@
                                                  SIGNATURE_BUF_LEN -   \
                                                  c->signature_c,       \
                                                  __VA_ARGS__);
+
 %}
 
 %lex-param {void *scanner}
@@ -51,6 +51,7 @@
 %locations
 
 %union {
+    char *string;
     t_hex_value rvalue;
     t_hex_sat sat;
     t_hex_cast cast;
@@ -61,16 +62,16 @@
 }
 
 /* Tokens */
-%start code
+%start input
 
 %expect 1
 
-%token DREG DIMM DPRE DEA RREG WREG FREG FIMM RPRE WPRE FPRE FWRAP FEA PART1
+%token INAME DREG DIMM DPRE DEA RREG WREG FREG FIMM RPRE WPRE FPRE FWRAP FEA
 %token VAR LBR RBR LPAR RPAR LSQ RSQ SEMI COLON PLUS MINUS MUL POW DIV MOD ABS
 %token CROUND ROUND CIRCADD COUNTONES AND OR XOR NOT ASSIGN INC DEC ANDA ORA
 %token XORA PLUSPLUS LT GT ASL ASR LSR EQ NEQ LTE GTE MIN MAX ANDL ORL NOTL
 %token COMMA FOR ICIRC IF MUN FSCR FCHK SXT ZXT NEW CONSTEXT LOCNT BREV SIGN
-%token LOAD STORE CONSTLL CONSTULL PC NPC LPCFG CANC QMARK IDENTITY
+%token LOAD STORE CONSTLL CONSTULL PC NPC LPCFG CANC QMARK IDENTITY PART1
 
 %token <rvalue> REG IMM PRE
 %token <index> ELSE
@@ -78,6 +79,7 @@
 %token <sat> SAT
 %token <cast> CAST EXTRACT DEPOSIT
 %token <range> SETBITS INSBITS INSRANGE EXTBITS EXTRANGE
+%type <string> INAME
 %type <rvalue> rvalue lvalue VAR assign_statement pre
 %type <rvalue> DREG DIMM DPRE RREG RPRE
 %type <index> if_stmt IF
@@ -112,34 +114,77 @@
 /* Bison Grammar */
 %%
 
+/* Input file containing the description of each hexagon instruction */
+input        : instructions
+             {
+                YYACCEPT;
+             }
+;
+
+instructions : instruction instructions
+             | %empty
+;
+
+instruction : INAME 
+            {
+              c->total_insn++;
+              c->inst.name = $1;
+              fprintf(stderr, "Compiling: %s\n", c->inst.name);
+            }
+            code 
+            {
+              if (c->inst.error_count != 0) {
+                  fprintf(stderr,
+                          "Parsing of instruction %s generated %d errors!\n",
+                          c->inst.name,
+                          c->inst.error_count);
+                  EMIT("assert(false && \"This instruction is not implemented!\");");
+              } else {
+                  c->implemented_insn++;
+                  emit_footer(c);
+                  commit(c);
+              }
+              /* Reset buffers */
+              c->signature_c = 0;
+              c->out_c = 0;
+              /* Free allocated register tracking */
+              for(int i = 0; i < c->inst.allocated_count; i++) {
+                  free((char *)c->inst.allocated[i].name);
+              }
+              /* Free INAME token value */
+              free(c->inst.name);
+              /* Initialize instruction-specific portion of the context */
+              memset(&(c->inst), 0, sizeof(inst_t));
+            }
+            | error /* Recover gracefully after instruction compilation error */
+;
+
 /* Return the modified registers list */
 code  : LBR
       {
-        EMIT_SIG("void emit_%s(DisasContext *ctx, "
-                 "insn_t *insn, packet_t *pkt",
-                 c->inst_name);
+        emit_header(c);
       }
       decls
       {
         EMIT_SIG(")");
-        OUT(c, &@1, "\n{");
+        OUT(c, &@1, "{\n");
 
         /* Initialize declared but uninitialized registers,
            but only for non-conditional instructions */
-        for (int i = 0; i < c->init_count; i++) {
-            bool is64 = c->init_list[i].bit_width == 64;
+        for (int i = 0; i < c->inst.init_count; i++) {
+            bool is64 = c->inst.init_list[i].bit_width == 64;
             const char *type = is64 ? "i64" : "i32";
-            if (c->init_list[i].type == REGISTER) {
-              OUT(c, &@1, "tcg_gen_movi_", type, "(", &(c->init_list[i]), ", 0);\n");
-            } else if (c->init_list[i].type == PREDICATE) {
-              char suffix = c->init_list[i].is_dotnew ? 'N' : 'V';
-              OUT(c, &@1, "tcg_gen_movi_", type, "(", &(c->init_list[i]), ", 0);\n");
+            if (c->inst.init_list[i].type == REGISTER) {
+              OUT(c, &@1, "tcg_gen_movi_", type, "(", &(c->inst.init_list[i]), ", 0);\n");
+            } else if (c->inst.init_list[i].type == PREDICATE) {
+              OUT(c, &@1, "tcg_gen_movi_", type, "(", &(c->inst.init_list[i]), ", 0);\n");
             }
         }
       }
-      FWRAP statements RPAR SEMI decls RBR
+      statements decls RBR
       {
-         YYACCEPT;
+        c->inst.code_begin = c->input_buffer + @5.first_column; 
+        c->inst.code_end = c->input_buffer + @5.last_column - 1; 
       }
 ;
 
@@ -159,11 +204,11 @@ decl  : DREG
             EMIT_SIG(", %s %s", type, reg_id);
             /* MuV register requires also MuN to provide its index */
             if ($1.reg.type == MODIFIER)
-              EMIT_SIG(", int MuN", type);
+              EMIT_SIG(", int MuN");
           }
           /* Enqueue register into initialization list */
-          c->init_list[c->init_count] = $1;
-          c->init_count++;
+          c->inst.init_list[c->inst.init_count] = $1;
+          c->inst.init_count++;
       }
       | DIMM
       {
@@ -174,18 +219,18 @@ decl  : DREG
         char suffix = $1.is_dotnew ? 'N' : 'V';
         EMIT_SIG(", TCGv P%c%c", $1.pre.id, suffix);
         /* Enqueue predicate into initialization list */
-        c->init_list[c->init_count] = $1;
-        c->init_count++;
+        c->inst.init_list[c->inst.init_count] = $1;
+        c->inst.init_count++;
       }
       | DEA
       | RREG
       {
         /* Remove register from initialization list */
-        int iter_count = c->init_count;
+        int iter_count = c->inst.init_count;
         for (int i = 0; i < iter_count; i++) {
-            if (rvalue_equal(&($1), &(c->init_list[i]))) {
-                c->init_list[i] = c->init_list[c->init_count-1];
-                c->init_count--;
+            if (rvalue_equal(&($1), &(c->inst.init_list[i]))) {
+                c->inst.init_list[i] = c->inst.init_list[c->inst.init_count-1];
+                c->inst.init_count--;
             }
         }
       }
@@ -195,11 +240,11 @@ decl  : DREG
       | RPRE
       {
         /* Remove predicate from initialization list */
-        int iter_count = c->init_count;
+        int iter_count = c->inst.init_count;
         for (int i = 0; i < iter_count; i++) {
-            if (rvalue_equal(&($1), &(c->init_list[i]))) {
-                c->init_list[i] = c->init_list[c->init_count-1];
-                c->init_count--;
+            if (rvalue_equal(&($1), &(c->inst.init_list[i]))) {
+                c->inst.init_list[i] = c->inst.init_list[c->inst.init_count-1];
+                c->inst.init_count--;
             }
         }
       }
@@ -432,9 +477,9 @@ if_statement : if_stmt
              {
                @1.last_column = @2.last_column;
                /* Generate label to jump if else is not verified */
-               OUT(c, &@1, "TCGLabel *if_label_", &c->if_count, " = gen_new_label();\n");
-               $2 = c->if_count;
-               c->if_count++;
+               OUT(c, &@1, "TCGLabel *if_label_", &c->inst.if_count, " = gen_new_label();\n");
+               $2 = c->inst.if_count;
+               c->inst.if_count++;
                /* Jump out of the else statement */
                OUT(c, &@1, "tcg_gen_br(if_label_", &$2, ");\n");
                /* Fix the else label */
@@ -484,7 +529,7 @@ fpart1_statement : PART1
 if_stmt      : IF
              {
                /* Generate an end label, if false branch to that label */
-               OUT(c, &@1, "TCGLabel *if_label_", &c->if_count, " = gen_new_label();\n");
+               OUT(c, &@1, "TCGLabel *if_label_", &c->inst.if_count, " = gen_new_label();\n");
              }
              LPAR rvalue RPAR
              {
@@ -492,10 +537,10 @@ if_stmt      : IF
                rvalue_materialize(c, &@1, &$4);
                char *bit_suffix = ($4.bit_width == 64) ? "i64" : "i32";
                OUT(c, &@1, "tcg_gen_brcondi_", bit_suffix, "(TCG_COND_EQ, ", &$4,
-                   ", 0, if_label_", &c->if_count, ");\n");
+                   ", 0, if_label_", &c->inst.if_count, ");\n");
                rvalue_free(c, &@1, &$4);
-               $1 = c->if_count;
-               c->if_count++;
+               $1 = c->inst.if_count;
+               c->inst.if_count++;
              }
              statement
              {
@@ -569,13 +614,13 @@ rvalue            : assign_statement            { /* does nothing */ }
                   {
                     /* Assign correct bit width and signedness */
                     bool found = false;
-                    for(int i = 0; i < c->allocated_count; i++) {
-                        if(!strcmp($1.var.name, c->allocated[i].name)) {
+                    for(int i = 0; i < c->inst.allocated_count; i++) {
+                        if(!strcmp($1.var.name, c->inst.allocated[i].name)) {
                             found = true;
-                            free(c->allocated[i].name);
-                            c->allocated[i].name = $1.var.name;
-                            $1.bit_width = c->allocated[i].bit_width;
-                            $1.is_unsigned = c->allocated[i].is_unsigned;
+                            free(c->inst.allocated[i].name);
+                            c->inst.allocated[i].name = $1.var.name;
+                            $1.bit_width = c->inst.allocated[i].bit_width;
+                            $1.is_unsigned = c->inst.allocated[i].is_unsigned;
                             break;
                         }
                     }
@@ -696,9 +741,9 @@ rvalue            : assign_statement            { /* does nothing */ }
                     if ($2.type == IMMEDIATE) {
                         res.type = IMMEDIATE;
                         res.imm.type = QEMU_TMP;
-                        res.imm.index = c->qemu_tmp_count;
+                        res.imm.index = c->inst.qemu_tmp_count;
                         OUT(c, &@1, "int", &bit_width, "_t ", &res, " = ~", &$2, ";\n");
-                        c->qemu_tmp_count++;
+                        c->inst.qemu_tmp_count++;
                     } else {
                         res = gen_tmp(c, &@1, bit_width);
                         OUT(c, &@1, "tcg_gen_not_", bit_suffix, "(", &res,
@@ -719,9 +764,9 @@ rvalue            : assign_statement            { /* does nothing */ }
                     if ($2.type == IMMEDIATE) {
                         res.type = IMMEDIATE;
                         res.imm.type = QEMU_TMP;
-                        res.imm.index = c->qemu_tmp_count;
+                        res.imm.index = c->inst.qemu_tmp_count;
                         OUT(c, &@1, "int", &bit_width, "_t ", &res, " = !", &$2, ";\n");
-                        c->qemu_tmp_count++;
+                        c->inst.qemu_tmp_count++;
                         $$ = res;
                     } else {
                         res = gen_tmp(c, &@1, bit_width);
@@ -869,9 +914,9 @@ rvalue            : assign_statement            { /* does nothing */ }
                     if ($2.type == IMMEDIATE) {
                         res.type = IMMEDIATE;
                         res.imm.type = QEMU_TMP;
-                        res.imm.index = c->qemu_tmp_count;
+                        res.imm.index = c->inst.qemu_tmp_count;
                         OUT(c, &@1, "int", &bit_width, "_t ", &res, " = abs(", &$2, ");\n");
-                        c->qemu_tmp_count++;
+                        c->inst.qemu_tmp_count++;
                         $$ = res;
                     } else {
                         res = gen_tmp(c, &@1, bit_width);
@@ -928,9 +973,9 @@ rvalue            : assign_statement            { /* does nothing */ }
                     if ($2.type == IMMEDIATE) {
                         res.type = IMMEDIATE;
                         res.imm.type = QEMU_TMP;
-                        res.imm.index = c->qemu_tmp_count;
+                        res.imm.index = c->inst.qemu_tmp_count;
                         OUT(c, &@1, "int", &bit_width, "_t ", &res, " = -", &$2, ";\n");
-                        c->qemu_tmp_count++;
+                        c->inst.qemu_tmp_count++;
                         $$ = res;
                     } else {
                         res = gen_tmp(c, &@1, bit_width);
@@ -1044,7 +1089,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Copyright (c) 2017 Alessandro Di Federico, ");
         fprintf(stderr, "rev.ng Srls Unipersonale\n");
         fprintf(stderr, "Author: Niccolò Izzo <n@izzo.sh>\n\n");
-        fprintf(stderr, "Usage: ./semantics META-INSTRUCTIONS-CSV DEFINES\n");
+        fprintf(stderr, "Usage: ./semantics INPUT DEFINES\n");
         return 1;
     }
 
@@ -1065,60 +1110,35 @@ int main(int argc, char **argv)
     fputs("\n", defines_file);
     fputs("#include \"insn.h\"\n\n", defines_file);
 
-    int total_insn = 0, implemented_insn = 0;
-    CsvParser *csvparser = CsvParser_new(argv[1], ",", 0);
-    CsvRow *row;
-    while ((row = CsvParser_getRow(csvparser)) ) {
-        context_t context = { 0 };
-        context.defines_file = defines_file;
-        total_insn++;
-        const char **rowFields = CsvParser_getFields(row);
-        if (CsvParser_getNumFields(row) < 2) {
-            fprintf(stderr, "Error: malformed csv!\n");
-            return 1;
-        }
-        /* Extract field and initialize buffer */
-        context.inst_name = rowFields[0];
-        context.inst_code = rowFields[1];
-        size_t in_buffer_size = strlen(context.inst_code) + 2;
-        char * in_buffer = (char *) calloc(in_buffer_size, sizeof(char));
-        memcpy(in_buffer, context.inst_code, in_buffer_size - 2);
-        in_buffer[in_buffer_size - 2] = '\0';
-        in_buffer[in_buffer_size - 1] = '\0';
-        char * out_buffer = (char *) calloc(OUT_BUF_LEN, sizeof(char));
-        char * signature_buffer = (char *) calloc(SIGNATURE_BUF_LEN, sizeof(char));
-        context.out_buffer = out_buffer;
-        context.signature_buffer = signature_buffer;
-        fprintf(stderr, "Compiling: %s\n", context.inst_name);
-        emit_header(&context);
-        yylex_init(&context.scanner);
-        yy_scan_buffer(in_buffer, in_buffer_size, context.scanner);
-        /* Start the parsing procedure */
-        yyparse(context.scanner, &context);
-        if (context.error_count != 0) {
-            fprintf(stderr, "Parsing of instruction %s generated %d errors!\n",
-                    context.inst_name,
-                    context.error_count);
-            context.out_c += snprintf(context.out_buffer+context.out_c, OUT_BUF_LEN-context.out_c,
-                "assert(false && \"This instruction is not implemented!\");");
-        } else {
-            implemented_insn++;
-            emit_footer(&context);
-            commit(&context);
-        }
-        /* Cleanup */
-        yylex_destroy(context.scanner);
-        CsvParser_destroy_row(row);
-        free(in_buffer);
-        free(out_buffer);
-        free(signature_buffer);
-        for(int i = 0; i < context.allocated_count; i++) {
-            free((char *)context.allocated[i].name);
-        }
-    }
-    CsvParser_destroy(csvparser);
-    fprintf(stderr, "%d/%d meta instructions have been implemented!\n", implemented_insn, total_insn);
+    /* Parser input file */
+    context_t context = { 0 };
+    context.defines_file = defines_file;
+    /* Initialize buffers */
+    context.out_buffer = (char *) calloc(OUT_BUF_LEN, sizeof(char));
+    context.signature_buffer = (char *) calloc(SIGNATURE_BUF_LEN, sizeof(char));
+    /* Read input file */
+    FILE *input_file = fopen(argv[1], "r");
+    fseek(input_file, 0L, SEEK_END);
+    long input_size = ftell(input_file);
+    context.input_buffer = (char *) calloc(input_size+1, sizeof(char));
+    fseek(input_file, 0L, SEEK_SET);
+    fread(context.input_buffer, sizeof(char), input_size, input_file);
+    yylex_init(&context.scanner);
+    YY_BUFFER_STATE buffer;
+    buffer = yy_scan_string(context.input_buffer, context.scanner);
+    /* Start the parsing procedure */
+    yyparse(context.scanner, &context);
+    fprintf(stderr, "%d/%d meta instructions have been implemented!\n",
+            context.implemented_insn,
+            context.total_insn);
     fputs("#endif /* TCG_AUTO_GEN */\n", defines_file);
+    /* Cleanup */
+    yy_delete_buffer(buffer, context.scanner);
+    yylex_destroy(context.scanner);
+    fclose(input_file);
     fclose(defines_file);
+    free(context.input_buffer);
+    free(context.out_buffer);
+    free(context.signature_buffer);
     return 0;
 }

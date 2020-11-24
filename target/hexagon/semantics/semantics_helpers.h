@@ -140,7 +140,10 @@ t_hex_value gen_tmp(context_t *c, YYLTYPE *locp, int bit_width);
 
 t_hex_value gen_local_tmp(context_t *c, YYLTYPE *locp, int bit_width);
 
-t_hex_value gen_tmp_value(context_t *c, YYLTYPE *locp, char * value, int bit_width);
+t_hex_value gen_tmp_value(context_t *c,
+                          YYLTYPE *locp,
+                          const char * value,
+                          int bit_width);
 
 t_hex_value gen_imm_value(context_t *c __attribute__((unused)),
                           YYLTYPE *locp,

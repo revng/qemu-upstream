@@ -28,25 +28,16 @@
 #include <stdbool.h>
 #include "semantics_struct.h"
 #include "semantics.tab.h"
-#include "csvparser.h"
 
 // Keep track of scanner position for error message printout
 #define YY_USER_ACTION \
-    yylloc->first_line = yylloc->last_line; \
     yylloc->first_column = yylloc->last_column; \
     for(int i = 0; yytext[i] != '\0'; i++) { \
-        if(yytext[i] == '\n') { \
-            yylloc->last_line++; \
-            yylloc->last_column = 0; \
-        } \
-        else { \
-            yylloc->last_column++; \
-        } \
+        yylloc->last_column++; \
     }
 
 /* Global Error Counter */
 int error_count = 0;
-int fileno(FILE *stream);
 
 %}
 
@@ -73,6 +64,8 @@ SIGN_ID                  s|u
 [ \t\f\v]+                { /* Ignore whitespaces. */ }
 [\n\r]+                   { /* Ignore newlines. */ }
 
+{INST_NAME}               { yylval->string = strdup(yytext);
+                            return (INAME); }
 "DECL_RREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
