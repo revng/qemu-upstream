@@ -1028,7 +1028,13 @@ void gen_write_creg(context_t *c,
                     t_hex_value *value) {
     rvalue_truncate(c, locp, value);
     rvalue_materialize(c, locp, value);
-    OUT(c, locp, "LOG_REG_WRITE(", creg_str[(uint8_t)reg->reg.id], ", ", value, ");\n");
+    OUT(c,
+        locp,
+        "gen_log_reg_write(", creg_str[(uint8_t)reg->reg.id], ", ",
+        value, ", insn->slot, GET_ATTRIB(insn->opcode, A_CONDEXEC));\n");
+    OUT(c,
+        locp,
+        "ctx_log_reg_write(ctx, ", creg_str[(uint8_t)reg->reg.id], ");\n");
     rvalue_free(c, locp, value);
 }
 

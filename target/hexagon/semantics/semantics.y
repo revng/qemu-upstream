@@ -331,7 +331,8 @@ assign_statement  : lvalue ASSIGN rvalue
                         OUT(c, &@1, "tcg_gen_andi_i32(", &$1, ", ", &$1, ", 0xff);\n");
                     }
                     if (is_direct) {
-                        OUT(c, &@1, "LOG_PRED_WRITE(", pre_id, ", ", &$1, ");\n");
+                        OUT(c, &@1, "gen_log_pred_write(", pre_id, ", ", &$1, ");\n");
+                        OUT(c, &@1, "ctx_log_pred_write(ctx, ", pre_id, ");\n");
                         rvalue_free(c, &@1, &$1);
                     }
                     rvalue_free(c, &@1, &$3);  /* Free temporary value */
