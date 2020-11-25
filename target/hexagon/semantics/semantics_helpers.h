@@ -20,7 +20,6 @@
 #ifndef SEMANTICS_HELPERS_H
 #define SEMANTICS_HELPERS_H
 
-#include "csvparser.h"
 #include "semantics.tab.h"
 #include "lex.yy.h"
 #include "semantics_helpers.h"
