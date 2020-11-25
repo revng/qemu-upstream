@@ -23,7 +23,6 @@ hex_common_py = 'hex_common.py'
 attribs_def_h = meson.current_source_dir() / 'attribs_def.h'
 gen_tcg_h = meson.current_source_dir() / 'gen_tcg.h'
 semantics_dir = meson.current_source_dir() / 'semantics'
-semantics_enabled = semantics_dir / 'enabled'
 
 #
 #  Step 1
@@ -70,14 +69,6 @@ helper_protos_h = custom_target(
 )
 hexagon_ss.add(helper_protos_h)
 
-tcg_funcs_h = custom_target(
-    'tcg_funcs_generated.h',
-    output: 'tcg_funcs_generated.h',
-    input: 'gen_tcg_funcs.py',
-    depend_files: [hex_common_py],
-    command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, semantics_enabled, '@OUTPUT@'],
-)
-hexagon_ss.add(tcg_funcs_h)
 
 tcg_func_table_h = custom_target(
     'tcg_func_table_generated.h',
@@ -203,21 +194,30 @@ bison = generator(find_program('bison'),
                   output: ['@BASENAME@.tab.c', '@BASENAME@.tab.h'],
                   arguments: ['@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@'])
 
-semantics = executable('semantics',
-                       [bison.process('semantics/semantics.y'),
-                        flex.process('semantics/semantics.lex'),
-                        'semantics/semantics_helpers.c'],
-                       include_directories: 'semantics')
+semantics_parser = executable('semantics',
+                              [bison.process('semantics/semantics.y'),
+                               flex.process('semantics/semantics.lex'),
+                               'semantics/semantics_helpers.c'],
+                              include_directories: 'semantics')
 
 auto_tcg = custom_target(
     'auto-tcg.c',
-    output: ['auto-tcg.c'],
+    output: ['auto-tcg.c', 'auto-tcg.h', 'enabled'],
     input: tcg_funcs2_h_prep,
-    capture: true,
     depend_files: [hex_common_py],
-    command: [semantics, '@INPUT@', 'auto-tcg.h'],
+    command: [semantics_parser, '@INPUT@', '@OUTPUT0@', '@OUTPUT1@', '@OUTPUT2@'],
 )
 
 hexagon_ss.add(auto_tcg)
+
+tcg_funcs_h = custom_target(
+    'tcg_funcs_generated.h',
+    output: 'tcg_funcs_generated.h',
+    input: 'gen_tcg_funcs.py',
+    depend_files: [hex_common_py],
+    dependencies: auto_tcg,
+    command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, auto_tcg[2].full_path(), '@OUTPUT@'],
+)
+hexagon_ss.add(tcg_funcs_h)
 
 target_arch += {'hexagon': hexagon_ss}

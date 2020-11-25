@@ -222,7 +222,9 @@ typedef struct context_t {
     int out_c;                    /**< Characters emitted into out_buffer    */
     char *signature_buffer;       /**< Buffer containing the signatures code */
     int signature_c;              /**< Characters emitted into sig..._buffer */
-    FILE *defines_file;           /**< File struct of the generated header   */
+    FILE *defines_file;           /**< FILE * of the generated header        */
+    FILE *output_file;            /**< FILE * of the C output file           */
+    FILE *enabled_file;           /**< FILE * of the list of enabled inst    */
     int total_insn;               /**< Number of instructions in input file  */
     int implemented_insn;         /**< Instruction compiled without errors   */
     inst_t inst;                  /**< Parsing data of the current inst      */
