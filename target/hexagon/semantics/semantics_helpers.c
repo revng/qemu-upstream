@@ -42,6 +42,10 @@ const char *COND_LTU = "TCG_COND_LTU";
 const char *COND_GEU = "TCG_COND_GEU";
 const char *COND_LEU = "TCG_COND_LEU";
 
+const char * creg_str[] = {"HEX_REG_SP", "HEX_REG_FP", "HEX_REG_LR",
+                           "HEX_REG_GP", "HEX_REG_LC0", "HEX_REG_LC1",
+                           "HEX_REG_SA0", "HEX_REG_SA1"};
+
 void yyerror(YYLTYPE *locp,
              yyscan_t scanner __attribute__((unused)),
              context_t *c,

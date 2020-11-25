@@ -36,27 +36,25 @@
 /**
  * Type of register, assigned to the t_hex_reg.type field
  */
-enum reg_type {GENERAL_PURPOSE, CONTROL, SYSTEM, MODIFIER, DOTNEW};
+typedef enum {GENERAL_PURPOSE, CONTROL, SYSTEM, MODIFIER, DOTNEW} reg_type;
 
 /**
  * Types of control registers, assigned to the t_hex_reg.id field
  */
-enum creg_type {SP, FP, LR, GP, LC0, LC1, SA0, SA1};
+typedef enum {SP, FP, LR, GP, LC0, LC1, SA0, SA1} creg_type;
 
 /**
  * Identifier string of the control registers, indexed by the creg_type enum
  */
-static const char * creg_str[] = {"HEX_REG_SP", "HEX_REG_FP", "HEX_REG_LR",
-                                  "HEX_REG_GP", "HEX_REG_LC0", "HEX_REG_LC1",
-                                  "HEX_REG_SA0", "HEX_REG_SA1"};
+extern const char * creg_str[];
 
 /**
  * Semantic record of the REG tokens, identifying registers
  */
 typedef struct t_hex_reg
 {
-    char id;                /**< Identifier of the register                  */
-    enum reg_type type;     /**< Type of the register                        */
+    creg_type id;           /**< Identifier of the register                  */
+    reg_type type;          /**< Type of the register                        */
     unsigned bit_width;     /**< Bit width of the reg, 32 or 64 bits         */
 } t_hex_reg;
 
