@@ -206,7 +206,6 @@ bison = generator(find_program('bison'),
 semantics = executable('semantics',
                        [bison.process('semantics/semantics.y'),
                         flex.process('semantics/semantics.lex'),
-                        'semantics/csvparser.c',
                         'semantics/semantics_helpers.c'],
                        include_directories: 'semantics')
 
