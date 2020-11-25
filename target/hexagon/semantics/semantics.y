@@ -125,12 +125,12 @@ instructions : instruction instructions
              | %empty
 ;
 
-instruction : INAME 
+instruction : INAME
             {
               c->total_insn++;
               c->inst.name = $1;
             }
-            code 
+            code
             {
               if (c->inst.error_count != 0) {
                   fprintf(stderr,
@@ -182,8 +182,8 @@ code  : LBR
       }
       statements decls RBR
       {
-        c->inst.code_begin = c->input_buffer + @5.first_column; 
-        c->inst.code_end = c->input_buffer + @5.last_column - 1; 
+        c->inst.code_begin = c->input_buffer + @5.first_column;
+        c->inst.code_end = c->input_buffer + @5.last_column - 1;
       }
 ;
 
