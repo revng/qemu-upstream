@@ -361,7 +361,6 @@ assign_statement  : lvalue ASSIGN rvalue
                     /* Memop width is specified in the load macro */
                     int bit_width = ($5.imm.value > 4) ? 64 : 32;
                     const char *sign_suffix = ($5.imm.value > 4) ? "" : (($7) ? "u" : "s");
-                    const char *helper_suffix = ($7) ? "u" : "s";
                     char size_suffix[4] = { 0 };
                     /* Create temporary variable (if not present) */
                     if ($11.type == VARID)
@@ -375,8 +374,13 @@ assign_statement  : lvalue ASSIGN rvalue
                     OUT(c, &@1, "tcg_gen_qemu_ld", size_suffix, sign_suffix);
                     OUT(c, &@1, "(", &$11, ", ", &$9, ", 0);\n");
                     OUT(c, &@1, "if (insn->slot == 0 && pkt->pkt_has_store_s1) {\n");
+#if 0
+                    const char *helper_suffix = ($7) ? "u" : "s";
                     OUT(c, &@1, "gen_helper_merge_inflight_store", &$5.imm.value);
                     OUT(c, &@1, helper_suffix, "(", &$11, ", cpu_env, ", &$9, ", ", &$11, ");\n");
+#else
+                    OUT(c, &@1, "abort();\n");
+#endif
                     OUT(c, &@1, "}\n");
                   }
                   | STORE LPAR IMM COMMA IMM COMMA VAR COMMA rvalue RPAR /* Store primitive */
