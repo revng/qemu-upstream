@@ -602,6 +602,7 @@ t_hex_value gen_bin_op(context_t *c,
                     OUT(c, locp, "tcg_gen_shli_", bit_suffix, "(", &res, ", ", &op1, ", ", &op2, ");\n");
                     break;
                 case IMM_REG:
+                    op1.bit_width = bit_width;
                     rvalue_materialize(c, locp, &op1);
                     /* Fallthrough */
                 case REG_REG:
@@ -782,12 +783,14 @@ t_hex_value gen_bin_op(context_t *c,
                     OUT(c, locp, &op2, ") ? ", &op1, " : ", &op2, ";\n");
                     break;
                 case IMM_REG:
+                    op1.bit_width = bit_width;
                     rvalue_materialize(c, locp, &op1);
                     OUT(c, locp, "tcg_gen_movcond_i", &bit_width);
                     OUT(c, locp, "(TCG_COND_LE, ", &res, ", ", &op1, ", ", &op2);
                     OUT(c, locp, ", ", &op1, ", ", &op2, ");\n");
                     break;
                 case REG_IMM:
+                    op2.bit_width = bit_width;
                     rvalue_materialize(c, locp, &op2);
                     /* Fallthrough */
                 case REG_REG:
@@ -809,12 +812,14 @@ t_hex_value gen_bin_op(context_t *c,
                     OUT(c, locp, &op2, ") ? ", &op2, " : ", &op1, ";\n");
                     break;
                 case IMM_REG:
+                    op1.bit_width = bit_width;
                     rvalue_materialize(c, locp, &op1);
                     OUT(c, locp, "tcg_gen_movcond_i", &bit_width);
                     OUT(c, locp, "(TCG_COND_LE, ", &res, ", ", &op1, ", ", &op2);
                     OUT(c, locp, ", ", &op2, ", ", &op1, ");\n");
                     break;
                 case REG_IMM:
+                    op2.bit_width = bit_width;
                     rvalue_materialize(c, locp, &op2);
                     /* Fallthrough */
                 case REG_REG:
