@@ -129,7 +129,6 @@ instruction : INAME
             {
               c->total_insn++;
               c->inst.name = $1;
-              fprintf(stderr, "Compiling: %s\n", c->inst.name);
             }
             code 
             {

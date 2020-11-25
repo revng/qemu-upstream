@@ -53,7 +53,7 @@ void yyerror(YYLTYPE *locp,
 {
     const char *code_ptr = c->input_buffer;
 
-    fprintf(stderr, "WARNING: '%s'\n", s);
+    fprintf(stderr, "WARNING (%s): '%s'\n", c->inst.name, s);
 
     fprintf(stderr, "Problematic range: ");
     for(int i = locp->first_column; i < locp->last_column; i++) {
