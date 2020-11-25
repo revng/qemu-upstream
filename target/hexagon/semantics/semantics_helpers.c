@@ -200,7 +200,7 @@ void rvalue_out(context_t *c, YYLTYPE *locp, void *pointer) {
   }
 }
 
-/* Copy output code buffer into stdout */
+/* Copy output code buffer */
 void commit(context_t *c) {
     /* Emit instruction pseudocode */
     EMIT_SIG("\n/* ");
@@ -209,8 +209,8 @@ void commit(context_t *c) {
     EMIT_SIG(" */\n");
 
     /* Commit instruction code to output file */
-    fwrite(c->signature_buffer, sizeof(char), c->signature_c, stdout);
-    fwrite(c->out_buffer, sizeof(char), c->out_c, stdout);
+    fwrite(c->signature_buffer, sizeof(char), c->signature_c, c->output_file);
+    fwrite(c->out_buffer, sizeof(char), c->out_c, c->output_file);
 
     fwrite(c->signature_buffer, sizeof(char), c->signature_c, c->defines_file);
     fprintf(c->defines_file, ";\n");

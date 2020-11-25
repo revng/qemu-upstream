@@ -140,6 +140,7 @@ instruction : INAME
                   EMIT("assert(false && \"This instruction is not implemented!\");");
               } else {
                   c->implemented_insn++;
+                  fprintf(c->enabled_file, "%s\n", c->inst.name);
                   emit_footer(c);
                   commit(c);
               }
@@ -1088,26 +1089,38 @@ lvalue            : REG
 
 int main(int argc, char **argv)
 {
-    if (argc < 3) {
+    if (argc != 5) {
         fprintf(stderr, "Semantics: Hexagon ISA to tinycode generator compiler\n\n");
         fprintf(stderr, "Copyright (c) 2017 Alessandro Di Federico, ");
         fprintf(stderr, "rev.ng Srls Unipersonale\n");
         fprintf(stderr, "Author: Niccolò Izzo <n@izzo.sh>\n\n");
-        fprintf(stderr, "Usage: ./semantics INPUT DEFINES\n");
+        fprintf(stderr, "Usage: ./semantics INPUT AUTO_TCG_C AUTO_TCG_H ENABLED\n");
         return 1;
     }
 
-    puts("#include \"qemu/osdep.h\"");
-    puts("#include \"qemu/log.h\"");
-    puts("#include \"cpu.h\"");
-    puts("#include \"internal.h\"");
-    puts("#include \"tcg/tcg-op.h\"");
-    puts("#include \"insn.h\"");
-    puts("#include \"opcodes.h\"");
-    puts("#include \"translate.h\"");
-    puts("#include \"genptr_helpers.h\"");
+    enum {
+        ARG_INDEX_ARGV0 = 0,
+        ARG_INDEX_INPUT,
+        ARG_INDEX_AUTO_TCG_C,
+        ARG_INDEX_AUTO_TCG_H,
+        ARG_INDEX_ENABLED
+    };
 
-    FILE *defines_file = fopen(argv[2], "w");
+    FILE *enabled_file = fopen(argv[ARG_INDEX_ENABLED], "w");
+
+    FILE *output_file = fopen(argv[ARG_INDEX_AUTO_TCG_C], "w");
+    fputs("#include \"qemu/osdep.h\"\n", output_file);
+    fputs("#include \"qemu/log.h\"\n", output_file);
+    fputs("#include \"cpu.h\"\n", output_file);
+    fputs("#include \"internal.h\"\n", output_file);
+    fputs("#include \"tcg/tcg-op.h\"\n", output_file);
+    fputs("#include \"insn.h\"\n", output_file);
+    fputs("#include \"opcodes.h\"\n", output_file);
+    fputs("#include \"translate.h\"\n", output_file);
+    fputs("#include \"genptr_helpers.h\"\n", output_file);
+    fputs("#include \"auto-tcg.h\"\n", output_file);
+
+    FILE *defines_file = fopen(argv[ARG_INDEX_AUTO_TCG_H], "w");
     assert(defines_file != NULL);
     fputs("#ifndef TCG_AUTO_GEN\n", defines_file);
     fputs("#define TCG_AUTO_GEN\n", defines_file);
@@ -1117,6 +1130,8 @@ int main(int argc, char **argv)
     /* Parser input file */
     context_t context = { 0 };
     context.defines_file = defines_file;
+    context.output_file = output_file;
+    context.enabled_file = enabled_file;
     /* Initialize buffers */
     context.out_buffer = (char *) calloc(OUT_BUF_LEN, sizeof(char));
     context.signature_buffer = (char *) calloc(SIGNATURE_BUF_LEN, sizeof(char));
@@ -1143,8 +1158,10 @@ int main(int argc, char **argv)
     /* Cleanup */
     yy_delete_buffer(buffer, context.scanner);
     yylex_destroy(context.scanner);
+    fclose(output_file);
     fclose(input_file);
     fclose(defines_file);
+    fclose(enabled_file);
     free(context.input_buffer);
     free(context.out_buffer);
     free(context.signature_buffer);
