@@ -24,6 +24,7 @@
 
 #include <string.h>
 #include <stdbool.h>
+
 #include "idef-parser.h"
 #include "idef-parser.tab.h"
 
