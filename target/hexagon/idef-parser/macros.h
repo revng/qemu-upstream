@@ -15,9 +15,7 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-//
-// Copy rules
-//
+/* Copy rules */
 #define fLSBOLD(VAL) (fGETBIT(0, VAL))
 #define fSATH(VAL) fSATN(16, VAL)
 #define fSATUH(VAL) fSATUN(16, VAL)
@@ -40,9 +38,7 @@
 #define fVSAT(A) fVSATN(32, A)
 #define fSAT(A) fSATN(32, A)
 
-//
-// Ease parsing
-//
+/* Ease parsing */
 #define f8BITSOF(VAL) (VAL ? 0xff : 0x00)
 #define fREAD_GP() (Constant_extended ? (0) : GP)
 #define fCLIP(DST,SRC,U) (DST=fMIN((1<<U)-1,fMAX(SRC,-(1<<U))))
@@ -56,16 +52,12 @@
 #define fBIDIR_ASHIFTR_SAT(SRC,SHAMT,REGSTYPE) bidir_shiftr(SRC,SHAMT)
 #define fbrev(REG) REG.h[1] | brev(REG.h[0])
 
-//
-// Negation operator
-//
+/* Negation operator */
 #define fLSBOLDNOT(VAL) (!fGETBIT(0, VAL))
 #define fLSBNEWNOT(PNUM) (!fLSBNEW(PNUM))
 #define fLSBNEW0NOT (!fLSBNEW0)
 
-//
-// Assignments
-//
+/* Assignments */
 #define fPCALIGN(IMM) (IMM=IMM & ~3)
 #define fWRITE_LR(A) (LR=A)
 #define fWRITE_FP(A) (FP=A)
@@ -90,9 +82,7 @@
 #define fPM_I(REG,IMM) (REG=REG+IMM)
 #define fPM_M(REG,MVAL) (REG=REG+MVAL)
 
-//
-// Binary operators
-//
+/* Binary operators */
 #define fADD128(A,B) (A+B)
 #define fSUB128(A,B) (A-B)
 #define fSHIFTR128(A,B) (size8s_t) (A >> B)
@@ -104,8 +94,6 @@
 #define fROTL(SRC,SHAMT,REGSTYPE) (SRC <<_{R} SHAMT)
 #define fASHIFTL(SRC,SHAMT,REGSTYPE) (fCAST##REGSTYPE##s(SRC) << SHAMT)
 
-//
-// Purge non-relavant parts
-//
+/* Purge non-relavant parts */
 #define fHIDE(A)
 #define fBRANCH_SPECULATE_STALL(DOTNEWVAL, JUMP_COND, SPEC_DIR, HINTBITNUM, STRBITNUM)
