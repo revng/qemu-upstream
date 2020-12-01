@@ -1,8 +1,0 @@
-#ifndef TCG_AUTO_GEN
-#define TCG_AUTO_GEN
-
-#include "insn.h"
-
-void emit_J2_jump(DisasContext *ctx, Insn *insn, Packet *pkt, int riV);
-
-#endif /* TCG_AUTO_GEN */
