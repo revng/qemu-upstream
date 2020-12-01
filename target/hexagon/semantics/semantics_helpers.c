@@ -17,7 +17,7 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "semantics_struct.h"
+#include "semantics.h"
 #include "semantics_helpers.h"
 #include "semantics.tab.h"
 #include "lex.yy.h"

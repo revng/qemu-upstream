@@ -26,7 +26,7 @@
 
 #include <string.h>
 #include <stdbool.h>
-#include "semantics_struct.h"
+#include "semantics.h"
 #include "semantics.tab.h"
 
 // Keep track of scanner position for error message printout
