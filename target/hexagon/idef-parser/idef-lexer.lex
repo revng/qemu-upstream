@@ -204,7 +204,7 @@ SIGN_ID                  s|u
 "fGEN_TCG_"{INST_NAME}"(" { return FWRAP; }
 "{"                      { return LBR; }
 "}"                      { return RBR; }
-"["                      { return LSQ; } 
+"["                      { return LSQ; }
 "]"                      { return RSQ; }
 "("                      { return LPAR; }
 ")"                      { return RPAR; }
