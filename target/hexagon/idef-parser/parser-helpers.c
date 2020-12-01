@@ -1,7 +1,5 @@
 /*
- * Hexagon emulation for qemu: semantics parser.
- *
- * Copyright (c) 2017 Alessandro Di Federico, rev.ng Srls Unipersonale
+ * Copyright(c) 2019-2020 rev.ng Srls. All Rights Reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
