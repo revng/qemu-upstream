@@ -17,13 +17,13 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SEMANTICS_HELPERS_H
-#define SEMANTICS_HELPERS_H
+#ifndef PARSER_HELPERS_H
+#define PARSER_HELPERS_H
 
-#include "semantics.tab.h"
-#include "lex.yy.h"
-#include "semantics_helpers.h"
-#include "semantics.h"
+#include "idef-parser.tab.h"
+#include "idef-parser.yy.h"
+#include "parser-helpers.h"
+#include "idef-parser.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdarg.h>
@@ -251,4 +251,4 @@ void emit_header(context_t *c);
 
 void emit_footer(context_t *c);
 
-#endif /* SEMANTIC_HELPERS_H */
+#endif /* PARSER_HELPERS_h */

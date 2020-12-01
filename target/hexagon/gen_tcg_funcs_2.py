@@ -306,7 +306,7 @@ def main():
 
     f = StringIO()
 
-    f.write('#include "macdesc_s.h"\n\n')
+    f.write('#include "macros.h"\n\n')
 
     for tag in tags:
         ## Skip the priv instructions
