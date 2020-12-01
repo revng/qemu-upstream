@@ -28,8 +28,8 @@
 #define ALLOC_LIST_LEN 32
 #define ALLOC_NAME_SIZE 32
 #define INIT_LIST_LEN 32
-#define OUT_BUF_LEN 1024 * 1024
-#define SIGNATURE_BUF_LEN 128 * 1024
+#define OUT_BUF_LEN (1024 * 1024)
+#define SIGNATURE_BUF_LEN (128 * 1024)
 
 /**
  * Type of register, assigned to the t_hex_reg.type field
