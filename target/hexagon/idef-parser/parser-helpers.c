@@ -877,15 +877,15 @@ t_hex_value gen_cast_op(context_t *c,
         return *source;
     } else {
         t_hex_value res = gen_tmp(c, locp, target_width);
-        // Truncate
+        /* Truncate */
         if (source->bit_width > target_width)
             OUT(c, locp, "tcg_gen_trunc_i64_tl(", &res, ", ", source, ");\n");
-        // Extend
+        /* Extend */
         else {
-            // Extend unsigned
+            /* Extend unsigned */
             if (source->is_unsigned)
                 OUT(c, locp, "tcg_gen_extu_i32_i64(", &res, ", ", source, ");\n");
-            // Extend signed
+            /* Extend signed */
             else
                 OUT(c, locp, "tcg_gen_ext_i32_i64(", &res, ", ", source, ");\n");
         }
@@ -942,7 +942,7 @@ void gen_rdeposit_op(context_t *c,
     int begin = range->begin;
     int end = range->end;
     int width = end - begin + 1;
-    // If the destination value is 32, truncate the value, otherwise extend
+    /* If the destination value is 32, truncate the value, otherwise extend */
     if (dest->bit_width == 32)
         rvalue_truncate(c, locp, value);
     else
@@ -973,7 +973,7 @@ void gen_deposit_op(context_t *c,
              "Deposit index must be immediate!\n");
     int bit_width = (dest->bit_width == 64) ? 64 : 32;
     int width = cast->bit_width;
-    // If the destination value is 32, truncate the value, otherwise extend
+    /* If the destination value is 32, truncate the value, otherwise extend */
     if (dest->bit_width == 32)
         rvalue_truncate(c, locp, value);
     else

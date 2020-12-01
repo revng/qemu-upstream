@@ -21,12 +21,12 @@
 #include "idef-parser.tab.h"
 #include "idef-parser.yy.h"
 
-// Decomment this to disable yyasserts
-//#define NDEBUG
+/* Uncomment this to disable yyasserts */
+/* #define NDEBUG */
 
 #define ERR_LINE_CONTEXT 40
 
-// Variadic macros to wrap the buffer printing functions
+/*  Variadic macros to wrap the buffer printing functions */
 #define EMIT(...) c->out_c += snprintf(c->out_buffer+c->out_c, \
                                        OUT_BUF_LEN-c->out_c,   \
                                        __VA_ARGS__);

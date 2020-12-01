@@ -33,12 +33,12 @@
 #include "parser-helpers.h"
 #include "idef-parser.h"
 
-// Decomment this to disable yyasserts
-//#define NDEBUG
+/* Decomment this to disable yyasserts */
+/* #define NDEBUG */
 
 #define ERR_LINE_CONTEXT 40
 
-// Variadic macros to wrap the buffer printing functions
+/* Variadic macros to wrap the buffer printing functions */
 #define EMIT(...) c->out_c += snprintf(c->out_buffer+c->out_c, \
                                        OUT_BUF_LEN-c->out_c,   \
                                        __VA_ARGS__);
@@ -100,7 +100,7 @@ void commit(context_t *c);
       yyassert(c, locp, false, "Unhandled print type!");                      \
   } while(0);
 
-// Make a FOREACH macro
+/* Make a FOREACH macro */
 #define FE_1(c, locp, WHAT, X) WHAT(c, locp, X)
 #define FE_2(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_1(c, locp, WHAT, __VA_ARGS__)
 #define FE_3(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_2(c, locp, WHAT, __VA_ARGS__)
@@ -110,7 +110,7 @@ void commit(context_t *c);
 #define FE_7(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_6(c, locp, WHAT, __VA_ARGS__)
 #define FE_8(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_7(c, locp, WHAT, __VA_ARGS__)
 #define FE_9(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_8(c, locp, WHAT, __VA_ARGS__)
-//... repeat as needed
+/* repeat as needed */
 
 #define GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, NAME, ...) NAME
 
