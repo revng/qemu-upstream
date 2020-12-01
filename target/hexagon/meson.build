@@ -22,7 +22,7 @@ prog_python = import('python').find_installation('python3')
 hex_common_py = 'hex_common.py'
 attribs_def_h = meson.current_source_dir() / 'attribs_def.h'
 gen_tcg_h = meson.current_source_dir() / 'gen_tcg.h'
-semantics_dir = meson.current_source_dir() / 'semantics'
+idef_parser_dir = meson.current_source_dir() / 'idef-parser'
 
 #
 #  Step 1
@@ -185,7 +185,7 @@ tcg_funcs2_h_prep = custom_target(
     input: tcg_funcs2_h,
     capture: true,
     depend_files: [hex_common_py],
-    command: ['@CURRENT_SOURCE_DIR@/semantics/prepare', '@INPUT@', '-I@CURRENT_SOURCE_DIR@/semantics/'],
+    command: [idef_parser_dir / 'prepare', '@INPUT@', '-I' + idef_parser_dir],
 )
 
 flex = generator(find_program('flex'),
@@ -196,18 +196,18 @@ bison = generator(find_program('bison'),
                   output: ['@BASENAME@.tab.c', '@BASENAME@.tab.h'],
                   arguments: ['@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@'])
 
-semantics_parser = executable('semantics',
-                              [bison.process('semantics/semantics.y'),
-                               flex.process('semantics/semantics.lex'),
-                               'semantics/semantics_helpers.c'],
-                              include_directories: 'semantics')
+idef_parser = executable('idef-parser',
+                         [flex.process(idef_parser_dir / 'idef-lexer.lex'),
+                          bison.process(idef_parser_dir / 'idef-parser.y'),
+                          idef_parser_dir / 'parser-helpers.c'],
+                         include_directories: 'idef-parser')
 
 auto_tcg = custom_target(
     'auto-tcg.c',
     output: ['auto-tcg.c', 'auto-tcg.h', 'enabled'],
     input: tcg_funcs2_h_prep,
     depend_files: [hex_common_py],
-    command: [semantics_parser, '@INPUT@', '@OUTPUT0@', '@OUTPUT1@', '@OUTPUT2@'],
+    command: [idef_parser, '@INPUT@', '@OUTPUT0@', '@OUTPUT1@', '@OUTPUT2@'],
 )
 
 hexagon_ss.add(auto_tcg)

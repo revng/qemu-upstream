@@ -17,10 +17,10 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "semantics.h"
-#include "semantics_helpers.h"
-#include "semantics.tab.h"
-#include "lex.yy.h"
+#include "idef-parser.h"
+#include "parser-helpers.h"
+#include "idef-parser.tab.h"
+#include "idef-parser.yy.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdarg.h>

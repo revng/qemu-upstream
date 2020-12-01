@@ -1,7 +1,7 @@
 %option noyywrap noinput nounput
 %option 8bit reentrant bison-bridge
 %option warn nodefault
-%option header-file="lex.yy.h"
+%option header-file="idef-parser.yy.h"
 %option bison-locations
 
 %{
@@ -26,8 +26,8 @@
 
 #include <string.h>
 #include <stdbool.h>
-#include "semantics.h"
-#include "semantics.tab.h"
+#include "idef-parser.h"
+#include "idef-parser.tab.h"
 
 // Keep track of scanner position for error message printout
 #define YY_USER_ACTION \

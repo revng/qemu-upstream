@@ -17,8 +17,8 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SEMANTICS_STRUCT_H
-#define SEMANTICS_STRUCT_H
+#ifndef IDEF_PARSER_H
+#define IDEF_PARSER_H
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -230,4 +230,4 @@ typedef struct context_t {
     inst_t inst;                  /**< Parsing data of the current inst      */
 } context_t;
 
-#endif /* SEMANTICS_STRUCT_H */
+#endif /* IDEF_PARSER_H */
