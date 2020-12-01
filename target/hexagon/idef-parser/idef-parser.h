@@ -44,13 +44,12 @@ typedef enum {SP, FP, LR, GP, LC0, LC1, SA0, SA1} creg_type;
 /**
  * Identifier string of the control registers, indexed by the creg_type enum
  */
-extern const char * creg_str[];
+extern const char *creg_str[];
 
 /**
  * Semantic record of the REG tokens, identifying registers
  */
-typedef struct t_hex_reg
-{
+typedef struct t_hex_reg {
     creg_type id;           /**< Identifier of the register                  */
     reg_type type;          /**< Type of the register                        */
     unsigned bit_width;     /**< Bit width of the reg, 32 or 64 bits         */
@@ -59,8 +58,7 @@ typedef struct t_hex_reg
 /**
  * Data structure, identifying a TCGv temporary value
  */
-typedef struct t_hex_tmp
-{
+typedef struct t_hex_tmp {
     int index;              /**< Index of the TCGv temporary value    */
 } t_hex_tmp;
 
@@ -73,8 +71,7 @@ enum imm_union_tag {I, VARIABLE, VALUE, QEMU_TMP, IMM_PC, IMM_CONSTEXT};
 /**
  * Semantic record of the IMM token, identifying an immediate constant
  */
-typedef struct t_hex_imm
-{
+typedef struct t_hex_imm {
     union {
         char id;            /**< Identifier of the immediate                 */
         uint64_t value;     /**< Immediate value (for VALUE type immediates) */
@@ -86,16 +83,14 @@ typedef struct t_hex_imm
 /**
  * Semantic record of the PRE token, identifying a predicate
  */
-typedef struct t_hex_pre
-{
+typedef struct t_hex_pre {
     char id;                /**< Identifier of the predicate                 */
 } t_hex_pre;
 
 /**
  * Semantic record of the SAT token, identifying the saturate operator
  */
-typedef struct t_hex_sat
-{
+typedef struct t_hex_sat {
     bool set_overflow;      /**< Set-overflow feature for the sat operator   */
     bool is_unsigned;       /**< Unsigned flag for the saturate operator     */
 } t_hex_sat;
@@ -103,8 +98,7 @@ typedef struct t_hex_sat
 /**
  * Semantic record of the CAST token, identifying the cast operator
  */
-typedef struct t_hex_cast
-{
+typedef struct t_hex_cast {
     int bit_width;          /**< Bit width of the cast operator              */
     bool is_unsigned;       /**< Unsigned flag for the cast operator         */
 } t_hex_cast;
@@ -113,8 +107,7 @@ typedef struct t_hex_cast
  * Semantic record of the MPY token, identifying the fMPY multiplication
  * operator
  */
-typedef struct t_hex_mpy
-{
+typedef struct t_hex_mpy {
     int first_bit_width;    /**< Bit width of the first operand of fMPY op   */
     int second_bit_width;   /**< Bit width of the second operand of fMPY     */
     bool first_unsigned;    /**< Unsigned flag for the first operand of fMPY */
@@ -125,8 +118,7 @@ typedef struct t_hex_mpy
  * Semantic record of the RANGE token, identifying the range-based bit
  * extraction and deposit operators
  */
-typedef struct t_hex_range
-{
+typedef struct t_hex_range {
     int begin;              /**< Beginning of the bit range                  */
     int end;                /**< End of the bit range                        */
     int is_unsigned;        /**< Unsigned flag for the bit operator          */
@@ -136,8 +128,7 @@ typedef struct t_hex_range
  * Semantic record of the VARID token, identifying automatic variables
  * of the input language
  */
-typedef struct t_hex_var
-{
+typedef struct t_hex_var {
     char *name;             /**< Name of the VARID automatic variable        */
 } t_hex_var;
 
@@ -163,8 +154,7 @@ enum rvalue_union_tag {REGISTER, TEMP, IMMEDIATE, PREDICATE, VARID};
  * immediate or register based. The rvalue tokens are combined together
  * through the use of several operators, to encode expressions
  */
-typedef struct t_hex_value
-{
+typedef struct t_hex_value {
     union {
         t_hex_reg reg;      /**< rvalue of register type                     */
         t_hex_tmp tmp;      /**< rvalue of temporary type                    */

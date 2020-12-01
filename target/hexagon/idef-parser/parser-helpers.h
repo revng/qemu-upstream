@@ -86,35 +86,44 @@ void rvalue_out(context_t *c, YYLTYPE *locp, void *pointer);
 /* Copy output code buffer into stdout */
 void commit(context_t *c);
 
-#define OUT_IMPL(c, locp, x)                                                  \
-  do {                                                                  \
-    if (__builtin_types_compatible_p (typeof (*x), char))               \
-      str_print((c), (locp), (char *) x);                                       \
-    else if (__builtin_types_compatible_p (typeof (*x), uint64_t))      \
-      uint64_print((c), (locp), (uint64_t *) x);                                \
-    else if (__builtin_types_compatible_p (typeof (*x), int))           \
-      int_print((c), (locp), (int *) x);                                        \
-    else if (__builtin_types_compatible_p (typeof (*x), t_hex_value))   \
-      rvalue_out((c), (locp), (t_hex_value *) x);                               \
-    else                                                                \
-      yyassert(c, locp, false, "Unhandled print type!");                      \
-  } while(0);
+#define OUT_IMPL(c, locp, x)                                            \
+    do {                                                                \
+        if (__builtin_types_compatible_p (typeof (*x), char)) {         \
+            str_print((c), (locp), (char *) x);                         \
+        } else if (__builtin_types_compatible_p (typeof (*x), uint64_t)) { \
+            uint64_print((c), (locp), (uint64_t *) x);                  \
+        } else if (__builtin_types_compatible_p (typeof (*x), int)) {   \
+            int_print((c), (locp), (int *) x);                          \
+        } else if (__builtin_types_compatible_p (typeof (*x), t_hex_value)) { \
+            rvalue_out((c), (locp), (t_hex_value *) x);                 \
+        } else {                                                        \
+                yyassert(c, locp, false, "Unhandled print type!");      \
+        }                                                               \
+    } while (0)
 
 /* Make a FOREACH macro */
 #define FE_1(c, locp, WHAT, X) WHAT(c, locp, X)
-#define FE_2(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_1(c, locp, WHAT, __VA_ARGS__)
-#define FE_3(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_2(c, locp, WHAT, __VA_ARGS__)
-#define FE_4(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_3(c, locp, WHAT, __VA_ARGS__)
-#define FE_5(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_4(c, locp, WHAT, __VA_ARGS__)
-#define FE_6(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_5(c, locp, WHAT, __VA_ARGS__)
-#define FE_7(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_6(c, locp, WHAT, __VA_ARGS__)
-#define FE_8(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_7(c, locp, WHAT, __VA_ARGS__)
-#define FE_9(c, locp, WHAT, X, ...) WHAT(c, locp, X)FE_8(c, locp, WHAT, __VA_ARGS__)
+#define FE_2(c, locp, WHAT, X, ...) \
+    WHAT(c, locp, X)FE_1(c, locp, WHAT, __VA_ARGS__)
+#define FE_3(c, locp, WHAT, X, ...) \
+    WHAT(c, locp, X)FE_2(c, locp, WHAT, __VA_ARGS__)
+#define FE_4(c, locp, WHAT, X, ...) \
+    WHAT(c, locp, X)FE_3(c, locp, WHAT, __VA_ARGS__)
+#define FE_5(c, locp, WHAT, X, ...) \
+    WHAT(c, locp, X)FE_4(c, locp, WHAT, __VA_ARGS__)
+#define FE_6(c, locp, WHAT, X, ...) \
+    WHAT(c, locp, X)FE_5(c, locp, WHAT, __VA_ARGS__)
+#define FE_7(c, locp, WHAT, X, ...) \
+    WHAT(c, locp, X)FE_6(c, locp, WHAT, __VA_ARGS__)
+#define FE_8(c, locp, WHAT, X, ...) \
+    WHAT(c, locp, X)FE_7(c, locp, WHAT, __VA_ARGS__)
+#define FE_9(c, locp, WHAT, X, ...) \
+    WHAT(c, locp, X)FE_8(c, locp, WHAT, __VA_ARGS__)
 /* repeat as needed */
 
 #define GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, NAME, ...) NAME
 
-#define FOR_EACH(c, locp, action, ...)                \
+#define FOR_EACH(c, locp, action, ...)          \
   do {                                          \
     GET_MACRO(__VA_ARGS__,                      \
               FE_9,                             \
@@ -125,7 +134,7 @@ void commit(context_t *c);
               FE_4,                             \
               FE_3,                             \
               FE_2,                             \
-              FE_1)(c, locp, action,                     \
+              FE_1)(c, locp, action,            \
                     __VA_ARGS__)                \
   } while (0)
 
@@ -140,7 +149,7 @@ t_hex_value gen_local_tmp(context_t *c, YYLTYPE *locp, int bit_width);
 
 t_hex_value gen_tmp_value(context_t *c,
                           YYLTYPE *locp,
-                          const char * value,
+                          const char *value,
                           int bit_width);
 
 t_hex_value gen_imm_value(context_t *c __attribute__((unused)),
@@ -220,7 +229,10 @@ void gen_write_creg(context_t *c,
                            t_hex_value *reg,
                            t_hex_value *value);
 
-void gen_assign(context_t *c, YYLTYPE *locp, t_hex_value *dest, t_hex_value *value);
+void gen_assign(context_t *c,
+                YYLTYPE *locp,
+                t_hex_value *dest,
+                t_hex_value *value);
 
 t_hex_value gen_convround(context_t *c,
                           YYLTYPE *locp,
