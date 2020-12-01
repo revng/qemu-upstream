@@ -15,10 +15,6 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "idef-parser.h"
-#include "parser-helpers.h"
-#include "idef-parser.tab.h"
-#include "idef-parser.yy.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdarg.h>
@@ -28,6 +24,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "idef-parser.h"
+#include "parser-helpers.h"
+#include "idef-parser.tab.h"
+#include "idef-parser.yy.h"
 
 const char *COND_EQ = "TCG_COND_EQ";
 const char *COND_NE = "TCG_COND_NE";
