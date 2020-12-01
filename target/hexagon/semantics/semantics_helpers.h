@@ -23,7 +23,7 @@
 #include "semantics.tab.h"
 #include "lex.yy.h"
 #include "semantics_helpers.h"
-#include "semantics_struct.h"
+#include "semantics.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdarg.h>
