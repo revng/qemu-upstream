@@ -38,6 +38,9 @@
 
 #define ERR_LINE_CONTEXT 40
 
+#define START_COMMENT "/" "*"
+#define END_COMMENT "*" "/"
+
 void yyerror(YYLTYPE *locp,
              yyscan_t scanner __attribute__((unused)),
              context_t *c,

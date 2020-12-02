@@ -29,12 +29,10 @@
 #include "idef-parser.tab.h"
 
 /* Keep track of scanner position for error message printout */
-#define YY_USER_ACTION do {                     \
-    yylloc->first_column = yylloc->last_column; \
+#define YY_USER_ACTION yylloc->first_column = yylloc->last_column; \
     for (int i = 0; yytext[i] != '\0'; i++) {   \
         yylloc->last_column++;                  \
-    }                                           \
- } while (0)
+    }
 
 /* Global Error Counter */
 int error_count;

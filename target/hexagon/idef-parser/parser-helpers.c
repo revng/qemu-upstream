@@ -30,9 +30,6 @@
 #include "idef-parser.tab.h"
 #include "idef-parser.yy.h"
 
-#define START_COMMENT "/" "*"
-#define END_COMMENT "*" "/"
-
 const char *COND_EQ = "TCG_COND_EQ";
 const char *COND_NE = "TCG_COND_NE";
 const char *COND_GT = "TCG_COND_GT";

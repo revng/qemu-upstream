@@ -200,23 +200,27 @@ idef_parser = executable('idef-parser',
                           idef_parser_dir / 'parser-helpers.c'],
                          include_directories: 'idef-parser')
 
-auto_tcg = custom_target(
-    'auto-tcg.c',
-    output: ['auto-tcg.c', 'auto-tcg.h', 'enabled'],
+idef_generated_tcg = custom_target(
+    'idef-generated-tcg',
+    output: ['idef-generated-emitter.c',
+             'idef-generated-emitter.h',
+             'idef-generated-enabled-instructions'],
     input: tcg_funcs2_h_prep,
     depend_files: [hex_common_py],
     command: [idef_parser, '@INPUT@', '@OUTPUT0@', '@OUTPUT1@', '@OUTPUT2@'],
 )
 
-hexagon_ss.add(auto_tcg)
+idef_generated_list = idef_generated_tcg[2].full_path()
+
+hexagon_ss.add(idef_generated_tcg)
 
 tcg_funcs_h = custom_target(
     'tcg_funcs_generated.h',
     output: 'tcg_funcs_generated.h',
     input: 'gen_tcg_funcs.py',
     depend_files: [hex_common_py],
-    dependencies: auto_tcg,
-    command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, auto_tcg[2].full_path(), '@OUTPUT@'],
+    depends: idef_generated_tcg,
+    command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, idef_generated_list, '@OUTPUT@'],
 )
 hexagon_ss.add(tcg_funcs_h)
 
