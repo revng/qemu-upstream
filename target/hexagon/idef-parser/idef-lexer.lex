@@ -29,14 +29,15 @@
 #include "idef-parser.tab.h"
 
 /* Keep track of scanner position for error message printout */
-#define YY_USER_ACTION \
+#define YY_USER_ACTION do {                     \
     yylloc->first_column = yylloc->last_column; \
-    for(int i = 0; yytext[i] != '\0'; i++) { \
-        yylloc->last_column++; \
-    }
+    for (int i = 0; yytext[i] != '\0'; i++) {   \
+        yylloc->last_column++;                  \
+    }                                           \
+ } while (0)
 
 /* Global Error Counter */
-int error_count = 0;
+int error_count;
 
 %}
 
@@ -64,7 +65,7 @@ SIGN_ID                  s|u
 [\n\r]+                   { /* Ignore newlines. */ }
 
 {INST_NAME}               { yylval->string = strdup(yytext);
-                            return (INAME); }
+                            return INAME; }
 "DECL_RREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
@@ -72,7 +73,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
-                           return (DREG); }
+                           return DREG; }
 "DECL_NEW_NREG_"{REG_ID_32}"(N"{REG_ID_32}"N, N"{REG_ID_32}"X, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = DOTNEW;
@@ -80,7 +81,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
-                           return (DREG); }
+                           return DREG; }
 "DECL_RREG_"{REG_ID_64}"(R"{REG_ID_64}"V, R"{REG_ID_64}"N, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
@@ -88,7 +89,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = false;
-                           return (DREG); }
+                           return DREG; }
 "DECL_NEW_NREG_"{REG_ID_64}"(N"{REG_ID_64}"N, N"{REG_ID_64}"X, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = DOTNEW;
@@ -96,14 +97,14 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = true;
-                           return (DREG); }
+                           return DREG; }
 "DECL_MREG_u(MuV, MuN, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = MODIFIER;
                            yylval->rvalue.reg.id = 'u';
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (DREG); }
+                           return DREG; }
 "DECL_CREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
@@ -111,27 +112,27 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
-                           return (DREG); }
+                           return DREG; }
 "DECL_IMM("{IMM_ID}"iV,"[0-9]");" {
                            yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VARIABLE;
                            yylval->rvalue.imm.id = yytext[9];
                            yylval->rvalue.is_dotnew = false;
-                           return (DIMM); }
+                           return DIMM; }
 "DECL_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"V, P"{LOWER_PRE}"N, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[10];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
-                           return (DPRE); }
+                           return DPRE; }
 "DECL_NEW_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N, P"{LOWER_PRE}"X, "[0-9]", "[0-9]");" {
                            yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[14];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
-                           return (DPRE); }
-"DECL_EA;"                { return (DEA); }
+                           return DPRE; }
+"DECL_EA;"                { return DEA; }
 "READ_RREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N);" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
@@ -139,7 +140,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
-                           return (RREG); }
+                           return RREG; }
 "WRITE_RREG_"{REG_ID_32}"(R"{REG_ID_32}"N, R"{REG_ID_32}"V);" {
                            return WREG; }
 "FREE_RREG_"{REG_ID_32}"(R"{REG_ID_32}"V);" {
@@ -151,7 +152,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = false;
-                           return (RREG); }
+                           return RREG; }
 "WRITE_RREG_"{REG_ID_64}"(R"{REG_ID_64}"N, R"{REG_ID_64}"V);" {
                            return WREG; }
 "FREE_RREG_"{REG_ID_64}"(R"{REG_ID_64}"V);" {
@@ -163,7 +164,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
-                           return (RREG); }
+                           return RREG; }
 "READ_NEW_NREG_"{REG_ID_64}"(N"{REG_ID_64}"N, N"{REG_ID_64}"X);" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = DOTNEW;
@@ -171,7 +172,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = true;
-                           return (RREG); }
+                           return RREG; }
 "FREE_NEW_NREG_"{REG_ID_32}"(N"{REG_ID_32}"N);" {
                            return FREG; }
 "FREE_IMM("{IMM_ID}"iV);" {
@@ -181,7 +182,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.pre.id = yytext[10];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
-                           return (RPRE); }
+                           return RPRE; }
 "WRITE_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N, P"{LOWER_PRE}"V);" {
                            return WPRE; }
 "READ_NEW_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N, P"{LOWER_PRE}"X);" {
@@ -189,7 +190,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.pre.id = yytext[14];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
-                           return (RPRE); }
+                           return RPRE; }
 "READ_MREG_u(MuV, MuN);" { return RREG; }
 "READ_CREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N);" {
                            return RREG; }
@@ -270,140 +271,140 @@ SIGN_ID                  s|u
 "fCOUNTONES_"{DIGIT}     { return COUNTONES; }
 "fSATN"                  { yylval->sat.set_overflow = false;
                            yylval->sat.is_unsigned = false;
-                           return (SAT); }
+                           return SAT; }
 "fVSATN"                 { yylval->sat.set_overflow = true;
                            yylval->sat.is_unsigned = false;
-                           return (SAT); }
+                           return SAT; }
 "fSATUN"                 { yylval->sat.set_overflow = false;
                            yylval->sat.is_unsigned = true;
-                           return (SAT); }
+                           return SAT; }
 "fVSATUN"                { yylval->sat.set_overflow = true;
                            yylval->sat.is_unsigned = true;
-                           return (SAT); }
+                           return SAT; }
 "fCAST4u"                { yylval->cast.bit_width = 32;
                            yylval->cast.is_unsigned = true;
-                           return (CAST); }
+                           return CAST; }
 "fCAST4s"                { yylval->cast.bit_width = 32;
                            yylval->cast.is_unsigned = false;
-                           return (CAST); }
+                           return CAST; }
 "fCAST8u"                { yylval->cast.bit_width = 64;
                            yylval->cast.is_unsigned = true;
-                           return (CAST); }
+                           return CAST; }
 "fCAST8s"                { yylval->cast.bit_width = 64;
                            yylval->cast.is_unsigned = false;
-                           return (CAST); }
+                           return CAST; }
 "fGETBIT"                { yylval->cast.bit_width = 1;
                            yylval->cast.is_unsigned = false;
-                           return (EXTRACT); }
+                           return EXTRACT; }
 "fGETBYTE"               { yylval->cast.bit_width = 8;
                            yylval->cast.is_unsigned = false;
-                           return (EXTRACT); }
+                           return EXTRACT; }
 "fGETUBYTE"              { yylval->cast.bit_width = 8;
                            yylval->cast.is_unsigned = true;
-                           return (EXTRACT); }
+                           return EXTRACT; }
 "fGETHALF"               { yylval->cast.bit_width = 16;
                            yylval->cast.is_unsigned = false;
-                           return (EXTRACT); }
+                           return EXTRACT; }
 "fGETUHALF"              { yylval->cast.bit_width = 16;
                            yylval->cast.is_unsigned = true;
-                           return (EXTRACT); }
+                           return EXTRACT; }
 "fGETWORD"               { yylval->cast.bit_width = 32;
                            yylval->cast.is_unsigned = false;
-                           return (EXTRACT); }
+                           return EXTRACT; }
 "fGETUWORD"              { yylval->cast.bit_width = 32;
                            yylval->cast.is_unsigned = true;
-                           return (EXTRACT); }
+                           return EXTRACT; }
 "fEXTRACTU_BITS"         |
 "fEXTRACTU_BIDIR"        { yylval->range.is_unsigned = true;
-                           return (EXTBITS); }
+                           return EXTBITS; }
 "fEXTRACTU_RANGE"        { yylval->range.is_unsigned = true;
-                           return (EXTRANGE); }
+                           return EXTRANGE; }
 "fSETBIT"                { yylval->cast.bit_width = 1;
                            yylval->cast.is_unsigned = false;
-                           return (DEPOSIT); }
+                           return DEPOSIT; }
 "fSETBYTE"               { yylval->cast.bit_width = 8;
                            yylval->cast.is_unsigned = false;
-                           return (DEPOSIT); }
+                           return DEPOSIT; }
 "fSETHALF"               { yylval->cast.bit_width = 16;
                            yylval->cast.is_unsigned = false;
-                           return (DEPOSIT); }
+                           return DEPOSIT; }
 "fSETWORD"               { yylval->cast.bit_width = 32;
                            yylval->cast.is_unsigned = false;
-                           return (DEPOSIT); }
-"fINSERT_BITS"           { return (INSBITS); }
-"fINSERT_RANGE"          { return (INSRANGE); }
-"fSETBITS"               { return (SETBITS); }
+                           return DEPOSIT; }
+"fINSERT_BITS"           { return INSBITS; }
+"fINSERT_RANGE"          { return INSRANGE; }
+"fSETBITS"               { return SETBITS; }
 "fMPY8UU"                { yylval->mpy.first_bit_width = 8;
                            yylval->mpy.second_bit_width = 8;
                            yylval->mpy.first_unsigned = true;
                            yylval->mpy.second_unsigned = true;
-                           return (MPY); }
+                           return MPY; }
 "fMPY8US"                { yylval->mpy.first_bit_width = 8;
                            yylval->mpy.second_bit_width = 8;
                            yylval->mpy.first_unsigned = true;
                            yylval->mpy.second_unsigned = false;
-                           return (MPY); }
+                           return MPY; }
 "fMPY8SU"                { yylval->mpy.first_bit_width = 8;
                            yylval->mpy.second_bit_width = 8;
                            yylval->mpy.first_unsigned = false;
                            yylval->mpy.second_unsigned = true;
-                           return (MPY); }
+                           return MPY; }
 "fMPY8SS"                { yylval->mpy.first_bit_width = 8;
                            yylval->mpy.second_bit_width = 8;
                            yylval->mpy.first_unsigned = false;
                            yylval->mpy.second_unsigned = false;
-                           return (MPY); }
+                           return MPY; }
 "fMPY16UU"               { yylval->mpy.first_bit_width = 16;
                            yylval->mpy.second_bit_width = 16;
                            yylval->mpy.first_unsigned = true;
                            yylval->mpy.second_unsigned = true;
-                           return (MPY); }
+                           return MPY; }
 "fMPY16US"               { yylval->mpy.first_bit_width = 16;
                            yylval->mpy.second_bit_width = 16;
                            yylval->mpy.first_unsigned = true;
                            yylval->mpy.second_unsigned = false;
-                           return (MPY); }
+                           return MPY; }
 "fMPY16SU"               { yylval->mpy.first_bit_width = 16;
                            yylval->mpy.second_bit_width = 16;
                            yylval->mpy.first_unsigned = false;
                            yylval->mpy.second_unsigned = true;
-                           return (MPY); }
+                           return MPY; }
 "fMPY16SS"               { yylval->mpy.first_bit_width = 16;
                            yylval->mpy.second_bit_width = 16;
                            yylval->mpy.first_unsigned = false;
                            yylval->mpy.second_unsigned = false;
-                           return (MPY); }
+                           return MPY; }
 "fMPY32UU"               { yylval->mpy.first_bit_width = 32;
                            yylval->mpy.second_bit_width = 32;
                            yylval->mpy.first_unsigned = true;
                            yylval->mpy.second_unsigned = true;
-                           return (MPY); }
+                           return MPY; }
 "fMPY32US"               { yylval->mpy.first_bit_width = 32;
                            yylval->mpy.second_bit_width = 32;
                            yylval->mpy.first_unsigned = true;
                            yylval->mpy.second_unsigned = false;
-                           return (MPY); }
+                           return MPY; }
 "fMPY32SU"               { yylval->mpy.first_bit_width = 32;
                            yylval->mpy.second_bit_width = 32;
                            yylval->mpy.first_unsigned = false;
                            yylval->mpy.second_unsigned = true;
-                           return (MPY); }
+                           return MPY; }
 "fSFMPY"                 |
 "fMPY32SS"               { yylval->mpy.first_bit_width = 32;
                            yylval->mpy.second_bit_width = 32;
                            yylval->mpy.first_unsigned = false;
                            yylval->mpy.second_unsigned = false;
-                           return (MPY); }
+                           return MPY; }
 "fMPY3216SS"             { yylval->mpy.first_bit_width = 32;
                            yylval->mpy.second_bit_width = 16;
                            yylval->mpy.first_unsigned = false;
                            yylval->mpy.second_unsigned = false;
-                           return (MPY); }
+                           return MPY; }
 "fMPY3216SU"             { yylval->mpy.first_bit_width = 32;
                            yylval->mpy.second_bit_width = 16;
                            yylval->mpy.first_unsigned = false;
                            yylval->mpy.second_unsigned = true;
-                           return (MPY); }
+                           return MPY; }
 "fNEWREG"                |
 "fNEWREG_ST"             |
 "fIMMEXT"                |
@@ -425,7 +426,7 @@ SIGN_ID                  s|u
 "fUNLOAT"                |
 "fDOUBLE"                |
 "fUNDOUBLE"              |
-"fECHO"                  { return (IDENTITY); }
+"fECHO"                  { return IDENTITY; }
 "(size8"[us]"_t)"        { yylval->cast.bit_width = 8;
                            yylval->cast.is_unsigned = ((yytext[6]) == 'u');
                            return CAST; }
@@ -450,221 +451,228 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "C"{REG_ID_32}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "C"{REG_ID_64}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
-                           return (REG); }
+                           return REG; }
 "R"{REG_ID_64}"V"        { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
-                           return (REG); }
+                           return REG; }
 "N"{LOWER_ID}            { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "N"{LOWER_ID}"N"         { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = DOTNEW;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "S"{SYS_ID_32}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = SYSTEM;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "S"{SYS_ID_64}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = SYSTEM;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
-                           return (REG); }
+                           return REG; }
 [rR]{DIGIT}+             { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = atoi(yytext + 1);
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "SGP"{DIGIT}             { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = SYSTEM;
                            yylval->rvalue.reg.id = atoi(yytext + 3);
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "fREAD_SP()"             |
 "SP"                     { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = SP;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "fREAD_FP()"             |
 "FP"                     { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = FP;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "fREAD_LR()"             |
 "LR"                     { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = LR;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "GP"                     { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = GP;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "fREAD_LC"{ZERO_ONE}     { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = LC0 + atoi(yytext + 8);
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "LC"{ZERO_ONE}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = LC0 + atoi(yytext + 2);
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "fREAD_SA"{ZERO_ONE}     { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = SA0 + atoi(yytext + 8);
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "SA"{ZERO_ONE}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = SA0 + atoi(yytext + 2);
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "MuV"                    { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = MODIFIER;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
-"MuN"                    { return (MUN); }
+                           return REG; }
+"MuN"                    { return MUN; }
 "ELR"                    { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = SYSTEM;
                            yylval->rvalue.reg.id = 3;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
-                           return (REG); }
+                           return REG; }
 "fREAD_P0()"             { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = '0';
                            yylval->rvalue.bit_width = 32;
-                           return (PRE); }
+                           return PRE; }
 [pP]{DIGIT}              { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[1];
                            yylval->rvalue.bit_width = 32;
-                           return (PRE); }
+                           return PRE; }
 "fLSBNEW(P"{LOWER_PRE}"N)" { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[9];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
-                           return (PRE); }
+                           return PRE; }
 "fLSBNEW0"               { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = '0';
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
-                           return (PRE); }
+                           return PRE; }
 "fLSBNEW1"               { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = '1';
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
-                           return (PRE); }
+                           return PRE; }
 "fLSBNEW1NOT"            { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = '1';
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
-                           return (PRE); }
+                           return PRE; }
 "P"{LOWER_PRE}V          { yylval->rvalue.type = PREDICATE;
                            yylval->rvalue.pre.id = yytext[1];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
-                           return (PRE); }
+                           return PRE; }
 {IMM_ID}"iV"             { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VARIABLE;
                            yylval->rvalue.imm.id = yytext[0];
-                           return (IMM); }
+                           return IMM; }
 "N"                      { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.imm.type = VARIABLE;
                            yylval->rvalue.imm.id = 'N';
-                           return (IMM); }
+                           return IMM; }
 "i"                      { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.imm.type = I;
-                           return (IMM); }
+                           return IMM; }
 {SIGN_ID}                { yylval->is_unsigned = (yytext[0] == 'u');
-                           return (SIGN);
+                           return SIGN;
                          }
 "fSF_BIAS()"             { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = 127;
-                           return (IMM); }
+                           return IMM; }
 {DIGIT}+                 { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = atoi(yytext);
-                           return (IMM); }
+                           return IMM; }
 {DIGIT}+"LL"             { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = atoi(yytext);
-                           return (IMM); }
+                           return IMM; }
 "0x"{HEX_DIGIT}+         { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = strtol(yytext, NULL, 16);
-                           return (IMM); }
+                           return IMM; }
 "0x"{HEX_DIGIT}+"LL"     { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = strtol(yytext, NULL, 16);
-                           return (IMM); }
-"fCONSTLL"               { return (CONSTLL); }
-"fCONSTULL"              { return (CONSTULL); }
-"fLOAD"                  { return (LOAD); }
-"fSTORE"                 { return (STORE); }
+                           return IMM; }
+"fCONSTLL"               { return CONSTLL; }
+"fCONSTULL"              { return CONSTULL; }
+"fLOAD"                  { return LOAD; }
+"fSTORE"                 { return STORE; }
 {VAR_ID}                 { /* Variable name, we adopt the C names convention */
                            yylval->rvalue.type = VARID;
-                           yylval->rvalue.var.name = strndup(yytext, ALLOC_NAME_SIZE);
-                           yylval->rvalue.bit_width = 32; /* Default types are int */
+                           yylval->rvalue.var.name = strndup(yytext,
+                                                             ALLOC_NAME_SIZE);
+                           /* Default types are int */
+                           yylval->rvalue.bit_width = 32;
                            if (yylval->rvalue.var.name == NULL) {
-                             fprintf(stderr, "Error: failed to duplicate var name: \"%s\"\n", yytext);
-                             error_count++;
-                             return (-1); /* invalid token */
+                               fprintf(stderr,
+                                       "Error: failed to duplicate var name: "
+                                       "\"%s\"\n",
+                                       yytext);
+                               error_count++;
+                               return -1; /* invalid token */
                            }
-                           return (VAR); }
+                           return VAR; }
 "fHINTJR(RsV)"           { /* Emit no token */ }
-.                        { fprintf(stderr, "Error: unexpected token \"%s\"\n", yytext);
+.                        { fprintf(stderr,
+                                   "Error: unexpected token \"%s\"\n",
+                                   yytext);
                            error_count++;
-                           return (-1); /* invalid token */
+                           return -1; /* invalid token */
                          }
 
 %%

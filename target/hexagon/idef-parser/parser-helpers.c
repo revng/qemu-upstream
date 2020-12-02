@@ -31,7 +31,7 @@
 #include "idef-parser.yy.h"
 
 #define START_COMMENT "/" "*"
-#define ED_COMMENT "*" "/"
+#define END_COMMENT "*" "/"
 
 const char *COND_EQ = "TCG_COND_EQ";
 const char *COND_NE = "TCG_COND_NE";
@@ -92,30 +92,30 @@ bool is_direct_predicate(t_hex_value *value)
 /* Print functions */
 void str_print(context_t *c, YYLTYPE *locp, char *string)
 {
-    EMIT("%s", string);
+    EMIT(c, "%s", string);
 }
 
 
 void uint64_print(context_t *c, YYLTYPE *locp, uint64_t *num)
 {
-    EMIT("%" PRIu64, *num);
+    EMIT(c, "%" PRIu64, *num);
 }
 
 void int_print(context_t *c, YYLTYPE *locp, int *num)
 {
-    EMIT("%d", *num);
+    EMIT(c, "%d", *num);
 }
 
 void tmp_print(context_t *c, YYLTYPE *locp, t_hex_tmp *tmp)
 {
-    EMIT("tmp_");
-    EMIT("%d", tmp->index);
+    EMIT(c, "tmp_");
+    EMIT(c, "%d", tmp->index);
 }
 
 void pre_print(context_t *c, YYLTYPE *locp, t_hex_pre *pre, bool is_dotnew)
 {
     char suffix = is_dotnew ? 'N' : 'V';
-    EMIT("P%c%c", pre->id, suffix);
+    EMIT(c, "P%c%c", pre->id, suffix);
 }
 
 void reg_compose(context_t *c, YYLTYPE *locp, t_hex_reg *reg, char reg_id[5])
@@ -133,8 +133,9 @@ void reg_compose(context_t *c, YYLTYPE *locp, t_hex_reg *reg, char reg_id[5])
     case MODIFIER:
         reg_id[0] = 'M';
         break;
-    default:
+    case DOTNEW:
         /* The DOTNEW case is managed by the upper level function */
+        break;
     }
     switch (reg->bit_width) {
     case 32:
@@ -154,11 +155,11 @@ void reg_compose(context_t *c, YYLTYPE *locp, t_hex_reg *reg, char reg_id[5])
 void reg_print(context_t *c, YYLTYPE *locp, t_hex_reg *reg)
 {
   if (reg->type == DOTNEW) {
-    EMIT("hex_new_value[N%cX]", reg->id);
+    EMIT(c, "hex_new_value[N%cX]", reg->id);
   } else {
     char reg_id[5] = { 0 };
     reg_compose(c, locp, reg, reg_id);
-    EMIT("%s", reg_id);
+    EMIT(c, "%s", reg_id);
   }
 }
 
@@ -166,22 +167,22 @@ void imm_print(context_t *c, YYLTYPE *locp, t_hex_imm *imm)
 {
     switch (imm->type) {
     case I:
-        EMIT("i");
+        EMIT(c, "i");
         break;
     case VARIABLE:
-        EMIT("%ciV", imm->id);
+        EMIT(c, "%ciV", imm->id);
         break;
     case VALUE:
-        EMIT("%" PRIu64, imm->value);
+        EMIT(c, "%" PRIu64, imm->value);
         break;
     case QEMU_TMP:
-        EMIT("qemu_tmp_%" PRIu64, imm->index);
+        EMIT(c, "qemu_tmp_%" PRIu64, imm->index);
         break;
     case IMM_PC:
-        EMIT("dc->pc");
+        EMIT(c, "dc->pc");
         break;
     case IMM_CONSTEXT:
-        EMIT("insn->extension_valid");
+        EMIT(c, "insn->extension_valid");
         break;
     default:
         yyassert(c, locp, false, "Cannot print this expression!");
@@ -190,7 +191,7 @@ void imm_print(context_t *c, YYLTYPE *locp, t_hex_imm *imm)
 
 void var_print(context_t *c, YYLTYPE *locp, t_hex_var *var)
 {
-    EMIT("%s", var->name);
+    EMIT(c, "%s", var->name);
 }
 
 void rvalue_out(context_t *c, YYLTYPE *locp, void *pointer)
@@ -221,11 +222,11 @@ void rvalue_out(context_t *c, YYLTYPE *locp, void *pointer)
 void commit(context_t *c)
 {
     /* Emit instruction pseudocode */
-    EMIT_SIG("\n" START_COMMENT " ");
+    EMIT_SIG(c, "\n" START_COMMENT " ");
     for (char *x = c->inst.code_begin; x < c->inst.code_end; x++) {
-        EMIT_SIG("%c", *x);
+        EMIT_SIG(c, "%c", *x);
     }
-    EMIT_SIG(" " END_COMMENT "\n");
+    EMIT_SIG(c, " " END_COMMENT "\n");
 
     /* Commit instruction code to output file */
     fwrite(c->signature_buffer, sizeof(char), c->signature_c, c->output_file);
@@ -789,7 +790,7 @@ t_hex_value gen_bin_op(context_t *c,
         default:
             fprintf(stderr, "Error in evalutating immediateness!");
             abort();
-
+        }
         break;
     }
     case XORB_OP:
@@ -1115,7 +1116,7 @@ t_hex_value gen_read_creg(context_t *c, YYLTYPE *locp, t_hex_value *reg)
 {
     if (reg->reg.type == CONTROL) {
         t_hex_value tmp = gen_tmp_value(c, locp, "0", 32);
-        char id = creg_str[(uint8_t)reg->reg.id];
+        const char *id = creg_str[(uint8_t)reg->reg.id];
         OUT(c, locp, "READ_REG(", &tmp, ", ", id, ");\n");
         return tmp;
     }
@@ -1302,13 +1303,13 @@ bool rvalue_equal(t_hex_value *v1, t_hex_value *v2)
 
 void emit_header(context_t *c)
 {
-    EMIT_SIG(START_COMMENT " %s " END_COMMENT "\n", c->inst.name);
-    EMIT_SIG("void emit_%s(DisasContext *ctx, Insn *insn, Packet *pkt",
+    EMIT_SIG(c, START_COMMENT " %s " END_COMMENT "\n", c->inst.name);
+    EMIT_SIG(c, "void emit_%s(DisasContext *ctx, Insn *insn, Packet *pkt",
              c->inst.name);
 }
 
 void emit_footer(context_t *c)
 {
-    EMIT("}\n");
-    EMIT("\n");
+    EMIT(c, "}\n");
+    EMIT(c, "\n");
 }

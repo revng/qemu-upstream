@@ -38,16 +38,6 @@
 
 #define ERR_LINE_CONTEXT 40
 
-/* Variadic macros to wrap the buffer printing functions */
-#define EMIT(...) c->out_c += snprintf(c->out_buffer+c->out_c, \
-                                       OUT_BUF_LEN-c->out_c,   \
-                                       __VA_ARGS__);
-#define EMIT_SIG(...) c->signature_c += snprintf(c->signature_buffer + \
-                                                 c->signature_c,       \
-                                                 SIGNATURE_BUF_LEN -   \
-                                                 c->signature_c,       \
-                                                 __VA_ARGS__);
-
 void yyerror(YYLTYPE *locp,
              yyscan_t scanner __attribute__((unused)),
              context_t *c,
@@ -99,7 +89,7 @@ void commit(context_t *c);
         } else {                                                        \
                 yyassert(c, locp, false, "Unhandled print type!");      \
         }                                                               \
-    } while (0)
+    } while (0);
 
 /* Make a FOREACH macro */
 #define FE_1(c, locp, WHAT, X) WHAT(c, locp, X)
