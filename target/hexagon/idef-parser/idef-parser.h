@@ -31,6 +31,21 @@
 #define OUT_BUF_LEN (1024 * 1024)
 #define SIGNATURE_BUF_LEN (128 * 1024)
 
+/* Variadic macros to wrap the buffer printing functions */
+#define EMIT(c, ...)                                                 \
+    do {                                                             \
+        (c)->out_c += snprintf((c)->out_buffer + (c)->out_c,         \
+                               OUT_BUF_LEN - (c)->out_c,             \
+                               __VA_ARGS__);                         \
+    } while (0)
+
+#define EMIT_SIG(c, ...)                                                       \
+    do {                                                                       \
+        (c)->signature_c += snprintf((c)->signature_buffer + (c)->signature_c, \
+                                     SIGNATURE_BUF_LEN - (c)->signature_c,     \
+                                     __VA_ARGS__);                             \
+    } while (0)
+
 /**
  * Type of register, assigned to the t_hex_reg.type field
  */
