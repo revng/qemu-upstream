@@ -700,7 +700,7 @@ def main():
     f.write("#ifndef HEXAGON_TCG_FUNCS_H\n")
     f.write("#define HEXAGON_TCG_FUNCS_H\n\n")
 
-    f.write("#include \"auto-tcg.h\"\n\n")
+    f.write("#include \"idef-generated-emitter.h\"\n\n")
 
     for tag in hex_common.tags:
         ## Skip the priv instructions

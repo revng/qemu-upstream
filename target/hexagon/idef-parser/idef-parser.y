@@ -1094,21 +1094,22 @@ int main(int argc, char **argv)
         fprintf(stderr,
                 "Semantics: Hexagon ISA to tinycode generator compiler\n\n");
         fprintf(stderr,
-                "Usage: ./semantics INPUT AUTO_TCG_C AUTO_TCG_H ENABLED\n");
+                "Usage: ./semantics IDEFS EMITTER_C EMITTER_H "
+                "ENABLED_INSTRUCTIONS_LIST\n");
         return 1;
     }
 
     enum {
         ARG_INDEX_ARGV0 = 0,
-        ARG_INDEX_INPUT,
-        ARG_INDEX_AUTO_TCG_C,
-        ARG_INDEX_AUTO_TCG_H,
-        ARG_INDEX_ENABLED
+        ARG_INDEX_IDEFS,
+        ARG_INDEX_EMITTER_C,
+        ARG_INDEX_EMITTER_H,
+        ARG_INDEX_ENABLED_INSTRUCTIONS_LIST
     };
 
-    FILE *enabled_file = fopen(argv[ARG_INDEX_ENABLED], "w");
+    FILE *enabled_file = fopen(argv[ARG_INDEX_ENABLED_INSTRUCTIONS_LIST], "w");
 
-    FILE *output_file = fopen(argv[ARG_INDEX_AUTO_TCG_C], "w");
+    FILE *output_file = fopen(argv[ARG_INDEX_EMITTER_C], "w");
     fputs("#include \"qemu/osdep.h\"\n", output_file);
     fputs("#include \"qemu/log.h\"\n", output_file);
     fputs("#include \"cpu.h\"\n", output_file);
@@ -1118,12 +1119,12 @@ int main(int argc, char **argv)
     fputs("#include \"opcodes.h\"\n", output_file);
     fputs("#include \"translate.h\"\n", output_file);
     fputs("#include \"genptr_helpers.h\"\n", output_file);
-    fputs("#include \"auto-tcg.h\"\n", output_file);
+    fprintf(output_file, "#include \"%s\"\n", argv[ARG_INDEX_EMITTER_H]);
 
-    FILE *defines_file = fopen(argv[ARG_INDEX_AUTO_TCG_H], "w");
+    FILE *defines_file = fopen(argv[ARG_INDEX_EMITTER_H], "w");
     assert(defines_file != NULL);
-    fputs("#ifndef TCG_AUTO_GEN\n", defines_file);
-    fputs("#define TCG_AUTO_GEN\n", defines_file);
+    fputs("#ifndef EMITTER_H\n", defines_file);
+    fputs("#define EMITTER_H\n", defines_file);
     fputs("\n", defines_file);
     fputs("#include \"insn.h\"\n\n", defines_file);
 
@@ -1157,7 +1158,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "%d/%d meta instructions have been implemented!\n",
             context.implemented_insn,
             context.total_insn);
-    fputs("#endif " START_COMMENT " TCG_AUTO_GEN " END_COMMENT "\n", defines_file);
+    fputs("#endif " START_COMMENT " EMITTER_h " END_COMMENT "\n", defines_file);
     /* Cleanup */
     yy_delete_buffer(buffer, context.scanner);
     yylex_destroy(context.scanner);
@@ -1168,5 +1169,6 @@ int main(int argc, char **argv)
     free(context.input_buffer);
     free(context.out_buffer);
     free(context.signature_buffer);
+
     return 0;
 }
