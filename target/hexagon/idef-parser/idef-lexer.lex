@@ -436,7 +436,7 @@ SIGN_ID                  s|u
 "?"                      { return QMARK; }
 "fREAD_PC()"             |
 "PC"                     { return PC; }
-"fREAD_NPC()"             |
+"fREAD_NPC()"            |
 "NPC"                    { return NPC; }
 "fGET_LPCFG"             |
 "USR.LPCFG"              { return LPCFG; }

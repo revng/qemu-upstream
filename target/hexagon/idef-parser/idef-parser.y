@@ -586,12 +586,9 @@ rvalue : assign_statement            { /* does nothing */ }
 }
 | NPC
 {
-    yyassert(c, &@1, 1 == 0,
-             "Reading npc from disascontext is still not supported\n");
-    /* Extract program counter into a temporary */
+    /* NPC is only read from CALLs, so we can hardcode it at translation time */
     $$ = gen_tmp(c, &@1, 32);
-    t_hex_value pc = gen_tmp_value(c, &@1, "dc->npc", 32);
-    OUT(c, &@1, "tcg_gen_mov_i32(", &$$, ", ", &pc, ");\n");
+    OUT(c, &@1, "tcg_gen_movi_i32(", &$$, ", ctx->npc);\n");
 }
 | CONSTEXT
 {
