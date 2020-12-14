@@ -263,7 +263,8 @@ SIGN_ID                  s|u
 "fMIN"                   { return MIN; }
 "fABS"                   { return ABS; }
 "fCRND"                  { return CROUND; }
-"fROUND"                 { return ROUND; }
+"fCRNDN"                 { return CROUND; }
+"fRNDN"                  { return ROUND; }
 "fPM_CIRI"               { return CIRCADD; }
 "fPM_CIRR"               { return CIRCADD; }
 "fCOUNTONES_"{DIGIT}     { return COUNTONES; }
