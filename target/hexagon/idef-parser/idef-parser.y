@@ -457,7 +457,7 @@ control_statement : frame_check          { /* does nothing */ }
 | fpart1_statement     { /* does nothing */ }
 ;
 
-frame_check : FCHK LPAR rvalue RPAR SEMI  { /* does nothing */ }
+frame_check : FCHK LPAR rvalue COMMA rvalue RPAR SEMI  { /* does nothing */ }
 ;
 
 cancel_statement : CANC
