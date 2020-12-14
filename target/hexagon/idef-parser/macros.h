@@ -78,6 +78,7 @@
 #define fEA_GPI(IMM) (EA=fREAD_GP()+IMM)
 #define fPM_I(REG,IMM) (REG=REG+IMM)
 #define fPM_M(REG,MVAL) (REG=REG+MVAL)
+#define fWRITE_NPC(VAL) (PC=VAL)
 
 /* Unary operators */
 #define fROUND(A) (A + 0x8000)
