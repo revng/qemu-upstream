@@ -783,8 +783,10 @@ rvalue : assign_statement            { /* does nothing */ }
 | SAT LPAR IMM COMMA rvalue RPAR
 {
     @1.last_column = @6.last_column;
-    yyassert(c, &@1, $3.imm.value < $5.bit_width, "To compute overflow, "
-             "source width must be greater than saturation width!");
+    if ($1.set_overflow) {
+        yyassert(c, &@1, $3.imm.value < $5.bit_width, "To compute overflow, "
+                 "source width must be greater than saturation width!");
+    }
     t_hex_value res = gen_tmp(c, &@1, $5.bit_width);
     const char *bit_suffix = ($5.bit_width == 64) ? "i64" : "i32";
     const char *overflow_str = ($1.set_overflow) ? "true" : "false";
