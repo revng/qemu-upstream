@@ -60,13 +60,12 @@
 %token XORA PLUSPLUS LT GT ASL ASR LSR EQ NEQ LTE GTE MIN MAX ANDL ORL NOTL
 %token COMMA FOR ICIRC IF MUN FSCR FCHK SXT ZXT NEW CONSTEXT LOCNT BREV SIGN
 %token LOAD STORE CONSTLL CONSTULL PC NPC LPCFG CANC QMARK IDENTITY PART1
-%token WRITE_NPC
 
 %token <rvalue> REG IMM PRE
 %token <index> ELSE
 %token <mpy> MPY
 %token <sat> SAT
-%token <cast> CAST EXTRACT DEPOSIT
+%token <cast> CAST EXTRACT DEPOSIT SETHALF
 %token <range> SETBITS INSBITS INSRANGE EXTBITS EXTRANGE
 %type <string> INAME
 %type <rvalue> rvalue lvalue VAR assign_statement pre
@@ -398,6 +397,14 @@ assign_statement : lvalue ASSIGN rvalue
 | DEPOSIT LPAR rvalue COMMA rvalue COMMA rvalue RPAR
 {
     @1.last_column = @8.last_column;
+    gen_deposit_op(c, &@1, &$5, &$7, &$3, &$1);
+}
+| SETHALF LPAR rvalue COMMA lvalue COMMA rvalue RPAR
+{
+    @1.last_column = @8.last_column;
+    if ($5.type == VARID) {
+        varid_allocate(c, &@1, &$5, $5.bit_width, $5.is_unsigned);
+    }
     gen_deposit_op(c, &@1, &$5, &$7, &$3, &$1);
 }
 | SETBITS LPAR rvalue COMMA rvalue COMMA rvalue COMMA rvalue RPAR

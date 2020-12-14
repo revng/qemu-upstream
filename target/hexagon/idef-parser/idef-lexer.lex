@@ -324,7 +324,7 @@ SIGN_ID                  s|u
                            return DEPOSIT; }
 "fSETHALF"               { yylval->cast.bit_width = 16;
                            yylval->cast.is_unsigned = false;
-                           return DEPOSIT; }
+                           return SETHALF; }
 "fSETWORD"               { yylval->cast.bit_width = 32;
                            yylval->cast.is_unsigned = false;
                            return DEPOSIT; }
