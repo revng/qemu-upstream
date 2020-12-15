@@ -373,7 +373,8 @@ assign_statement : lvalue ASSIGN rvalue
     OUT(c, &@1, helper_suffix,
         "(", &$11, ", cpu_env, ", &$9, ", ", &$11, ");\n");
 #else
-    OUT(c, &@1, "abort();\n");
+    yyassert(c, &@1, false,
+             "gen_helper_merge_inflight_store is no longer available");
 #endif
     OUT(c, &@1, "}\n");
 }
@@ -791,6 +792,7 @@ rvalue : assign_statement            { /* does nothing */ }
     const char *bit_suffix = ($5.bit_width == 64) ? "i64" : "i32";
     const char *overflow_str = ($1.set_overflow) ? "true" : "false";
     const char *unsigned_str = ($1.is_unsigned) ? "u" : "";
+    yyassert(c, &@1, false, "gen_sat is no longer available");
     OUT(c, &@1, "gen_sat", unsigned_str, "_", bit_suffix, "(", &res, ", ");
     OUT(c, &@1, &$5, ", ", &$3.imm.value, ", ", overflow_str, ");\n");
     $$ = res;
@@ -1000,6 +1002,7 @@ rvalue : assign_statement            { /* does nothing */ }
 | CIRCADD LPAR rvalue COMMA rvalue COMMA rvalue RPAR
 {
     @1.last_column = @8.last_column;
+    yyassert(c, &@1, false, "gen_fcircadd is no longer available");
     $$ = gen_circ_op(c, &@1, &$3, &$5, &$7);
 }
 | LOCNT LPAR rvalue RPAR
