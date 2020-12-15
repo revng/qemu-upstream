@@ -152,7 +152,7 @@ void reg_compose(context_t *c, YYLTYPE *locp, t_hex_reg *reg, char reg_id[5])
 void reg_print(context_t *c, YYLTYPE *locp, t_hex_reg *reg)
 {
   if (reg->type == DOTNEW) {
-    EMIT(c, "hex_new_value[N%cX]", reg->id);
+    EMIT(c, "N%cN", reg->id);
   } else {
     char reg_id[5] = { 0 };
     reg_compose(c, locp, reg, reg_id);

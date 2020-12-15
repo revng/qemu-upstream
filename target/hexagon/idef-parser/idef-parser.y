@@ -185,7 +185,7 @@ decls : decls decl
 decl : DREG
 {
     if ($1.reg.type == DOTNEW) {
-        EMIT_SIG(c, ", int N%cX", $1.reg.id);
+        EMIT_SIG(c, ", TCGv N%cN", $1.reg.id);
     } else {
         bool is64 = ($1.bit_width == 64);
         const char *type = is64 ? "TCGv_i64" : "TCGv_i32";

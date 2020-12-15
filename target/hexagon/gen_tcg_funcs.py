@@ -608,10 +608,7 @@ def gen_tcg_func(f, tag, regs, imms):
                 if regtype == "M":
                     declared.append("%s%sN" % (regtype, regid))
             elif hex_common.is_new_val(regtype, regid, tag):
-                if regtype == "N":
-                    declared.append("%s%sX" % (regtype,regid))
-                else:
-                    declared.append("%s%sN" % (regtype,regid))
+                declared.append("%s%sN" % (regtype,regid))
             else:
                 print("Bad register parse: ",regtype,regid,toss,numregs)
 

@@ -224,10 +224,6 @@ def gen_tcg_func(f, tag, regs, imms):
         if match is not None:
             declared.insert(i+1, match.string.replace("V", "N"))
 
-    ## Instead of passing N.N, pass N.V
-    for i, name in enumerate(declared):
-        declared[i] = re.sub(r"N([esdtuvxy])N", r"N\1X", name)
-
     if 'A_PRIV' in attribdict[tag]:
         f.write('    fCHECKFORPRIV();\n')
     if 'A_GUEST' in attribdict[tag]:
