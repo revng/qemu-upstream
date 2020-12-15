@@ -364,19 +364,11 @@ assign_statement : lvalue ASSIGN rvalue
     } else {
         rvalue_extend(c, &@1, &$11);
     }
+    OUT(c, &@1, "if (insn->slot == 0 && pkt->pkt_has_store_s1) {\n");
+    OUT(c, &@1, "process_store(ctx, 1);\n");
+    OUT(c, &@1, "}\n");
     OUT(c, &@1, "tcg_gen_qemu_ld", size_suffix, sign_suffix);
     OUT(c, &@1, "(", &$11, ", ", &$9, ", 0);\n");
-    OUT(c, &@1, "if (insn->slot == 0 && pkt->pkt_has_store_s1) {\n");
-#if 0
-    const char *helper_suffix = ($7) ? "u" : "s";
-    OUT(c, &@1, "gen_helper_merge_inflight_store", &$5.imm.value);
-    OUT(c, &@1, helper_suffix,
-        "(", &$11, ", cpu_env, ", &$9, ", ", &$11, ");\n");
-#else
-    yyassert(c, &@1, false,
-             "gen_helper_merge_inflight_store is no longer available");
-#endif
-    OUT(c, &@1, "}\n");
 }
 | STORE LPAR IMM COMMA IMM COMMA VAR COMMA rvalue RPAR /* Store primitive */
 {
