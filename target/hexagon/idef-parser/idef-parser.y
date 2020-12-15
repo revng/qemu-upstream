@@ -1001,7 +1001,6 @@ rvalue : assign_statement            { /* does nothing */ }
 | CIRCADD LPAR rvalue COMMA rvalue COMMA rvalue RPAR
 {
     @1.last_column = @8.last_column;
-    yyassert(c, &@1, false, "gen_fcircadd is no longer available");
     $$ = gen_circ_op(c, &@1, &$3, &$5, &$7);
 }
 | LOCNT LPAR rvalue RPAR

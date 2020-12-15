@@ -1219,7 +1219,7 @@ t_hex_value gen_circ_op(context_t *c,
     t_hex_value cs = gen_tmp(c, locp, 32);
     rvalue_materialize(c, locp, increment);
     OUT(c, locp, "READ_REG(", &cs, ", HEX_REG_CS0 + MuN);\n");
-    OUT(c, locp, "gen_fcircadd(", addr, ", ", increment, ", ", modifier);
+    OUT(c, locp, "gen_helper_fcircadd(", addr, ", ", addr, ", ", increment, ", ", modifier);
     OUT(c, locp, ", ", &cs, ");\n");
     rvalue_free(c, locp, &cs);
     rvalue_free(c, locp, increment);
