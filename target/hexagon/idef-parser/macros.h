@@ -50,7 +50,6 @@
 #define fBIDIR_ASHIFTR(SRC,SHAMT,REGSTYPE) ((SHAMT>0)?(fCAST##REGSTYPE##s(SRC)>>SHAMT):(fCAST##REGSTYPE##s(SRC)<<-SHAMT))
 #define fBIDIR_LSHIFTR(SRC,SHAMT,REGSTYPE) ((SHAMT>0)?(fCAST##REGSTYPE##u(SRC)>>>SHAMT):(fCAST##REGSTYPE##u(SRC)<<-SHAMT))
 #define fBIDIR_ASHIFTR_SAT(SRC,SHAMT,REGSTYPE) bidir_shiftr(SRC,SHAMT)
-#define fbrev(REG) REG.h[1] | brev(REG.h[0])
 
 /* Negation operator */
 #define fLSBOLDNOT(VAL) (!fGETBIT(0, VAL))
