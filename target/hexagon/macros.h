@@ -22,6 +22,110 @@
 #include "hex_regs.h"
 #include "reg_fields.h"
 
+
+#ifdef QEMU_GENERATE
+
+static inline void gen_store32(TCGv vaddr, TCGv src, int width, int slot)
+{
+    tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
+    tcg_gen_movi_tl(hex_store_width[slot], width);
+    tcg_gen_mov_tl(hex_store_val32[slot], src);
+}
+
+static inline void gen_store1(TCGv_env cpu_env, TCGv vaddr, TCGv src,
+                              DisasContext *ctx, int slot)
+{
+    gen_store32(vaddr, src, 1, slot);
+    ctx->store_width[slot] = 1;
+}
+
+static inline void gen_store2(TCGv_env cpu_env, TCGv vaddr, TCGv src,
+                              DisasContext *ctx, int slot)
+{
+    gen_store32(vaddr, src, 2, slot);
+    ctx->store_width[slot] = 2;
+}
+
+static inline void gen_store4(TCGv_env cpu_env, TCGv vaddr, TCGv src,
+                              DisasContext *ctx, int slot)
+{
+    gen_store32(vaddr, src, 4, slot);
+    ctx->store_width[slot] = 4;
+}
+
+
+static inline void gen_store8(TCGv_env cpu_env, TCGv vaddr, TCGv_i64 src,
+                              DisasContext *ctx, int slot)
+{
+    tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
+    tcg_gen_movi_tl(hex_store_width[slot], 8);
+    tcg_gen_mov_i64(hex_store_val64[slot], src);
+    ctx->store_width[slot] = 8;
+}
+
+static inline TCGv gen_read_reg(TCGv result, int num)
+{
+    tcg_gen_mov_tl(result, hex_gpr[num]);
+    return result;
+}
+
+static inline void gen_set_usr_field(int field, TCGv val)
+{
+    tcg_gen_deposit_tl(hex_gpr[HEX_REG_USR], hex_gpr[HEX_REG_USR], val,
+                       reg_field_info[field].offset,
+                       reg_field_info[field].width);
+}
+
+static inline void gen_set_usr_fieldi(int field, int x)
+{
+    TCGv val = tcg_const_tl(x);
+    gen_set_usr_field(field, val);
+    tcg_temp_free(val);
+}
+
+static inline void gen_log_reg_write(int rnum, TCGv val)
+{
+    tcg_gen_mov_tl(hex_new_value[rnum], val);
+#if HEX_DEBUG
+    /* Do this so HELPER(debug_commit_end) will know */
+    tcg_gen_movi_tl(hex_reg_written[rnum], 1);
+#endif
+}
+
+static inline void gen_write_new_pc(TCGv addr)
+{
+    /* If there are multiple branches in a packet, ignore the second one */
+    TCGv zero = tcg_const_tl(0);
+    tcg_gen_movcond_tl(TCG_COND_NE, hex_next_PC, hex_branch_taken, zero,
+                       hex_next_PC, addr);
+    tcg_gen_movi_tl(hex_branch_taken, 1);
+    tcg_temp_free(zero);
+}
+
+static inline void gen_log_pred_write(int pnum, TCGv val)
+{
+    TCGv zero = tcg_const_tl(0);
+    TCGv base_val = tcg_temp_new();
+    TCGv and_val = tcg_temp_new();
+    TCGv pred_written = tcg_temp_new();
+
+    /* Multiple writes to the same preg are and'ed together */
+    tcg_gen_andi_tl(base_val, val, 0xff);
+    tcg_gen_and_tl(and_val, base_val, hex_new_pred_value[pnum]);
+    tcg_gen_andi_tl(pred_written, hex_pred_written, 1 << pnum);
+    tcg_gen_movcond_tl(TCG_COND_NE, hex_new_pred_value[pnum],
+                       pred_written, zero,
+                       and_val, base_val);
+    tcg_gen_ori_tl(hex_pred_written, hex_pred_written, 1 << pnum);
+
+    tcg_temp_free(zero);
+    tcg_temp_free(base_val);
+    tcg_temp_free(and_val);
+    tcg_temp_free(pred_written);
+}
+
+#endif
+
 #ifdef QEMU_GENERATE
 #define READ_REG(dest, NUM)              gen_read_reg(dest, NUM)
 #define READ_PREG(dest, NUM)             gen_read_preg(dest, (NUM))
