@@ -25,6 +25,70 @@
 
 #ifdef QEMU_GENERATE
 
+static inline void gen_sat_i32(TCGv dest, TCGv source, int width, bool set_overflow) {
+    TCGv max_val = tcg_const_i32((1 << (width - 1)) - 1);
+    TCGv min_val = tcg_const_i32(-(1 << (width - 1)));
+    tcg_gen_movcond_i32(TCG_COND_GT, dest, source, max_val, max_val, source);
+    tcg_gen_movcond_i32(TCG_COND_LT, dest, source, min_val, min_val, dest);
+    // Set Overflow Bit
+    if (set_overflow) {
+        TCGv ovf = tcg_temp_new();
+        TCGv one = tcg_const_i32(1);
+        GET_USR_FIELD(USR_OVF, ovf);
+        tcg_gen_movcond_i32(TCG_COND_GT, ovf, ovf, max_val, one, ovf);
+        tcg_gen_movcond_i32(TCG_COND_LT, ovf, ovf, min_val, one, ovf);
+        SET_USR_FIELD(USR_OVF, ovf);
+    }
+}
+
+static inline void gen_satu_i32(TCGv dest, TCGv source, int width, bool set_overflow) {
+    TCGv max_val = tcg_const_i32((1 << width) - 1);
+    tcg_gen_movcond_i32(TCG_COND_GTU, dest, source, max_val, max_val, source);
+    // Set Overflow Bit
+    if (set_overflow) {
+        TCGv ovf = tcg_temp_new();
+        TCGv one = tcg_const_i32(1);
+        GET_USR_FIELD(USR_OVF, ovf);
+        tcg_gen_movcond_i32(TCG_COND_GTU, ovf, ovf, max_val, one, ovf);
+        SET_USR_FIELD(USR_OVF, ovf);
+    }
+}
+
+static inline void gen_sat_i64(TCGv_i64 dest, TCGv_i64 source, int width, bool set_overflow) {
+    TCGv_i64 max_val = tcg_const_i64((1 << (width - 1)) - 1);
+    TCGv_i64 min_val = tcg_const_i64(-(1 << (width - 1)));
+    tcg_gen_movcond_i64(TCG_COND_GT, dest, source, max_val, max_val, source);
+    tcg_gen_movcond_i64(TCG_COND_LT, dest, source, min_val, min_val, dest);
+    // Set Overflow Bit
+    if (set_overflow) {
+        TCGv ovf = tcg_temp_new();
+        TCGv_i64 ovf_ext = tcg_temp_new_i64();
+        TCGv_i64 one = tcg_const_i64(1);
+        GET_USR_FIELD(USR_OVF, ovf);
+        tcg_gen_ext_i32_i64(ovf_ext, ovf);
+        tcg_gen_movcond_i64(TCG_COND_GT, ovf_ext, ovf_ext, max_val, one, ovf_ext);
+        tcg_gen_movcond_i64(TCG_COND_LT, ovf_ext, ovf_ext, min_val, one, ovf_ext);
+        tcg_gen_trunc_i64_tl(ovf, ovf_ext);
+        SET_USR_FIELD(USR_OVF, ovf);
+    }
+}
+
+static inline void gen_satu_i64(TCGv_i64 dest, TCGv_i64 source, int width, bool set_overflow) {
+    TCGv_i64 max_val = tcg_const_i64((1 << width) - 1);
+    tcg_gen_movcond_i64(TCG_COND_GTU, dest, source, max_val, max_val, source);
+    // Set Overflow Bit
+    if (set_overflow) {
+        TCGv ovf = tcg_temp_new();
+        TCGv_i64 ovf_ext = tcg_temp_new_i64();
+        TCGv_i64 one = tcg_const_i64(1);
+        GET_USR_FIELD(USR_OVF, ovf);
+        tcg_gen_ext_i32_i64(ovf_ext, ovf);
+        tcg_gen_movcond_i64(TCG_COND_GTU, ovf_ext, ovf_ext, max_val, one, ovf_ext);
+        tcg_gen_trunc_i64_tl(ovf, ovf_ext);
+        SET_USR_FIELD(USR_OVF, ovf);
+    }
+}
+
 static inline void gen_store32(TCGv vaddr, TCGv src, int width, int slot)
 {
     tcg_gen_mov_tl(hex_store_addr[slot], vaddr);

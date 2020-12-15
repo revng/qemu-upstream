@@ -792,7 +792,6 @@ rvalue : assign_statement            { /* does nothing */ }
     const char *bit_suffix = ($5.bit_width == 64) ? "i64" : "i32";
     const char *overflow_str = ($1.set_overflow) ? "true" : "false";
     const char *unsigned_str = ($1.is_unsigned) ? "u" : "";
-    yyassert(c, &@1, false, "gen_sat is no longer available");
     OUT(c, &@1, "gen_sat", unsigned_str, "_", bit_suffix, "(", &res, ", ");
     OUT(c, &@1, &$5, ", ", &$3.imm.value, ", ", overflow_str, ");\n");
     $$ = res;
