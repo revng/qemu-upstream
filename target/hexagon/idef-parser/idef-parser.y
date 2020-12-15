@@ -176,6 +176,15 @@ statements decls RBR
     c->inst.code_begin = c->input_buffer + @5.first_column;
     c->inst.code_end = c->input_buffer + @5.last_column - 1;
 }
+|
+LBR
+{
+    /* Nop */
+    emit_header(c);
+    EMIT_SIG(c, ")");
+    OUT(c, &@1, "{\n");
+}
+RBR
 ;
 
 decls : decls decl
