@@ -597,15 +597,17 @@ def gen_tcg_func(f, tag, regs, imms):
         if (hex_common.is_read(regid)):
             genptr_src_read_opn(f,regtype,regid,tag)
 
-    if is_semantics_enabled(tag):
+    if hex_common.is_semantics_enabled(tag):
         declared = []
         ## Handle registers
         for regtype,regid,toss,numregs in regs:
-            if is_pair(regid) or (is_single(regid) and is_old_val(regtype, regid, tag)):
+            if (hex_common.is_pair(regid)
+                or (hex_common.is_single(regid)
+                    and hex_common.is_old_val(regtype, regid, tag))):
                 declared.append("%s%sV" % (regtype, regid))
                 if regtype == "M":
                     declared.append("%s%sN" % (regtype, regid))
-            elif is_new_val(regtype, regid, tag):
+            elif hex_common.is_new_val(regtype, regid, tag):
                 if regtype == "N":
                     declared.append("%s%sX" % (regtype,regid))
                 else:
@@ -615,7 +617,7 @@ def gen_tcg_func(f, tag, regs, imms):
 
         ## Handle immediates
         for immlett,bits,immshift in imms:
-            declared.append(imm_name(immlett))
+            declared.append(hex_common.imm_name(immlett))
 
         f.write("    emit_%s(%s);\n" % (tag, ", ".join(["ctx", "insn", "pkt"] + declared)))
 
@@ -691,7 +693,7 @@ def main():
     hex_common.read_attribs_file(sys.argv[2])
     hex_common.read_overrides_file(sys.argv[3])
     hex_common.calculate_attribs()
-    read_semantics_enabled_file(sys.argv[4])
+    hex_common.read_semantics_enabled_file(sys.argv[4])
     tagregs = hex_common.get_tagregs()
     tagimms = hex_common.get_tagimms()
 
