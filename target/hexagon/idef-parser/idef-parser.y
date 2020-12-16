@@ -944,21 +944,7 @@ rvalue : assign_statement            { /* does nothing */ }
 | ROUND LPAR rvalue COMMA rvalue RPAR
 {
     @1.last_column = @6.last_column;
-    /* Add .5 only if .5 bit is set */
-    yyassert(c, &@1, $3.bit_width <= 32,
-             "Convround not implemented for bit widths > 32!");
-    t_hex_value one = gen_imm_value(c, &@1, 1, 32);
-    t_hex_value remainder = gen_bin_op(c, &@1, ANDB_OP, &$3, &$5);
-    t_hex_value res = gen_bin_op(c, &@1, ADD_OP, &$3, &remainder);
-    /* Zero out trailing bits */
-    t_hex_value mask = gen_bin_op(c, &@1, ASL_OP, &$5, &one);
-    mask = gen_bin_op(c, &@1, SUB_OP, &mask, &one);
-    rvalue_materialize(c, &@1, &mask);
-    OUT(c, &@1, "tcg_gen_not_i32(", &mask, ", ", &mask, ");\n");
-    res = gen_bin_op(c, &@1, ANDB_OP, &res, &mask);
-    rvalue_free(c, &@1, &$3);
-    rvalue_free(c, &@1, &$5);
-    $$ = res;
+    $$ = gen_round(c, &@1, &$3, &$5);
 }
 | MINUS rvalue
 {

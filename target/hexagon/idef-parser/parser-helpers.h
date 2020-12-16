@@ -232,6 +232,11 @@ t_hex_value gen_convround(context_t *c,
                           t_hex_value *source,
                           t_hex_value *round_bit);
 
+t_hex_value gen_round(context_t *c,
+                      YYLTYPE *locp,
+                      t_hex_value *source,
+                      t_hex_value *position);
+
 /* Circular addressing mode with auto-increment */
 t_hex_value gen_circ_op(context_t *c,
                         YYLTYPE *locp,
