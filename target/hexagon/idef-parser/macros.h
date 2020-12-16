@@ -42,8 +42,6 @@
 #define f8BITSOF(VAL) (VAL ? 0xff : 0x00)
 #define fREAD_GP() (Constant_extended ? (0) : GP)
 #define fCLIP(DST,SRC,U) (DST=fMIN((1<<U)-1,fMAX(SRC,-(1<<U))))
-#define fRNDN(A,N) ((N==0)?(A):round(A,2**(N-1)))
-#define fCRNDN(A,N) ((N==0)?A:convround(A,2**(N-1))>>N)
 #define fBIDIR_ASHIFTL(SRC,SHAMT,REGSTYPE) ((SHAMT>0)?(fCAST##REGSTYPE##s(SRC)<<SHAMT):(fCAST##REGSTYPE##s(SRC)>>-SHAMT))
 #define fBIDIR_LSHIFTL(SRC,SHAMT,REGSTYPE) ((SHAMT>0)?(fCAST##REGSTYPE##u(SRC)<<SHAMT):(fCAST##REGSTYPE##u(SRC)>>>-SHAMT))
 #define fBIDIR_ASHIFTL_SAT(SRC,SHAMT,REGSTYPE) bidir_shiftl(SRC,SHAMT)
@@ -80,6 +78,9 @@
 #define fEA_GPI(IMM) (EA=fREAD_GP()+IMM)
 #define fPM_I(REG,IMM) (REG=REG+IMM)
 #define fPM_M(REG,MVAL) (REG=REG+MVAL)
+
+/* Unary operators */
+#define fROUND(A) (A + 0x8000)
 
 /* Binary operators */
 #define fADD128(A,B) (A+B)

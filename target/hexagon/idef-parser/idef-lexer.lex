@@ -262,8 +262,6 @@ SIGN_ID                  s|u
 "fSF_MIN"                |
 "fMIN"                   { return MIN; }
 "fABS"                   { return ABS; }
-"fCRND"                  { return CROUND; }
-"fCRNDN"                 { return CROUND; }
 "fRNDN"                  { return ROUND; }
 "fPM_CIRI"               { return CIRCADD; }
 "fPM_CIRR"               { return CIRCADD; }

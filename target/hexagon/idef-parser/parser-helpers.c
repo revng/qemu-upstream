@@ -1221,29 +1221,35 @@ t_hex_value gen_round(context_t *c,
     t_hex_value src = *source;
     t_hex_value pos = *position;
 
-    rvalue_materialize(c, locp, &pos);
+    t_hex_value src_width = gen_imm_value(c, locp, src.bit_width, 32);
+    t_hex_value dst_width = gen_imm_value(c, locp, 64, 32);
+    t_hex_value a = gen_extend_op(c, locp, &src_width, &dst_width, &src, false);
 
-    src.is_unsigned = false;
-    t_hex_value a = gen_cast_op(c, locp, &src, 64);
-    pos.is_unsigned = false;
-    t_hex_value b = gen_cast_op(c, locp, &pos, 64);
+    src_width = gen_imm_value(c, locp, 5, 32);
+    dst_width = gen_imm_value(c, locp, 64, 32);
+    t_hex_value b = gen_extend_op(c, locp, &src_width, &dst_width, &pos, true);
+
+    // Disable auto-free of values used more than once
+    a.is_symbol = true;
     b.is_symbol = true;
 
     t_hex_value res = gen_tmp(c, locp, 64);
 
-    t_hex_value zero = gen_tmp_value(c, locp, "0", 64);
-    t_hex_value one = gen_imm_value(c, locp, 1, 64);
+    t_hex_value one = gen_tmp_value(c, locp, "1", 64);
     t_hex_value n_m1 = gen_bin_op(c, locp, SUB_OP, &b, &one);
+    one = gen_tmp_value(c, locp, "1", 64);
     t_hex_value shifted = gen_bin_op(c, locp, ASL_OP, &one, &n_m1);
     t_hex_value sum = gen_bin_op(c, locp, ADD_OP, &shifted, &a);
 
+    t_hex_value zero = gen_tmp_value(c, locp, "0", 64);
     OUT(c, locp, "tcg_gen_movcond_i64");
     OUT(c, locp, "(TCG_COND_EQ, ", &res, ", ", &b, ", ", &zero);
     OUT(c, locp, ", ", &a, ", ", &sum, ");\n");
 
+    rvalue_free(c, locp, &a);
     rvalue_free(c, locp, &b);
-    rvalue_free(c, locp, &source);
-    rvalue_free(c, locp, &position);
+    rvalue_free(c, locp, &zero);
+    rvalue_free(c, locp, &sum);
 
     return res;
 }

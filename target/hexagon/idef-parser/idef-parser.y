@@ -89,7 +89,7 @@
 %left EQ NEQ
 %left LT GT LTE GTE
 %left ASL ASR LSR
-%right ABS CROUND
+%right ABS
 %left MINUS PLUS
 %left POW
 %left MUL DIV MOD MPY
