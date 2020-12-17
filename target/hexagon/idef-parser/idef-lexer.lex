@@ -278,6 +278,9 @@ SIGN_ID                  s|u
 "fVSATUN"                { yylval->sat.set_overflow = true;
                            yylval->sat.is_unsigned = true;
                            return SAT; }
+"fSE32_64"               { yylval->cast.bit_width = 64;
+                           yylval->cast.is_unsigned = false;
+                           return CAST; }
 "fCAST4u"                { yylval->cast.bit_width = 32;
                            yylval->cast.is_unsigned = true;
                            return CAST; }
@@ -417,7 +420,6 @@ SIGN_ID                  s|u
 "fZE16_32"               |
 "fSE16_32"               |
 "fZE32_64"               |
-"fSE32_64"               |
 "fPASS"                  |
 "fFLOAT"                 |
 "fUNLOAT"                |
