@@ -415,11 +415,12 @@ void ea_free(context_t *c, YYLTYPE *locp)
     OUT(c, locp, "tcg_temp_free(EA);\n");
 }
 
-t_hex_value gen_bin_cmp(context_t *c,
-                        YYLTYPE *locp,
-                        const char *type,
-                        t_hex_value *op1,
-                        t_hex_value *op2)
+static inline t_hex_value gen_bin_cmp_ext(context_t *c,
+                                          YYLTYPE *locp,
+                                          const char *type,
+                                          t_hex_value *op1,
+                                          t_hex_value *op2,
+                                          bool autofree)
 {
 #define IMM_IMM 0
 #define IMM_REG 1
@@ -484,9 +485,12 @@ t_hex_value gen_bin_cmp(context_t *c,
         abort();
     }
     }
-    /* Free operands */
-    rvalue_free(c, locp, op1);
-    rvalue_free(c, locp, op2);
+
+    if (autofree) {
+        /* Free operands */
+        rvalue_free(c, locp, op1);
+        rvalue_free(c, locp, op2);
+    }
 
     return res;
 
@@ -496,12 +500,20 @@ t_hex_value gen_bin_cmp(context_t *c,
 #undef REG_REG
 }
 
+t_hex_value gen_bin_cmp(context_t *c,
+                        YYLTYPE *locp,
+                        const char *type,
+                        t_hex_value *op1,
+                        t_hex_value *op2) {
+    return gen_bin_cmp_ext(c, locp, type, op1, op2, true);
+}
+
 /* Code generation functions */
 t_hex_value gen_bin_op(context_t *c,
-                       YYLTYPE *locp,
-                       enum op_type type,
-                       t_hex_value *operand1,
-                       t_hex_value *operand2)
+                    YYLTYPE *locp,
+                    enum op_type type,
+                    t_hex_value *operand1,
+                    t_hex_value *operand2)
 {
 #define IMM_IMM 0
 #define IMM_REG 1
@@ -825,7 +837,7 @@ t_hex_value gen_bin_op(context_t *c,
             break;
         case IMM_REG:
             zero = gen_tmp_value(c, locp, "0", 32);
-            tmp2 = gen_bin_cmp(c, locp, "TCG_COND_NE", &op2, &zero);
+            tmp2 = gen_bin_cmp_ext(c, locp, "TCG_COND_NE", &op2, &zero, false);
             OUT(c, locp, "tcg_gen_andi_", bit_suffix,
                 "(", &res, ", ", &op1, " != 0 , ", &tmp2, ");\n");
             rvalue_free(c, locp, &zero);
@@ -833,7 +845,7 @@ t_hex_value gen_bin_op(context_t *c,
             break;
         case REG_IMM:
             zero = gen_tmp_value(c, locp, "0", 32);
-            tmp1 = gen_bin_cmp(c, locp, "TCG_COND_NE", &op1, &zero);
+            tmp1 = gen_bin_cmp_ext(c, locp, "TCG_COND_NE", &op1, &zero, false);
             OUT(c, locp, "tcg_gen_andi_", bit_suffix,
                 "(", &res, ", ", &tmp1, ", ", &op2, " != 0);\n");
             rvalue_free(c, locp, &zero);
@@ -841,8 +853,8 @@ t_hex_value gen_bin_op(context_t *c,
             break;
         case REG_REG:
             zero = gen_tmp_value(c, locp, "0", 32);
-            tmp1 = gen_bin_cmp(c, locp, "TCG_COND_NE", &op1, &zero);
-            tmp2 = gen_bin_cmp(c, locp, "TCG_COND_NE", &op2, &zero);
+            tmp1 = gen_bin_cmp_ext(c, locp, "TCG_COND_NE", &op1, &zero, false);
+            tmp2 = gen_bin_cmp_ext(c, locp, "TCG_COND_NE", &op2, &zero, false);
             OUT(c, locp, "tcg_gen_and_", bit_suffix,
                 "(", &res, ", ", &tmp1, ", ", &tmp2, ");\n");
             rvalue_free(c, locp, &zero);
