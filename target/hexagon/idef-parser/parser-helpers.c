@@ -294,6 +294,19 @@ t_hex_value gen_local_tmp(context_t *c, YYLTYPE *locp, int bit_width)
     return rvalue;
 }
 
+void gen_dbg_str(context_t *c,
+                 YYLTYPE *locp,
+                 const char *str,
+                 t_hex_value *val) {
+    rvalue_materialize(c, locp, val);
+    int width = val->bit_width;
+    OUT(c, locp, "TCGv_ptr tmp_", &c->inst.tmp_count,
+        " = tcg_const_local_ptr(", str, ");\n");
+    OUT(c, locp, "gen_helper_dbg_str_i", &width, "(",
+        "tmp_", &c->inst.tmp_count, ", ", val, ");\n");
+    c->inst.tmp_count++;
+}
+
 t_hex_value gen_tmp_value(context_t *c,
                           YYLTYPE *locp,
                           const char *value,
