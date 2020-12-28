@@ -392,28 +392,33 @@ void rvalue_truncate(context_t *c, YYLTYPE *locp, t_hex_value *rvalue)
     }
 }
 
+int find_variable(context_t *c, YYLTYPE *locp, t_hex_value *varid) {
+    for (int i = 0; i < c->inst.allocated_count; i++) {
+        if (!strcmp(varid->var.name, c->inst.allocated[i].name)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void varid_allocate(context_t *c,
                     YYLTYPE *locp,
                     t_hex_value *varid,
                     int width,
                     bool is_unsigned)
 {
-    bool found = false;
     varid->bit_width = width;
     const char *bit_suffix = width == 64 ? "64" : "32";
     yyassert(c, locp, c->inst.allocated_count < ALLOC_LIST_LEN,
              "Too many automatic variables required!");
-    for (int i = 0; i < c->inst.allocated_count; i++) {
-        if (!strcmp(varid->var.name, c->inst.allocated[i].name)) {
-            found = true;
-            free((char *) varid->var.name);
-            varid->var.name = c->inst.allocated[i].name;
-            varid->bit_width = c->inst.allocated[i].bit_width;
-            varid->is_unsigned = c->inst.allocated[i].is_unsigned;
-            break;
-        }
-    }
-    if (!found) {
+    int index = find_variable(c, locp, varid);
+    bool found = index != -1;
+    if (found) {
+        free((char *) varid->var.name);
+        varid->var.name = c->inst.allocated[index].name;
+        varid->bit_width = c->inst.allocated[index].bit_width;
+        varid->is_unsigned = c->inst.allocated[index].is_unsigned;
+    } else {
         OUT(c, locp, "TCGv_i", bit_suffix, " ", varid);
         OUT(c, locp, " = tcg_temp_local_new_i", bit_suffix, "();\n");
         c->inst.allocated[c->inst.allocated_count].name = varid->var.name;
@@ -536,6 +541,18 @@ t_hex_value gen_bin_op(context_t *c,
     /* Replicate operands to avoid side effects */
     t_hex_value op1 = *operand1;
     t_hex_value op2 = *operand2;
+
+    /* Enforce variables' size */
+    if (op1.type == VARID) {
+        int index = find_variable(c, locp, &op1);
+        yyassert(c, locp, index >= 0, "Variable in bin_op must exist!\n");
+        op1.bit_width = c->inst.allocated[index].bit_width;
+    }
+    if (op2.type == VARID) {
+        int index = find_variable(c, locp, &op2);
+        yyassert(c, locp, index >= 0, "Variable in bin_op must exist!\n");
+        op2.bit_width = c->inst.allocated[index].bit_width;
+    }
 
     int op_types = (op1.type != IMMEDIATE) << 1 | (op2.type != IMMEDIATE);
 
@@ -1089,10 +1106,12 @@ void gen_deposit_op(context_t *c,
     int bit_width = (dest->bit_width == 64) ? 64 : 32;
     int width = cast->bit_width;
     /* If the destination value is 32, truncate the value, otherwise extend */
-    if (dest->bit_width == 32) {
-        rvalue_truncate(c, locp, value);
-    } else {
-        rvalue_extend(c, locp, value);
+    if (dest->bit_width != value->bit_width) {
+        if (bit_width == 32) {
+            rvalue_truncate(c, locp, value);
+        } else {
+            rvalue_extend(c, locp, value);
+        }
     }
     rvalue_materialize(c, locp, value);
     OUT(c, locp, "tcg_gen_deposit_i", &bit_width, "(", dest, ", ", dest, ", ");
@@ -1176,10 +1195,12 @@ void gen_assign(context_t *c,
         varid_allocate(c, locp, dest, value->bit_width, value->is_unsigned);
     }
     int bit_width = dest->bit_width == 64 ? 64 : 32;
-    if (bit_width == 64) {
-        rvalue_extend(c, locp, value);
-    } else {
-        rvalue_truncate(c, locp, value);
+    if (bit_width != value->bit_width) {
+        if (bit_width == 64) {
+            rvalue_extend(c, locp, value);
+        } else {
+            rvalue_truncate(c, locp, value);
+        }
     }
     rvalue_materialize(c, locp, value);
     if (value->type == IMMEDIATE) {

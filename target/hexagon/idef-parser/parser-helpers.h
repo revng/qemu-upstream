@@ -158,6 +158,8 @@ void rvalue_extend(context_t *c, YYLTYPE *locp, t_hex_value *rvalue);
 
 void rvalue_truncate(context_t *c, YYLTYPE *locp, t_hex_value *rvalue);
 
+int find_variable(context_t *c, YYLTYPE *locp, t_hex_value *varid);
+
 void varid_allocate(context_t *c,
                     YYLTYPE *locp,
                     t_hex_value *varid,

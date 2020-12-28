@@ -39,7 +39,7 @@
 #define fSAT(A) fSATN(32, A)
 
 /* Ease parsing */
-#define f8BITSOF(VAL) (VAL ? 0xff : 0x00)
+#define f8BITSOF(VAL) ((VAL) ? 0xff : 0x00)
 #define fREAD_GP() (Constant_extended ? (0) : GP)
 #define fCLIP(DST,SRC,U) (DST=fMIN((1<<U)-1,fMAX(SRC,-(1<<U))))
 #define fBIDIR_ASHIFTL(SRC,SHAMT,REGSTYPE) ((SHAMT>0)?(fCAST##REGSTYPE##s(SRC)<<SHAMT):(fCAST##REGSTYPE##s(SRC)>>-SHAMT))

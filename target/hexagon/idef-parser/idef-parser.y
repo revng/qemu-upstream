@@ -411,8 +411,19 @@ assign_statement : lvalue ASSIGN rvalue
 | SETHALF LPAR rvalue COMMA lvalue COMMA rvalue RPAR
 {
     @1.last_column = @8.last_column;
+    yyassert(c, &@1, $3.type == IMMEDIATE,
+             "Deposit index must be immediate!\n");
     if ($5.type == VARID) {
-        varid_allocate(c, &@1, &$5, $5.bit_width, $5.is_unsigned);
+        int var_id = find_variable(c, &@1, &$5);
+        if (var_id == -1) {
+            t_hex_value zero = gen_imm_value(c, &@1, 0, 64);
+            zero.is_unsigned = true;
+            $5.bit_width = 64;
+            gen_assign(c, &@1, &$5, &zero);
+        } else {
+            /* We need to enforce the variable size (default is 32) */
+            $5.bit_width = c->inst.allocated[var_id].bit_width;
+        }
     }
     gen_deposit_op(c, &@1, &$5, &$7, &$3, &$1);
 }
