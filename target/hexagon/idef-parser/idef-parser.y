@@ -813,6 +813,7 @@ rvalue : assign_statement            { /* does nothing */ }
     const char *unsigned_str = ($1.is_unsigned) ? "u" : "";
     OUT(c, &@1, "gen_sat", unsigned_str, "_", bit_suffix, "(", &res, ", ");
     OUT(c, &@1, &$5, ", ", &$3.imm.value, ", ", overflow_str, ");\n");
+    res.is_unsigned = $1.is_unsigned;
     $$ = res;
 }
 | CAST rvalue

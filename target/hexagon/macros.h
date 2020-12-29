@@ -1042,6 +1042,8 @@ static inline void gen_sat_i32(TCGv dest, TCGv source, int width, bool set_overf
 static inline void gen_satu_i32(TCGv dest, TCGv source, int width, bool set_overflow) {
     TCGv max_val = tcg_const_i32((1 << width) - 1);
     tcg_gen_movcond_i32(TCG_COND_GTU, dest, source, max_val, max_val, source);
+    TCGv_i32 zero = tcg_const_i32(0);
+    tcg_gen_movcond_i32(TCG_COND_LT, dest, source, zero, zero, dest);
     // Set Overflow Bit
     if (set_overflow) {
         TCGv ovf = tcg_temp_new();
@@ -1074,6 +1076,8 @@ static inline void gen_sat_i64(TCGv_i64 dest, TCGv_i64 source, int width, bool s
 static inline void gen_satu_i64(TCGv_i64 dest, TCGv_i64 source, int width, bool set_overflow) {
     TCGv_i64 max_val = tcg_const_i64((1 << width) - 1);
     tcg_gen_movcond_i64(TCG_COND_GTU, dest, source, max_val, max_val, source);
+    TCGv_i64 zero = tcg_const_i64(0);
+    tcg_gen_movcond_i64(TCG_COND_LT, dest, source, zero, zero, dest);
     // Set Overflow Bit
     if (set_overflow) {
         TCGv ovf = tcg_temp_new();
