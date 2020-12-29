@@ -900,6 +900,9 @@ t_hex_value gen_bin_op(context_t *c,
     }
     case MINI_OP:
     {
+        const char *comparison = (op1.is_unsigned && op2.is_unsigned)
+                                 ? "TCG_COND_LEU"
+                                 : "TCG_COND_LE";
         switch (op_types) {
         case IMM_IMM:
             OUT(c, locp, "int", &bit_width, "_t ", &res, " = (", &op1, " <= ");
@@ -909,7 +912,7 @@ t_hex_value gen_bin_op(context_t *c,
             op1.bit_width = bit_width;
             rvalue_materialize(c, locp, &op1);
             OUT(c, locp, "tcg_gen_movcond_i", &bit_width);
-            OUT(c, locp, "(TCG_COND_LE, ", &res, ", ", &op1, ", ", &op2);
+            OUT(c, locp, "(", comparison, ", ", &res, ", ", &op1, ", ", &op2);
             OUT(c, locp, ", ", &op1, ", ", &op2, ");\n");
             break;
         case REG_IMM:
@@ -918,7 +921,7 @@ t_hex_value gen_bin_op(context_t *c,
             /* Fallthrough */
         case REG_REG:
             OUT(c, locp, "tcg_gen_movcond_i", &bit_width);
-            OUT(c, locp, "(TCG_COND_LE, ", &res, ", ", &op1, ", ", &op2);
+            OUT(c, locp, "(", comparison, ", ", &res, ", ", &op1, ", ", &op2);
             OUT(c, locp, ", ", &op1, ", ", &op2, ");\n");
             break;
         default:
