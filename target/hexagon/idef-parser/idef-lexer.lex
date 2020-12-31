@@ -473,11 +473,13 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
+                           yylval->rvalue.bit_width = 32;
                            return REG; }
 "N"{LOWER_ID}"N"         { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = DOTNEW;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
+                           yylval->rvalue.bit_width = 32;
                            return REG; }
 "S"{SYS_ID_32}           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = SYSTEM;
@@ -624,7 +626,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.imm.value = 127;
                            return IMM; }
 {DIGIT}+                 { yylval->rvalue.type = IMMEDIATE;
-                           yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = atoi(yytext);

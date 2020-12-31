@@ -1152,6 +1152,7 @@ t_hex_value gen_extract_op(context_t *c,
     const char *sign_prefix = (cast->is_unsigned) ? "" : "s";
     int width = cast->bit_width;
     t_hex_value res = gen_tmp(c, locp, bit_width);
+    res.is_unsigned = cast->is_unsigned;
     OUT(c, locp, "tcg_gen_", sign_prefix, "extract_i", &bit_width,
         "(", &res, ", ", source);
     OUT(c, locp, ", ", index, " * ", &width, ", ", &width, ");\n");

@@ -373,6 +373,15 @@ assign_statement : lvalue ASSIGN rvalue
     } else {
         rvalue_extend(c, &@1, &$11);
     }
+    if ($9.type == VARID) {
+        int var_id = find_variable(c, &@1, &$9);
+        yyassert(c, &@1, var_id != -1, "Load variable must exist!\n");
+        /* We need to enforce the variable size */
+        $9.bit_width = c->inst.allocated[var_id].bit_width;
+    }
+    if ($9.bit_width != 32) {
+        rvalue_truncate(c, &@1, &$9);
+    }
     OUT(c, &@1, "if (insn->slot == 0 && pkt->pkt_has_store_s1) {\n");
     OUT(c, &@1, "process_store(ctx, 1);\n");
     OUT(c, &@1, "}\n");
@@ -389,6 +398,15 @@ assign_statement : lvalue ASSIGN rvalue
         rvalue_truncate(c, &@1, &$9);
     } else {
         rvalue_extend(c, &@1, &$9);
+    }
+    if ($7.type == VARID) {
+        int var_id = find_variable(c, &@1, &$7);
+        yyassert(c, &@1, var_id != -1, "Load variable must exist!\n");
+        /* We need to enforce the variable size */
+        $7.bit_width = c->inst.allocated[var_id].bit_width;
+    }
+    if ($7.bit_width != 32) {
+        rvalue_truncate(c, &@1, &$7);
     }
     rvalue_materialize(c, &@1, &$9);
     OUT(c, &@1, "gen_store", &mem_width, "(cpu_env, ", &$7, ", ", &$9);
@@ -1045,6 +1063,7 @@ rvalue : assign_statement            { /* does nothing */ }
 {
     @1.last_column = @6.last_column;
     $$ = gen_extract_op(c, &@1, &$5, &$3, &$1);
+    $$ = gen_cast_op(c, &@1, &$$, 64);
 }
 | EXTBITS LPAR rvalue COMMA rvalue COMMA rvalue RPAR
 {
