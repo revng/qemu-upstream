@@ -327,7 +327,7 @@ assign_statement : lvalue ASSIGN rvalue
         OUT(c, &@1, &$3, " = (", &$3, " & 0xff) << i;\n");
         OUT(c, &@1, "tcg_gen_ori_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
     } else {
-        OUT(c, &@1, "tcg_gen_or_i32(", &$1, ", ", &$1, ", ", &$3, ");\n");
+        OUT(c, &@1, "tcg_gen_mov_i32(", &$1, ", ", &$3, ");\n");
         OUT(c, &@1, "tcg_gen_andi_i32(", &$1, ", ", &$1, ", 0xff);\n");
     }
     if (is_direct) {
