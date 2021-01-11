@@ -592,7 +592,7 @@ t_hex_value gen_bin_op(context_t *c,
         res.imm.index = c->inst.qemu_tmp_count;
     }
     /* Handle signedness, if both unsigned -> result is unsigned, else signed */
-    res.is_unsigned = op1.is_unsigned && &op2.is_unsigned;
+    res.is_unsigned = op1.is_unsigned && op2.is_unsigned;
 
     switch (type) {
     case ADD_OP:
