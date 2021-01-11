@@ -936,11 +936,19 @@ rvalue : assign_statement            { /* does nothing */ }
 | SXT LPAR IMM COMMA IMM COMMA rvalue RPAR
 {
     @1.last_column = @8.last_column;
+    yyassert(c, &@1, $5.type == IMMEDIATE &&
+             $5.imm.type == VALUE,
+             "SXT expects immediate values\n");
+    $5.imm.value = 64;
     $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, false);
 }
 | ZXT LPAR IMM COMMA IMM COMMA rvalue RPAR
 {
     @1.last_column = @8.last_column;
+    yyassert(c, &@1, $5.type == IMMEDIATE &&
+             $5.imm.type == VALUE,
+             "ZXT expects immediate values\n");
+    $5.imm.value = 64;
     $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, true);
 }
 | LPAR rvalue RPAR
