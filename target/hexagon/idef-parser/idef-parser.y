@@ -43,6 +43,7 @@
     t_hex_value rvalue;
     t_hex_sat sat;
     t_hex_cast cast;
+    t_hex_extract extract;
     t_hex_range range;
     t_hex_mpy mpy;
     bool is_unsigned;
@@ -65,7 +66,8 @@
 %token <index> ELSE
 %token <mpy> MPY
 %token <sat> SAT
-%token <cast> CAST EXTRACT DEPOSIT SETHALF
+%token <cast> CAST DEPOSIT SETHALF
+%token <extract> EXTRACT
 %token <range> SETBITS INSBITS INSRANGE EXTBITS EXTRANGE
 %type <string> INAME
 %type <rvalue> rvalue lvalue VAR assign_statement pre
@@ -1072,7 +1074,6 @@ rvalue : assign_statement            { /* does nothing */ }
 {
     @1.last_column = @6.last_column;
     $$ = gen_extract_op(c, &@1, &$5, &$3, &$1);
-    $$ = gen_cast_op(c, &@1, &$$, 64);
 }
 | EXTBITS LPAR rvalue COMMA rvalue COMMA rvalue RPAR
 {

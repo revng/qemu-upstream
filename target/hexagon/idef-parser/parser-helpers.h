@@ -215,7 +215,7 @@ t_hex_value gen_extract_op(context_t *c,
                            YYLTYPE *locp,
                            t_hex_value *source,
                            t_hex_value *index,
-                           t_hex_cast *cast);
+                           t_hex_extract *extract);
 
 t_hex_value gen_read_creg(context_t *c, YYLTYPE *locp, t_hex_value *reg);
 

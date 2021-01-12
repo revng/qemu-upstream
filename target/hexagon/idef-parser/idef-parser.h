@@ -119,6 +119,15 @@ typedef struct t_hex_cast {
 } t_hex_cast;
 
 /**
+ * Semantic record of the EXTRACT token, identifying the cast operator
+ */
+typedef struct t_hex_extract {
+    int bit_width;          /**< Bit width of the extract operator           */
+    int storage_bit_width;  /**< Actual bit width of the extract operator    */
+    bool is_unsigned;       /**< Unsigned flag for the extract operator      */
+} t_hex_extract;
+
+/**
  * Semantic record of the MPY token, identifying the fMPY multiplication
  * operator
  */

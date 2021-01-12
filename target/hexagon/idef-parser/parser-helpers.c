@@ -1145,17 +1145,35 @@ t_hex_value gen_extract_op(context_t *c,
                            YYLTYPE *locp,
                            t_hex_value *source,
                            t_hex_value *index,
-                           t_hex_cast *cast) {
+                           t_hex_extract *extract) {
     yyassert(c, locp, index->type == IMMEDIATE,
              "Extract index must be immediate!\n");
     int bit_width = (source->bit_width == 64) ? 64 : 32;
-    const char *sign_prefix = (cast->is_unsigned) ? "" : "s";
-    int width = cast->bit_width;
+    const char *sign_prefix = (extract->is_unsigned) ? "" : "s";
+    int width = extract->bit_width;
     t_hex_value res = gen_tmp(c, locp, bit_width);
-    res.is_unsigned = cast->is_unsigned;
+    res.is_unsigned = extract->is_unsigned;
     OUT(c, locp, "tcg_gen_", sign_prefix, "extract_i", &bit_width,
         "(", &res, ", ", source);
     OUT(c, locp, ", ", index, " * ", &width, ", ", &width, ");\n");
+
+    /* Some extract operations have bit_width != storage_bit_width */
+    if (extract->storage_bit_width > bit_width) {
+        t_hex_value tmp = gen_tmp(c, locp, extract->storage_bit_width);
+        tmp.is_unsigned = extract->is_unsigned;
+        if (extract->is_unsigned) {
+            /* Extend unsigned */
+            OUT(c, locp, "tcg_gen_extu_i32_i64(",
+                &tmp, ", ", &res, ");\n");
+        } else {
+            /* Extend signed */
+            OUT(c, locp, "tcg_gen_ext_i32_i64(",
+                &tmp, ", ", &res, ");\n");
+        }
+        rvalue_free(c, locp, &res);
+        res = tmp;
+    }
+
     *source = res;
     return *source;
 }

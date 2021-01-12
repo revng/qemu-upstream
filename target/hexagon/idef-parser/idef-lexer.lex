@@ -293,26 +293,33 @@ SIGN_ID                  s|u
 "fCAST8s"                { yylval->cast.bit_width = 64;
                            yylval->cast.is_unsigned = false;
                            return CAST; }
-"fGETBIT"                { yylval->cast.bit_width = 1;
-                           yylval->cast.is_unsigned = false;
+"fGETBIT"                { yylval->extract.bit_width = 1;
+                           yylval->extract.storage_bit_width = 1;
+                           yylval->extract.is_unsigned = false;
                            return EXTRACT; }
-"fGETBYTE"               { yylval->cast.bit_width = 8;
-                           yylval->cast.is_unsigned = false;
+"fGETBYTE"               { yylval->extract.bit_width = 8;
+                           yylval->extract.storage_bit_width = 8;
+                           yylval->extract.is_unsigned = false;
                            return EXTRACT; }
-"fGETUBYTE"              { yylval->cast.bit_width = 8;
-                           yylval->cast.is_unsigned = true;
+"fGETUBYTE"              { yylval->extract.bit_width = 8;
+                           yylval->extract.storage_bit_width = 8;
+                           yylval->extract.is_unsigned = true;
                            return EXTRACT; }
-"fGETHALF"               { yylval->cast.bit_width = 16;
-                           yylval->cast.is_unsigned = false;
+"fGETHALF"               { yylval->extract.bit_width = 16;
+                           yylval->extract.storage_bit_width = 16;
+                           yylval->extract.is_unsigned = false;
                            return EXTRACT; }
-"fGETUHALF"              { yylval->cast.bit_width = 16;
-                           yylval->cast.is_unsigned = true;
+"fGETUHALF"              { yylval->extract.bit_width = 16;
+                           yylval->extract.storage_bit_width = 16;
+                           yylval->extract.is_unsigned = true;
                            return EXTRACT; }
-"fGETWORD"               { yylval->cast.bit_width = 32;
-                           yylval->cast.is_unsigned = false;
+"fGETWORD"               { yylval->extract.bit_width = 32;
+                           yylval->extract.storage_bit_width = 64;
+                           yylval->extract.is_unsigned = false;
                            return EXTRACT; }
-"fGETUWORD"              { yylval->cast.bit_width = 32;
-                           yylval->cast.is_unsigned = true;
+"fGETUWORD"              { yylval->extract.bit_width = 32;
+                           yylval->extract.storage_bit_width = 64;
+                           yylval->extract.is_unsigned = true;
                            return EXTRACT; }
 "fEXTRACTU_BITS"         |
 "fEXTRACTU_BIDIR"        { yylval->range.is_unsigned = true;
