@@ -365,6 +365,7 @@ assign_statement : lvalue ASSIGN rvalue
     char size_suffix[4] = { 0 };
     /* Create temporary variable (if not present) */
     if ($11.type == VARID) {
+        /* TODO: this is a common pattern, the parser should be varid-aware. */
         varid_allocate(c, &@1, &$11, bit_width, $7);
     }
     snprintf(size_suffix, 4, "%" PRIu64, $5.imm.value * 8);
