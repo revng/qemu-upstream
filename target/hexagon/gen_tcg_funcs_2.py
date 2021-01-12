@@ -22,7 +22,7 @@ import re
 import string
 from io import StringIO
 
-from hex_common import *
+import hex_common
 
 ##
 ## Helpers for gen_tcg_func
@@ -38,7 +38,7 @@ def genptr_decl_pair_writeble(f, tag, regtype, regid, regno):
     f.write("    TCGv_i64 %s%sV = tcg_temp_local_new_i64();\n" % \
         (regtype, regid))
     f.write("    const int %s = insn->regno[%d];\n" % (regN, regno))
-    if ('A_CONDEXEC' in attribdict[tag]):
+    if ('A_CONDEXEC' in hex_common.attribdict[tag]):
         f.write("    if (!is_preloaded(ctx, %s)) {\n" % regN)
         f.write("        tcg_gen_mov_tl(hex_new_value[%s], hex_gpr[%s]);\n" % \
                              (regN, regN))
@@ -53,7 +53,7 @@ def genptr_decl_writeble(f, tag, regtype, regid, regno):
     f.write("    TCGv %s%sV = tcg_temp_local_new();\n" % \
         (regtype, regid))
     f.write("    const int %s = insn->regno[%d];\n" % (regN, regno))
-    if ('A_CONDEXEC' in attribdict[tag]):
+    if ('A_CONDEXEC' in hex_common.attribdict[tag]):
         f.write("    if (!is_preloaded(ctx, %s)) {\n" % regN)
         f.write("        tcg_gen_mov_tl(hex_new_value[%s], hex_gpr[%s]);\n" % \
                              (regN, regN))
@@ -76,12 +76,12 @@ def genptr_decl_new(f,regtype,regid,regno):
     return regV
 
 def genptr_decl_opn(f, tag, regtype, regid, toss, numregs, i):
-    if (is_pair(regid)):
+    if (hex_common.is_pair(regid)):
         return genptr_decl(f, tag, regtype, regid, i)
-    elif (is_single(regid)):
-        if is_old_val(regtype, regid, tag):
+    elif (hex_common.is_single(regid)):
+        if hex_common.is_old_val(regtype, regid, tag):
             return genptr_decl(f, tag, regtype, regid,i)
-        elif is_new_val(regtype, regid, tag):
+        elif hex_common.is_new_val(regtype, regid, tag):
             return genptr_decl_new(f,regtype,regid,i)
         else:
             print("Bad register parse: ",regtype,regid,toss,numregs)
@@ -95,7 +95,7 @@ def genptr_decl_imm(f,immlett):
         i = 1
     else:
         i = 0
-    immV = imm_name(immlett)
+    immV = hex_common.imm_name(immlett)
     f.write("    DECL_IMM(%s,%d);\n" % (immV,i))
     return immV
 
@@ -108,12 +108,12 @@ def genptr_free_new(f,regtype,regid,regno):
     f.write("%s(%s%sN);\n" % (macro, regtype, regid))
 
 def genptr_free_opn(f,regtype,regid,i,tag):
-    if (is_pair(regid)):
+    if (hex_common.is_pair(regid)):
         genptr_free(f,regtype,regid,i)
-    elif (is_single(regid)):
-        if is_old_val(regtype, regid, tag):
+    elif (hex_common.is_single(regid)):
+        if hex_common.is_old_val(regtype, regid, tag):
             genptr_free(f,regtype,regid,i)
-        elif is_new_val(regtype, regid, tag):
+        elif hex_common.is_new_val(regtype, regid, tag):
             genptr_free_new(f,regtype,regid,i)
         else:
             print("Bad register parse: ",regtype,regid,toss,numregs)
@@ -131,12 +131,12 @@ def genptr_src_read_new(f,regtype,regid):
         (macro,regtype,regid,regtype,regid))
 
 def genptr_src_read_opn(f,regtype,regid,tag):
-    if (is_pair(regid)):
+    if (hex_common.is_pair(regid)):
         genptr_src_read(f,regtype,regid)
-    elif (is_single(regid)):
-        if is_old_val(regtype, regid, tag):
+    elif (hex_common.is_single(regid)):
+        if hex_common.is_old_val(regtype, regid, tag):
             genptr_src_read(f,regtype,regid)
-        elif is_new_val(regtype, regid, tag):
+        elif hex_common.is_new_val(regtype, regid, tag):
             genptr_src_read_new(f,regtype,regid)
         else:
             print("Bad register parse: ",regtype,regid,toss,numregs)
@@ -145,12 +145,12 @@ def genptr_src_read_opn(f,regtype,regid,tag):
 
 def gen_helper_call_opn(f, tag, regtype, regid, toss, numregs, i):
     if (i > 0): f.write(", ")
-    if (is_pair(regid)):
+    if (hex_common.is_pair(regid)):
         f.write("%s%sV" % (regtype,regid))
-    elif (is_single(regid)):
-        if is_old_val(regtype, regid, tag):
+    elif (hex_common.is_single(regid)):
+        if hex_common.is_old_val(regtype, regid, tag):
             f.write("%s%sV" % (regtype,regid))
-        elif is_new_val(regtype, regid, tag):
+        elif hex_common.is_new_val(regtype, regid, tag):
             f.write("%s%sN" % (regtype,regid))
         else:
             print("Bad register parse: ",regtype,regid,toss,numregs)
@@ -159,22 +159,22 @@ def gen_helper_call_opn(f, tag, regtype, regid, toss, numregs, i):
 
 def gen_helper_decl_imm(f,immlett):
     f.write("    DECL_TCG_IMM(tcgv_%s, %s);\n" % \
-        (imm_name(immlett), imm_name(immlett)))
+        (hex_common.imm_name(immlett), imm_name(immlett)))
 
 def gen_helper_call_imm(f,immlett):
-    f.write(", tcgv_%s" % imm_name(immlett))
+    f.write(", tcgv_%s" % hex_common.imm_name(immlett))
 
 def gen_helper_free_imm(f,immlett):
-    f.write("    FREE_TCG_IMM(tcgv_%s);\n" % imm_name(immlett))
+    f.write("    FREE_TCG_IMM(tcgv_%s);\n" % hex_common.imm_name(immlett))
 
 def genptr_dst_write(f, tag, regtype, regid):
     macro = "    WRITE_%sREG_%s" % (regtype, regid)
     f.write("%s(%s%sN, %s%sV);\n" % (macro, regtype, regid, regtype, regid))
 
 def genptr_dst_write_opn(f,regtype, regid, tag):
-    if (is_pair(regid)):
+    if (hex_common.is_pair(regid)):
         genptr_dst_write(f, tag, regtype, regid)
-    elif (is_single(regid)):
+    elif (hex_common.is_single(regid)):
         genptr_dst_write(f, tag, regtype, regid)
     else:
         print("Bad register parse: ",regtype,regid,toss,numregs)
@@ -199,15 +199,15 @@ def genptr_dst_write_opn(f,regtype, regid, tag):
 ##           tcg_temp_free(RdV);
 ##       }
 ##
-##       where <GEN> depends on skip_qemu_helper(tag)
-##       if skip_qemu_helper(tag) is True
+##       where <GEN> depends on hex_common.skip_qemu_helper(tag)
+##       if hex_common.skip_qemu_helper(tag) is True
 ##       <GEN>  is fGEN_TCG_A2_add({ RdV=RsV+RtV;});
-##       if skip_qemu_helper(tag) is False
+##       if hex_common.skip_qemu_helper(tag) is False
 ##       <GEN>  is gen_helper_A2_add(RdV, cpu_env, RsV, RtV);
 ##
 def gen_tcg_func(f, tag, regs, imms):
     f.write(tag + ' {\n')
-    if need_ea(tag): gen_decl_ea_tcg(f, tag)
+    if hex_common.need_ea(tag): gen_decl_ea_tcg(f, tag)
     i=0
     ## Declare all the operands (regs and immediates)
     declared = []
@@ -224,62 +224,62 @@ def gen_tcg_func(f, tag, regs, imms):
         if match is not None:
             declared.insert(i+1, match.string.replace("V", "N"))
 
-    if 'A_PRIV' in attribdict[tag]:
+    if 'A_PRIV' in hex_common.attribdict[tag]:
         f.write('    fCHECKFORPRIV();\n')
-    if 'A_GUEST' in attribdict[tag]:
+    if 'A_GUEST' in hex_common.attribdict[tag]:
         f.write('    fCHECKFORGUEST();\n')
 
     ## Read all the inputs
     for regtype,regid,toss,numregs in regs:
-        if (is_read(regid)):
+        if (hex_common.is_read(regid)):
             genptr_src_read_opn(f,regtype,regid,tag)
 
     if True:
-        f.write("    %s\n" % semdict[tag])
-    elif ( skip_qemu_helper(tag) ):
-        f.write("    fGEN_TCG_%s(%s);\n" % (tag, semdict[tag]))
+        f.write("    %s\n" % hex_common.semdict[tag])
+    elif ( hex_common.skip_qemu_helper(tag) ):
+        f.write("    fGEN_TCG_%s(%s);\n" % (tag, hex_common.semdict[tag]))
     else:
         ## Generate the call to the helper
         for immlett,bits,immshift in imms:
             gen_helper_decl_imm(f,immlett)
-        if need_part1(tag):
+        if hex_common.need_part1(tag):
             f.write("    TCGv part1 = tcg_const_tl(insn->part1);\n")
-        if need_slot(tag):
+        if hex_common.need_slot(tag):
             f.write("    TCGv slot = tcg_const_tl(insn->slot);\n")
         f.write("    gen_helper_%s(" % (tag))
         i=0
         ## If there is a scalar result, it is the return type
         for regtype,regid,toss,numregs in regs:
-            if (is_written(regid)):
+            if (hex_common.is_written(regid)):
                 gen_helper_call_opn(f, tag, regtype, regid, toss, numregs, i)
                 i += 1
         if (i > 0): f.write(", ")
         f.write("cpu_env")
         i=1
         for regtype,regid,toss,numregs in regs:
-            if (is_read(regid)):
+            if (hex_common.is_read(regid)):
                 gen_helper_call_opn(f, tag, regtype, regid, toss, numregs, i)
                 i += 1
         for immlett,bits,immshift in imms:
             gen_helper_call_imm(f,immlett)
 
-        if need_slot(tag): f.write(", slot")
-        if need_part1(tag): f.write(", part1" )
+        if hex_common.need_slot(tag): f.write(", slot")
+        if hex_common.need_part1(tag): f.write(", part1" )
         f.write(");\n")
-        if need_slot(tag):
+        if hex_common.need_slot(tag):
             f.write("    tcg_temp_free(slot);\n")
-        if need_part1(tag):
+        if hex_common.need_part1(tag):
             f.write("    tcg_temp_free(part1);\n")
         for immlett,bits,immshift in imms:
             gen_helper_free_imm(f,immlett)
 
     ## Write all the outputs
     for regtype,regid,toss,numregs in regs:
-        if (is_written(regid)):
+        if (hex_common.is_written(regid)):
             genptr_dst_write_opn(f,regtype, regid, tag)
 
     ## Free all the operands (regs and immediates)
-    if need_ea(tag): gen_free_ea_tcg(f)
+    if hex_common.need_ea(tag): gen_free_ea_tcg(f)
     for regtype,regid,toss,numregs in regs:
         genptr_free_opn(f,regtype,regid,i,tag)
         i += 1
@@ -293,23 +293,23 @@ def gen_def_tcg_func(f, tag, tagregs, tagimms):
     gen_tcg_func(f, tag, regs, imms)
 
 def main():
-    read_semantics_file(sys.argv[1])
-    read_attribs_file(sys.argv[2])
-    read_overrides_file(sys.argv[3])
-    calculate_attribs()
-    tagregs = get_tagregs()
-    tagimms = get_tagimms()
+    hex_common.read_semantics_file(sys.argv[1])
+    hex_common.read_attribs_file(sys.argv[2])
+    hex_common.read_overrides_file(sys.argv[3])
+    hex_common.calculate_attribs()
+    tagregs = hex_common.get_tagregs()
+    tagimms = hex_common.get_tagimms()
 
     f = StringIO()
 
     f.write('#include "macros.h"\n\n')
 
-    for tag in tags:
+    for tag in hex_common.tags:
         ## Skip the priv instructions
-        if ( "A_PRIV" in attribdict[tag] ) :
+        if ( "A_PRIV" in hex_common.attribdict[tag] ) :
             continue
         ## Skip the guest instructions
-        if ( "A_GUEST" in attribdict[tag] ) :
+        if ( "A_GUEST" in hex_common.attribdict[tag] ) :
             continue
         ## Skip the diag instructions
         if ( tag == "Y6_diag" ) :
