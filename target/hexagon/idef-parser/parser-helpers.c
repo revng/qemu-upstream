@@ -900,7 +900,7 @@ t_hex_value gen_bin_op(context_t *c,
     }
     case MINI_OP:
     {
-        const char *comparison = (op1.is_unsigned && op2.is_unsigned)
+        const char *comparison = res.is_unsigned
                                  ? "TCG_COND_LEU"
                                  : "TCG_COND_LE";
         switch (op_types) {
@@ -932,7 +932,7 @@ t_hex_value gen_bin_op(context_t *c,
     }
     case MAXI_OP:
     {
-        const char *comparison = (op1.is_unsigned && op2.is_unsigned)
+        const char *comparison = res.is_unsigned
                                  ? "TCG_COND_LEU"
                                  : "TCG_COND_LE";
         switch (op_types) {
