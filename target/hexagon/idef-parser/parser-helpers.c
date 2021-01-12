@@ -528,10 +528,10 @@ t_hex_value gen_bin_cmp(context_t *c,
 
 /* Code generation functions */
 t_hex_value gen_bin_op(context_t *c,
-                    YYLTYPE *locp,
-                    enum op_type type,
-                    t_hex_value *operand1,
-                    t_hex_value *operand2)
+                       YYLTYPE *locp,
+                       enum op_type type,
+                       t_hex_value *operand1,
+                       t_hex_value *operand2)
 {
 #define IMM_IMM 0
 #define IMM_REG 1
