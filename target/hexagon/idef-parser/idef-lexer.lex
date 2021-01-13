@@ -638,8 +638,20 @@ SIGN_ID                  s|u
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = atoi(yytext);
                            return IMM; }
+{DIGIT}+"LL"             { yylval->rvalue.type = IMMEDIATE;
+                           yylval->rvalue.bit_width = 64;
+                           yylval->rvalue.is_unsigned = false;
+                           yylval->rvalue.imm.type = VALUE;
+                           yylval->rvalue.imm.value = atoi(yytext);
+                           return IMM; }
 "0x"{HEX_DIGIT}+         { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = false;
+                           yylval->rvalue.imm.type = VALUE;
+                           yylval->rvalue.imm.value = strtol(yytext, NULL, 16);
+                           return IMM; }
+"0x"{HEX_DIGIT}+"LL"     { yylval->rvalue.type = IMMEDIATE;
+                           yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = strtol(yytext, NULL, 16);
