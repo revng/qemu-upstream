@@ -1240,47 +1240,160 @@ void gen_assign(context_t *c,
 
 t_hex_value gen_convround(context_t *c,
                           YYLTYPE *locp,
-                          t_hex_value *source,
-                          t_hex_value *round_bit)
+                          t_hex_value *source)
 {
-    round_bit->is_symbol = true;
-    /* Round bit is given in one hot encoding */
-    /* If input is 64 bit cast it to 32 (used for vavgw) */
-    *source = gen_cast_op(c, locp, source, 32);
+    unsigned bit_width = source->bit_width;
+    const char *size = (bit_width == 32) ? "32" : "64";
+    t_hex_value res = gen_tmp(c, locp, bit_width);
+
+    t_hex_value mask = gen_tmp_value(c, locp, "0x3", bit_width);
+    mask.is_symbol = true;
     source->is_symbol = true;
-    /* Add .5 if > .5 but not if is == .5 and value is even */
-    yyassert(c, locp, source->bit_width <= 32,
-           "Convround not implemented for bit widths > 32!");
-    t_hex_value zero = gen_tmp_value(c, locp, "0", 32);
-    t_hex_value one = gen_imm_value(c, locp, 1, 32);
-    t_hex_value two = gen_imm_value(c, locp, 2, 32);
-    t_hex_value remainder = gen_bin_op(c, locp, ANDB_OP, source, round_bit);
-    t_hex_value tmp_mask = gen_bin_op(c, locp, ASL_OP, round_bit, &two);
-    t_hex_value mask = gen_bin_op(c, locp, SUB_OP, &tmp_mask, &one);
-    t_hex_value masked_value = gen_bin_op(c, locp, ANDB_OP, source, &mask);
-    rvalue_materialize(c, locp, &masked_value);
-    rvalue_materialize(c, locp, round_bit);
-    /* If value is even and == .5 do not round */
-    t_hex_value new_remainder = gen_tmp(c, locp, 32);
-    OUT(c, locp, "tcg_gen_movcond_i32(TCG_COND_EQ, ", &new_remainder);
-    OUT(c, locp, ", ", &masked_value, ", ", round_bit, ", ");
-    OUT(c, locp, &zero, ", ", &remainder, ");\n");
-    t_hex_value res = gen_bin_op(c, locp, ADD_OP, source, &new_remainder);
-    /* Zero out trailing bits */
-    mask = gen_bin_op(c, locp, ASL_OP, round_bit, &one);
-    mask = gen_bin_op(c, locp, SUB_OP, &mask, &one);
-    t_hex_value new_mask = gen_tmp(c, locp, 32);
-    OUT(c, locp, "tcg_gen_not_i32(", &new_mask, ", ", &mask, ");\n");
-    res = gen_bin_op(c, locp, ANDB_OP, &res, &new_mask);
-    rvalue_free(c, locp, &remainder);
-    rvalue_free(c, locp, &masked_value);
+    t_hex_value and = gen_bin_op(c, locp, ANDB_OP, source, &mask);
+    t_hex_value one = gen_tmp_value(c, locp, "1", bit_width);
+    t_hex_value source_p1 = gen_bin_op(c, locp, ADD_OP, source, &one);
+
+    OUT(c, locp, "tcg_gen_movcond_i", size, "(TCG_COND_EQ, ", &res);
+    OUT(c, locp, ", ", &and, ", ", &mask, ", ");
+    OUT(c, locp, &source_p1, ", ", source, ");\n");
+
     rvalue_free(c, locp, &mask);
-    rvalue_free(c, locp, &zero);
     rvalue_free(c, locp, source);
-    rvalue_free(c, locp, round_bit);
+
     return res;
 }
 
+static t_hex_value gen_convround_n_a(context_t *c,
+                                     YYLTYPE *locp,
+                                     t_hex_value *a,
+                                     t_hex_value *n)
+{
+    t_hex_value res = gen_tmp(c, locp, 64);
+    OUT(c, locp, "tcg_gen_ext_i32_i64(", &res, ", ", a, ");\n");
+    return res;
+}
+
+static t_hex_value gen_convround_n_b(context_t *c,
+                                     YYLTYPE *locp,
+                                     t_hex_value *a,
+                                     t_hex_value *n)
+{
+    t_hex_value res = gen_tmp(c, locp, 64);
+    OUT(c, locp, "tcg_gen_ext_i32_i64(", &res, ", ", a, ");\n");
+
+    t_hex_value one = gen_tmp_value(c, locp, "1", 32);
+    t_hex_value tmp = gen_tmp(c, locp, 32);
+    t_hex_value tmp_64 = gen_tmp(c, locp, 64);
+
+    OUT(c, locp, "tcg_gen_shl_i32(", &tmp);
+    OUT(c, locp, ", ", &one, ", ", n, ");\n");
+    OUT(c, locp, "tcg_gen_and_i32(", &tmp);
+    OUT(c, locp, ", ", &tmp, ", ", a, ");\n");
+    OUT(c, locp, "tcg_gen_shri_i32(", &tmp);
+    OUT(c, locp, ", ", &tmp, ", 1);\n");
+    OUT(c, locp, "tcg_gen_ext_i32_i64(", &tmp_64, ", ", &tmp, ");\n");
+    OUT(c, locp, "tcg_gen_add_i64(", &res);
+    OUT(c, locp, ", ", &res, ", ", &tmp_64, ");\n");
+
+    rvalue_free(c, locp, &one);
+    rvalue_free(c, locp, &tmp);
+    rvalue_free(c, locp, &tmp_64);
+
+    return res;
+}
+
+static t_hex_value gen_convround_n_c(context_t *c,
+                                     YYLTYPE *locp,
+                                     t_hex_value *a,
+                                     t_hex_value *n)
+{
+    t_hex_value res = gen_tmp(c, locp, 64);
+    OUT(c, locp, "tcg_gen_ext_i32_i64(", &res, ", ", a, ");\n");
+
+    t_hex_value one = gen_tmp_value(c, locp, "1", 32);
+    t_hex_value tmp = gen_tmp(c, locp, 32);
+    t_hex_value tmp_64 = gen_tmp(c, locp, 64);
+
+    OUT(c, locp, "tcg_gen_subi_i32(", &tmp);
+    OUT(c, locp, ", ", n, ", 1);\n");
+    OUT(c, locp, "tcg_gen_shl_i32(", &tmp);
+    OUT(c, locp, ", ", &one, ", ", &tmp, ");\n");
+    OUT(c, locp, "tcg_gen_ext_i32_i64(", &tmp_64, ", ", &tmp, ");\n");
+    OUT(c, locp, "tcg_gen_add_i64(", &res);
+    OUT(c, locp, ", ", &res, ", ", &tmp_64, ");\n");
+
+    rvalue_free(c, locp, &one);
+    rvalue_free(c, locp, &tmp);
+    rvalue_free(c, locp, &tmp_64);
+
+    return res;
+}
+
+t_hex_value gen_convround_n(context_t *c,
+                            YYLTYPE *locp,
+                            t_hex_value *source,
+                            t_hex_value *bit_pos)
+{
+    /* If input is 64 bit cast it to 32 */
+    t_hex_value a = gen_cast_op(c, locp, source, 32);
+    t_hex_value n = gen_cast_op(c, locp, bit_pos, 32);
+
+    rvalue_materialize(c, locp, &a);
+    rvalue_materialize(c, locp, &n);
+
+    t_hex_value r1 = gen_convround_n_a(c, locp, &a, &n);
+    t_hex_value r2 = gen_convround_n_b(c, locp, &a, &n);
+    t_hex_value r3 = gen_convround_n_c(c, locp, &a, &n);
+
+    t_hex_value l_32 = gen_tmp_value(c, locp, "1", 32);
+
+    t_hex_value cond = gen_tmp(c, locp, 32);
+    t_hex_value cond_64 = gen_tmp(c, locp, 64);
+    t_hex_value mask = gen_tmp(c, locp, 32);
+    t_hex_value n_64 = gen_tmp(c, locp, 64);
+    t_hex_value res = gen_tmp(c, locp, 64);
+    t_hex_value zero = gen_tmp_value(c, locp, "0", 64);
+
+    OUT(c, locp, "tcg_gen_sub_i32(", &mask);
+    OUT(c, locp, ", ", &n, ", ", &l_32, ");\n");
+    OUT(c, locp, "tcg_gen_shl_i32(", &mask);
+    OUT(c, locp, ", ", &l_32, ", ", &mask, ");\n");
+    OUT(c, locp, "tcg_gen_sub_i32(", &mask);
+    OUT(c, locp, ", ", &mask, ", ", &l_32, ");\n");
+    OUT(c, locp, "tcg_gen_and_i32(", &cond);
+    OUT(c, locp, ", ", &a, ", ", &mask, ");\n");
+    OUT(c, locp, "tcg_gen_extu_i32_i64(", &cond_64, ", ", &cond, ");\n");
+    OUT(c, locp, "tcg_gen_ext_i32_i64(", &n_64, ", ", &n, ");\n");
+
+    OUT(c, locp, "tcg_gen_movcond_i64");
+    OUT(c, locp, "(TCG_COND_EQ, ", &res, ", ", &cond_64, ", ", &zero);
+    OUT(c, locp, ", ", &r2, ", ", &r3, ");\n");
+
+    OUT(c, locp, "tcg_gen_movcond_i64");
+    OUT(c, locp, "(TCG_COND_EQ, ", &res, ", ", &n_64, ", ", &zero);
+    OUT(c, locp, ", ", &r1, ", ", &res, ");\n");
+
+    OUT(c, locp, "tcg_gen_shr_i64(", &res);
+    OUT(c, locp, ", ", &res, ", ", &n_64, ");\n");
+
+    rvalue_free(c, locp, &a);
+    rvalue_free(c, locp, &n);
+
+    rvalue_free(c, locp, &r1);
+    rvalue_free(c, locp, &r2);
+    rvalue_free(c, locp, &r3);
+
+    rvalue_free(c, locp, &cond);
+    rvalue_free(c, locp, &cond_64);
+    rvalue_free(c, locp, &l_32);
+    rvalue_free(c, locp, &mask);
+    rvalue_free(c, locp, &n_64);
+    rvalue_free(c, locp, &zero);
+
+    rvalue_truncate(c, locp, &res);
+
+    return res;
+}
 
 t_hex_value gen_round(context_t *c,
                       YYLTYPE *locp,

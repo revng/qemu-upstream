@@ -231,8 +231,12 @@ void gen_assign(context_t *c,
 
 t_hex_value gen_convround(context_t *c,
                           YYLTYPE *locp,
-                          t_hex_value *source,
-                          t_hex_value *round_bit);
+                          t_hex_value *source);
+
+t_hex_value gen_convround_n(context_t *c,
+                            YYLTYPE *locp,
+                            t_hex_value *source,
+                            t_hex_value *bit_pos);
 
 t_hex_value gen_round(context_t *c,
                       YYLTYPE *locp,

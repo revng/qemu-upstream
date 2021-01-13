@@ -989,14 +989,12 @@ rvalue : assign_statement            { /* does nothing */ }
 | CROUND LPAR rvalue COMMA rvalue RPAR
 {
     @1.last_column = @6.last_column;
-    $$ = gen_convround(c, &@1, &$3, &$5);
+    $$ = gen_convround_n(c, &@1, &$3, &$5);
 }
 | CROUND LPAR rvalue RPAR
 {
     @1.last_column = @4.last_column;
-    /* When is not specified assume mask = 1 */
-    t_hex_value one = gen_imm_value(c, &@1, 1, 32);
-    $$ = gen_convround(c, &@1, &$3, &one);
+    $$ = gen_convround(c, &@1, &$3);
 }
 | ROUND LPAR rvalue COMMA rvalue RPAR
 {
