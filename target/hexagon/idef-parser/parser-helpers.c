@@ -1533,6 +1533,38 @@ void emit_header(context_t *c)
              c->inst.name);
 }
 
+void emit_arg(context_t *c, YYLTYPE *locp, t_hex_value *arg)
+{
+    switch (arg->type) {
+    case REGISTER:
+        if (arg->reg.type == DOTNEW) {
+            EMIT_SIG(c, ", TCGv N%cN", arg->reg.id);
+        } else {
+            bool is64 = (arg->bit_width == 64);
+            const char *type = is64 ? "TCGv_i64" : "TCGv_i32";
+            char reg_id[5] = { 0 };
+            reg_compose(c, locp, &(arg->reg), reg_id);
+            EMIT_SIG(c, ", %s %s", type, reg_id);
+            /* MuV register requires also MuN to provide its index */
+            if (arg->reg.type == MODIFIER) {
+                EMIT_SIG(c, ", int MuN");
+            }
+        }
+        break;
+    case PREDICATE:
+        {
+            char suffix = arg->is_dotnew ? 'N' : 'V';
+            EMIT_SIG(c, ", TCGv P%c%c", arg->pre.id, suffix);
+        }
+        break;
+    default:
+        {
+            fprintf(stderr, "emit_arg got unsupported argument!");
+            abort();
+        }
+    }
+}
+
 void emit_footer(context_t *c)
 {
     EMIT(c, "}\n");

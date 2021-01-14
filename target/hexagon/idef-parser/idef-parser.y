@@ -119,6 +119,26 @@ instruction : INAME
 {
     c->total_insn++;
     c->inst.name = $1;
+    emit_header(c);
+}
+arguments
+{
+    EMIT_SIG(c, ")");
+    OUT(c, &@1, "{\n");
+
+    /* Initialize declared but uninitialized registers, but only for */
+    /* non-conditional instructions */
+    for (int i = 0; i < c->inst.init_count; i++) {
+        bool is64 = c->inst.init_list[i].bit_width == 64;
+        const char *type = is64 ? "i64" : "i32";
+        if (c->inst.init_list[i].type == REGISTER) {
+            OUT(c, &@1, "tcg_gen_movi_", type,
+                "(", &(c->inst.init_list[i]), ", 0);\n");
+        } else if (c->inst.init_list[i].type == PREDICATE) {
+            OUT(c, &@1, "tcg_gen_movi_", type,
+                "(", &(c->inst.init_list[i]), ", 0);\n");
+        }
+    }
 }
 code
 {
@@ -149,65 +169,26 @@ code
 | error /* Recover gracefully after instruction compilation error */
 ;
 
-/* Return the modified registers list */
-code : LBR
-{
-    emit_header(c);
-}
-decls
-{
-    EMIT_SIG(c, ")");
-    OUT(c, &@1, "{\n");
-
-    /* Initialize declared but uninitialized registers, but only for */
-    /* non-conditional instructions */
-    for (int i = 0; i < c->inst.init_count; i++) {
-        bool is64 = c->inst.init_list[i].bit_width == 64;
-        const char *type = is64 ? "i64" : "i32";
-        if (c->inst.init_list[i].type == REGISTER) {
-            OUT(c, &@1, "tcg_gen_movi_", type,
-                "(", &(c->inst.init_list[i]), ", 0);\n");
-        } else if (c->inst.init_list[i].type == PREDICATE) {
-            OUT(c, &@1, "tcg_gen_movi_", type,
-                "(", &(c->inst.init_list[i]), ", 0);\n");
-        }
-    }
-}
-statements decls RBR
-{
-    c->inst.code_begin = c->input_buffer + @5.first_column;
-    c->inst.code_end = c->input_buffer + @5.last_column - 1;
-}
+arguments : LPAR RPAR
 |
-LBR
-{
-    /* Nop */
-    emit_header(c);
-    EMIT_SIG(c, ")");
-    OUT(c, &@1, "{\n");
-}
-RBR
+LPAR argument_list RPAR
 ;
 
-decls : decls decl
-| %empty
+argument_list : decl COMMA argument_list
+| decl
+;
+
+/* Return the modified registers list */
+code : LBR statements RBR
+{
+    c->inst.code_begin = c->input_buffer + @2.first_column;
+    c->inst.code_end = c->input_buffer + @2.last_column - 1;
+}
 ;
 
 decl : DREG
 {
-    if ($1.reg.type == DOTNEW) {
-        EMIT_SIG(c, ", TCGv N%cN", $1.reg.id);
-    } else {
-        bool is64 = ($1.bit_width == 64);
-        const char *type = is64 ? "TCGv_i64" : "TCGv_i32";
-        char reg_id[5] = { 0 };
-        reg_compose(c, &@1, &($1.reg), reg_id);
-        EMIT_SIG(c, ", %s %s", type, reg_id);
-        /* MuV register requires also MuN to provide its index */
-        if ($1.reg.type == MODIFIER) {
-            EMIT_SIG(c, ", int MuN");
-        }
-    }
+    emit_arg(c, &@1, &$1);
     /* Enqueue register into initialization list */
     c->inst.init_list[c->inst.init_count] = $1;
     c->inst.init_count++;
@@ -218,8 +199,7 @@ decl : DREG
 }
 | DPRE
 {
-    char suffix = $1.is_dotnew ? 'N' : 'V';
-    EMIT_SIG(c, ", TCGv P%c%c", $1.pre.id, suffix);
+    emit_arg(c, &@1, &$1);
     /* Enqueue predicate into initialization list */
     c->inst.init_list[c->inst.init_count] = $1;
     c->inst.init_count++;
@@ -227,28 +207,14 @@ decl : DREG
 | DEA
 | RREG
 {
-    /* Remove register from initialization list */
-    int iter_count = c->inst.init_count;
-    for (int i = 0; i < iter_count; i++) {
-        if (rvalue_equal(&($1), &(c->inst.init_list[i]))) {
-            c->inst.init_list[i] = c->inst.init_list[c->inst.init_count - 1];
-            c->inst.init_count--;
-        }
-    }
+    emit_arg(c, &@1, &$1);
 }
 | WREG
 | FREG
 | FIMM
 | RPRE
 {
-    /* Remove predicate from initialization list */
-    int iter_count = c->inst.init_count;
-    for (int i = 0; i < iter_count; i++) {
-        if (rvalue_equal(&($1), &(c->inst.init_list[i]))) {
-            c->inst.init_list[i] = c->inst.init_list[c->inst.init_count - 1];
-            c->inst.init_count--;
-        }
-    }
+    emit_arg(c, &@1, &$1);
 }
 | WPRE
 | FPRE

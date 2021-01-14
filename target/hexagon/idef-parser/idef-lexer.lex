@@ -64,142 +64,132 @@ SIGN_ID                  s|u
 
 {INST_NAME}               { yylval->string = strdup(yytext);
                             return INAME; }
-"DECL_RREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N, "[0-9]", "[0-9]");" {
+"RREG_"{REG_ID_32} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
-                           yylval->rvalue.reg.id = yytext[10];
+                           yylval->rvalue.reg.id = yytext[5];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return DREG; }
-"DECL_NEW_NREG_"{REG_ID_32}"(N"{REG_ID_32}"N, N"{REG_ID_32}"X, "[0-9]", "[0-9]");" {
+"NEW_NREG_"{REG_ID_32} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = DOTNEW;
-                           yylval->rvalue.reg.id = yytext[14];
+                           yylval->rvalue.reg.id = yytext[9];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
                            return DREG; }
-"DECL_RREG_"{REG_ID_64}"(R"{REG_ID_64}"V, R"{REG_ID_64}"N, "[0-9]", "[0-9]");" {
+"RREG_"{REG_ID_64} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
-                           yylval->rvalue.reg.id = yytext[10];
+                           yylval->rvalue.reg.id = yytext[5];
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = false;
                            return DREG; }
-"DECL_NEW_NREG_"{REG_ID_64}"(N"{REG_ID_64}"N, N"{REG_ID_64}"X, "[0-9]", "[0-9]");" {
+"NEW_NREG_"{REG_ID_64} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = DOTNEW;
-                           yylval->rvalue.reg.id = yytext[15];
+                           yylval->rvalue.reg.id = yytext[10];
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = true;
                            return DREG; }
-"DECL_MREG_u(MuV, MuN, "[0-9]", "[0-9]");" {
+"MREG_u" {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = MODIFIER;
                            yylval->rvalue.reg.id = 'u';
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return DREG; }
-"DECL_CREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N, "[0-9]", "[0-9]");" {
+"CREG_"{REG_ID_32} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
-                           yylval->rvalue.reg.id = yytext[10];
+                           yylval->rvalue.reg.id = yytext[5];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return DREG; }
-"DECL_IMM("{IMM_ID}"iV,"[0-9]");" {
+"IMM_"{IMM_ID}"iV" {
                            yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VARIABLE;
-                           yylval->rvalue.imm.id = yytext[9];
+                           yylval->rvalue.imm.id = yytext[4];
                            yylval->rvalue.is_dotnew = false;
                            return DIMM; }
-"DECL_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"V, P"{LOWER_PRE}"N, "[0-9]", "[0-9]");" {
+"PREG_"{LOWER_PRE} {
                            yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = yytext[10];
+                           yylval->rvalue.pre.id = yytext[5];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return DPRE; }
-"DECL_NEW_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N, P"{LOWER_PRE}"X, "[0-9]", "[0-9]");" {
+"NEW_PREG_"{LOWER_PRE} {
                            yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = yytext[14];
+                           yylval->rvalue.pre.id = yytext[9];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
                            return DPRE; }
-"DECL_EA;"                { return DEA; }
-"READ_RREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N);" {
+"ea"                       { return DEA; }
+"in_RREG_"{REG_ID_32} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
-                           yylval->rvalue.reg.id = yytext[10];
+                           yylval->rvalue.reg.id = yytext[8];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return RREG; }
-"WRITE_RREG_"{REG_ID_32}"(R"{REG_ID_32}"N, R"{REG_ID_32}"V);" {
-                           return WREG; }
-"FREE_RREG_"{REG_ID_32}"(R"{REG_ID_32}"V);" {
-                           return FREG; }
-"READ_RREG_"{REG_ID_64}"(R"{REG_ID_64}"V, R"{REG_ID_64}"N);" {
+"in_RREG_"{REG_ID_64} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
-                           yylval->rvalue.reg.id = yytext[10];
+                           yylval->rvalue.reg.id = yytext[8];
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = false;
                            return RREG; }
-"WRITE_RREG_"{REG_ID_64}"(R"{REG_ID_64}"N, R"{REG_ID_64}"V);" {
-                           return WREG; }
-"FREE_RREG_"{REG_ID_64}"(R"{REG_ID_64}"V);" {
-                           return FREG; }
-"READ_NEW_NREG_"{REG_ID_32}"(N"{REG_ID_32}"N, N"{REG_ID_32}"X);" {
+"in_NEW_NREG_"{REG_ID_32} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = DOTNEW;
-                           yylval->rvalue.reg.id = yytext[14];
+                           yylval->rvalue.reg.id = yytext[12];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
                            return RREG; }
-"READ_NEW_NREG_"{REG_ID_64}"(N"{REG_ID_64}"N, N"{REG_ID_64}"X);" {
+"in_NEW_NREG_"{REG_ID_64} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = DOTNEW;
-                           yylval->rvalue.reg.id = yytext[15];
+                           yylval->rvalue.reg.id = yytext[12];
                            yylval->rvalue.reg.bit_width = 64;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = true;
                            return RREG; }
-"FREE_NEW_NREG_"{REG_ID_32}"(N"{REG_ID_32}"N);" {
-                           return FREG; }
-"FREE_IMM("{IMM_ID}"iV);" {
-                           return FIMM; }
-"READ_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"V, P"{LOWER_PRE}"N);" {
+"in_PREG_"{LOWER_PRE} {
                            yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = yytext[10];
+                           yylval->rvalue.pre.id = yytext[8];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return RPRE; }
-"WRITE_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N, P"{LOWER_PRE}"V);" {
-                           return WPRE; }
-"READ_NEW_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N, P"{LOWER_PRE}"X);" {
+"in_NEW_PREG_"{LOWER_PRE} {
                            yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = yytext[14];
+                           yylval->rvalue.pre.id = yytext[12];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
                            return RPRE; }
-"READ_MREG_u(MuV, MuN);" { return RREG; }
-"READ_CREG_"{REG_ID_32}"(R"{REG_ID_32}"V, R"{REG_ID_32}"N);" {
+"in_MREG_u" {
+                           yylval->rvalue.type = REGISTER;
+                           yylval->rvalue.reg.type = MODIFIER;
+                           yylval->rvalue.reg.id = 'u';
+                           yylval->rvalue.reg.bit_width = 32;
+                           yylval->rvalue.bit_width = 32;
                            return RREG; }
-"FREE_CREG_"{LOWER_PRE}"(R"{REG_ID_32}"V);" {
-                           return FREG; }
-"FREE_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"V);" {
-                           return FPRE; }
-"FREE_NEW_PREG_"{LOWER_PRE}"(P"{LOWER_PRE}"N);" {
-                           return FPRE; }
-"FREE_MREG_u(MuV);"      { return FREG; }
-"FREE_EA;"               { return FEA; }
+"in_CREG_"{REG_ID_32} {
+                           yylval->rvalue.type = REGISTER;
+                           yylval->rvalue.reg.type = CONTROL;
+                           yylval->rvalue.reg.id = yytext[5];
+                           yylval->rvalue.reg.bit_width = 32;
+                           yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_dotnew = false;
+                           return RREG; }
 "fGEN_TCG_"{INST_NAME}"(" { return FWRAP; }
 "{"                      { return LBR; }
 "}"                      { return RBR; }
