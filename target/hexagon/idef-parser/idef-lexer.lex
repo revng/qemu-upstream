@@ -242,7 +242,7 @@ SIGN_ID                  s|u
 "Constant_extended"      { return CONSTEXT; }
 "fCL1_"{DIGIT}           { return LOCNT; }
 "fBREV_"{DIGIT}          { return BREV; }
-"brev"                   { return BREV; }
+"fbrev"                  { return BREV; }
 "fSXTN"                  { return SXT; }
 "fZXTN"                  { return ZXT; }
 "fDF_MAX"                |

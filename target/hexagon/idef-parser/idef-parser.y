@@ -1008,18 +1008,6 @@ rvalue : assign_statement            { /* does nothing */ }
     /* Leading ones count */
     $$ = gen_bitcnt_op(c, &@1, &$3, true, false);
 }
-| LOCNT LPAR BREV LPAR rvalue RPAR RPAR
-{
-    @1.last_column = @7.last_column;
-    /* Trailing ones count */
-    $$ = gen_bitcnt_op(c, &@1, &$5, true, true);
-}
-| LOCNT LPAR NOT BREV LPAR rvalue RPAR RPAR
-{
-    @1.last_column = @8.last_column;
-    /* Trailing zeroes count */
-    $$ = gen_bitcnt_op(c, &@1, &$6, false, true);
-}
 | COUNTONES LPAR rvalue RPAR
 {
     @1.last_column = @4.last_column;
@@ -1062,6 +1050,17 @@ rvalue : assign_statement            { /* does nothing */ }
     $1.begin = $7.imm.value;
     $1.end = $5.imm.value;
     $$ = gen_rextract_op(c, &@1, &$3, &$1);
+}
+| BREV LPAR rvalue RPAR
+{
+    @1.last_column = @4.last_column;
+    yyassert(c, &@1, $3.bit_width <= 32,
+             "fbrev not implemented for 64-bit integers!");
+    t_hex_value res = gen_tmp(c, &@1, $3.bit_width);
+    rvalue_materialize(c, &@1, &$3);
+    OUT(c, &@1, "gen_fbrev(", &res, ", ", &$3, ");\n");
+    rvalue_free(c, &@1, &$3);
+    $$ = res;
 }
 ;
 
