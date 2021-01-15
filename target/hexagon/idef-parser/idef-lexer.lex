@@ -185,7 +185,7 @@ SIGN_ID                  s|u
 "in_CREG_"{REG_ID_32} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
-                           yylval->rvalue.reg.id = yytext[5];
+                           yylval->rvalue.reg.id = yytext[8];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
