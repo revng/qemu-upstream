@@ -1180,7 +1180,7 @@ t_hex_value gen_extract_op(context_t *c,
 
 t_hex_value gen_read_creg(context_t *c, YYLTYPE *locp, t_hex_value *reg)
 {
-    if (reg->reg.type == CONTROL) {
+    if (reg->reg.type == CONTROL && reg->reg.id < 'a') {
         t_hex_value tmp = gen_tmp_value(c, locp, "0", 32);
         const char *id = creg_str[(uint8_t)reg->reg.id];
         OUT(c, locp, "READ_REG(", &tmp, ", ", id, ");\n");
@@ -1211,7 +1211,8 @@ void gen_assign(context_t *c,
                 t_hex_value *dest,
                 t_hex_value *value)
 {
-    if (dest->type == REGISTER && dest->reg.type == CONTROL) {
+    if (dest->type == REGISTER &&
+        dest->reg.type == CONTROL && dest->reg.id < 'a') {
         gen_write_creg(c, locp, dest, value);
         return;
     }

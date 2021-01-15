@@ -450,13 +450,13 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return REG; }
-"C"{REG_ID_32}           { yylval->rvalue.type = REGISTER;
+"C"{REG_ID_32}"V"        { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return REG; }
-"C"{REG_ID_64}           { yylval->rvalue.type = REGISTER;
+"C"{REG_ID_64}"V"        { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 64;
