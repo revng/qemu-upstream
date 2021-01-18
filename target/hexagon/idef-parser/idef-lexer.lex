@@ -257,7 +257,7 @@ SIGN_ID                  s|u
 "fFRAMECHECK"            { return FCHK; }
 "Constant_extended"      { return CONSTEXT; }
 "fCL1_"{DIGIT}           { return LOCNT; }
-"fBREV_"{DIGIT}          { return BREV; }
+"fBREV_4"                { return BREV_4; }
 "fbrev"                  { return BREV; }
 "fSXTN"                  { return SXT; }
 "fZXTN"                  { return ZXT; }
