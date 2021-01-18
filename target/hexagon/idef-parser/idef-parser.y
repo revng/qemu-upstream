@@ -185,6 +185,12 @@ code : LBR statements RBR
     c->inst.code_begin = c->input_buffer + @2.first_column;
     c->inst.code_end = c->input_buffer + @2.last_column - 1;
 }
+|
+LBR
+{
+    /* Nop */
+}
+RBR
 ;
 
 decl : DREG
