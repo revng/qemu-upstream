@@ -111,6 +111,14 @@ SIGN_ID                  s|u
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return DREG; }
+"CREG_"{REG_ID_64} {
+                           yylval->rvalue.type = REGISTER;
+                           yylval->rvalue.reg.type = CONTROL;
+                           yylval->rvalue.reg.id = yytext[5];
+                           yylval->rvalue.reg.bit_width = 64;
+                           yylval->rvalue.bit_width = 64;
+                           yylval->rvalue.is_dotnew = false;
+                           return DREG; }
 "IMM_"{IMM_ID}"iV" {
                            yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.is_unsigned = false;
@@ -188,6 +196,14 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.id = yytext[8];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_dotnew = false;
+                           return RREG; }
+"in_CREG_"{REG_ID_64} {
+                           yylval->rvalue.type = REGISTER;
+                           yylval->rvalue.reg.type = CONTROL;
+                           yylval->rvalue.reg.id = yytext[8];
+                           yylval->rvalue.reg.bit_width = 64;
+                           yylval->rvalue.bit_width = 64;
                            yylval->rvalue.is_dotnew = false;
                            return RREG; }
 "fGEN_TCG_"{INST_NAME}"(" { return FWRAP; }
