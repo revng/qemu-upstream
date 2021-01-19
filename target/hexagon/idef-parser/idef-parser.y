@@ -705,7 +705,11 @@ rvalue : assign_statement            { /* does nothing */ }
 | rvalue ASR rvalue
 {
     @1.last_column = @3.last_column;
-    $$ = gen_bin_op(c, &@1, ASR_OP, &$1, &$3);
+    if ($1.is_unsigned) {
+        $$ = gen_bin_op(c, &@1, LSR_OP, &$1, &$3);
+    } else {
+        $$ = gen_bin_op(c, &@1, ASR_OP, &$1, &$3);
+    }
 }
 | rvalue LSR rvalue
 {
