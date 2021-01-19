@@ -1024,7 +1024,6 @@ rvalue : assign_statement            { /* does nothing */ }
     @1.last_column = @4.last_column;
     /* Ones count */
     $$ = gen_ctpop_op(c, &@1, &$3);
-
 }
 | LPCFG
 {
