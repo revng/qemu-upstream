@@ -44,7 +44,7 @@ DIGIT                    [0-9]
 LOWER_ID                 [a-z]
 UPPER_ID                 [A-Z]
 ID                       LOWER_ID|UPPER_ID
-INST_NAME                [A-Z]+[0-9]_([a-z]|[0-9]|_)+
+INST_NAME                [A-Z]+[0-9]_([A-Za-z]|[0-9]|_)+
 HEX_DIGIT                [0-9a-fA-F]
 REG_ID_32                e|s|d|t|u|v|x|y
 REG_ID_64                ee|ss|dd|tt|uu|vv|xx|yy
@@ -64,6 +64,9 @@ SIGN_ID                  s|u
 
 {INST_NAME}               { yylval->string = strdup(yytext);
                             return INAME; }
+"0.0"                    |
+"0x1.0p52"               |
+"0x1.0p-52"              { return FAIL; }
 "RREG_"{REG_ID_32} {
                            yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;

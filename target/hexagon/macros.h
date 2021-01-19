@@ -23,6 +23,11 @@
 #include "reg_fields.h"
 
 #ifdef QEMU_GENERATE
+static inline TCGv gen_read_preg(TCGv pred, uint8_t num)
+{
+    tcg_gen_mov_tl(pred, hex_pred[num]);
+    return pred;
+}
 #define READ_REG(dest, NUM)              gen_read_reg(dest, NUM)
 #define READ_PREG(dest, NUM)             gen_read_preg(dest, (NUM))
 #else

@@ -33,12 +33,6 @@ static inline TCGv gen_zero(TCGv result)
     return result;
 }
 
-static inline TCGv gen_read_preg(TCGv pred, uint8_t num)
-{
-    tcg_gen_mov_tl(pred, hex_pred[num]);
-    return pred;
-}
-
 static inline void gen_log_predicated_reg_write(int rnum, TCGv val, int slot)
 {
     TCGv one = tcg_const_tl(1);

@@ -50,6 +50,8 @@ def main():
             continue
         if ( tag == "Y6_diag1" ) :
             continue
+        if ( tag.startswith('V6_') ) :
+            continue
 
         regs = tagregs[tag]
         imms = tagimms[tag]
