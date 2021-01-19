@@ -1534,7 +1534,9 @@ t_hex_value gen_fbrev_4(context_t *c, YYLTYPE *locp, t_hex_value *source)
     OUT(c, locp, "tcg_gen_andi_tl(", &tmp2, ", ", &res, ", 0x00ff00ff);\n");
     OUT(c, locp, "tcg_gen_shli_tl(", &tmp2, ", ", &tmp2, ", 8);\n");
     OUT(c, locp, "tcg_gen_or_tl(", &res, ", ", &tmp1, ", ", &tmp2, ");\n");
-    OUT(c, locp, "tcg_gen_bswap32_tl(", &res, ", ", &res, ");\n");
+    OUT(c, locp, "tcg_gen_shri_tl(", &tmp1, ", ", &res, ", 16);\n");
+    OUT(c, locp, "tcg_gen_shli_tl(", &tmp2, ", ", &res, ", 16);\n");
+    OUT(c, locp, "tcg_gen_or_tl(", &res, ", ", &tmp1, ", ", &tmp2, ");\n");
 
     rvalue_free(c, locp, &tmp1);
     rvalue_free(c, locp, &tmp2);
