@@ -1035,7 +1035,7 @@ static inline void gen_sat_i32(TCGv dest, TCGv source, int width, bool set_overf
     TCGv min_val = tcg_const_i32(-(1 << (width - 1)));
     tcg_gen_movcond_i32(TCG_COND_GT, dest, source, max_val, max_val, source);
     tcg_gen_movcond_i32(TCG_COND_LT, dest, source, min_val, min_val, dest);
-    // Set Overflow Bit
+    /* Set Overflow Bit */
     if (set_overflow) {
         TCGv ovf = tcg_temp_new();
         TCGv one = tcg_const_i32(1);
@@ -1051,7 +1051,7 @@ static inline void gen_satu_i32(TCGv dest, TCGv source, int width, bool set_over
     tcg_gen_movcond_i32(TCG_COND_GTU, dest, source, max_val, max_val, source);
     TCGv_i32 zero = tcg_const_i32(0);
     tcg_gen_movcond_i32(TCG_COND_LT, dest, source, zero, zero, dest);
-    // Set Overflow Bit
+    /* Set Overflow Bit */
     if (set_overflow) {
         TCGv ovf = tcg_temp_new();
         TCGv one = tcg_const_i32(1);
@@ -1066,7 +1066,7 @@ static inline void gen_sat_i64(TCGv_i64 dest, TCGv_i64 source, int width, bool s
     TCGv_i64 min_val = tcg_const_i64(-(1 << (width - 1)));
     tcg_gen_movcond_i64(TCG_COND_GT, dest, source, max_val, max_val, source);
     tcg_gen_movcond_i64(TCG_COND_LT, dest, source, min_val, min_val, dest);
-    // Set Overflow Bit
+    /* Set Overflow Bit */
     if (set_overflow) {
         TCGv ovf = tcg_temp_new();
         TCGv_i64 ovf_ext = tcg_temp_new_i64();
@@ -1085,7 +1085,7 @@ static inline void gen_satu_i64(TCGv_i64 dest, TCGv_i64 source, int width, bool 
     tcg_gen_movcond_i64(TCG_COND_GTU, dest, source, max_val, max_val, source);
     TCGv_i64 zero = tcg_const_i64(0);
     tcg_gen_movcond_i64(TCG_COND_LT, dest, source, zero, zero, dest);
-    // Set Overflow Bit
+    /* Set Overflow Bit */
     if (set_overflow) {
         TCGv ovf = tcg_temp_new();
         TCGv_i64 ovf_ext = tcg_temp_new_i64();
