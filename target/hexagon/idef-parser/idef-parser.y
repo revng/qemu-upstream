@@ -72,7 +72,7 @@
 %token <range> SETBITS INSBITS INSRANGE EXTBITS EXTRANGE
 %type <string> INAME
 %type <rvalue> rvalue lvalue VAR assign_statement pre
-%type <rvalue> DREG DIMM DPRE RREG RPRE
+%type <rvalue> DREG DIMM DPRE RREG RPRE FAIL
 %type <index> if_stmt IF
 %type <is_unsigned> SIGN
 
@@ -563,7 +563,13 @@ statement
 }
 ;
 
-rvalue : assign_statement            { /* does nothing */ }
+rvalue : FAIL
+{
+    @1.last_column = @1.last_column;
+    yyassert(c, &@1, false, "Encountered a FAIL token as rvalue.\n");
+}
+|
+assign_statement            { /* does nothing */ }
 | REG
 {
     $$ = gen_read_creg(c, &@1, &$1);
@@ -1090,7 +1096,12 @@ pre : PRE
 }
 ;
 
-lvalue : REG
+lvalue : FAIL
+{
+    @1.last_column = @1.last_column;
+    yyassert(c, &@1, false, "Encountered a FAIL token as lvalue.\n");
+}
+| REG
 {
     $$ = $1;
 }

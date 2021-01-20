@@ -64,6 +64,10 @@ SIGN_ID                  s|u
 
 {INST_NAME}               { yylval->string = strdup(yytext);
                             return INAME; }
+"fFLOAT"                 |
+"fUNFLOAT"               |
+"fDOUBLE"                |
+"fUNDOUBLE"              |
 "0.0"                    |
 "0x1.0p52"               |
 "0x1.0p-52"              { return FAIL; }
@@ -439,10 +443,6 @@ SIGN_ID                  s|u
 "fSE16_32"               |
 "fZE32_64"               |
 "fPASS"                  |
-"fFLOAT"                 |
-"fUNLOAT"                |
-"fDOUBLE"                |
-"fUNDOUBLE"              |
 "fECHO"                  { return IDENTITY; }
 "(size8"[us]"_t)"        { yylval->cast.bit_width = 8;
                            yylval->cast.is_unsigned = ((yytext[6]) == 'u');
