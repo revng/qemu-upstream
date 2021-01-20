@@ -118,6 +118,9 @@ instructions : instruction instructions
 
 instruction : INAME
 {
+    /* Early-free if the parser failed on the previous instruction */
+    free_instruction(c);
+
     c->total_insn++;
     c->inst.name = $1;
     emit_header(c);
@@ -155,17 +158,7 @@ code
         emit_footer(c);
         commit(c);
     }
-    /* Reset buffers */
-    c->signature_c = 0;
-    c->out_c = 0;
-    /* Free allocated register tracking */
-    for (int i = 0; i < c->inst.allocated_count; i++) {
-        free((char *)c->inst.allocated[i].name);
-    }
-    /* Free INAME token value */
-    free(c->inst.name);
-    /* Initialize instruction-specific portion of the context */
-    memset(&(c->inst), 0, sizeof(inst_t));
+    free_instruction(c);
 }
 | error /* Recover gracefully after instruction compilation error */
 ;
@@ -197,6 +190,8 @@ decl : DREG
 {
     emit_arg(c, &@1, &$1);
     /* Enqueue register into initialization list */
+    yyassert(c, &@1, c->inst.init_count < INIT_LIST_LEN,
+             "init_count overflow");
     c->inst.init_list[c->inst.init_count] = $1;
     c->inst.init_count++;
 }

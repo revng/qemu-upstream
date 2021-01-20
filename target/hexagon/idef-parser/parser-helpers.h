@@ -275,4 +275,6 @@ void emit_arg(context_t *c, YYLTYPE *locp, t_hex_value *arg);
 
 void emit_footer(context_t *c);
 
+void free_instruction(context_t *c);
+
 #endif /* PARSER_HELPERS_h */

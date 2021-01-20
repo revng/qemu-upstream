@@ -1612,3 +1612,18 @@ void emit_footer(context_t *c)
     EMIT(c, "}\n");
     EMIT(c, "\n");
 }
+
+void free_instruction(context_t *c)
+{
+    /* Reset buffers */
+    c->signature_c = 0;
+    c->out_c = 0;
+    /* Free allocated register tracking */
+    for (int i = 0; i < c->inst.allocated_count; i++) {
+        free((char *)c->inst.allocated[i].name);
+    }
+    /* Free INAME token value */
+    free(c->inst.name);
+    /* Initialize instruction-specific portion of the context */
+    memset(&(c->inst), 0, sizeof(inst_t));
+}
