@@ -1148,8 +1148,8 @@ int main(int argc, char **argv)
 
     FILE *defines_file = fopen(argv[ARG_INDEX_EMITTER_H], "w");
     assert(defines_file != NULL);
-    fputs("#ifndef EMITTER_H\n", defines_file);
-    fputs("#define EMITTER_H\n", defines_file);
+    fputs("#ifndef HEX_EMITTER_H\n", defines_file);
+    fputs("#define HEX_EMITTER_H\n", defines_file);
     fputs("\n", defines_file);
     fputs("#include \"insn.h\"\n\n", defines_file);
 
@@ -1183,7 +1183,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "%d/%d meta instructions have been implemented!\n",
             context.implemented_insn,
             context.total_insn);
-    fputs("#endif " START_COMMENT " EMITTER_h " END_COMMENT "\n", defines_file);
+    fputs("#endif " START_COMMENT " HEX_EMITTER_h " END_COMMENT "\n", defines_file);
     /* Cleanup */
     yy_delete_buffer(buffer, context.scanner);
     yylex_destroy(context.scanner);
