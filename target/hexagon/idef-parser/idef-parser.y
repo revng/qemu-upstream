@@ -61,7 +61,7 @@
 %token XORA PLUSPLUS LT GT ASL ASR LSR EQ NEQ LTE GTE MIN MAX ANDL ORL NOTL
 %token COMMA FOR ICIRC IF MUN FSCR FCHK SXT ZXT NEW CONSTEXT LOCNT BREV SIGN
 %token LOAD STORE CONSTLL CONSTULL PC NPC LPCFG CANC QMARK IDENTITY PART1
-%token BREV_4 FAIL
+%token BREV_4 BREV_8 FAIL
 
 %token <rvalue> REG IMM PRE
 %token <index> ELSE
@@ -1077,6 +1077,11 @@ assign_statement            { /* does nothing */ }
 {
     @1.last_column = @4.last_column;
     $$ = gen_fbrev_4(c, &@1, &$3);
+}
+| BREV_8 LPAR rvalue RPAR
+{
+    @1.last_column = @4.last_column;
+    $$ = gen_fbrev_8(c, &@1, &$3);
 }
 ;
 

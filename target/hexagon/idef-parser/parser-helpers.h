@@ -258,6 +258,8 @@ t_hex_value gen_ctpop_op(context_t *c, YYLTYPE *locp, t_hex_value *source);
 
 t_hex_value gen_fbrev_4(context_t *c, YYLTYPE *locp, t_hex_value *source);
 
+t_hex_value gen_fbrev_8(context_t *c, YYLTYPE *locp, t_hex_value *source);
+
 void gen_dbg_str(context_t *c,
                  YYLTYPE *locp,
                  const char *str,

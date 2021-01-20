@@ -1563,6 +1563,74 @@ t_hex_value gen_fbrev_4(context_t *c, YYLTYPE *locp, t_hex_value *source)
     return res;
 }
 
+t_hex_value gen_fbrev_8(context_t *c, YYLTYPE *locp, t_hex_value *source)
+{
+    rvalue_extend(c, locp, source);
+
+    t_hex_value res = gen_tmp(c, locp, 64);
+    t_hex_value tmp1 = gen_tmp(c, locp, 64);
+    t_hex_value tmp2 = gen_tmp(c, locp, 64);
+
+    rvalue_materialize(c, locp, source);
+
+    OUT(c, locp, "tcg_gen_mov_i64(",
+        &res, ", ", source, ");\n");
+    OUT(c, locp, "tcg_gen_andi_i64(",
+        &tmp1, ", ", &res, ", 0xaaaaaaaaaaaaaaaa);\n");
+    OUT(c, locp, "tcg_gen_shri_i64(",
+        &tmp1, ", ", &tmp1, ", 1);\n");
+    OUT(c, locp, "tcg_gen_andi_i64(",
+        &tmp2, ", ", &res, ", 0x5555555555555555);\n");
+    OUT(c, locp, "tcg_gen_shli_i64(",
+        &tmp2, ", ", &tmp2, ", 1);\n");
+    OUT(c, locp, "tcg_gen_or_i64(", &res, ", ", &tmp1, ", ", &tmp2, ");\n");
+    OUT(c, locp, "tcg_gen_andi_i64(",
+        &tmp1, ", ", &res, ", 0xcccccccccccccccc);\n");
+    OUT(c, locp, "tcg_gen_shri_i64(",
+        &tmp1, ", ", &tmp1, ", 2);\n");
+    OUT(c, locp, "tcg_gen_andi_i64(",
+        &tmp2, ", ", &res, ", 0x3333333333333333);\n");
+    OUT(c, locp, "tcg_gen_shli_i64(",
+        &tmp2, ", ", &tmp2, ", 2);\n");
+    OUT(c, locp, "tcg_gen_or_i64(", &res, ", ", &tmp1, ", ", &tmp2, ");\n");
+    OUT(c, locp, "tcg_gen_andi_i64(",
+        &tmp1, ", ", &res, ", 0xf0f0f0f0f0f0f0f0);\n");
+    OUT(c, locp, "tcg_gen_shri_i64(",
+        &tmp1, ", ", &tmp1, ", 4);\n");
+    OUT(c, locp, "tcg_gen_andi_i64(",
+        &tmp2, ", ", &res, ", 0x0f0f0f0f0f0f0f0f);\n");
+    OUT(c, locp, "tcg_gen_shli_i64(",
+        &tmp2, ", ", &tmp2, ", 4);\n");
+    OUT(c, locp, "tcg_gen_or_i64(", &res, ", ", &tmp1, ", ", &tmp2, ");\n");
+    OUT(c, locp, "tcg_gen_andi_i64(",
+        &tmp1, ", ", &res, ", 0xff00ff00ff00ff00);\n");
+    OUT(c, locp, "tcg_gen_shri_i64(",
+        &tmp1, ", ", &tmp1, ", 8);\n");
+    OUT(c, locp, "tcg_gen_andi_i64(",
+        &tmp2, ", ", &res, ", 0x00ff00ff00ff00ff);\n");
+    OUT(c, locp, "tcg_gen_shli_i64(",
+        &tmp2, ", ", &tmp2, ", 8);\n");
+    OUT(c, locp, "tcg_gen_or_i64(", &res, ", ", &tmp1, ", ", &tmp2, ");\n");
+    OUT(c, locp, "tcg_gen_andi_i64(",
+        &tmp1, ", ", &res, ", 0xffff0000ffff0000);\n");
+    OUT(c, locp, "tcg_gen_shri_i64(",
+        &tmp1, ", ", &tmp1, ", 16);\n");
+    OUT(c, locp, "tcg_gen_andi_i64(",
+        &tmp2, ", ", &res, ", 0x0000ffff0000ffff);\n");
+    OUT(c, locp, "tcg_gen_shli_i64(",
+        &tmp2, ", ", &tmp2, ", 16);\n");
+    OUT(c, locp, "tcg_gen_or_i64(", &res, ", ", &tmp1, ", ", &tmp2, ");\n");
+    OUT(c, locp, "tcg_gen_shri_i64(", &tmp1, ", ", &res, ", 32);\n");
+    OUT(c, locp, "tcg_gen_shli_i64(", &tmp2, ", ", &res, ", 32);\n");
+    OUT(c, locp, "tcg_gen_or_i64(", &res, ", ", &tmp1, ", ", &tmp2, ");\n");
+
+    rvalue_free(c, locp, &tmp1);
+    rvalue_free(c, locp, &tmp2);
+    rvalue_free(c, locp, source);
+
+    return res;
+}
+
 bool reg_equal(t_hex_reg *r1, t_hex_reg *r2)
 {
     return !memcmp(r1, r2, sizeof(t_hex_reg));
