@@ -695,8 +695,26 @@ t_hex_value gen_bin_op(context_t *c,
                 " = ", &op1, " << ", &op2, ";\n");
             break;
         case REG_IMM:
-            OUT(c, locp, "tcg_gen_shli_", bit_suffix,
-                "(", &res, ", ", &op1, ", ", &op2, ");\n");
+            {
+                /* Need to work around assert(op2 < 64) in tcg_gen_shli */
+                if (op_is64bit) {
+                    rvalue_extend(c, locp, &op2);
+                }
+                rvalue_materialize(c, locp, &op2);
+                const char *mask = op_is64bit ? "0xffffffffffffffc0"
+                                              : "0xffffffc0";
+                t_hex_value zero = gen_tmp_value(c, locp, "0", bit_width);
+                t_hex_value tmp = gen_tmp(c, locp, bit_width);
+                OUT(c, locp, "tcg_gen_andi_", bit_suffix,
+                    "(", &tmp, ", ", &op2, ", ", mask, ");\n");
+                OUT(c, locp, "tcg_gen_movcond_i", &bit_width);
+                OUT(c, locp, "(TCG_COND_EQ, ", &tmp, ", ", &tmp, ", ", &zero);
+                OUT(c, locp, ", ", &op2, ", ", &zero, ");\n");
+                OUT(c, locp, "tcg_gen_shl_", bit_suffix,
+                    "(", &res, ", ", &op1, ", ", &tmp, ");\n");
+                rvalue_free(c, locp, &zero);
+                rvalue_free(c, locp, &tmp);
+            }
             break;
         case IMM_REG:
             op1.bit_width = bit_width;
