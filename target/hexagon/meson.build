@@ -174,7 +174,7 @@ hexagon_ss.add(files(
 tcg_funcs2_h = custom_target(
     'tcg_funcs_generated2.h',
     output: 'tcg_funcs_generated2.h',
-    input: 'gen_tcg_funcs_2.py',
+    input: 'gen_idef_parser_funcs.py',
     depend_files: [hex_common_py],
     command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, '@OUTPUT@'],
 )
