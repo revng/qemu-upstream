@@ -598,11 +598,6 @@ static inline void gen_fbrev(TCGv result, TCGv src)
     tcg_gen_andi_tl(tmp2, lo, 0x0f0f);
     tcg_gen_shli_tl(tmp2, tmp2, 4);
     tcg_gen_or_tl(lo, tmp1, tmp2);
-    tcg_gen_andi_tl(tmp1, lo, 0xff00);
-    tcg_gen_shri_tl(tmp1, tmp1, 8);
-    tcg_gen_andi_tl(tmp2, lo, 0x00ff);
-    tcg_gen_shli_tl(tmp2, tmp2, 8);
-    tcg_gen_or_tl(lo, tmp1, tmp2);
     tcg_gen_bswap16_tl(lo, lo);
 
     /* Final tweaks */
