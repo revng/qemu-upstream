@@ -69,14 +69,6 @@ helper_protos_h = custom_target(
 )
 hexagon_ss.add(helper_protos_h)
 
-tcg_funcs_h = custom_target(
-    'tcg_funcs_generated.h',
-    output: 'tcg_funcs_generated.h',
-    input: 'gen_tcg_funcs.py',
-    depend_files: [hex_common_py],
-    command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, '@OUTPUT@'],
-)
-hexagon_ss.add(tcg_funcs_h)
 
 tcg_func_table_h = custom_target(
     'tcg_func_table_generated.h',
@@ -218,5 +210,19 @@ idef_generated_tcg = custom_target(
     depend_files: [hex_common_py],
     command: [idef_parser, '@INPUT@', '@OUTPUT0@', '@OUTPUT1@', '@OUTPUT2@'],
 )
+
+idef_generated_list = idef_generated_tcg[2].full_path()
+
+hexagon_ss.add(idef_generated_tcg)
+
+tcg_funcs_h = custom_target(
+    'tcg_funcs_generated.h',
+    output: 'tcg_funcs_generated.h',
+    input: 'gen_tcg_funcs.py',
+    depend_files: [hex_common_py],
+    depends: idef_generated_tcg,
+    command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, idef_generated_list, '@OUTPUT@'],
+)
+hexagon_ss.add(tcg_funcs_h)
 
 target_arch += {'hexagon': hexagon_ss}
