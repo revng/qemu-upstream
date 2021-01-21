@@ -357,7 +357,7 @@ assign_statement : lvalue ASSIGN rvalue
         $9 = rvalue_truncate(c, &@1, &$9);
     }
     OUT(c, &@1, "if (insn->slot == 0 && pkt->pkt_has_store_s1) {\n");
-    OUT(c, &@1, "process_store(ctx, 1);\n");
+    OUT(c, &@1, "process_store(ctx, pkt, 1);\n");
     OUT(c, &@1, "}\n");
     OUT(c, &@1, "tcg_gen_qemu_ld", size_suffix, sign_suffix);
     OUT(c, &@1, "(", &$11, ", ", &$9, ", 0);\n");
@@ -1228,9 +1228,11 @@ int main(int argc, char **argv)
     buffer = yy_scan_string(context.input_buffer, context.scanner);
     /* Start the parsing procedure */
     yyparse(context.scanner, &context);
-    fprintf(stderr, "%d/%d meta instructions have been implemented!\n",
-            context.implemented_insn,
-            context.total_insn);
+    if (context.implemented_insn != context.total_insn) {
+        fprintf(stderr, "%d/%d meta instructions have been implemented!\n",
+                context.implemented_insn,
+                context.total_insn);
+    }
     fputs("#endif " START_COMMENT " HEX_EMITTER_h " END_COMMENT "\n",
           defines_file);
     /* Cleanup */
