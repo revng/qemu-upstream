@@ -3348,4 +3348,31 @@ static void tcg_gen_mov2_i64(TCGv_i64 r, TCGv_i64 a, TCGv_i64 b)
 
 GEN_ATOMIC_HELPER(xchg, mov2, 0)
 
+static void dbg_helper(const char *s, uint64_t a)
+{
+    char buff[1024];
+    snprintf(buff, sizeof(buff), "%s%" PRIx64 "\n", s, a);
+    (void)!write(STDOUT_FILENO, buff, strlen(buff));
+}
+
+void HELPER(dbg_i32)(uint32_t a)
+{
+    dbg_helper("DBG: ", (uint64_t)a);
+}
+
+void HELPER(dbg_i64)(uint64_t a)
+{
+    dbg_helper("DBG: ", a);
+}
+
+void HELPER(dbg_str_i32)(void *p, uint32_t a)
+{
+    dbg_helper((char *)p, (uint64_t)a);
+}
+
+void HELPER(dbg_str_i64)(void *p, uint64_t a)
+{
+    dbg_helper((char *)p, a);
+}
+
 #undef GEN_ATOMIC_HELPER
