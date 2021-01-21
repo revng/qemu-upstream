@@ -186,7 +186,7 @@ idef_parser_input_h = custom_target(
     command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, '@OUTPUT@'],
 )
 
-idef_parser_input_h_prep = custom_target(
+preprocessed_idef_parser_input_h = custom_target(
     'idef_parser_input.preprocessed.h',
     output: 'idef_parser_input.preprocessed.h',
     input: idef_parser_input_h,
@@ -198,5 +198,25 @@ idef_parser_input_h_prep = custom_target(
 flex = generator(find_program('flex'),
                  output: '@PLAINNAME@.yy.c',
                  arguments: ['-o', '@OUTPUT@', '@INPUT@'])
+
+bison = generator(find_program('bison'),
+                  output: ['@BASENAME@.tab.c', '@BASENAME@.tab.h'],
+                  arguments: ['@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@'])
+
+idef_parser = executable('idef-parser',
+                         [flex.process(idef_parser_dir / 'idef-lexer.lex'),
+                          bison.process(idef_parser_dir / 'idef-parser.y'),
+                          idef_parser_dir / 'parser-helpers.c'],
+                         include_directories: 'idef-parser')
+
+idef_generated_tcg = custom_target(
+    'idef-generated-tcg',
+    output: ['idef-generated-emitter.c',
+             'idef-generated-emitter.h',
+             'idef-generated-enabled-instructions'],
+    input: preprocessed_idef_parser_input_h,
+    depend_files: [hex_common_py],
+    command: [idef_parser, '@INPUT@', '@OUTPUT0@', '@OUTPUT1@', '@OUTPUT2@'],
+)
 
 target_arch += {'hexagon': hexagon_ss}
