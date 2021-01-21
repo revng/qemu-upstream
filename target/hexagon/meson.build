@@ -22,6 +22,7 @@ prog_python = import('python').find_installation('python3')
 hex_common_py = 'hex_common.py'
 attribs_def_h = meson.current_source_dir() / 'attribs_def.h'
 gen_tcg_h = meson.current_source_dir() / 'gen_tcg.h'
+idef_parser_dir = meson.current_source_dir() / 'idef-parser'
 
 #
 #  Step 1
@@ -176,5 +177,22 @@ hexagon_ss.add(files(
     'mmvec/decode_ext_mmvec.c',
     'mmvec/system_ext_mmvec.c',
 ))
+
+idef_parser_input_h = custom_target(
+    'idef_parser_input.h',
+    output: 'idef_parser_input.h',
+    input: 'gen_idef_parser_funcs.py',
+    depend_files: [hex_common_py],
+    command: [prog_python, '@INPUT@', semantics, attribs_def_h, gen_tcg_h, '@OUTPUT@'],
+)
+
+idef_parser_input_h_prep = custom_target(
+    'idef_parser_input.preprocessed.h',
+    output: 'idef_parser_input.preprocessed.h',
+    input: idef_parser_input_h,
+    capture: true,
+    depend_files: [hex_common_py],
+    command: [idef_parser_dir / 'prepare', '@INPUT@', '-I' + idef_parser_dir],
+)
 
 target_arch += {'hexagon': hexagon_ss}
