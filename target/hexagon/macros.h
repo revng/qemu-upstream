@@ -572,32 +572,34 @@ static inline TCGv gen_read_ireg(TCGv result, TCGv val, int shift)
 #define fEA_REG(REG) tcg_gen_mov_tl(EA, REG)
 static inline void gen_fbrev(TCGv result, TCGv src)
 {
-    TCGv result_hi = tcg_temp_new();
-    TCGv result_lo = tcg_temp_new();
+    TCGv lo = tcg_temp_new();
     TCGv tmp1 = tcg_temp_new();
     TCGv tmp2 = tcg_temp_new();
-    int i;
 
-    /*
-     *  Bit reverse the low 16 bits of the address
-     */
-    tcg_gen_andi_tl(result_hi, src, 0xffff0000);
-    tcg_gen_movi_tl(result_lo, 0);
-    tcg_gen_mov_tl(tmp1, src);
-    for (i = 0; i < 16; i++) {
-        /*
-         * result_lo = (result_lo << 1) | (tmp1 & 1);
-         * tmp1 >>= 1;
-         */
-        tcg_gen_shli_tl(result_lo, result_lo, 1);
-        tcg_gen_andi_tl(tmp2, tmp1, 1);
-        tcg_gen_or_tl(result_lo, result_lo, tmp2);
-        tcg_gen_sari_tl(tmp1, tmp1, 1);
-    }
-    tcg_gen_or_tl(result, result_hi, result_lo);
+    /* Bit reversal of low 16 bits */
+    tcg_gen_andi_tl(lo, src, 0xffff);
+    tcg_gen_andi_tl(tmp1, lo, 0xaaaa);
+    tcg_gen_shri_tl(tmp1, tmp1, 1);
+    tcg_gen_andi_tl(tmp2, lo, 0x5555);
+    tcg_gen_shli_tl(tmp2, tmp2, 1);
+    tcg_gen_or_tl(lo, tmp1, tmp2);
+    tcg_gen_andi_tl(tmp1, lo, 0xcccc);
+    tcg_gen_shri_tl(tmp1, tmp1, 2);
+    tcg_gen_andi_tl(tmp2, lo, 0x3333);
+    tcg_gen_shli_tl(tmp2, tmp2, 2);
+    tcg_gen_or_tl(lo, tmp1, tmp2);
+    tcg_gen_andi_tl(tmp1, lo, 0xf0f0);
+    tcg_gen_shri_tl(tmp1, tmp1, 4);
+    tcg_gen_andi_tl(tmp2, lo, 0x0f0f);
+    tcg_gen_shli_tl(tmp2, tmp2, 4);
+    tcg_gen_or_tl(lo, tmp1, tmp2);
+    tcg_gen_bswap16_tl(lo, lo);
 
-    tcg_temp_free(result_hi);
-    tcg_temp_free(result_lo);
+    /* Final tweaks */
+    tcg_gen_andi_tl(result, src, 0xffff0000);
+    tcg_gen_ori_tl(result, lo, 8);
+
+    tcg_temp_free(lo);
     tcg_temp_free(tmp1);
     tcg_temp_free(tmp2);
 }
