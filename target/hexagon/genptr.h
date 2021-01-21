@@ -19,7 +19,27 @@
 #define HEXAGON_GENPTR_H
 
 #include "insn.h"
+#include "tcg/tcg.h"
+#include "translate.h"
 
 extern const SemanticInsn opcode_genptr[];
+
+TCGv gen_read_reg(TCGv result, int num);
+TCGv gen_read_preg(TCGv pred, uint8_t num);
+void gen_log_reg_write(int rnum, TCGv val);
+void gen_log_pred_write(int pnum, TCGv val);
+TCGv gen_set_bit(int i, TCGv result, TCGv src);
+void gen_store32(TCGv vaddr, TCGv src, int width, int slot);
+void gen_store1(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
+                int slot);
+void gen_store2(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
+                int slot);
+void gen_store4(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
+                int slot);
+void gen_store8(TCGv_env cpu_env, TCGv vaddr, TCGv_i64 src, DisasContext *ctx,
+                int slot);
+void gen_write_new_pc(TCGv addr);
+void gen_set_usr_field(int field, TCGv val);
+void gen_set_usr_fieldi(int field, int x);
 
 #endif

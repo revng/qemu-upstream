@@ -26,6 +26,7 @@
 #include "translate.h"
 #include "macros.h"
 #include "gen_tcg.h"
+#include "genptr.h"
 
 static inline TCGv gen_zero(TCGv result)
 {
@@ -33,13 +34,13 @@ static inline TCGv gen_zero(TCGv result)
     return result;
 }
 
-static inline TCGv gen_read_reg(TCGv result, int num)
+TCGv gen_read_reg(TCGv result, int num)
 {
     tcg_gen_mov_tl(result, hex_gpr[num]);
     return result;
 }
 
-static inline TCGv gen_read_preg(TCGv pred, uint8_t num)
+TCGv gen_read_preg(TCGv pred, uint8_t num)
 {
     tcg_gen_mov_tl(pred, hex_pred[num]);
     return pred;
@@ -65,7 +66,7 @@ static inline void gen_log_predicated_reg_write(int rnum, TCGv val, int slot)
     tcg_temp_free(slot_mask);
 }
 
-static inline void gen_log_reg_write(int rnum, TCGv val)
+void gen_log_reg_write(int rnum, TCGv val)
 {
     tcg_gen_mov_tl(hex_new_value[rnum], val);
 #if HEX_DEBUG
@@ -128,7 +129,7 @@ static void gen_log_reg_write_pair(int rnum, TCGv_i64 val)
 #endif
 }
 
-static inline void gen_log_pred_write(int pnum, TCGv val)
+void gen_log_pred_write(int pnum, TCGv val)
 {
     TCGv zero = tcg_const_tl(0);
     TCGv base_val = tcg_temp_new();
@@ -336,7 +337,7 @@ static inline TCGv_i64 gen_get_word_i64(TCGv_i64 result, int N, TCGv_i64 src,
     return result;
 }
 
-static inline TCGv gen_set_bit(int i, TCGv result, TCGv src)
+TCGv gen_set_bit(int i, TCGv result, TCGv src)
 {
     TCGv mask = tcg_const_tl(~(1 << i));
     TCGv bit = tcg_temp_new();
@@ -420,15 +421,15 @@ static inline void gen_store_conditional8(CPUHexagonState *env,
     tcg_gen_movi_tl(hex_llsc_addr, ~0);
 }
 
-static inline void gen_store32(TCGv vaddr, TCGv src, int width, int slot)
+void gen_store32(TCGv vaddr, TCGv src, int width, int slot)
 {
     tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
     tcg_gen_movi_tl(hex_store_width[slot], width);
     tcg_gen_mov_tl(hex_store_val32[slot], src);
 }
 
-static inline void gen_store1(TCGv_env cpu_env, TCGv vaddr, TCGv src,
-                              DisasContext *ctx, int slot)
+void gen_store1(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
+                int slot)
 {
     gen_store32(vaddr, src, 1, slot);
     ctx->store_width[slot] = 1;
@@ -442,8 +443,8 @@ static inline void gen_store1i(TCGv_env cpu_env, TCGv vaddr, int32_t src,
     tcg_temp_free(tmp);
 }
 
-static inline void gen_store2(TCGv_env cpu_env, TCGv vaddr, TCGv src,
-                              DisasContext *ctx, int slot)
+void gen_store2(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
+                int slot)
 {
     gen_store32(vaddr, src, 2, slot);
     ctx->store_width[slot] = 2;
@@ -457,8 +458,8 @@ static inline void gen_store2i(TCGv_env cpu_env, TCGv vaddr, int32_t src,
     tcg_temp_free(tmp);
 }
 
-static inline void gen_store4(TCGv_env cpu_env, TCGv vaddr, TCGv src,
-                              DisasContext *ctx, int slot)
+void gen_store4(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
+                int slot)
 {
     gen_store32(vaddr, src, 4, slot);
     ctx->store_width[slot] = 4;
@@ -472,8 +473,8 @@ static inline void gen_store4i(TCGv_env cpu_env, TCGv vaddr, int32_t src,
     tcg_temp_free(tmp);
 }
 
-static inline void gen_store8(TCGv_env cpu_env, TCGv vaddr, TCGv_i64 src,
-                              DisasContext *ctx, int slot)
+void gen_store8(TCGv_env cpu_env, TCGv vaddr, TCGv_i64 src, DisasContext *ctx,
+                int slot)
 {
     tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
     tcg_gen_movi_tl(hex_store_width[slot], 8);
@@ -537,7 +538,7 @@ static inline TCGv gen_8bitsof(TCGv result, TCGv value)
     return result;
 }
 
-static inline void gen_write_new_pc(TCGv addr)
+void gen_write_new_pc(TCGv addr)
 {
     /* If there are multiple branches in a packet, ignore the second one */
     TCGv zero = tcg_const_tl(0);
@@ -547,14 +548,14 @@ static inline void gen_write_new_pc(TCGv addr)
     tcg_temp_free(zero);
 }
 
-static inline void gen_set_usr_field(int field, TCGv val)
+void gen_set_usr_field(int field, TCGv val)
 {
     tcg_gen_deposit_tl(hex_gpr[HEX_REG_USR], hex_gpr[HEX_REG_USR], val,
                        reg_field_info[field].offset,
                        reg_field_info[field].width);
 }
 
-static inline void gen_set_usr_fieldi(int field, int x)
+void gen_set_usr_fieldi(int field, int x)
 {
     TCGv val = tcg_const_tl(x);
     gen_set_usr_field(field, val);
