@@ -607,6 +607,7 @@ SIGN_ID                  s|u
 "fCONSTULL"              { return CONSTULL; }
 "fLOAD"                  { return LOAD; }
 "fSTORE"                 { return STORE; }
+"fROTL"                  { return ROTL; }
 {VAR_ID}                 { /* Variable name, we adopt the C names convention */
                            yylval->rvalue.type = VARID;
                            yylval->rvalue.var.name = strndup(yytext,

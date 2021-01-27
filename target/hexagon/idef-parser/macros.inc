@@ -117,7 +117,7 @@
 #define fSCALE(N, A) (A << N)
 #define fASHIFTR(SRC, SHAMT, REGSTYPE) (SRC >> SHAMT)
 #define fLSHIFTR(SRC, SHAMT, REGSTYPE) (SRC >>> SHAMT)
-#define fROTL(SRC, SHAMT, REGSTYPE) (SRC <<_{R} SHAMT)
+#define fROTL(SRC, SHAMT, REGSTYPE) fROTL(SRC, SHAMT)
 #define fASHIFTL(SRC, SHAMT, REGSTYPE) (fCAST##REGSTYPE##s(SRC) << SHAMT)
 
 /* Purge non-relavant parts */

@@ -1610,6 +1610,35 @@ HexValue gen_fbrev_8(Context *c, YYLTYPE *locp, HexValue *source)
     return res;
 }
 
+HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n) {
+    const char *suffix = source->bit_width == 64 ? "i64" : "i32";
+
+    HexValue res = gen_tmp(c, locp, source->bit_width);
+    res.is_unsigned = source->is_unsigned;
+    HexValue tmp_l = gen_tmp(c, locp, source->bit_width);
+    HexValue tmp_r = gen_tmp(c, locp, source->bit_width);
+    HexValue shr = gen_tmp(c, locp, source->bit_width);
+
+    OUT(c, locp, "tcg_gen_movi_", suffix, "(",
+        &shr, ", ", &source->bit_width, ");\n");
+    OUT(c, locp, "tcg_gen_subi_", suffix, "(",
+        &shr, ", ", &shr, ", ", n, ");\n");
+    OUT(c, locp, "tcg_gen_shli_", suffix, "(",
+        &tmp_l, ", ", source, ", ", n, ");\n");
+    OUT(c, locp, "tcg_gen_shr_", suffix, "(",
+        &tmp_r, ", ", source, ", ", &shr, ");\n");
+    OUT(c, locp, "tcg_gen_or_", suffix, "(",
+        &res, ", ", &tmp_l, ", ", &tmp_r, ");\n");
+
+    rvalue_free(c, locp, source);
+    rvalue_free(c, locp, n);
+    rvalue_free(c, locp, &tmp_l);
+    rvalue_free(c, locp, &tmp_r);
+    rvalue_free(c, locp, &shr);
+
+    return res;
+}
+
 bool reg_equal(HexReg *r1, HexReg *r2)
 {
     return !memcmp(r1, r2, sizeof(HexReg));

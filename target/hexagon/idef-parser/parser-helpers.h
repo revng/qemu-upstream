@@ -262,6 +262,8 @@ HexValue gen_fbrev_4(Context *c, YYLTYPE *locp, HexValue *source);
 
 HexValue gen_fbrev_8(Context *c, YYLTYPE *locp, HexValue *source);
 
+HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n);
+
 
 bool reg_equal(HexReg *r1, HexReg *r2);
 
