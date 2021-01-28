@@ -320,8 +320,3 @@ DEF_HELPER_FLAGS_4(gvec_leu32, TCG_CALL_NO_RWG, void, ptr, ptr, ptr, i32)
 DEF_HELPER_FLAGS_4(gvec_leu64, TCG_CALL_NO_RWG, void, ptr, ptr, ptr, i32)
 
 DEF_HELPER_FLAGS_5(gvec_bitsel, TCG_CALL_NO_RWG, void, ptr, ptr, ptr, ptr, i32)
-
-DEF_HELPER_FLAGS_1(dbg_i32, TCG_CALL_NO_RWG, void, i32)
-DEF_HELPER_FLAGS_1(dbg_i64, TCG_CALL_NO_RWG, void, i64)
-DEF_HELPER_FLAGS_2(dbg_str_i32, TCG_CALL_NO_RWG, void, ptr, i32)
-DEF_HELPER_FLAGS_2(dbg_str_i64, TCG_CALL_NO_RWG, void, ptr, i64)
