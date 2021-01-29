@@ -1185,6 +1185,7 @@ HexValue gen_extract_op(Context *c,
         res = tmp;
     }
 
+    rvalue_free(c, locp, source);
     *source = res;
     return *source;
 }
