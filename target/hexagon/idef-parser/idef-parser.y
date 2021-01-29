@@ -926,6 +926,7 @@ assign_statement            { /* does nothing */ }
     OUT(c, &@1, "tcg_gen_concat_i32_i64(",
         &key, ", ", &frame_key, ", ", &frame_key, ");\n");
     OUT(c, &@1, "tcg_gen_xor_i64(", &res, ", ", &$3, ", ", &key, ");\n");
+    rvalue_free(c, &@1, &$3);
     $$ = res;
 }
 | SXT LPAR IMM COMMA IMM COMMA rvalue RPAR
