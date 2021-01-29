@@ -651,7 +651,6 @@ static void gen_asl_op(Context *c, YYLTYPE *locp, unsigned bit_width,
         }
         rvalue_materialize(c, locp, op1);
         rvalue_materialize(c, locp, op2);
-        op2->is_symbol = true;
         rvalue_materialize(c, locp, &edge);
         OUT(c, locp, "tcg_gen_movcond_i", &bit_width);
         if (op_types == REG_REG || op_types == IMM_REG) {
