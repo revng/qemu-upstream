@@ -153,6 +153,7 @@ code
                 c->inst.error_count);
         EMIT(c, "assert(false && \"This instruction is not implemented!\");");
     } else {
+        free_variables(c, &@1);
         c->implemented_insn++;
         fprintf(c->enabled_file, "%s\n", c->inst.name);
         emit_footer(c);

@@ -1707,6 +1707,14 @@ void emit_footer(Context *c)
     EMIT(c, "\n");
 }
 
+void free_variables(Context *c, YYLTYPE *locp) {
+    for (unsigned i = 0; i < c->inst.allocated_count; ++i) {
+        Var *var = &c->inst.allocated[i];
+        const char *suffix = var->bit_width == 64 ? "i64" : "i32";
+        OUT(c, locp, "tcg_temp_free_", suffix, "(", var->name, ");\n");
+    }
+}
+
 void free_instruction(Context *c)
 {
     /* Reset buffers */
