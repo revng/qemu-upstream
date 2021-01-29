@@ -476,8 +476,8 @@ static inline HexValue gen_bin_cmp_ext(Context *c,
         *op1 = swp;
         /* Swap comparison direction */
         type = cmp_swap(c, locp, type);
-
-    } /* fallthrough */
+    }
+    /* fallthrough */
     case REG_IMM:
     {
         OUT(c, locp, "tcg_gen_setcondi_", bit_suffix, "(");
