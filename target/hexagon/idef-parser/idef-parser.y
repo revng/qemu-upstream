@@ -482,6 +482,7 @@ cancel_statement : CANC
 {
     HexValue slot = gen_tmp_value(c, &@1, "insn->slot", 32);
     OUT(c, &@1, "gen_cancel(", &slot, ");\n");
+    rvalue_free(c, &@1, &slot);
 }
 ;
 
