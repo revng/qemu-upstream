@@ -277,6 +277,8 @@ void emit_arg(Context *c, YYLTYPE *locp, HexValue *arg);
 
 void emit_footer(Context *c);
 
+void free_variables(Context *c, YYLTYPE *locp);
+
 void free_instruction(Context *c);
 
 #endif /* PARSER_HELPERS_h */
