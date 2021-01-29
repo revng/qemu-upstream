@@ -1033,6 +1033,7 @@ assign_statement            { /* does nothing */ }
     @1.last_column = @4.last_column;
     /* Leading ones count */
     $$ = gen_locnt_op(c, &@1, &$3);
+    rvalue_free(c, &@1, &$3);
 }
 | COUNTONES LPAR rvalue RPAR
 {
