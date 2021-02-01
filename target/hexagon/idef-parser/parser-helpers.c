@@ -229,6 +229,7 @@ void commit(Context *c)
 
     /* Commit instruction code to output file */
     fwrite(c->signature_buffer, sizeof(char), c->signature_c, c->output_file);
+    fwrite(c->header_buffer, sizeof(char), c->header_c, c->output_file);
     fwrite(c->out_buffer, sizeof(char), c->out_c, c->output_file);
 
     fwrite(c->signature_buffer, sizeof(char), c->signature_c, c->defines_file);
@@ -407,8 +408,8 @@ void varid_allocate(Context *c,
         varid->bit_width = c->inst.allocated[index].bit_width;
         varid->is_unsigned = c->inst.allocated[index].is_unsigned;
     } else {
-        OUT(c, locp, "TCGv_i", bit_suffix, " ", varid);
-        OUT(c, locp, " = tcg_temp_local_new_i", bit_suffix, "();\n");
+        EMIT_HEAD(c, "TCGv_i%s %s", bit_suffix, varid->var.name);
+        EMIT_HEAD(c, " = tcg_temp_local_new_i%s();\n", bit_suffix);
         c->inst.allocated[c->inst.allocated_count].name = varid->var.name;
         c->inst.allocated[c->inst.allocated_count].bit_width = width;
         c->inst.allocated[c->inst.allocated_count].is_unsigned = is_unsigned;
@@ -1720,6 +1721,7 @@ void free_instruction(Context *c)
     /* Reset buffers */
     c->signature_c = 0;
     c->out_c = 0;
+    c->header_c = 0;
     /* Free allocated register tracking */
     for (int i = 0; i < c->inst.allocated_count; i++) {
         free((char *)c->inst.allocated[i].name);

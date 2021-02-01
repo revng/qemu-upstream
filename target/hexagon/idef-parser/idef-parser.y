@@ -128,7 +128,7 @@ instruction : INAME
 arguments
 {
     EMIT_SIG(c, ")");
-    OUT(c, &@1, "{\n");
+    EMIT_HEAD(c, "{\n");
 
     /* Initialize declared but uninitialized registers, but only for */
     /* non-conditional instructions */
@@ -1183,6 +1183,7 @@ int main(int argc, char **argv)
     /* Initialize buffers */
     context.out_buffer = (char *) calloc(OUT_BUF_LEN, sizeof(char));
     context.signature_buffer = (char *) calloc(SIGNATURE_BUF_LEN, sizeof(char));
+    context.header_buffer = (char *) calloc(HEADER_BUF_LEN, sizeof(char));
     /* Read input file */
     FILE *input_file = fopen(argv[ARG_INDEX_IDEFS], "r");
     fseek(input_file, 0L, SEEK_END);
