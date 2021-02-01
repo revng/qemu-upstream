@@ -1485,8 +1485,7 @@ HexValue gen_locnt_op(Context *c, YYLTYPE *locp, HexValue *source)
     rvalue_materialize(c, locp, source);
     OUT(c, locp, "tcg_gen_not_i", bit_suffix, "(", &res, ", ", source, ");\n");
     OUT(c, locp, "tcg_gen_clzi_i", bit_suffix, "(", &res, ", ", &res, ", ");
-    OUT(c, locp, bit_suffix, ");");
-    rvalue_free(c, locp, source);
+    OUT(c, locp, bit_suffix, ");\n");
     return res;
 }
 
