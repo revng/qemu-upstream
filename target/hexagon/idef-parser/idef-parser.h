@@ -30,6 +30,7 @@
 #define INIT_LIST_LEN 32
 #define OUT_BUF_LEN (1024 * 1024)
 #define SIGNATURE_BUF_LEN (128 * 1024)
+#define HEADER_BUF_LEN (128 * 1024)
 
 /* Variadic macros to wrap the buffer printing functions */
 #define EMIT(c, ...)                                                 \
@@ -43,6 +44,13 @@
     do {                                                                       \
         (c)->signature_c += snprintf((c)->signature_buffer + (c)->signature_c, \
                                      SIGNATURE_BUF_LEN - (c)->signature_c,     \
+                                     __VA_ARGS__);                             \
+    } while (0)
+
+#define EMIT_HEAD(c, ...)                                                      \
+    do {                                                                       \
+        (c)->header_c += snprintf((c)->header_buffer + (c)->header_c,          \
+                                     SIGNATURE_BUF_LEN - (c)->header_c,        \
                                      __VA_ARGS__);                             \
     } while (0)
 
@@ -234,6 +242,8 @@ typedef struct Context {
     int out_c;                    /**< Characters emitted into out_buffer    */
     char *signature_buffer;       /**< Buffer containing the signatures code */
     int signature_c;              /**< Characters emitted into sig..._buffer */
+    char *header_buffer;          /**< Buffer containing the output code     */
+    int header_c;                 /**< Characters emitted into header buffer */
     FILE *defines_file;           /**< FILE * of the generated header        */
     FILE *output_file;            /**< FILE * of the C output file           */
     FILE *enabled_file;           /**< FILE * of the list of enabled inst    */
