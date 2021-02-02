@@ -362,6 +362,7 @@ assign_statement : lvalue ASSIGN rvalue
     OUT(c, &@1, "}\n");
     OUT(c, &@1, "tcg_gen_qemu_ld", size_suffix, sign_suffix);
     OUT(c, &@1, "(", &$11, ", ", &$9, ", 0);\n");
+    rvalue_free(c, &@1, &$9);
 }
 | STORE LPAR IMM COMMA IMM COMMA VAR COMMA rvalue RPAR /* Store primitive */
 {
@@ -386,6 +387,7 @@ assign_statement : lvalue ASSIGN rvalue
     rvalue_materialize(c, &@1, &$9);
     OUT(c, &@1, "gen_store", &mem_width, "(cpu_env, ", &$7, ", ", &$9);
     OUT(c, &@1, ", ctx, insn->slot);\n");
+    rvalue_free(c, &@1, &$7);
     rvalue_free(c, &@1, &$9);
 }
 | LPCFG ASSIGN rvalue
@@ -475,7 +477,11 @@ control_statement : frame_check          { /* does nothing */ }
 | fpart1_statement     { /* does nothing */ }
 ;
 
-frame_check : FCHK LPAR rvalue COMMA rvalue RPAR SEMI  { /* does nothing */ }
+frame_check : FCHK LPAR rvalue COMMA rvalue RPAR SEMI  {
+    /* does nothing */
+    rvalue_free(c, &@1, &$3);
+    rvalue_free(c, &@1, &$5);
+}
 ;
 
 cancel_statement : CANC
@@ -673,6 +679,8 @@ assign_statement            { /* does nothing */ }
         HexValue dst_width = gen_imm_value(c, &@1, 64, 32);
         $$ = gen_extend_op(c, &@1, &src_width, &dst_width, &$$,
                            $1.first_unsigned && $1.second_unsigned);
+        rvalue_free(c, &@1, &src_width);
+        rvalue_free(c, &@1, &dst_width);
     }
 }
 | rvalue PLUS rvalue
@@ -827,6 +835,7 @@ assign_statement            { /* does nothing */ }
     OUT(c, &@1, "gen_sat", unsigned_str, "_", bit_suffix, "(", &res, ", ");
     OUT(c, &@1, &$5, ", ", &$3.imm.value, ", ", overflow_str, ");\n");
     res.is_unsigned = $1.is_unsigned;
+    rvalue_free(c, &@1, &$5);
     $$ = res;
 }
 | CAST rvalue
@@ -926,6 +935,8 @@ assign_statement            { /* does nothing */ }
     OUT(c, &@1, "tcg_gen_concat_i32_i64(",
         &key, ", ", &frame_key, ", ", &frame_key, ");\n");
     OUT(c, &@1, "tcg_gen_xor_i64(", &res, ", ", &$3, ", ", &key, ");\n");
+    rvalue_free(c, &@1, &key);
+    rvalue_free(c, &@1, &frame_key);
     rvalue_free(c, &@1, &$3);
     $$ = res;
 }
@@ -937,6 +948,7 @@ assign_statement            { /* does nothing */ }
              "SXT expects immediate values\n");
     $5.imm.value = 64;
     $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, false);
+    rvalue_free(c, &@1, &$7);
 }
 | ZXT LPAR IMM COMMA IMM COMMA rvalue RPAR
 {
@@ -946,6 +958,7 @@ assign_statement            { /* does nothing */ }
              "ZXT expects immediate values\n");
     $5.imm.value = 64;
     $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, true);
+    rvalue_free(c, &@1, &$7);
 }
 | LPAR rvalue RPAR
 {
@@ -975,6 +988,7 @@ assign_statement            { /* does nothing */ }
         OUT(c, &@1, "tcg_gen_movcond_i", &bit_width);
         OUT(c, &@1, "(TCG_COND_GT, ", &res, ", ", &$2, ", ", &zero);
         OUT(c, &@1, ", ", &$2, ", ", &res, ");\n");
+        rvalue_free(c, &@1, &zero);
         rvalue_free(c, &@1, &$2);
         $$ = res;
     }
@@ -983,11 +997,14 @@ assign_statement            { /* does nothing */ }
 {
     @1.last_column = @6.last_column;
     $$ = gen_convround_n(c, &@1, &$3, &$5);
+    rvalue_free(c, &@1, &$3);
+    rvalue_free(c, &@1, &$5);
 }
 | CROUND LPAR rvalue RPAR
 {
     @1.last_column = @4.last_column;
     $$ = gen_convround(c, &@1, &$3);
+    rvalue_free(c, &@1, &$3);
 }
 | ROUND LPAR rvalue COMMA rvalue RPAR
 {
