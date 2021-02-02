@@ -1064,8 +1064,8 @@ HexValue gen_extend_op(Context *c,
     int op_width = (dst_width->imm.value > 32) ? 64 : 32;
     HexValue res = gen_tmp(c, locp, op_width);
     /* Cast and materialize immediate operands and source value */
-    *value = gen_cast_op(c, locp, value, op_width);
     rvalue_materialize(c, locp, value);
+    *value = gen_cast_op(c, locp, value, op_width);
     /* Shift left of tcgv width - source width */
     OUT(c, locp, "tcg_gen_shli_i", &op_width, "(", &res, ", ", value);
     OUT(c, locp, ", ", &op_width, " - ", src_width, ");\n");
@@ -1084,9 +1084,6 @@ HexValue gen_extend_op(Context *c,
     }
     /* Set destination signedness */
     res.is_unsigned = is_unsigned;
-    rvalue_free(c, locp, src_width);
-    rvalue_free(c, locp, dst_width);
-    rvalue_free(c, locp, value);
     return res;
 }
 
@@ -1272,7 +1269,6 @@ HexValue gen_convround(Context *c,
     OUT(c, locp, &source_p1, ", ", source, ");\n");
 
     rvalue_free(c, locp, &mask);
-    rvalue_free(c, locp, source);
 
     return res;
 }
@@ -1349,15 +1345,15 @@ HexValue gen_convround_n(Context *c,
                          HexValue *bit_pos)
 {
     /* If input is 64 bit cast it to 32 */
-    HexValue a = gen_cast_op(c, locp, source, 32);
-    HexValue n = gen_cast_op(c, locp, bit_pos, 32);
+    *source = gen_cast_op(c, locp, source, 32);
+    *bit_pos = gen_cast_op(c, locp, bit_pos, 32);
 
-    rvalue_materialize(c, locp, &a);
-    rvalue_materialize(c, locp, &n);
+    rvalue_materialize(c, locp, source);
+    rvalue_materialize(c, locp, bit_pos);
 
-    HexValue r1 = gen_convround_n_a(c, locp, &a, &n);
-    HexValue r2 = gen_convround_n_b(c, locp, &a, &n);
-    HexValue r3 = gen_convround_n_c(c, locp, &a, &n);
+    HexValue r1 = gen_convround_n_a(c, locp, source, bit_pos);
+    HexValue r2 = gen_convround_n_b(c, locp, source, bit_pos);
+    HexValue r3 = gen_convround_n_c(c, locp, source, bit_pos);
 
     HexValue l_32 = gen_tmp_value(c, locp, "1", 32);
 
@@ -1369,15 +1365,15 @@ HexValue gen_convround_n(Context *c,
     HexValue zero = gen_tmp_value(c, locp, "0", 64);
 
     OUT(c, locp, "tcg_gen_sub_i32(", &mask);
-    OUT(c, locp, ", ", &n, ", ", &l_32, ");\n");
+    OUT(c, locp, ", ", bit_pos, ", ", &l_32, ");\n");
     OUT(c, locp, "tcg_gen_shl_i32(", &mask);
     OUT(c, locp, ", ", &l_32, ", ", &mask, ");\n");
     OUT(c, locp, "tcg_gen_sub_i32(", &mask);
     OUT(c, locp, ", ", &mask, ", ", &l_32, ");\n");
     OUT(c, locp, "tcg_gen_and_i32(", &cond);
-    OUT(c, locp, ", ", &a, ", ", &mask, ");\n");
+    OUT(c, locp, ", ", source, ", ", &mask, ");\n");
     OUT(c, locp, "tcg_gen_extu_i32_i64(", &cond_64, ", ", &cond, ");\n");
-    OUT(c, locp, "tcg_gen_ext_i32_i64(", &n_64, ", ", &n, ");\n");
+    OUT(c, locp, "tcg_gen_ext_i32_i64(", &n_64, ", ", bit_pos, ");\n");
 
     OUT(c, locp, "tcg_gen_movcond_i64");
     OUT(c, locp, "(TCG_COND_EQ, ", &res, ", ", &cond_64, ", ", &zero);
@@ -1389,9 +1385,6 @@ HexValue gen_convround_n(Context *c,
 
     OUT(c, locp, "tcg_gen_shr_i64(", &res);
     OUT(c, locp, ", ", &res, ", ", &n_64, ");\n");
-
-    rvalue_free(c, locp, &a);
-    rvalue_free(c, locp, &n);
 
     rvalue_free(c, locp, &r1);
     rvalue_free(c, locp, &r2);
