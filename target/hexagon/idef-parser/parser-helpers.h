@@ -156,11 +156,11 @@ HexValue gen_imm_value(Context *c __attribute__((unused)),
 
 void rvalue_free(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
-void rvalue_materialize(Context *c, YYLTYPE *locp, HexValue *rvalue);
+HexValue rvalue_materialize(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
-void rvalue_extend(Context *c, YYLTYPE *locp, HexValue *rvalue);
+HexValue rvalue_extend(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
-void rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue);
+HexValue rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
 int find_variable(Context *c, YYLTYPE *locp, HexValue *varid);
 
