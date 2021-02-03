@@ -173,10 +173,10 @@ void varid_allocate(Context *c,
 void ea_free(Context *c, YYLTYPE *locp);
 
 HexValue gen_bin_cmp(Context *c,
-                        YYLTYPE *locp,
-                        const char *type,
-                        HexValue *op1,
-                        HexValue *op2);
+                     YYLTYPE *locp,
+                     const char *type,
+                     HexValue *op1_ptr,
+                     HexValue *op2_ptr);
 
 /* Code generation functions */
 HexValue gen_bin_op(Context *c,
@@ -242,10 +242,10 @@ HexValue gen_convround_n(Context *c,
                             HexValue *source,
                             HexValue *bit_pos);
 
-HexValue gen_round(Context *c,
-                      YYLTYPE *locp,
-                      HexValue *source,
-                      HexValue *position);
+HexValue gen_convround_n(Context *c,
+                         YYLTYPE *locp,
+                         HexValue *source_ptr,
+                         HexValue *bit_pos_ptr);
 
 /* Circular addressing mode with auto-increment */
 HexValue gen_circ_op(Context *c,
