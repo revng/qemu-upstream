@@ -294,8 +294,8 @@ assign_statement : lvalue ASSIGN rvalue
     if (is_direct) {
         $1 = gen_tmp_value(c, &@1, "0", 32);
     }
-    rvalue_materialize(c, &@1, &$3);
-    rvalue_truncate(c, &@1, &$3);
+    $3 = rvalue_materialize(c, &@1, &$3);
+    $3 = rvalue_truncate(c, &@1, &$3);
     /* Extract first 8 bits, and store new predicate value */
     if ($3.type == IMMEDIATE) {
         OUT(c, &@1, &$3, " = (", &$3, " & 0xff) << i;\n");
@@ -325,8 +325,8 @@ assign_statement : lvalue ASSIGN rvalue
 | PC ASSIGN rvalue
 {
     @1.last_column = @3.last_column;
-    rvalue_truncate(c, &@1, &$3);
-    rvalue_materialize(c, &@1, &$3);
+    $3 = rvalue_truncate(c, &@1, &$3);
+    $3 = rvalue_materialize(c, &@1, &$3);
     OUT(c, &@1, "gen_write_new_pc(", &$3, ");\n");
     rvalue_free(c, &@1, &$3); /* Free temporary value */
 }
@@ -344,9 +344,9 @@ assign_statement : lvalue ASSIGN rvalue
     }
     snprintf(size_suffix, 4, "%" PRIu64, $5.imm.value * 8);
     if (bit_width == 32) {
-        rvalue_truncate(c, &@1, &$11);
+        $11 = rvalue_truncate(c, &@1, &$11);
     } else {
-        rvalue_extend(c, &@1, &$11);
+        $11 = rvalue_extend(c, &@1, &$11);
     }
     if ($9.type == VARID) {
         int var_id = find_variable(c, &@1, &$9);
@@ -355,13 +355,14 @@ assign_statement : lvalue ASSIGN rvalue
         $9.bit_width = c->inst.allocated[var_id].bit_width;
     }
     if ($9.bit_width != 32) {
-        rvalue_truncate(c, &@1, &$9);
+        $9 = rvalue_truncate(c, &@1, &$9);
     }
     OUT(c, &@1, "if (insn->slot == 0 && pkt->pkt_has_store_s1) {\n");
     OUT(c, &@1, "process_store(ctx, 1);\n");
     OUT(c, &@1, "}\n");
     OUT(c, &@1, "tcg_gen_qemu_ld", size_suffix, sign_suffix);
     OUT(c, &@1, "(", &$11, ", ", &$9, ", 0);\n");
+    /* If the var in $9 was truncated it is now a tmp HexValue, so free it. */
     rvalue_free(c, &@1, &$9);
 }
 | STORE LPAR IMM COMMA IMM COMMA VAR COMMA rvalue RPAR /* Store primitive */
@@ -371,9 +372,9 @@ assign_statement : lvalue ASSIGN rvalue
     int mem_width = $5.imm.value;
     /* Adjust operand bit width to memop bit width */
     if (mem_width < 8) {
-        rvalue_truncate(c, &@1, &$9);
+        $9 = rvalue_truncate(c, &@1, &$9);
     } else {
-        rvalue_extend(c, &@1, &$9);
+        $9 = rvalue_extend(c, &@1, &$9);
     }
     if ($7.type == VARID) {
         int var_id = find_variable(c, &@1, &$7);
@@ -382,19 +383,20 @@ assign_statement : lvalue ASSIGN rvalue
         $7.bit_width = c->inst.allocated[var_id].bit_width;
     }
     if ($7.bit_width != 32) {
-        rvalue_truncate(c, &@1, &$7);
+        $7 = rvalue_truncate(c, &@1, &$7);
     }
-    rvalue_materialize(c, &@1, &$9);
+    $9 = rvalue_materialize(c, &@1, &$9);
     OUT(c, &@1, "gen_store", &mem_width, "(cpu_env, ", &$7, ", ", &$9);
     OUT(c, &@1, ", ctx, insn->slot);\n");
-    rvalue_free(c, &@1, &$7);
     rvalue_free(c, &@1, &$9);
+    /* If the var in $7 was truncated it is now a tmp HexValue, so free it. */
+    rvalue_free(c, &@1, &$7);
 }
 | LPCFG ASSIGN rvalue
 {
     @1.last_column = @3.last_column;
-    rvalue_truncate(c, &@1, &$3);
-    rvalue_materialize(c, &@1, &$3);
+    $3 = rvalue_truncate(c, &@1, &$3);
+    $3 = rvalue_materialize(c, &@1, &$3);
     OUT(c, &@1, "SET_USR_FIELD(USR_LPCFG, ", &$3, ");\n");
     rvalue_free(c, &@1, &$3);
 }
@@ -431,12 +433,13 @@ assign_statement : lvalue ASSIGN rvalue
              $5.imm.type == VALUE,
              "Range deposit needs immediate values!\n");
     int i;
-    rvalue_truncate(c, &@1, &$9);
+    $9 = rvalue_truncate(c, &@1, &$9);
     for (i = $5.imm.value; i <= $3.imm.value; ++i) {
         OUT(c, &@1, "gen_set_bit(", &i, ", ", &$7, ", ", &$9, ");\n");
     }
     rvalue_free(c, &@1, &$3);
     rvalue_free(c, &@1, &$5);
+    rvalue_free(c, &@1, &$7);
     rvalue_free(c, &@1, &$9);
 }
 | INSBITS LPAR rvalue COMMA rvalue COMMA rvalue COMMA rvalue RPAR
@@ -450,6 +453,8 @@ assign_statement : lvalue ASSIGN rvalue
     $1.begin = $7.imm.value;
     $1.end = $5.imm.value - 1 + $7.imm.value;
     gen_rdeposit_op(c, &@1, &$3, &$9, &$1);
+    rvalue_free(c, &@1, &$5);
+    rvalue_free(c, &@1, &$7);
 }
 | INSRANGE LPAR rvalue COMMA rvalue COMMA rvalue COMMA rvalue RPAR
 {
@@ -462,6 +467,8 @@ assign_statement : lvalue ASSIGN rvalue
     $1.begin = $7.imm.value;
     $1.end = $5.imm.value;
     gen_rdeposit_op(c, &@1, &$3, &$9, &$1);
+    rvalue_free(c, &@1, &$5);
+    rvalue_free(c, &@1, &$7);
 }
 | IDENTITY LPAR rvalue RPAR
 {
@@ -560,7 +567,7 @@ if_stmt : IF
 LPAR rvalue RPAR
 {
     @1.last_column = @3.last_column;
-    rvalue_materialize(c, &@1, &$4);
+    $4 = rvalue_materialize(c, &@1, &$4);
     const char *bit_suffix = ($4.bit_width == 64) ? "i64" : "i32";
     OUT(c, &@1, "tcg_gen_brcondi_", bit_suffix, "(TCG_COND_EQ, ", &$4,
         ", 0, if_label_", &c->inst.if_count, ");\n");
@@ -679,8 +686,6 @@ assign_statement            { /* does nothing */ }
         HexValue dst_width = gen_imm_value(c, &@1, 64, 32);
         $$ = gen_extend_op(c, &@1, &src_width, &dst_width, &$$,
                            $1.first_unsigned && $1.second_unsigned);
-        rvalue_free(c, &@1, &src_width);
-        rvalue_free(c, &@1, &dst_width);
     }
 }
 | rvalue PLUS rvalue
@@ -904,15 +909,15 @@ assign_statement            { /* does nothing */ }
     bool is_64bit = ($3.bit_width == 64) || ($5.bit_width == 64);
     int bit_width = (is_64bit) ? 64 : 32;
     if (is_64bit) {
-        rvalue_extend(c, &@1, &$1);
-        rvalue_extend(c, &@1, &$3);
-        rvalue_extend(c, &@1, &$5);
+        $1 = rvalue_extend(c, &@1, &$1);
+        $3 = rvalue_extend(c, &@1, &$3);
+        $5 = rvalue_extend(c, &@1, &$5);
     } else {
-        rvalue_truncate(c, &@1, &$1);
+        $1 = rvalue_truncate(c, &@1, &$1);
     }
-    rvalue_materialize(c, &@1, &$1);
-    rvalue_materialize(c, &@1, &$3);
-    rvalue_materialize(c, &@1, &$5);
+    $1 = rvalue_materialize(c, &@1, &$1);
+    $3 = rvalue_materialize(c, &@1, &$3);
+    $5 = rvalue_materialize(c, &@1, &$5);
     HexValue res = gen_local_tmp(c, &@1, bit_width);
     HexValue zero = gen_tmp_value(c, &@1, "0", bit_width);
     OUT(c, &@1, "tcg_gen_movcond_i", &bit_width);
@@ -929,7 +934,7 @@ assign_statement            { /* does nothing */ }
     @1.last_column = @4.last_column;
     HexValue key = gen_tmp(c, &@1, 64);
     HexValue res = gen_tmp(c, &@1, 64);
-    rvalue_extend(c, &@1, &$3);
+    $3 = rvalue_extend(c, &@1, &$3);
     HexValue frame_key = gen_tmp(c, &@1, 32);
     OUT(c, &@1, "READ_REG(", &frame_key, ", HEX_REG_FRAMEKEY);\n");
     OUT(c, &@1, "tcg_gen_concat_i32_i64(",
@@ -948,7 +953,6 @@ assign_statement            { /* does nothing */ }
              "SXT expects immediate values\n");
     $5.imm.value = 64;
     $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, false);
-    rvalue_free(c, &@1, &$7);
 }
 | ZXT LPAR IMM COMMA IMM COMMA rvalue RPAR
 {
@@ -958,7 +962,6 @@ assign_statement            { /* does nothing */ }
              "ZXT expects immediate values\n");
     $5.imm.value = 64;
     $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, true);
-    rvalue_free(c, &@1, &$7);
 }
 | LPAR rvalue RPAR
 {
@@ -997,14 +1000,11 @@ assign_statement            { /* does nothing */ }
 {
     @1.last_column = @6.last_column;
     $$ = gen_convround_n(c, &@1, &$3, &$5);
-    rvalue_free(c, &@1, &$3);
-    rvalue_free(c, &@1, &$5);
 }
 | CROUND LPAR rvalue RPAR
 {
     @1.last_column = @4.last_column;
     $$ = gen_convround(c, &@1, &$3);
-    rvalue_free(c, &@1, &$3);
 }
 | ROUND LPAR rvalue COMMA rvalue RPAR
 {
@@ -1040,6 +1040,7 @@ assign_statement            { /* does nothing */ }
     @1.last_column = @6.last_column;
     $$ = gen_tmp(c, &@1, 32);
     OUT(c, &@1, "gen_read_ireg(", &$$, ", ", &$3, ", ", &$6, ");\n");
+    rvalue_free(c, &@1, &$3);
 }
 | CIRCADD LPAR rvalue COMMA rvalue COMMA rvalue RPAR
 {
@@ -1051,7 +1052,6 @@ assign_statement            { /* does nothing */ }
     @1.last_column = @4.last_column;
     /* Leading ones count */
     $$ = gen_locnt_op(c, &@1, &$3);
-    rvalue_free(c, &@1, &$3);
 }
 | COUNTONES LPAR rvalue RPAR
 {
@@ -1082,6 +1082,8 @@ assign_statement            { /* does nothing */ }
     $1.begin = $7.imm.value;
     $1.end = $5.imm.value - 1 + $7.imm.value;
     $$ = gen_rextract_op(c, &@1, &$3, &$1);
+    rvalue_free(c, &@1, &$5);
+    rvalue_free(c, &@1, &$7);
 }
 | EXTRANGE LPAR rvalue COMMA rvalue COMMA rvalue RPAR
 {
@@ -1094,6 +1096,8 @@ assign_statement            { /* does nothing */ }
     $1.begin = $7.imm.value;
     $1.end = $5.imm.value;
     $$ = gen_rextract_op(c, &@1, &$3, &$1);
+    rvalue_free(c, &@1, &$5);
+    rvalue_free(c, &@1, &$7);
 }
 | BREV LPAR rvalue RPAR
 {
@@ -1101,7 +1105,7 @@ assign_statement            { /* does nothing */ }
     yyassert(c, &@1, $3.bit_width <= 32,
              "fbrev not implemented for 64-bit integers!");
     HexValue res = gen_tmp(c, &@1, $3.bit_width);
-    rvalue_materialize(c, &@1, &$3);
+    $3 = rvalue_materialize(c, &@1, &$3);
     OUT(c, &@1, "gen_fbrev(", &res, ", ", &$3, ");\n");
     rvalue_free(c, &@1, &$3);
     $$ = res;
