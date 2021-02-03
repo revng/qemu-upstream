@@ -237,10 +237,10 @@ HexValue gen_convround(Context *c,
                           YYLTYPE *locp,
                           HexValue *source);
 
-HexValue gen_convround_n(Context *c,
-                            YYLTYPE *locp,
-                            HexValue *source,
-                            HexValue *bit_pos);
+HexValue gen_round(Context *c,
+                   YYLTYPE *locp,
+                   HexValue *source,
+                   HexValue *position);
 
 HexValue gen_convround_n(Context *c,
                          YYLTYPE *locp,
