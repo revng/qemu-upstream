@@ -276,7 +276,7 @@ static inline HexValue gen_tmp_impl(Context *c,
     rvalue.bit_width = bit_width;
     rvalue.is_unsigned = false;
     rvalue.is_dotnew = false;
-    rvalue.is_symbol = false;
+    rvalue.is_manual = false;
     rvalue.tmp.index = c->inst.tmp_count;
     const char *suffix = is_local ? "local_" : "";
     OUT(c, locp, "TCGv_i", &bit_width, " tmp_", &c->inst.tmp_count,
@@ -305,7 +305,7 @@ HexValue gen_tmp_value(Context *c,
     rvalue.bit_width = bit_width;
     rvalue.is_unsigned = false;
     rvalue.is_dotnew = false;
-    rvalue.is_symbol = false;
+    rvalue.is_manual = false;
     rvalue.tmp.index = c->inst.tmp_count;
     OUT(c, locp, "TCGv_i", &bit_width, " tmp_", &c->inst.tmp_count,
         " = tcg_const_i", &bit_width, "(", value, ");\n");
@@ -323,7 +323,7 @@ HexValue gen_imm_value(Context *c __attribute__((unused)),
     rvalue.bit_width = bit_width;
     rvalue.is_unsigned = false;
     rvalue.is_dotnew = false;
-    rvalue.is_symbol = false;
+    rvalue.is_manual = false;
     rvalue.imm.type = VALUE;
     rvalue.imm.value = value;
     return rvalue;
@@ -331,14 +331,14 @@ HexValue gen_imm_value(Context *c __attribute__((unused)),
 
 void rvalue_free(Context *c, YYLTYPE *locp, HexValue *rvalue)
 {
-    if (rvalue->type == TEMP && !rvalue->is_symbol) {
+    if (rvalue->type == TEMP && !rvalue->is_manual) {
         const char *bit_suffix = (rvalue->bit_width == 64) ? "i64" : "i32";
         OUT(c, locp, "tcg_temp_free_", bit_suffix, "(", rvalue, ");\n");
     }
 }
 
 static void rvalue_free_sym(Context *c, YYLTYPE *locp, HexValue *rvalue) {
-    rvalue->is_symbol = false;
+    rvalue->is_manual = false;
     rvalue_free(c, locp, rvalue);
 }
 
@@ -843,7 +843,7 @@ static void gen_andl_op(Context *c, YYLTYPE *locp, unsigned bit_width,
         break;
     case REG_REG:
         zero = gen_tmp_value(c, locp, "0", 32);
-        zero.is_symbol = true;
+        zero.is_manual = true;
         tmp1 = gen_bin_cmp(c, locp, "TCG_COND_NE", op1, &zero);
         tmp2 = gen_bin_cmp(c, locp, "TCG_COND_NE", op2, &zero);
         OUT(c, locp, "tcg_gen_and_", bit_suffix,
@@ -1002,7 +1002,7 @@ HexValue gen_bin_op(Context *c,
     } else {
         res.type = IMMEDIATE;
         res.is_dotnew = false;
-        res.is_symbol = false;
+        res.is_manual = false;
         res.imm.type = QEMU_TMP;
         res.imm.index = c->inst.qemu_tmp_count;
     }
@@ -1304,13 +1304,13 @@ HexValue gen_convround(Context *c,
                        HexValue *source)
 {
     HexValue src = *source;
-    src.is_symbol = true;
+    src.is_manual = true;
 
     unsigned bit_width = src.bit_width;
     const char *size = (bit_width == 32) ? "32" : "64";
     HexValue res = gen_tmp(c, locp, bit_width);
     HexValue mask = gen_tmp_value(c, locp, "0x3", bit_width);
-    mask.is_symbol = true;
+    mask.is_manual = true;
     HexValue and = gen_bin_op(c, locp, ANDB_OP, &src, &mask);
     HexValue one = gen_tmp_value(c, locp, "1", bit_width);
     HexValue src_p1 = gen_bin_op(c, locp, ADD_OP, &src, &one);
@@ -1319,7 +1319,7 @@ HexValue gen_convround(Context *c,
     OUT(c, locp, ", ", &and, ", ", &mask, ", ");
     OUT(c, locp, &src_p1, ", ", &src, ");\n");
 
-    /* Free src but use the original `is_symbol` value */
+    /* Free src but use the original `is_manual` value */
     rvalue_free(c, locp, source);
 
     /* Free the rest of the values */
@@ -1416,8 +1416,8 @@ HexValue gen_convround_n(Context *c,
 
     bool free_source_sym = !rvalue_equal(&source, source_ptr);
     bool free_bit_pos_sym = !rvalue_equal(&bit_pos, bit_pos_ptr);
-    source.is_symbol = true;
-    bit_pos.is_symbol = true;
+    source.is_manual = true;
+    bit_pos.is_manual = true;
 
     HexValue r1 = gen_convround_n_a(c, locp, &source, &bit_pos);
     HexValue r2 = gen_convround_n_b(c, locp, &source, &bit_pos);
@@ -1491,8 +1491,8 @@ HexValue gen_round(Context *c,
     HexValue b = gen_extend_op(c, locp, &src_width, &dst_width, &pos, true);
 
     /* Disable auto-free of values used more than once */
-    a.is_symbol = true;
-    b.is_symbol = true;
+    a.is_manual = true;
+    b.is_manual = true;
 
     HexValue res = gen_tmp(c, locp, 64);
 

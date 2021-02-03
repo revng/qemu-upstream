@@ -647,7 +647,7 @@ assign_statement            { /* does nothing */ }
     rvalue.imm.type = IMM_CONSTEXT;
     rvalue.is_unsigned = true;
     rvalue.is_dotnew = false;
-    rvalue.is_symbol = false;
+    rvalue.is_manual = false;
     $$ = rvalue;
 }
 | VAR
@@ -782,7 +782,7 @@ assign_statement            { /* does nothing */ }
     HexValue res;
     res.is_unsigned = $2.is_unsigned;
     res.is_dotnew = false;
-    res.is_symbol = false;
+    res.is_manual = false;
     if ($2.type == IMMEDIATE) {
         res.type = IMMEDIATE;
         res.imm.type = QEMU_TMP;
@@ -805,7 +805,7 @@ assign_statement            { /* does nothing */ }
     HexValue res;
     res.is_unsigned = $2.is_unsigned;
     res.is_dotnew = false;
-    res.is_symbol = false;
+    res.is_manual = false;
     if ($2.type == IMMEDIATE) {
         res.type = IMMEDIATE;
         res.imm.type = QEMU_TMP;
@@ -975,7 +975,7 @@ assign_statement            { /* does nothing */ }
     HexValue res;
     res.is_unsigned = $2.is_unsigned;
     res.is_dotnew = false;
-    res.is_symbol = false;
+    res.is_manual = false;
     if ($2.type == IMMEDIATE) {
         res.type = IMMEDIATE;
         res.imm.type = QEMU_TMP;
@@ -1019,7 +1019,7 @@ assign_statement            { /* does nothing */ }
     HexValue res;
     res.is_unsigned = $2.is_unsigned;
     res.is_dotnew = false;
-    res.is_symbol = false;
+    res.is_manual = false;
     if ($2.type == IMMEDIATE) {
         res.type = IMMEDIATE;
         res.imm.type = QEMU_TMP;

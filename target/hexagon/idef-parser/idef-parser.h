@@ -198,7 +198,7 @@ typedef struct HexValue {
     unsigned bit_width;     /**< Bit width of the rvalue                     */
     bool is_unsigned;       /**< Unsigned flag for the rvalue                */
     bool is_dotnew;         /**< rvalue of predicate type is dotnew?         */
-    bool is_symbol;         /**< Does the temporary have a name?             */
+    bool is_manual;         /**< Opt out of automatic freeing of params      */
 } HexValue;
 
 /**
