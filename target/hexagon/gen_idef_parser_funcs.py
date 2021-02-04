@@ -60,13 +60,23 @@ def main():
         ## Skip the guest instructions
         if ( "A_GUEST" in hex_common.attribdict[tag] ) :
             continue
+        ## Skip instructions using switch
+        if ( tag in {'S4_vrcrotate_acc', 'S4_vrcrotate'} ) :
+            continue
+        ## Skip trap instructions
+        if ( tag in {'J2_trap0', 'J2_trap1'} ) :
+            continue
+        ## Skip 128-bit instructions
+        if ( tag in {'A7_croundd_ri', 'A7_croundd_rr'} ) :
+            continue
+        ## Skip other unsupported instructions
         if ( tag.startswith('Y') ) :
             continue
         if ( tag.startswith('V6_') ) :
             continue
         if ( tag.startswith('F') ) :
             continue
-        if ( tag in {'J2_trap0', 'J2_trap1'} ):
+        if ( tag.endswith('_locked') ) :
             continue
 
         regs = tagregs[tag]
