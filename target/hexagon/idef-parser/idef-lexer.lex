@@ -213,6 +213,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.is_dotnew = false;
                            return RREG; }
 "fGEN_TCG_"{INST_NAME}"(" { return FWRAP; }
+"(unsigned int)"         { /* Skip c-style casts */ }
 "{"                      { return LBR; }
 "}"                      { return RBR; }
 "["                      { return LSQ; }
