@@ -70,6 +70,8 @@ def main():
         if ( tag in {'A7_croundd_ri', 'A7_croundd_rr'} ) :
             continue
         ## Skip other unsupported instructions
+        if ( tag.startswith('S2_cabacdecbin') ) :
+            continue
         if ( tag.startswith('Y') ) :
             continue
         if ( tag.startswith('V6_') ) :
