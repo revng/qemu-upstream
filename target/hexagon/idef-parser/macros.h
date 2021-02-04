@@ -27,7 +27,6 @@
 #define fVSATB(VAL) fVSATN(8, VAL)
 #define fCALL(A) fWRITE_LR(fREAD_NPC()); fWRITE_NPC(A);
 #define fCALLR(A) fWRITE_LR(fREAD_NPC()); fWRITE_NPC(A);
-#define fCAST4_8s(A) fSXTN(32, 64, A)
 #define fCAST4_8u(A) fZXTN(32, 64, A)
 #define fCAST2_8s(A) fSXTN(16, 64, A)
 #define fCAST2_8u(A) fZXTN(16, 64, A)

@@ -296,6 +296,13 @@ SIGN_ID                  s|u
 "fSE32_64"               { yylval->cast.bit_width = 64;
                            yylval->cast.is_unsigned = false;
                            return CAST; }
+"fCAST4_4u"              { yylval->cast.bit_width = 32;
+                           yylval->cast.is_unsigned = true;
+                           return CAST; }
+"fCAST4_8s"              {
+                           yylval->cast.bit_width = 64;
+                           yylval->cast.is_unsigned = false;
+                           return CAST; }
 "fCAST4u"                { yylval->cast.bit_width = 32;
                            yylval->cast.is_unsigned = true;
                            return CAST; }
@@ -434,7 +441,6 @@ SIGN_ID                  s|u
 "fCAST2_2s"              |
 "fCAST2_2u"              |
 "fCAST4_4s"              |
-"fCAST4_4u"              |
 "fCAST8_8s"              |
 "fCAST8_8u"              |
 "fZE8_16"                |

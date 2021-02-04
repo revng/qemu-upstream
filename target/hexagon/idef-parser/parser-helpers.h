@@ -192,9 +192,9 @@ HexValue gen_cast_op(Context *c,
 
 HexValue gen_extend_op(Context *c,
                           YYLTYPE *locp,
-                          HexValue *src_width,
-                          HexValue *dst_width,
-                          HexValue *value,
+                          HexValue *src_width_ptr,
+                          HexValue *dst_width_ptr,
+                          HexValue *value_ptr,
                           bool is_unsigned);
 
 void gen_rdeposit_op(Context *c,
