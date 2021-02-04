@@ -1093,38 +1093,46 @@ HexValue gen_cast_op(Context *c,
 
 HexValue gen_extend_op(Context *c,
                        YYLTYPE *locp,
-                       HexValue *src_width,
-                       HexValue *dst_width,
-                       HexValue *value,
+                       HexValue *src_width_ptr,
+                       HexValue *dst_width_ptr,
+                       HexValue *value_ptr,
                        bool is_unsigned) {
-    /* Select destination TCGv type, if destination > 32 then tcgv = 64 */
-    int op_width = (dst_width->imm.value > 32) ? 64 : 32;
-    HexValue res = gen_tmp(c, locp, op_width);
-    /* Cast and materialize immediate operands and source value */
-    HexValue value_m = rvalue_materialize(c, locp, value);
-    value_m = gen_cast_op(c, locp, &value_m, op_width);
-    /* Shift left of tcgv width - source width */
-    OUT(c, locp, "tcg_gen_shli_i", &op_width, "(", &res, ", ", &value_m);
-    OUT(c, locp, ", ", &op_width, " - ", src_width, ");\n");
-    /* Shift Right (arithmetic if sign extension, logic if zero extension) */
+    HexValue src_width = *src_width_ptr;
+    HexValue dst_width = *dst_width_ptr;
+    HexValue value = *value_ptr;
+    src_width = rvalue_extend(c, locp, &src_width);
+    value = rvalue_extend(c, locp, &value);
+    src_width = rvalue_materialize(c, locp, &src_width);
+    value = rvalue_materialize(c, locp, &value);
+
+    HexValue res = gen_tmp(c, locp, 64);
+    HexValue shift = gen_tmp_value(c, locp, "64", 64);
+    HexValue zero = gen_tmp_value(c, locp, "0", 64);
+    OUT(c, locp, "tcg_gen_sub_i64(",
+        &shift, ", ", &shift, ", ", &src_width, ");\n");
     if (is_unsigned) {
-        OUT(c, locp, "tcg_gen_shri_i", &op_width, "(", &res, ", ", &res);
-        OUT(c, locp, ", ", &op_width, " - ", src_width, ");\n");
+        HexValue mask = gen_tmp_value(c, locp, "0xffffffffffffffff", 64);
+        OUT(c, locp, "tcg_gen_shr_i64(",
+            &mask, ", ", &mask, ", ", &shift, ");\n");
+        OUT(c, locp, "tcg_gen_and_i64(",
+            &res, ", ", &value, ", ", &mask, ");\n");
+        rvalue_free(c, locp, &mask);
     } else {
-        OUT(c, locp, "tcg_gen_sari_i", &op_width, "(", &res, ", ", &res);
-        OUT(c, locp, ", ", &op_width, " - ", src_width, ");\n");
+        OUT(c, locp, "tcg_gen_shl_i64(",
+            &res, ", ", &value, ", ", &shift, ");\n");
+        OUT(c, locp, "tcg_gen_sar_i64(",
+            &res, ", ", &res, ", ", &shift, ");\n");
     }
-    /* Zero-out unwanted bits */
-    if (dst_width->imm.value != op_width) {
-        OUT(c, locp, "tcg_gen_extract_i", &op_width, "(");
-        OUT(c, locp, &res, ", ", &res, ", 0, ", &dst_width, ");\n");
-    }
-    /* Set destination signedness */
+    OUT(c, locp, "tcg_gen_movcond_i64(", COND_EQ, ", ", &res, ", ");
+    OUT(c, locp, &src_width, ", ", &zero, ", ", &zero, ", ", &res, ");\n");
+
+    rvalue_free(c, locp, &src_width);
+    rvalue_free(c, locp, &dst_width);
+    rvalue_free(c, locp, &value);
+    rvalue_free(c, locp, &shift);
+    rvalue_free(c, locp, &zero);
+
     res.is_unsigned = is_unsigned;
-    /* Free everything */
-    rvalue_free(c, locp, src_width);
-    rvalue_free(c, locp, dst_width);
-    rvalue_free(c, locp, &value_m);
     return res;
 }
 

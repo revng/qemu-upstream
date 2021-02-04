@@ -849,6 +849,7 @@ assign_statement            { /* does nothing */ }
     /* Assign target signedness */
     $2.is_unsigned = $1.is_unsigned;
     $$ = gen_cast_op(c, &@1, &$2, $1.bit_width);
+    $$.is_unsigned = $1.is_unsigned;
 }
 | rvalue LSQ rvalue RSQ
 {
@@ -954,13 +955,12 @@ assign_statement            { /* does nothing */ }
     $5.imm.value = 64;
     $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, false);
 }
-| ZXT LPAR IMM COMMA IMM COMMA rvalue RPAR
+| ZXT LPAR rvalue COMMA IMM COMMA rvalue RPAR
 {
     @1.last_column = @8.last_column;
     yyassert(c, &@1, $5.type == IMMEDIATE &&
              $5.imm.type == VALUE,
              "ZXT expects immediate values\n");
-    $5.imm.value = 64;
     $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, true);
 }
 | LPAR rvalue RPAR
