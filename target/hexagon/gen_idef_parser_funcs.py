@@ -66,6 +66,8 @@ def main():
             continue
         if ( tag.startswith('F') ) :
             continue
+        if ( tag in {'J2_trap0', 'J2_trap1'} ):
+            continue
 
         regs = tagregs[tag]
         imms = tagimms[tag]
