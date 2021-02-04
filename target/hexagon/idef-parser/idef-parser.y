@@ -946,7 +946,7 @@ assign_statement            { /* does nothing */ }
     rvalue_free(c, &@1, &$3);
     $$ = res;
 }
-| SXT LPAR IMM COMMA IMM COMMA rvalue RPAR
+| SXT LPAR rvalue COMMA IMM COMMA rvalue RPAR
 {
     @1.last_column = @8.last_column;
     yyassert(c, &@1, $5.type == IMMEDIATE &&
