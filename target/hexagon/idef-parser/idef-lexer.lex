@@ -359,7 +359,6 @@ SIGN_ID                  s|u
                            yylval->cast.is_unsigned = false;
                            return DEPOSIT; }
 "fINSERT_BITS"           { return INSBITS; }
-"fINSERT_RANGE"          { return INSRANGE; }
 "fSETBITS"               { return SETBITS; }
 "fMPY8UU"                { yylval->mpy.first_bit_width = 8;
                            yylval->mpy.second_bit_width = 8;

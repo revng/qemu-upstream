@@ -1140,13 +1140,11 @@ void gen_rdeposit_op(Context *c,
                      YYLTYPE *locp,
                      HexValue *dest,
                      HexValue *value,
-                     HexRange *range)
+                     HexValue *begin,
+                     HexValue *width)
 {
     HexValue value_m;
     int bit_width = (dest->bit_width == 64) ? 64 : 32;
-    int begin = range->begin;
-    int end = range->end;
-    int width = end - begin + 1;
     /* If the destination value is 32, truncate the value, otherwise extend */
     if (dest->bit_width == 32) {
         value_m = rvalue_truncate(c, locp, &value_m);
