@@ -1194,9 +1194,8 @@ HexValue gen_rextract_op(Context *c,
     int begin = range->begin;
     int end = range->end;
     int width = end - begin + 1;
-    const char *sign_prefix = (range->is_unsigned) ? "" : "s";
     HexValue res = gen_tmp(c, locp, bit_width);
-    OUT(c, locp, "tcg_gen_", sign_prefix, "extract_i", &bit_width, "(", &res);
+    OUT(c, locp, "tcg_gen_extract_i", &bit_width, "(", &res);
     OUT(c, locp, ", ", source, ", ", &begin, ", ", &width, ");\n");
     rvalue_free(c, locp, source);
     return res;
