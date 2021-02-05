@@ -1189,11 +1189,9 @@ void gen_deposit_op(Context *c,
 HexValue gen_rextract_op(Context *c,
                          YYLTYPE *locp,
                          HexValue *source,
-                         HexRange *range) {
+                         int begin,
+                         int width) {
     int bit_width = (source->bit_width == 64) ? 64 : 32;
-    int begin = range->begin;
-    int end = range->end;
-    int width = end - begin + 1;
     HexValue res = gen_tmp(c, locp, bit_width);
     OUT(c, locp, "tcg_gen_extract_i", &bit_width, "(", &res);
     OUT(c, locp, ", ", source, ", ", &begin, ", ", &width, ");\n");
