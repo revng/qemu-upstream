@@ -69,7 +69,7 @@
 %token <sat> SAT
 %token <cast> CAST DEPOSIT SETHALF
 %token <extract> EXTRACT
-%token <range> SETBITS INSBITS INSRANGE
+%token <range> SETBITS INSBITS
 %type <string> INAME
 %type <rvalue> rvalue lvalue VAR assign_statement pre
 %type <rvalue> DREG DIMM DPRE RREG RPRE FAIL
@@ -445,28 +445,7 @@ assign_statement : lvalue ASSIGN rvalue
 | INSBITS LPAR rvalue COMMA rvalue COMMA rvalue COMMA rvalue RPAR
 {
     @1.last_column = @10.last_column;
-    yyassert(c, &@1, $5.type == IMMEDIATE &&
-             $5.imm.type == VALUE &&
-             $7.type == IMMEDIATE &&
-             $7.imm.type == VALUE,
-             "Range deposit needs immediate values!\n");
-    $1.begin = $7.imm.value;
-    $1.end = $5.imm.value - 1 + $7.imm.value;
-    gen_rdeposit_op(c, &@1, &$3, &$9, &$1);
-    rvalue_free(c, &@1, &$5);
-    rvalue_free(c, &@1, &$7);
-}
-| INSRANGE LPAR rvalue COMMA rvalue COMMA rvalue COMMA rvalue RPAR
-{
-    @1.last_column = @10.last_column;
-    yyassert(c, &@1, $5.type == IMMEDIATE &&
-             $5.imm.type == VALUE &&
-             $7.type == IMMEDIATE &&
-             $7.imm.type == VALUE,
-             "Range deposit needs immediate values!\n");
-    $1.begin = $7.imm.value;
-    $1.end = $5.imm.value;
-    gen_rdeposit_op(c, &@1, &$3, &$9, &$1);
+    gen_rdeposit_op(c, &@1, &$3, &$9, &$7, &$5);
     rvalue_free(c, &@1, &$5);
     rvalue_free(c, &@1, &$7);
 }

@@ -198,10 +198,11 @@ HexValue gen_extend_op(Context *c,
                           bool is_unsigned);
 
 void gen_rdeposit_op(Context *c,
-                           YYLTYPE *locp,
-                           HexValue *dest,
-                           HexValue *value,
-                           HexRange *range);
+                     YYLTYPE *locp,
+                     HexValue *dest,
+                     HexValue *value,
+                     HexValue *begin,
+                     HexValue *width);
 
 void gen_deposit_op(Context *c,
                            YYLTYPE *locp,
