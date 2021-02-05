@@ -344,8 +344,7 @@ SIGN_ID                  s|u
                            yylval->extract.storage_bit_width = 64;
                            yylval->extract.is_unsigned = true;
                            return EXTRACT; }
-"fEXTRACTU_BITS"         |
-"fEXTRACTU_BIDIR"        { yylval->range.is_unsigned = true;
+"fEXTRACTU_BITS"         { yylval->range.is_unsigned = true;
                            return EXTBITS; }
 "fEXTRACTU_RANGE"        { yylval->range.is_unsigned = true;
                            return EXTRANGE; }

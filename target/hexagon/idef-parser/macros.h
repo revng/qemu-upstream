@@ -65,6 +65,9 @@
 
 #define fBIDIR_ASHIFTR_SAT(SRC, SHAMT, REGSTYPE) bidir_shiftr(SRC, SHAMT)
 
+#define fEXTRACTU_BIDIR(INREG, WIDTH, OFFSET)                           \
+    (fZXTN(WIDTH, 32, fBIDIR_LSHIFTR((INREG), (OFFSET), 4_8)))
+
 #define fCARRY_FROM_ADD(A, B, C)                                        \
     fGETUWORD(1,                                                        \
               fGETUWORD(1, A) +                                         \
