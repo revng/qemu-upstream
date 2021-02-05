@@ -1079,11 +1079,7 @@ assign_statement            { /* does nothing */ }
              $7.type == IMMEDIATE &&
              $7.imm.type == VALUE,
              "Range extract needs immediate values!\n");
-    $1.begin = $7.imm.value;
-    $1.end = $5.imm.value - 1 + $7.imm.value;
-    $$ = gen_rextract_op(c, &@1, &$3, &$1);
-    rvalue_free(c, &@1, &$5);
-    rvalue_free(c, &@1, &$7);
+    $$ = gen_rextract_op(c, &@1, &$3, $7.imm.value, $5.imm.value);
 }
 | EXTRANGE LPAR rvalue COMMA rvalue COMMA rvalue RPAR
 {
@@ -1093,11 +1089,11 @@ assign_statement            { /* does nothing */ }
              $7.type == IMMEDIATE &&
              $7.imm.type == VALUE,
              "Range extract needs immediate values!\n");
-    $1.begin = $7.imm.value;
-    $1.end = $5.imm.value;
-    $$ = gen_rextract_op(c, &@1, &$3, &$1);
-    rvalue_free(c, &@1, &$5);
-    rvalue_free(c, &@1, &$7);
+    $$ = gen_rextract_op(c,
+                         &@1,
+                         &$3,
+                         $7.imm.value,
+                         $5.imm.value - $7.imm.value + 1);
 }
 | BREV LPAR rvalue RPAR
 {

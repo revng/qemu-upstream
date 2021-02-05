@@ -211,9 +211,10 @@ void gen_deposit_op(Context *c,
                            HexCast *cast);
 
 HexValue gen_rextract_op(Context *c,
-                           YYLTYPE *locp,
-                           HexValue *source,
-                           HexRange *range);
+                         YYLTYPE *locp,
+                         HexValue *source,
+                         int begin,
+                         int width);
 
 HexValue gen_extract_op(Context *c,
                            YYLTYPE *locp,
