@@ -608,11 +608,18 @@ SIGN_ID                  s|u
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = strtol(yytext, NULL, 16);
                            return IMM; }
+"0x"{HEX_DIGIT}+"ULL"    { yylval->rvalue.type = IMMEDIATE;
+                           yylval->rvalue.bit_width = 64;
+                           yylval->rvalue.is_unsigned = true;
+                           yylval->rvalue.imm.type = VALUE;
+                           yylval->rvalue.imm.value = strtoul(yytext, NULL, 16);
+                           return IMM; }
 "fCONSTLL"               { return CONSTLL; }
 "fCONSTULL"              { return CONSTULL; }
 "fLOAD"                  { return LOAD; }
 "fSTORE"                 { return STORE; }
 "fROTL"                  { return ROTL; }
+"fSET_OVERFLOW"          { return SETOVF; }
 {VAR_ID}                 { /* Variable name, we adopt the C names convention */
                            yylval->rvalue.type = VARID;
                            yylval->rvalue.var.name = strndup(yytext,

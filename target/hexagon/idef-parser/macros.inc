@@ -77,6 +77,27 @@
                         fGETUWORD(0, A) +                               \
                         fGETUWORD(0, B) + C))
 
+#define fADDSAT64(DST, A, B)                                            \
+        __a = fCAST8u(A);                                               \
+        __b = fCAST8u(B);                                               \
+        __sum = __a + __b;                                              \
+        __xor = __a ^ __b;                                              \
+        __mask = 0x8000000000000000ULL;                                 \
+        if (__xor & __mask) {                                           \
+            DST = __sum;                                                \
+        }                                                               \
+        else if ((__a ^ __sum) & __mask) {                              \
+            if (__sum & __mask) {                                       \
+                DST = 0x7FFFFFFFFFFFFFFFLL;                             \
+                fSET_OVERFLOW();                                        \
+            } else {                                                    \
+                DST = 0x8000000000000000ULL;                            \
+                fSET_OVERFLOW();                                        \
+            }                                                           \
+        } else {                                                        \
+            DST = __sum;                                                \
+        }
+
 /* Negation operator */
 #define fLSBOLDNOT(VAL) (!fGETBIT(0, VAL))
 #define fLSBNEWNOT(PNUM) (!fLSBNEW(PNUM))

@@ -172,7 +172,7 @@ void imm_print(Context *c, YYLTYPE *locp, HexImm *imm)
         EMIT(c, "%ciV", imm->id);
         break;
     case VALUE:
-        EMIT(c, "%" PRIu64, imm->value);
+        EMIT(c, "((int64_t)%" PRIu64 "ULL)", (int64_t)imm->value);
         break;
     case QEMU_TMP:
         EMIT(c, "qemu_tmp_%" PRIu64, imm->index);
