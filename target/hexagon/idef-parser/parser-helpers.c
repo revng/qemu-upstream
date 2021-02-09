@@ -337,15 +337,15 @@ void rvalue_free(Context *c, YYLTYPE *locp, HexValue *rvalue)
     }
 }
 
-static void rvalue_free_sym(Context *c, YYLTYPE *locp, HexValue *rvalue) {
+static void rvalue_free_manual(Context *c, YYLTYPE *locp, HexValue *rvalue) {
     rvalue->is_manual = false;
     rvalue_free(c, locp, rvalue);
 }
 
 static void rvalue_free_ext(Context *c, YYLTYPE *locp, HexValue *rvalue,
-                     bool free_symbol) {
-    if (free_symbol) {
-        rvalue_free_sym(c, locp, rvalue);
+                            bool free_manual) {
+    if (free_manual) {
+        rvalue_free_manual(c, locp, rvalue);
     } else {
         rvalue_free(c, locp, rvalue);
     }
@@ -849,7 +849,7 @@ static void gen_andl_op(Context *c, YYLTYPE *locp, unsigned bit_width,
         tmp2 = gen_bin_cmp(c, locp, "TCG_COND_NE", op2, &zero);
         OUT(c, locp, "tcg_gen_and_", bit_suffix,
             "(", res, ", ", &tmp1, ", ", &tmp2, ");\n");
-        rvalue_free_sym(c, locp, &zero);
+        rvalue_free_manual(c, locp, &zero);
         rvalue_free(c, locp, &tmp1);
         rvalue_free(c, locp, &tmp2);
         break;
@@ -1353,7 +1353,7 @@ HexValue gen_convround(Context *c,
     rvalue_free(c, locp, source);
 
     /* Free the rest of the values */
-    rvalue_free_sym(c, locp, &mask);
+    rvalue_free_manual(c, locp, &mask);
     rvalue_free(c, locp, &and);
     rvalue_free(c, locp, &src_p1);
 
@@ -1537,8 +1537,8 @@ HexValue gen_round(Context *c,
     OUT(c, locp, "(TCG_COND_EQ, ", &res, ", ", &b, ", ", &zero);
     OUT(c, locp, ", ", &a, ", ", &sum, ");\n");
 
-    rvalue_free_sym(c, locp, &a);
-    rvalue_free_sym(c, locp, &b);
+    rvalue_free_manual(c, locp, &a);
+    rvalue_free_manual(c, locp, &b);
     rvalue_free(c, locp, &zero);
     rvalue_free(c, locp, &sum);
 
