@@ -1181,7 +1181,6 @@ void gen_rdeposit_op(Context *c,
 
     rvalue_free(c, locp, &zero);
     rvalue_free(c, locp, width);
-    rvalue_free(c, locp, begin);
     rvalue_free(c, locp, &res);
 }
 
