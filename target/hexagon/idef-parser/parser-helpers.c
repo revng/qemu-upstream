@@ -1005,6 +1005,7 @@ HexValue gen_bin_op(Context *c,
         res.is_manual = false;
         res.imm.type = QEMU_TMP;
         res.imm.index = c->inst.qemu_tmp_count;
+        res.bit_width = bit_width;
     }
     /* Handle signedness, if both unsigned -> result is unsigned, else signed */
     res.is_unsigned = op1.is_unsigned && op2.is_unsigned;
