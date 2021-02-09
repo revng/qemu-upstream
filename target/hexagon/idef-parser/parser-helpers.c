@@ -999,7 +999,6 @@ HexValue gen_bin_op(Context *c,
     HexValue res;
     if (op_types != IMM_IMM) {
         res = gen_tmp(c, locp, bit_width);
-        res.type = TEMP;
     } else {
         res.type = IMMEDIATE;
         res.is_dotnew = false;
