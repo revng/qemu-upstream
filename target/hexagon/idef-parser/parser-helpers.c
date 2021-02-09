@@ -355,6 +355,7 @@ HexValue rvalue_materialize(Context *c, YYLTYPE *locp, HexValue *rvalue)
 {
     if (rvalue->type == IMMEDIATE) {
         HexValue tmp = gen_tmp(c, locp, rvalue->bit_width);
+        tmp.is_unsigned = rvalue->is_unsigned;
         const char *bit_suffix = (rvalue->bit_width == 64) ? "i64" : "i32";
         OUT(c, locp, "tcg_gen_movi_", bit_suffix,
             "(", &tmp, ", ", rvalue, ");\n");
@@ -1143,18 +1144,45 @@ void gen_rdeposit_op(Context *c,
                      HexValue *begin,
                      HexValue *width)
 {
-    HexValue value_m;
-    int bit_width = (dest->bit_width == 64) ? 64 : 32;
-    /* If the destination value is 32, truncate the value, otherwise extend */
-    if (dest->bit_width == 32) {
-        value_m = rvalue_truncate(c, locp, &value_m);
-    } else {
-        value_m = rvalue_extend(c, locp, &value_m);
+    HexValue dest_m = *dest;
+    dest_m.is_manual = true;
+
+    HexValue value_m = rvalue_extend(c, locp, value);
+    HexValue begin_m = rvalue_extend(c, locp, begin);
+    HexValue width_orig = *width;
+    width_orig.is_manual = true;
+    HexValue width_m = rvalue_extend(c, locp, &width_orig);
+    width_m = rvalue_materialize(c, locp, &width_m);
+
+    HexValue mask = gen_tmp_value(c, locp, "0xffffffffffffffffUL", 64);
+    mask.is_unsigned = true;
+    HexValue k64 = gen_tmp_value(c, locp, "64", 64);
+    k64 = gen_bin_op(c, locp, SUB_OP, &k64, &width_m);
+    mask = gen_bin_op(c, locp, LSR_OP, &mask, &k64);
+    begin_m.is_manual = true;
+    mask = gen_bin_op(c, locp, ASL_OP, &mask, &begin_m);
+    mask.is_manual = true;
+    value_m = gen_bin_op(c, locp, ASL_OP, &value_m, &begin_m);
+    value_m = gen_bin_op(c, locp, ANDB_OP, &value_m, &mask);
+
+    OUT(c, locp, "tcg_gen_not_i64(", &mask, ", ", &mask, ");\n");
+    mask.is_manual = false;
+    HexValue res = gen_bin_op(c, locp, ANDB_OP, &dest_m, &mask);
+    res = gen_bin_op(c, locp, ORB_OP, &res, &value_m);
+
+    if (dest->bit_width != res.bit_width) {
+        res = rvalue_truncate(c, locp, &res);
     }
-    value_m = rvalue_materialize(c, locp, &value_m);
-    OUT(c, locp, "tcg_gen_deposit_i", &bit_width, "(", dest, ", ", dest, ", ");
-    OUT(c, locp, &value_m, ", ", &begin, ", ", &width, ");\n");
-    rvalue_free(c, locp, &value_m);
+
+    HexValue zero = gen_tmp_value(c, locp, "0", res.bit_width);
+    OUT(c, locp, "tcg_gen_movcond_i", &res.bit_width, "(TCG_COND_NE, ", dest);
+    OUT(c, locp, ", ", &width_orig, ", ", &zero, ", ", &res, ", ", dest,
+        ");\n");
+
+    rvalue_free(c, locp, &zero);
+    rvalue_free(c, locp, width);
+    rvalue_free(c, locp, begin);
+    rvalue_free(c, locp, &res);
 }
 
 void gen_deposit_op(Context *c,
