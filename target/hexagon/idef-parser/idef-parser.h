@@ -147,16 +147,6 @@ typedef struct HexMpy {
 } HexMpy;
 
 /**
- * Semantic record of the RANGE token, identifying the range-based bit
- * extraction and deposit operators
- */
-typedef struct HexRange {
-    int begin;              /**< Beginning of the bit range                  */
-    int end;                /**< End of the bit range                        */
-    int is_unsigned;        /**< Unsigned flag for the bit operator          */
-} HexRange;
-
-/**
  * Semantic record of the VARID token, identifying automatic variables
  * of the input language
  */
