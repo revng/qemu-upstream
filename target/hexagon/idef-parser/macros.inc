@@ -27,7 +27,6 @@
 #define fVSATB(VAL) fVSATN(8, VAL)
 #define fCALL(A) fWRITE_LR(fREAD_NPC()); fWRITE_NPC(A);
 #define fCALLR(A) fWRITE_LR(fREAD_NPC()); fWRITE_NPC(A);
-#define fCAST4_8u(A) fZXTN(32, 64, A)
 #define fCAST2_8s(A) fSXTN(16, 64, A)
 #define fCAST2_8u(A) fZXTN(16, 64, A)
 #define fCAST8S_16S(A) (fSXTN(64, 128, A))
@@ -58,10 +57,12 @@
      (fCAST##REGSTYPE##s(SRC) >> SHAMT) :       \
      (fCAST##REGSTYPE##s(SRC) << -SHAMT))
 
+#define fBIDIR_SHIFTR(SRC, SHAMT, REGSTYPE) \
+    (((SHAMT) < 0) ? ((fCAST##REGSTYPE(SRC) << ((-(SHAMT)) - 1)) << 1)  \
+                   : (fCAST##REGSTYPE(SRC) >> (SHAMT)))
+
 #define fBIDIR_LSHIFTR(SRC, SHAMT, REGSTYPE)                            \
-    ((SHAMT > 0) ?                                                      \
-     (fCAST##REGSTYPE##u(SRC) >>> SHAMT) :                              \
-     (fCAST##REGSTYPE##u(SRC) << -SHAMT))
+    fBIDIR_SHIFTR(SRC, SHAMT, REGSTYPE##u)
 
 #define fBIDIR_ASHIFTR_SAT(SRC, SHAMT, REGSTYPE) bidir_shiftr(SRC, SHAMT)
 

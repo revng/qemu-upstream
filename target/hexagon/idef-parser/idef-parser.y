@@ -61,7 +61,7 @@
 %token XORA PLUSPLUS LT GT ASL ASR LSR EQ NEQ LTE GTE MIN MAX ANDL ORL NOTL
 %token COMMA FOR ICIRC IF MUN FSCR FCHK SXT ZXT NEW CONSTEXT LOCNT BREV SIGN
 %token LOAD STORE CONSTLL CONSTULL PC NPC LPCFG CANC QMARK IDENTITY PART1
-%token BREV_4 BREV_8 ROTL EXTBITS EXTRANGE FAIL
+%token BREV_4 BREV_8 ROTL INSBITS EXTBITS EXTRANGE CAST4_8U FAIL
 
 %token <rvalue> REG IMM PRE
 %token <index> ELSE
@@ -69,7 +69,7 @@
 %token <sat> SAT
 %token <cast> CAST DEPOSIT SETHALF
 %token <extract> EXTRACT
-%token <range> SETBITS INSBITS
+%token <range> SETBITS
 %type <string> INAME
 %type <rvalue> rvalue lvalue VAR assign_statement pre
 %type <rvalue> DREG DIMM DPRE RREG RPRE FAIL
@@ -442,12 +442,10 @@ assign_statement : lvalue ASSIGN rvalue
     rvalue_free(c, &@1, &$7);
     rvalue_free(c, &@1, &$9);
 }
-| INSBITS LPAR rvalue COMMA rvalue COMMA rvalue COMMA rvalue RPAR
+| INSBITS LPAR lvalue COMMA rvalue COMMA rvalue COMMA rvalue RPAR
 {
     @1.last_column = @10.last_column;
     gen_rdeposit_op(c, &@1, &$3, &$9, &$7, &$5);
-    rvalue_free(c, &@1, &$5);
-    rvalue_free(c, &@1, &$7);
 }
 | IDENTITY LPAR rvalue RPAR
 {
@@ -1073,6 +1071,14 @@ assign_statement            { /* does nothing */ }
                          &$3,
                          $7.imm.value,
                          $5.imm.value - $7.imm.value + 1);
+}
+| CAST4_8U LPAR rvalue RPAR
+{
+    @1.last_column = @4.last_column;
+    $$ = rvalue_truncate(c, &@1, &$3);
+    $$.is_unsigned = true;
+    $$ = rvalue_materialize(c, &@1, &$$);
+    $$ = rvalue_extend(c, &@1, &$$);
 }
 | BREV LPAR rvalue RPAR
 {
