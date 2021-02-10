@@ -49,72 +49,66 @@ def main():
     tagregs = hex_common.get_tagregs()
     tagimms = hex_common.get_tagimms()
 
-    f = StringIO()
+    with open(sys.argv[4], 'w') as f:
+        f.write('#include "macros.inc"\n\n')
 
-    f.write('#include "macros.inc"\n\n')
+        for tag in hex_common.tags:
+            ## Skip the priv instructions
+            if ( "A_PRIV" in hex_common.attribdict[tag] ) :
+                continue
+            ## Skip the guest instructions
+            if ( "A_GUEST" in hex_common.attribdict[tag] ) :
+                continue
+            ## Skip instructions using switch
+            if ( tag in {'S4_vrcrotate_acc', 'S4_vrcrotate'} ) :
+                continue
+            ## Skip trap instructions
+            if ( tag in {'J2_trap0', 'J2_trap1'} ) :
+                continue
+            ## Skip 128-bit instructions
+            if ( tag in {'A7_croundd_ri', 'A7_croundd_rr'} ) :
+                continue
+            ## Skip other unsupported instructions
+            if ( tag.startswith('S2_cabacdecbin') ) :
+                continue
+            if ( tag.startswith('Y') ) :
+                continue
+            if ( tag.startswith('V6_') ) :
+                continue
+            if ( tag.startswith('F') ) :
+                continue
+            if ( tag.endswith('_locked') ) :
+                continue
 
-    for tag in hex_common.tags:
-        ## Skip the priv instructions
-        if ( "A_PRIV" in hex_common.attribdict[tag] ) :
-            continue
-        ## Skip the guest instructions
-        if ( "A_GUEST" in hex_common.attribdict[tag] ) :
-            continue
-        ## Skip instructions using switch
-        if ( tag in {'S4_vrcrotate_acc', 'S4_vrcrotate'} ) :
-            continue
-        ## Skip trap instructions
-        if ( tag in {'J2_trap0', 'J2_trap1'} ) :
-            continue
-        ## Skip 128-bit instructions
-        if ( tag in {'A7_croundd_ri', 'A7_croundd_rr'} ) :
-            continue
-        ## Skip other unsupported instructions
-        if ( tag.startswith('S2_cabacdecbin') ) :
-            continue
-        if ( tag.startswith('Y') ) :
-            continue
-        if ( tag.startswith('V6_') ) :
-            continue
-        if ( tag.startswith('F') ) :
-            continue
-        if ( tag.endswith('_locked') ) :
-            continue
+            regs = tagregs[tag]
+            imms = tagimms[tag]
 
-        regs = tagregs[tag]
-        imms = tagimms[tag]
+            arguments = []
+            if hex_common.need_ea(tag):
+                arguments.append("EA")
 
-        arguments = []
-        if hex_common.need_ea(tag):
-            arguments.append("EA")
+            for regtype,regid,toss,numregs in regs:
+                prefix = "in " if hex_common.is_read(regid) else ""
 
-        for regtype,regid,toss,numregs in regs:
-            prefix = "in " if hex_common.is_read(regid) else ""
+                is_pair = hex_common.is_pair(regid)
+                is_single_old = (hex_common.is_single(regid)
+                                 and hex_common.is_old_val(regtype, regid, tag))
+                is_single_new = (hex_common.is_single(regid)
+                                 and hex_common.is_new_val(regtype, regid, tag))
 
-            is_pair = hex_common.is_pair(regid)
-            is_single_old = (hex_common.is_single(regid)
-                             and hex_common.is_old_val(regtype, regid, tag))
-            is_single_new = (hex_common.is_single(regid)
-                             and hex_common.is_new_val(regtype, regid, tag))
+                if is_pair or is_single_old:
+                    arguments.append("%s%s%sV" % (prefix, regtype, regid))
+                elif is_single_new:
+                    arguments.append("%s%s%sN" % (prefix, regtype, regid))
+                else:
+                    print("Bad register parse: ",regtype,regid,toss,numregs)
 
-            if is_pair or is_single_old:
-                arguments.append("%s%s%sV" % (prefix, regtype, regid))
-            elif is_single_new:
-                arguments.append("%s%s%sN" % (prefix, regtype, regid))
-            else:
-                print("Bad register parse: ",regtype,regid,toss,numregs)
+            for immlett,bits,immshift in imms:
+                arguments.append(hex_common.imm_name(immlett))
 
-        for immlett,bits,immshift in imms:
-            arguments.append(hex_common.imm_name(immlett))
-
-        f.write("%s(%s) {\n" % (tag, ", ".join(arguments)))
-        f.write("    %s\n" % hex_common.semdict[tag])
-        f.write("}\n\n")
-
-    realf = open(sys.argv[4], 'w')
-    realf.write(f.getvalue())
-    realf.close()
-    f.close()
+            f.write("%s(%s) {\n" % (tag, ", ".join(arguments)))
+            f.write("    %s\n" % hex_common.semdict[tag])
+            f.write("}\n\n")
 
 if __name__ == "__main__":
     main()
