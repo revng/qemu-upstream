@@ -1156,6 +1156,7 @@ int main(int argc, char **argv)
     fputs("#include \"opcodes.h\"\n", output_file);
     fputs("#include \"translate.h\"\n", output_file);
     fputs("#include \"genptr_helpers.h\"\n", output_file);
+    fputs("#include \"genptr.h\"\n", output_file);
     fprintf(output_file, "#include \"%s\"\n", argv[ARG_INDEX_EMITTER_H]);
 
     FILE *defines_file = fopen(argv[ARG_INDEX_EMITTER_H], "w");
