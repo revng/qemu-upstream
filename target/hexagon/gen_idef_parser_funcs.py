@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 ##
-##  Copyright(c) 2019-2020 Qualcomm Innovation Center, Inc. All Rights Reserved.
+##  Copyright(c) 2019-2020 rev.ng Srls. All Rights Reserved.
 ##
 ##  This program is free software; you can redistribute it and/or modify
 ##  it under the terms of the GNU General Public License as published by
