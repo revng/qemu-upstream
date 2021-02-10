@@ -233,5 +233,124 @@ static inline void gen_store_conditional8(CPUHexagonState *env,
     tcg_gen_movi_tl(hex_llsc_addr, ~0);
 }
 
+void gen_fbrev(TCGv result, TCGv src)
+{
+    TCGv lo = tcg_temp_new();
+    TCGv tmp1 = tcg_temp_new();
+    TCGv tmp2 = tcg_temp_new();
+
+    /* Bit reversal of low 16 bits */
+    tcg_gen_andi_tl(lo, src, 0xffff);
+    tcg_gen_andi_tl(tmp1, lo, 0xaaaa);
+    tcg_gen_shri_tl(tmp1, tmp1, 1);
+    tcg_gen_andi_tl(tmp2, lo, 0x5555);
+    tcg_gen_shli_tl(tmp2, tmp2, 1);
+    tcg_gen_or_tl(lo, tmp1, tmp2);
+    tcg_gen_andi_tl(tmp1, lo, 0xcccc);
+    tcg_gen_shri_tl(tmp1, tmp1, 2);
+    tcg_gen_andi_tl(tmp2, lo, 0x3333);
+    tcg_gen_shli_tl(tmp2, tmp2, 2);
+    tcg_gen_or_tl(lo, tmp1, tmp2);
+    tcg_gen_andi_tl(tmp1, lo, 0xf0f0);
+    tcg_gen_shri_tl(tmp1, tmp1, 4);
+    tcg_gen_andi_tl(tmp2, lo, 0x0f0f);
+    tcg_gen_shli_tl(tmp2, tmp2, 4);
+    tcg_gen_or_tl(lo, tmp1, tmp2);
+    tcg_gen_bswap16_tl(lo, lo);
+
+    /* Final tweaks */
+    tcg_gen_andi_tl(result, src, 0xffff0000);
+    tcg_gen_ori_tl(result, lo, 8);
+
+    tcg_temp_free(lo);
+    tcg_temp_free(tmp1);
+    tcg_temp_free(tmp2);
+}
+
+TCGv gen_set_bit(int i, TCGv result, TCGv src)
+{
+    TCGv mask = tcg_const_tl(~(1 << i));
+    TCGv bit = tcg_temp_new();
+    tcg_gen_shli_tl(bit, src, i);
+    tcg_gen_and_tl(result, result, mask);
+    tcg_gen_or_tl(result, result, bit);
+    tcg_temp_free(mask);
+    tcg_temp_free(bit);
+
+    return result;
+}
+
+void gen_cancel(TCGv slot)
+{
+    TCGv one = tcg_const_tl(1);
+    TCGv mask = tcg_temp_new();
+    tcg_gen_shl_tl(mask, one, slot);
+    tcg_gen_or_tl(hex_slot_cancelled, hex_slot_cancelled, mask);
+    tcg_temp_free(one);
+    tcg_temp_free(mask);
+}
+
+void gen_store32(TCGv vaddr, TCGv src, int width, int slot)
+{
+    tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
+    tcg_gen_movi_tl(hex_store_width[slot], width);
+    tcg_gen_mov_tl(hex_store_val32[slot], src);
+}
+
+void gen_store1(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
+                int slot)
+{
+    gen_store32(vaddr, src, 1, slot);
+    ctx->store_width[slot] = 1;
+}
+
+void gen_store2(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
+                int slot)
+{
+    gen_store32(vaddr, src, 2, slot);
+    ctx->store_width[slot] = 2;
+}
+
+void gen_store4(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
+                int slot)
+{
+    gen_store32(vaddr, src, 4, slot);
+    ctx->store_width[slot] = 4;
+}
+
+
+void gen_store8(TCGv_env cpu_env, TCGv vaddr, TCGv_i64 src, DisasContext *ctx,
+                int slot)
+{
+    tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
+    tcg_gen_movi_tl(hex_store_width[slot], 8);
+    tcg_gen_mov_i64(hex_store_val64[slot], src);
+    ctx->store_width[slot] = 8;
+}
+
+void gen_set_usr_field(int field, TCGv val)
+{
+    tcg_gen_deposit_tl(hex_gpr[HEX_REG_USR], hex_gpr[HEX_REG_USR], val,
+                       reg_field_info[field].offset,
+                       reg_field_info[field].width);
+}
+
+void gen_set_usr_fieldi(int field, int x)
+{
+    TCGv val = tcg_const_tl(x);
+    gen_set_usr_field(field, val);
+    tcg_temp_free(val);
+}
+
+void gen_write_new_pc(TCGv addr)
+{
+    /* If there are multiple branches in a packet, ignore the second one */
+    TCGv zero = tcg_const_tl(0);
+    tcg_gen_movcond_tl(TCG_COND_NE, hex_next_PC, hex_branch_taken, zero,
+                       hex_next_PC, addr);
+    tcg_gen_movi_tl(hex_branch_taken, 1);
+    tcg_temp_free(zero);
+}
+
 #include "tcg_funcs_generated.h"
 #include "tcg_func_table_generated.h"
