@@ -23,11 +23,6 @@
 #include "reg_fields.h"
 
 #ifdef QEMU_GENERATE
-static inline TCGv gen_read_preg(TCGv pred, uint8_t num)
-{
-    tcg_gen_mov_tl(pred, hex_pred[num]);
-    return pred;
-}
 #define READ_REG(dest, NUM)              gen_read_reg(dest, NUM)
 #define READ_PREG(dest, NUM)             gen_read_preg(dest, (NUM))
 #else
@@ -423,41 +418,6 @@ static inline void gen_logical_not(TCGv dest, TCGv src)
 #ifdef QEMU_GENERATE
 #define fEA_IMM(IMM) tcg_gen_movi_tl(EA, IMM)
 #define fEA_REG(REG) tcg_gen_mov_tl(EA, REG)
-
-static inline void gen_fbrev(TCGv result, TCGv src)
-{
-    TCGv lo = tcg_temp_new();
-    TCGv tmp1 = tcg_temp_new();
-    TCGv tmp2 = tcg_temp_new();
-
-    /* Bit reversal of low 16 bits */
-    tcg_gen_andi_tl(lo, src, 0xffff);
-    tcg_gen_andi_tl(tmp1, lo, 0xaaaa);
-    tcg_gen_shri_tl(tmp1, tmp1, 1);
-    tcg_gen_andi_tl(tmp2, lo, 0x5555);
-    tcg_gen_shli_tl(tmp2, tmp2, 1);
-    tcg_gen_or_tl(lo, tmp1, tmp2);
-    tcg_gen_andi_tl(tmp1, lo, 0xcccc);
-    tcg_gen_shri_tl(tmp1, tmp1, 2);
-    tcg_gen_andi_tl(tmp2, lo, 0x3333);
-    tcg_gen_shli_tl(tmp2, tmp2, 2);
-    tcg_gen_or_tl(lo, tmp1, tmp2);
-    tcg_gen_andi_tl(tmp1, lo, 0xf0f0);
-    tcg_gen_shri_tl(tmp1, tmp1, 4);
-    tcg_gen_andi_tl(tmp2, lo, 0x0f0f);
-    tcg_gen_shli_tl(tmp2, tmp2, 4);
-    tcg_gen_or_tl(lo, tmp1, tmp2);
-    tcg_gen_bswap16_tl(lo, lo);
-
-    /* Final tweaks */
-    tcg_gen_andi_tl(result, src, 0xffff0000);
-    tcg_gen_ori_tl(result, lo, 8);
-
-    tcg_temp_free(lo);
-    tcg_temp_free(tmp1);
-    tcg_temp_free(tmp2);
-}
-
 #define fPM_I(REG, IMM)     tcg_gen_addi_tl(REG, REG, IMM)
 #define fPM_M(REG, MVAL)    tcg_gen_add_tl(REG, REG, MVAL)
 #else
@@ -572,32 +532,6 @@ static inline void gen_fbrev(TCGv result, TCGv src)
               (((VAL) & 0x0ffffffffLL) << ((N) * 32)); \
     } while (0)
 
-#ifdef QEMU_GENERATE
-static inline TCGv gen_set_bit(int i, TCGv result, TCGv src)
-{
-    TCGv mask = tcg_const_tl(~(1 << i));
-    TCGv bit = tcg_temp_new();
-    tcg_gen_shli_tl(bit, src, i);
-    tcg_gen_and_tl(result, result, mask);
-    tcg_gen_or_tl(result, result, bit);
-    tcg_temp_free(mask);
-    tcg_temp_free(bit);
-
-    return result;
-}
-
-static inline void gen_cancel(TCGv slot)
-{
-    TCGv one = tcg_const_tl(1);
-    TCGv mask = tcg_temp_new();
-    tcg_gen_shl_tl(mask, one, slot);
-    tcg_gen_or_tl(hex_slot_cancelled, hex_slot_cancelled, mask);
-    tcg_temp_free(one);
-    tcg_temp_free(mask);
-}
-
-#endif
-
 #define fSETBIT(N, DST, VAL) \
     do { \
         DST = (DST & ~(1ULL << (N))) | (((uint64_t)(VAL)) << (N)); \
@@ -653,108 +587,5 @@ static inline void gen_cancel(TCGv slot)
 #define fBRANCH_SPECULATE_STALL(DOTNEWVAL, JUMP_COND, SPEC_DIR, HINTBITNUM, \
                                 STRBITNUM) /* Nothing */
 
-
-#ifdef QEMU_GENERATE
-
-static inline void gen_store32(TCGv vaddr, TCGv src, int width, int slot)
-{
-    tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
-    tcg_gen_movi_tl(hex_store_width[slot], width);
-    tcg_gen_mov_tl(hex_store_val32[slot], src);
-}
-
-static inline void gen_store1(TCGv_env cpu_env, TCGv vaddr, TCGv src,
-                              DisasContext *ctx, int slot)
-{
-    gen_store32(vaddr, src, 1, slot);
-    ctx->store_width[slot] = 1;
-}
-
-static inline void gen_store2(TCGv_env cpu_env, TCGv vaddr, TCGv src,
-                              DisasContext *ctx, int slot)
-{
-    gen_store32(vaddr, src, 2, slot);
-    ctx->store_width[slot] = 2;
-}
-
-static inline void gen_store4(TCGv_env cpu_env, TCGv vaddr, TCGv src,
-                              DisasContext *ctx, int slot)
-{
-    gen_store32(vaddr, src, 4, slot);
-    ctx->store_width[slot] = 4;
-}
-
-
-static inline void gen_store8(TCGv_env cpu_env, TCGv vaddr, TCGv_i64 src,
-                              DisasContext *ctx, int slot)
-{
-    tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
-    tcg_gen_movi_tl(hex_store_width[slot], 8);
-    tcg_gen_mov_i64(hex_store_val64[slot], src);
-    ctx->store_width[slot] = 8;
-}
-
-static inline TCGv gen_read_reg(TCGv result, int num)
-{
-    tcg_gen_mov_tl(result, hex_gpr[num]);
-    return result;
-}
-
-static inline void gen_set_usr_field(int field, TCGv val)
-{
-    tcg_gen_deposit_tl(hex_gpr[HEX_REG_USR], hex_gpr[HEX_REG_USR], val,
-                       reg_field_info[field].offset,
-                       reg_field_info[field].width);
-}
-
-static inline void gen_set_usr_fieldi(int field, int x)
-{
-    TCGv val = tcg_const_tl(x);
-    gen_set_usr_field(field, val);
-    tcg_temp_free(val);
-}
-
-static inline void gen_log_reg_write(int rnum, TCGv val)
-{
-    tcg_gen_mov_tl(hex_new_value[rnum], val);
-#if HEX_DEBUG
-    /* Do this so HELPER(debug_commit_end) will know */
-    tcg_gen_movi_tl(hex_reg_written[rnum], 1);
-#endif
-}
-
-static inline void gen_write_new_pc(TCGv addr)
-{
-    /* If there are multiple branches in a packet, ignore the second one */
-    TCGv zero = tcg_const_tl(0);
-    tcg_gen_movcond_tl(TCG_COND_NE, hex_next_PC, hex_branch_taken, zero,
-                       hex_next_PC, addr);
-    tcg_gen_movi_tl(hex_branch_taken, 1);
-    tcg_temp_free(zero);
-}
-
-static inline void gen_log_pred_write(int pnum, TCGv val)
-{
-    TCGv zero = tcg_const_tl(0);
-    TCGv base_val = tcg_temp_new();
-    TCGv and_val = tcg_temp_new();
-    TCGv pred_written = tcg_temp_new();
-
-    /* Multiple writes to the same preg are and'ed together */
-    tcg_gen_andi_tl(base_val, val, 0xff);
-    tcg_gen_and_tl(and_val, base_val, hex_new_pred_value[pnum]);
-    tcg_gen_andi_tl(pred_written, hex_pred_written, 1 << pnum);
-    tcg_gen_movcond_tl(TCG_COND_NE, hex_new_pred_value[pnum],
-                       pred_written, zero,
-                       and_val, base_val);
-    tcg_gen_ori_tl(hex_pred_written, hex_pred_written, 1 << pnum);
-
-    tcg_temp_free(zero);
-    tcg_temp_free(base_val);
-    tcg_temp_free(and_val);
-    tcg_temp_free(pred_written);
-}
-
-#endif
 
 #endif
