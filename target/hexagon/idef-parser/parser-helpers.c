@@ -1744,6 +1744,50 @@ HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n) {
     return res;
 }
 
+HexValue gen_interleave(Context *c,
+                        YYLTYPE *locp,
+                        HexValue *odd,
+                        HexValue *even)
+{
+    HexValue a = rvalue_truncate(c, locp, odd);
+    a.is_unsigned = true;
+    HexValue b = rvalue_truncate(c, locp, even);
+    a.is_unsigned = true;
+
+    a = rvalue_extend(c, locp, &a);
+    b = rvalue_extend(c, locp, &b);
+
+    HexValue res = gen_tmp(c, locp, 64);
+    res.is_unsigned = true;
+
+    const char *masks[5] = {
+        "0x0000ffff0000ffffULL",
+        "0x00ff00ff00ff00ffULL",
+        "0x0f0f0f0f0f0f0f0fULL",
+        "0x3333333333333333ULL",
+        "0x5555555555555555ULL",
+    };
+
+    unsigned shift = 16;
+    for (unsigned i=0; i<5; ++i) {
+        OUT(c, locp, "tcg_gen_shli_i64(", &res, ", ", &a, ", ", &shift, ");\n");
+        OUT(c, locp, "tcg_gen_or_i64(", &a, ", ", &res, ", ", &a, ");\n");
+        OUT(c, locp, "tcg_gen_andi_i64(", &a, ", ", &a, ", ", masks[i], ");\n");
+        OUT(c, locp, "tcg_gen_shli_i64(", &res, ", ", &b, ", ", &shift, ");\n");
+        OUT(c, locp, "tcg_gen_or_i64(", &b, ", ", &res, ", ", &b, ");\n");
+        OUT(c, locp, "tcg_gen_andi_i64(", &b, ", ", &b, ", ", masks[i], ");\n");
+        shift >>= 1;
+    }
+
+    OUT(c, locp, "tcg_gen_shli_i64(", &a, ", ", &a, ", 1);\n");
+    OUT(c, locp, "tcg_gen_or_i64(", &res, ", ", &a, ", ", &b, ");\n");
+
+    rvalue_free(c, locp, &a);
+    rvalue_free(c, locp, &b);
+
+    return res;
+}
+
 bool reg_equal(HexReg *r1, HexReg *r2)
 {
     return !memcmp(r1, r2, sizeof(HexReg));

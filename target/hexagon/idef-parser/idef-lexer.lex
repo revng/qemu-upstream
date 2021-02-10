@@ -620,6 +620,7 @@ SIGN_ID                  s|u
 "fSTORE"                 { return STORE; }
 "fROTL"                  { return ROTL; }
 "fSET_OVERFLOW"          { return SETOVF; }
+"fINTERLEAVE"            { return INTERLEAVE; }
 {VAR_ID}                 { /* Variable name, we adopt the C names convention */
                            yylval->rvalue.type = VARID;
                            yylval->rvalue.var.name = strndup(yytext,

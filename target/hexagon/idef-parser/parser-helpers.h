@@ -266,6 +266,11 @@ HexValue gen_fbrev_8(Context *c, YYLTYPE *locp, HexValue *source);
 
 HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n);
 
+HexValue gen_interleave(Context *c,
+                        YYLTYPE *locp,
+                        HexValue *odd,
+                        HexValue *even);
+
 
 bool reg_equal(HexReg *r1, HexReg *r2);
 
