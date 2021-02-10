@@ -1744,6 +1744,53 @@ HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n) {
     return res;
 }
 
+const char *INTERLEAVE_MASKS[6] = {
+    "0x5555555555555555ULL",
+    "0x3333333333333333ULL",
+    "0x0f0f0f0f0f0f0f0fULL",
+    "0x00ff00ff00ff00ffULL",
+    "0x0000ffff0000ffffULL",
+    "0x00000000ffffffffULL",
+};
+
+HexValue gen_deinterleave(Context *c, YYLTYPE *locp, HexValue *mixed)
+{
+    HexValue src = rvalue_extend(c, locp, mixed);
+
+    HexValue a = gen_tmp(c, locp, 64);
+    a.is_unsigned = true;
+    HexValue b = gen_tmp(c, locp, 64);
+    b.is_unsigned = true;
+
+    const char **masks = INTERLEAVE_MASKS;
+
+    OUT(c, locp, "tcg_gen_shri_i64(", &a, ", ", &src, ", 1);\n");
+    OUT(c, locp, "tcg_gen_andi_i64(", &a, ", ", &a, ", ", masks[0],");\n");
+    OUT(c, locp, "tcg_gen_andi_i64(", &b, ", ", &src, ", ", masks[0],");\n");
+
+    HexValue res = gen_tmp(c, locp, 64);
+    res.is_unsigned = true;
+
+    unsigned shift = 1;
+    for (unsigned i=1; i<6; ++i) {
+        OUT(c, locp, "tcg_gen_shri_i64(", &res, ", ", &b, ", ", &shift,");\n");
+        OUT(c, locp, "tcg_gen_or_i64(", &b, ", ", &res, ", ", &b,");\n");
+        OUT(c, locp, "tcg_gen_andi_i64(", &b, ", ", &b, ", ", masks[i],");\n");
+        OUT(c, locp, "tcg_gen_shri_i64(", &res, ", ", &a, ", ", &shift,");\n");
+        OUT(c, locp, "tcg_gen_or_i64(", &a, ", ", &res, ", ", &a,");\n");
+        OUT(c, locp, "tcg_gen_andi_i64(", &a, ", ", &a, ", ", masks[i],");\n");
+        shift <<= 1;
+    }
+
+    OUT(c, locp, "tcg_gen_shli_i64(", &a, ", ", &a, ", 32);\n");
+    OUT(c, locp, "tcg_gen_or_i64(", &res, ", ", &a, ", ", &b,");\n");
+
+    rvalue_free(c, locp, &a);
+    rvalue_free(c, locp, &b);
+
+    return res;
+}
+
 HexValue gen_interleave(Context *c,
                         YYLTYPE *locp,
                         HexValue *odd,
@@ -1760,16 +1807,10 @@ HexValue gen_interleave(Context *c,
     HexValue res = gen_tmp(c, locp, 64);
     res.is_unsigned = true;
 
-    const char *masks[5] = {
-        "0x0000ffff0000ffffULL",
-        "0x00ff00ff00ff00ffULL",
-        "0x0f0f0f0f0f0f0f0fULL",
-        "0x3333333333333333ULL",
-        "0x5555555555555555ULL",
-    };
+    const char **masks = INTERLEAVE_MASKS;
 
     unsigned shift = 16;
-    for (unsigned i=0; i<5; ++i) {
+    for (int i=4; i>=0; --i) {
         OUT(c, locp, "tcg_gen_shli_i64(", &res, ", ", &a, ", ", &shift, ");\n");
         OUT(c, locp, "tcg_gen_or_i64(", &a, ", ", &res, ", ", &a, ");\n");
         OUT(c, locp, "tcg_gen_andi_i64(", &a, ", ", &a, ", ", masks[i], ");\n");

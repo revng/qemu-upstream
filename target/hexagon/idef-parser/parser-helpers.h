@@ -266,6 +266,8 @@ HexValue gen_fbrev_8(Context *c, YYLTYPE *locp, HexValue *source);
 
 HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n);
 
+HexValue gen_deinterleave(Context *c, YYLTYPE *locp, HexValue *mixed);
+
 HexValue gen_interleave(Context *c,
                         YYLTYPE *locp,
                         HexValue *odd,

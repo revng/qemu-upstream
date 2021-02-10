@@ -61,7 +61,7 @@
 %token COMMA FOR ICIRC IF MUN FSCR FCHK SXT ZXT NEW CONSTEXT LOCNT BREV SIGN
 %token LOAD STORE CONSTLL CONSTULL PC NPC LPCFG CANC QMARK IDENTITY PART1
 %token BREV_4 BREV_8 ROTL INSBITS SETBITS EXTBITS EXTRANGE CAST4_8U SETOVF FAIL
-%token INTERLEAVE
+%token DEINTERLEAVE INTERLEAVE
 
 %token <rvalue> REG IMM PRE
 %token <index> ELSE
@@ -1109,6 +1109,11 @@ assign_statement            { /* does nothing */ }
 {
     @1.last_column = @3.last_column;
     OUT(c, &@1, "gen_set_usr_fieldi(USR_OVF, 1);\n");
+}
+| DEINTERLEAVE LPAR rvalue RPAR
+{
+    @1.last_column = @4.last_column;
+    $$ = gen_deinterleave(c, &@1, &$3);
 }
 | INTERLEAVE LPAR rvalue COMMA rvalue RPAR
 {
