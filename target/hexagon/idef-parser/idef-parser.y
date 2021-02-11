@@ -1110,6 +1110,13 @@ assign_statement            { /* does nothing */ }
     @1.last_column = @3.last_column;
     OUT(c, &@1, "gen_set_usr_fieldi(USR_OVF, 1);\n");
 }
+| SETOVF LPAR rvalue RPAR
+{
+    /* Convenience fSET_OVERFLOW with pass-through */
+    @1.last_column = @3.last_column;
+    OUT(c, &@1, "gen_set_usr_fieldi(USR_OVF, 1);\n");
+    $$ = $3;
+}
 | DEINTERLEAVE LPAR rvalue RPAR
 {
     @1.last_column = @4.last_column;

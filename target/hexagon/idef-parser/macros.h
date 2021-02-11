@@ -50,8 +50,6 @@
      (fCAST##REGSTYPE##u(SRC) << SHAMT) :       \
      (fCAST##REGSTYPE##u(SRC) >>> -SHAMT))
 
-#define fBIDIR_ASHIFTL_SAT(SRC, SHAMT, REGSTYPE) bidir_shiftl(SRC, SHAMT)
-
 #define fBIDIR_ASHIFTR(SRC, SHAMT, REGSTYPE)    \
     ((SHAMT > 0) ?                              \
      (fCAST##REGSTYPE##s(SRC) >> SHAMT) :       \
@@ -64,7 +62,26 @@
 #define fBIDIR_LSHIFTR(SRC, SHAMT, REGSTYPE)                            \
     fBIDIR_SHIFTR(SRC, SHAMT, REGSTYPE##u)
 
-#define fBIDIR_ASHIFTR_SAT(SRC, SHAMT, REGSTYPE) bidir_shiftr(SRC, SHAMT)
+#define fSATVALN(N, VAL)                                                \
+    fSET_OVERFLOW(                                                      \
+        ((VAL) < 0) ? (-(1LL << ((N) - 1))) : ((1LL << ((N) - 1)) - 1)  \
+    )
+
+#define fSAT_ORIG_SHL(A, ORIG_REG)                                      \
+    (((fCAST4s((fSAT(A)) ^ (fCAST4s(ORIG_REG)))) < 0)                   \
+        ? fSATVALN(32, (fCAST4s(ORIG_REG)))                             \
+        : ((((ORIG_REG) > 0) && ((A) == 0)) ? fSATVALN(32, (ORIG_REG))  \
+                                            : fSAT(A)))
+
+#define fBIDIR_ASHIFTR_SAT(SRC, SHAMT, REGSTYPE)                        \
+    (((SHAMT) < 0) ? fSAT_ORIG_SHL((fCAST##REGSTYPE##s(SRC)             \
+                        << ((-(SHAMT)) - 1)) << 1, (SRC))               \
+                   : (fCAST##REGSTYPE##s(SRC) >> (SHAMT)))
+
+#define fBIDIR_ASHIFTL_SAT(SRC, SHAMT, REGSTYPE)                        \
+    (((SHAMT) < 0)                                                      \
+     ? ((fCAST##REGSTYPE##s(SRC) >> ((-(SHAMT)) - 1)) >> 1)             \
+     : fSAT_ORIG_SHL(fCAST##REGSTYPE##s(SRC) << (SHAMT), (SRC)))
 
 #define fEXTRACTU_BIDIR(INREG, WIDTH, OFFSET)                           \
     (fZXTN(WIDTH, 32, fBIDIR_LSHIFTR((INREG), (OFFSET), 4_8)))
