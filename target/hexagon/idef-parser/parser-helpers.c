@@ -337,7 +337,8 @@ void rvalue_free(Context *c, YYLTYPE *locp, HexValue *rvalue)
     }
 }
 
-static void rvalue_free_manual(Context *c, YYLTYPE *locp, HexValue *rvalue) {
+static void rvalue_free_manual(Context *c, YYLTYPE *locp, HexValue *rvalue)
+{
     rvalue->is_manual = false;
     rvalue_free(c, locp, rvalue);
 }
@@ -1715,7 +1716,8 @@ HexValue gen_fbrev_8(Context *c, YYLTYPE *locp, HexValue *source)
     return res;
 }
 
-HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n) {
+HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n)
+{
     const char *suffix = source->bit_width == 64 ? "i64" : "i32";
 
     HexValue res = gen_tmp(c, locp, source->bit_width);
@@ -1765,25 +1767,25 @@ HexValue gen_deinterleave(Context *c, YYLTYPE *locp, HexValue *mixed)
     const char **masks = INTERLEAVE_MASKS;
 
     OUT(c, locp, "tcg_gen_shri_i64(", &a, ", ", &src, ", 1);\n");
-    OUT(c, locp, "tcg_gen_andi_i64(", &a, ", ", &a, ", ", masks[0],");\n");
-    OUT(c, locp, "tcg_gen_andi_i64(", &b, ", ", &src, ", ", masks[0],");\n");
+    OUT(c, locp, "tcg_gen_andi_i64(", &a, ", ", &a, ", ", masks[0], ");\n");
+    OUT(c, locp, "tcg_gen_andi_i64(", &b, ", ", &src, ", ", masks[0], ");\n");
 
     HexValue res = gen_tmp(c, locp, 64);
     res.is_unsigned = true;
 
     unsigned shift = 1;
-    for (unsigned i=1; i<6; ++i) {
-        OUT(c, locp, "tcg_gen_shri_i64(", &res, ", ", &b, ", ", &shift,");\n");
-        OUT(c, locp, "tcg_gen_or_i64(", &b, ", ", &res, ", ", &b,");\n");
-        OUT(c, locp, "tcg_gen_andi_i64(", &b, ", ", &b, ", ", masks[i],");\n");
-        OUT(c, locp, "tcg_gen_shri_i64(", &res, ", ", &a, ", ", &shift,");\n");
-        OUT(c, locp, "tcg_gen_or_i64(", &a, ", ", &res, ", ", &a,");\n");
-        OUT(c, locp, "tcg_gen_andi_i64(", &a, ", ", &a, ", ", masks[i],");\n");
+    for (unsigned i = 1; i < 6; ++i) {
+        OUT(c, locp, "tcg_gen_shri_i64(", &res, ", ", &b, ", ", &shift, ");\n");
+        OUT(c, locp, "tcg_gen_or_i64(", &b, ", ", &res, ", ", &b, ");\n");
+        OUT(c, locp, "tcg_gen_andi_i64(", &b, ", ", &b, ", ", masks[i], ");\n");
+        OUT(c, locp, "tcg_gen_shri_i64(", &res, ", ", &a, ", ", &shift, ");\n");
+        OUT(c, locp, "tcg_gen_or_i64(", &a, ", ", &res, ", ", &a, ");\n");
+        OUT(c, locp, "tcg_gen_andi_i64(", &a, ", ", &a, ", ", masks[i], ");\n");
         shift <<= 1;
     }
 
     OUT(c, locp, "tcg_gen_shli_i64(", &a, ", ", &a, ", 32);\n");
-    OUT(c, locp, "tcg_gen_or_i64(", &res, ", ", &a, ", ", &b,");\n");
+    OUT(c, locp, "tcg_gen_or_i64(", &res, ", ", &a, ", ", &b, ");\n");
 
     rvalue_free(c, locp, &a);
     rvalue_free(c, locp, &b);
@@ -1810,7 +1812,7 @@ HexValue gen_interleave(Context *c,
     const char **masks = INTERLEAVE_MASKS;
 
     unsigned shift = 16;
-    for (int i=4; i>=0; --i) {
+    for (int i = 4; i >= 0; --i) {
         OUT(c, locp, "tcg_gen_shli_i64(", &res, ", ", &a, ", ", &shift, ");\n");
         OUT(c, locp, "tcg_gen_or_i64(", &a, ", ", &res, ", ", &a, ");\n");
         OUT(c, locp, "tcg_gen_andi_i64(", &a, ", ", &a, ", ", masks[i], ");\n");
@@ -1897,7 +1899,8 @@ void emit_footer(Context *c)
     EMIT(c, "\n");
 }
 
-void free_variables(Context *c, YYLTYPE *locp) {
+void free_variables(Context *c, YYLTYPE *locp)
+{
     for (unsigned i = 0; i < c->inst.allocated_count; ++i) {
         Var *var = &c->inst.allocated[i];
         const char *suffix = var->bit_width == 64 ? "i64" : "i32";
