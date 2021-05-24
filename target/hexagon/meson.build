@@ -226,3 +226,23 @@ tcg_funcs_generated = custom_target(
 hexagon_ss.add(tcg_funcs_generated)
 
 target_arch += {'hexagon': hexagon_ss}
+
+llvm_dep = dependency('llvm', version : '>= 4.0', modules : ['support'])
+pass = shared_library('mypass', 'hello.cpp', dependencies: [llvm_dep], cpp_args: ['-std=c++14', '-fno-rtti', '-fno-exceptions'])
+opt = find_program(llvm_dep.get_variable(configtool: 'bindir') / 'opt')
+clang = find_program(llvm_dep.get_variable(configtool: 'bindir') / 'clang')
+
+get_llvm_ir = find_program('get-llvm-ir.py')
+helpers_llvm_ir = custom_target('helpers-llvm-ir',
+                output: ['op_helper.ll'],
+                input: ['op_helper.c'],
+                command: [get_llvm_ir, '-S', clang, '@INPUT@', '@OUTPUT@'])
+
+helpers_promoted = custom_target(
+    'helpers-promoted',
+    output: ['idef-generated-emitter2.c',
+             'idef-generated-emitter2.h.inc',
+             'idef-generated-enabled-instructions2'],
+    input: helpers_llvm_ir,
+    command: [opt, '-load', pass, '@INPUT@', '-hello', '--emitter-body=@OUTPUT0@', '--emitter-header=@OUTPUT1@', '--emitter-enabled-instructions=@OUTPUT2@', '-o', '/dev/null'],
+)
