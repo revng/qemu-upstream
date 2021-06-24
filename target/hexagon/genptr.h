@@ -29,15 +29,15 @@ TCGv gen_read_preg(TCGv pred, uint8_t num);
 void gen_log_reg_write(int rnum, TCGv val);
 void gen_log_pred_write(DisasContext *ctx, int pnum, TCGv val);
 void gen_store32(DisasContext *ctx, TCGv vaddr, TCGv src, tcg_target_long width,
-                 unsigned slot);
+                 uint32_t slot);
 void gen_store1(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
-                unsigned slot);
+                uint32_t slot);
 void gen_store2(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
-                unsigned slot);
+                uint32_t slot);
 void gen_store4(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
-                unsigned slot);
+                uint32_t slot);
 void gen_store8(TCGv_env cpu_env, TCGv vaddr, TCGv_i64 src, DisasContext *ctx,
-                unsigned slot);
+                uint32_t slot);
 void gen_write_new_pc(TCGv addr);
 void gen_set_usr_field(int field, TCGv val);
 void gen_set_usr_fieldi(int field, int x);

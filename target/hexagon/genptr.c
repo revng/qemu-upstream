@@ -348,7 +348,7 @@ static inline void gen_store_conditional8(CPUHexagonState *env,
 }
 
 void gen_store32(DisasContext *ctx, TCGv vaddr, TCGv src, tcg_target_long width,
-                 unsigned slot)
+                 uint32_t slot)
 {
     tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
     tcg_gen_movi_tl(hex_store_width[slot], width);
@@ -357,30 +357,62 @@ void gen_store32(DisasContext *ctx, TCGv vaddr, TCGv src, tcg_target_long width,
 }
 
 void gen_store1(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
-                unsigned slot)
+                uint32_t slot)
 {
     gen_store32(ctx, vaddr, src, 1, slot);
 }
 
+static inline void gen_store1i(TCGv_env cpu_env, TCGv vaddr, int32_t src,
+                               DisasContext *ctx, uint32_t slot)
+{
+    TCGv tmp = tcg_const_tl(src);
+    gen_store1(cpu_env, vaddr, tmp, ctx, slot);
+    tcg_temp_free(tmp);
+}
+
 void gen_store2(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
-                unsigned slot)
+                uint32_t slot)
 {
     gen_store32(ctx, vaddr, src, 2, slot);
 }
 
+static inline void gen_store2i(TCGv_env cpu_env, TCGv vaddr, int32_t src,
+                               DisasContext *ctx, uint32_t slot)
+{
+    TCGv tmp = tcg_const_tl(src);
+    gen_store2(cpu_env, vaddr, tmp, ctx, slot);
+    tcg_temp_free(tmp);
+}
+
 void gen_store4(TCGv_env cpu_env, TCGv vaddr, TCGv src, DisasContext *ctx,
-                unsigned slot)
+                uint32_t slot)
 {
     gen_store32(ctx, vaddr, src, 4, slot);
 }
 
+static inline void gen_store4i(TCGv_env cpu_env, TCGv vaddr, int32_t src,
+                               DisasContext *ctx, uint32_t slot)
+{
+    TCGv tmp = tcg_const_tl(src);
+    gen_store4(cpu_env, vaddr, tmp, ctx, slot);
+    tcg_temp_free(tmp);
+}
+
 void gen_store8(TCGv_env cpu_env, TCGv vaddr, TCGv_i64 src, DisasContext *ctx,
-                unsigned slot)
+                uint32_t slot)
 {
     tcg_gen_mov_tl(hex_store_addr[slot], vaddr);
     tcg_gen_movi_tl(hex_store_width[slot], 8);
     tcg_gen_mov_i64(hex_store_val64[slot], src);
     ctx->store_width[slot] = 8;
+}
+
+static inline void gen_store8i(TCGv_env cpu_env, TCGv vaddr, int64_t src,
+                               DisasContext *ctx, uint32_t slot)
+{
+    TCGv_i64 tmp = tcg_const_i64(src);
+    gen_store8(cpu_env, vaddr, tmp, ctx, slot);
+    tcg_temp_free_i64(tmp);
 }
 
 void gen_set_usr_field(int field, TCGv val)
