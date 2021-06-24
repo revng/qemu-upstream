@@ -41,7 +41,7 @@ TCGv gen_read_preg(TCGv pred, uint8_t num)
 }
 
 static inline void gen_log_predicated_reg_write(int rnum, TCGv val,
-                                                unsigned slot)
+                                                uint32_t slot)
 {
     TCGv zero = tcg_const_tl(0);
     TCGv slot_mask = tcg_temp_new();
@@ -75,7 +75,7 @@ void gen_log_reg_write(int rnum, TCGv val)
 }
 
 static void gen_log_predicated_reg_write_pair(int rnum, TCGv_i64 val,
-                                              unsigned slot)
+                                              uint32_t slot)
 {
     TCGv val32 = tcg_temp_new();
     TCGv zero = tcg_const_tl(0);
