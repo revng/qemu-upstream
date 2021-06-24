@@ -441,34 +441,34 @@ void gen_write_new_pc(TCGv addr)
 
 void gen_sat_i32(TCGv dest, TCGv source, int width)
 {
-    TCGv max_val = tcg_const_i32((1 << (width - 1)) - 1);
-    TCGv min_val = tcg_const_i32(-(1 << (width - 1)));
+    TCGv max_val = tcg_const_tl((1 << (width - 1)) - 1);
+    TCGv min_val = tcg_const_tl(-(1 << (width - 1)));
     tcg_gen_smin_tl(dest, source, max_val);
     tcg_gen_smax_tl(dest, dest, min_val);
-    tcg_temp_free_i32(max_val);
-    tcg_temp_free_i32(min_val);
+    tcg_temp_free(max_val);
+    tcg_temp_free(min_val);
 }
 
 void gen_sat_i32_ext(TCGv ovfl, TCGv dest, TCGv source, int width)
 {
     gen_sat_i32(dest, source, width);
-    tcg_gen_setcond_i32(TCG_COND_NE, ovfl, source, dest);
+    tcg_gen_setcond_tl(TCG_COND_NE, ovfl, source, dest);
 }
 
 void gen_satu_i32(TCGv dest, TCGv source, int width)
 {
-    TCGv max_val = tcg_const_i32((1 << width) - 1);
-    tcg_gen_movcond_i32(TCG_COND_GTU, dest, source, max_val, max_val, source);
-    TCGv_i32 zero = tcg_const_i32(0);
-    tcg_gen_movcond_i32(TCG_COND_LT, dest, source, zero, zero, dest);
-    tcg_temp_free_i32(max_val);
-    tcg_temp_free_i32(zero);
+    TCGv max_val = tcg_const_tl((1 << width) - 1);
+    tcg_gen_movcond_tl(TCG_COND_GTU, dest, source, max_val, max_val, source);
+    TCGv zero = tcg_const_tl(0);
+    tcg_gen_movcond_tl(TCG_COND_LT, dest, source, zero, zero, dest);
+    tcg_temp_free(max_val);
+    tcg_temp_free(zero);
 }
 
 void gen_satu_i32_ext(TCGv ovfl, TCGv dest, TCGv source, int width)
 {
     gen_satu_i32(dest, source, width);
-    tcg_gen_setcond_i32(TCG_COND_NE, ovfl, source, dest);
+    tcg_gen_setcond_tl(TCG_COND_NE, ovfl, source, dest);
 }
 
 void gen_sat_i64(TCGv_i64 dest, TCGv_i64 source, int width)
