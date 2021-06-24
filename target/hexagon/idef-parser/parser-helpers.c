@@ -2169,7 +2169,7 @@ HexValue gen_rvalue_sat(Context *c, YYLTYPE *locp, HexSat *sat, HexValue *n,
     const char *unsigned_str = (sat->is_unsigned) ? "u" : "";
     if (sat->set_overflow) {
         HexValue ovfl = gen_tmp(c, locp, 32);
-        OUT(c, locp, "gen_sat", unsigned_str, "_", bit_suffix, "_ext(");
+        OUT(c, locp, "gen_sat", unsigned_str, "_", bit_suffix, "_ovfl(");
         OUT(c, locp, &ovfl, ", ", &res, ", ", v, ", ", &n->imm.value, ");\n");
         gen_set_overflow(c, locp, &ovfl);
     } else {

@@ -42,12 +42,12 @@ void gen_write_new_pc(TCGv addr);
 void gen_set_usr_field(int field, TCGv val);
 void gen_set_usr_fieldi(int field, int x);
 void gen_sat_i32(TCGv dest, TCGv source, int width);
-void gen_sat_i32_ext(TCGv ovfl, TCGv dest, TCGv source, int width);
+void gen_sat_i32_ovfl(TCGv ovfl, TCGv dest, TCGv source, int width);
 void gen_satu_i32(TCGv dest, TCGv source, int width);
-void gen_satu_i32_ext(TCGv ovfl, TCGv dest, TCGv source, int width);
+void gen_satu_i32_ovfl(TCGv ovfl, TCGv dest, TCGv source, int width);
 void gen_sat_i64(TCGv_i64 dest, TCGv_i64 source, int width);
-void gen_sat_i64_ext(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width);
+void gen_sat_i64_ovfl(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width);
 void gen_satu_i64(TCGv_i64 dest, TCGv_i64 source, int width);
-void gen_satu_i64_ext(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width);
+void gen_satu_i64_ovfl(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width);
 
 #endif

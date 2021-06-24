@@ -449,7 +449,7 @@ void gen_sat_i32(TCGv dest, TCGv source, int width)
     tcg_temp_free(min_val);
 }
 
-void gen_sat_i32_ext(TCGv ovfl, TCGv dest, TCGv source, int width)
+void gen_sat_i32_ovfl(TCGv ovfl, TCGv dest, TCGv source, int width)
 {
     gen_sat_i32(dest, source, width);
     tcg_gen_setcond_tl(TCG_COND_NE, ovfl, source, dest);
@@ -465,7 +465,7 @@ void gen_satu_i32(TCGv dest, TCGv source, int width)
     tcg_temp_free(zero);
 }
 
-void gen_satu_i32_ext(TCGv ovfl, TCGv dest, TCGv source, int width)
+void gen_satu_i32_ovfl(TCGv ovfl, TCGv dest, TCGv source, int width)
 {
     gen_satu_i32(dest, source, width);
     tcg_gen_setcond_tl(TCG_COND_NE, ovfl, source, dest);
@@ -481,7 +481,7 @@ void gen_sat_i64(TCGv_i64 dest, TCGv_i64 source, int width)
     tcg_temp_free_i64(min_val);
 }
 
-void gen_sat_i64_ext(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width)
+void gen_sat_i64_ovfl(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width)
 {
     gen_sat_i64(dest, source, width);
     TCGv_i64 ovfl_64 = tcg_temp_new_i64();
@@ -500,7 +500,7 @@ void gen_satu_i64(TCGv_i64 dest, TCGv_i64 source, int width)
     tcg_temp_free_i64(zero);
 }
 
-void gen_satu_i64_ext(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width)
+void gen_satu_i64_ovfl(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width)
 {
     gen_sat_i64(dest, source, width);
     TCGv_i64 ovfl_64 = tcg_temp_new_i64();
