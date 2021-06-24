@@ -2252,7 +2252,7 @@ HexValue gen_rvalue_brev(Context *c, YYLTYPE *locp, HexValue *v)
              "fbrev not implemented for 64-bit integers!");
     HexValue res = gen_tmp(c, locp, v->bit_width);
     *v = rvalue_materialize(c, locp, v);
-    OUT(c, locp, "gen_fbrev(", &res, ", ", v, ");\n");
+    OUT(c, locp, "gen_helper_fbrev(", &res, ", ", v, ");\n");
     rvalue_free(c, locp, v);
     return res;
 }

@@ -49,6 +49,5 @@ void gen_sat_i64(TCGv_i64 dest, TCGv_i64 source, int width);
 void gen_sat_i64_ext(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width);
 void gen_satu_i64(TCGv_i64 dest, TCGv_i64 source, int width);
 void gen_satu_i64_ext(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width);
-void gen_fbrev(TCGv result, TCGv src);
 
 #endif

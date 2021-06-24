@@ -477,39 +477,5 @@ void gen_satu_i64_ext(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width)
     tcg_temp_free_i64(ovfl_64);
 }
 
-void gen_fbrev(TCGv result, TCGv src)
-{
-    TCGv lo = tcg_temp_new();
-    TCGv tmp1 = tcg_temp_new();
-    TCGv tmp2 = tcg_temp_new();
-
-    /* Bit reversal of low 16 bits */
-    tcg_gen_extract_tl(lo, src, 0, 16);
-    tcg_gen_andi_tl(tmp1, lo, 0xaaaa);
-    tcg_gen_shri_tl(tmp1, tmp1, 1);
-    tcg_gen_andi_tl(tmp2, lo, 0x5555);
-    tcg_gen_shli_tl(tmp2, tmp2, 1);
-    tcg_gen_or_tl(lo, tmp1, tmp2);
-    tcg_gen_andi_tl(tmp1, lo, 0xcccc);
-    tcg_gen_shri_tl(tmp1, tmp1, 2);
-    tcg_gen_andi_tl(tmp2, lo, 0x3333);
-    tcg_gen_shli_tl(tmp2, tmp2, 2);
-    tcg_gen_or_tl(lo, tmp1, tmp2);
-    tcg_gen_andi_tl(tmp1, lo, 0xf0f0);
-    tcg_gen_shri_tl(tmp1, tmp1, 4);
-    tcg_gen_andi_tl(tmp2, lo, 0x0f0f);
-    tcg_gen_shli_tl(tmp2, tmp2, 4);
-    tcg_gen_or_tl(lo, tmp1, tmp2);
-    tcg_gen_bswap16_tl(lo, lo);
-
-    /* Final tweaks */
-    tcg_gen_deposit_tl(result, src, lo, 0, 16);
-    tcg_gen_or_tl(result, result, lo);
-
-    tcg_temp_free(lo);
-    tcg_temp_free(tmp1);
-    tcg_temp_free(tmp2);
-}
-
 #include "tcg_funcs_generated.c.inc"
 #include "tcg_func_table_generated.c.inc"
