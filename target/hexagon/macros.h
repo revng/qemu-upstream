@@ -84,7 +84,7 @@
 #endif
 
 #ifdef QEMU_GENERATE
-static inline void gen_cancel(unsigned slot)
+static inline void gen_cancel(uint32_t slot)
 {
     tcg_gen_ori_tl(hex_slot_cancelled, hex_slot_cancelled, 1 << slot);
 }
