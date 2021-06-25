@@ -453,12 +453,6 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            return REG; }
-[rR]{DIGIT}+             { yylval->rvalue.type = REGISTER;
-                           yylval->rvalue.reg.type = GENERAL_PURPOSE;
-                           yylval->rvalue.reg.id = atoi(yytext + 1);
-                           yylval->rvalue.reg.bit_width = 32;
-                           yylval->rvalue.bit_width = 32;
-                           return REG; }
 "fREAD_SP()"             |
 "SP"                     { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
