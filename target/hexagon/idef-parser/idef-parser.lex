@@ -446,12 +446,14 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = true;
                            return REG; }
 "N"{LOWER_ID}"N"         { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = DOTNEW;
                            yylval->rvalue.reg.id = yytext[1];
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = true;
                            return REG; }
 "fREAD_SP()"             |
 "SP"                     { yylval->rvalue.type = REGISTER;
@@ -459,6 +461,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.id = SP;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = true;
                            return REG; }
 "fREAD_FP()"             |
 "FP"                     { yylval->rvalue.type = REGISTER;
@@ -466,6 +469,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.id = FP;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = true;
                            return REG; }
 "fREAD_LR()"             |
 "LR"                     { yylval->rvalue.type = REGISTER;
@@ -473,12 +477,14 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.id = LR;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = true;
                            return REG; }
 "GP"                     { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = GP;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = true;
                            return REG; }
 "fREAD_LC"[01]           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
@@ -499,12 +505,14 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.id = SA0 + (yytext[8] - '0');
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = true;
                            return REG; }
 "SA"[01]                 { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = SA0 + (yytext[2] - '0');
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = true;
                            return REG; }
 "MuN"                    { return MUN; }
 "fREAD_P0()"             { yylval->rvalue.type = PREDICATE;
