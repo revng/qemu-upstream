@@ -485,12 +485,14 @@ SIGN_ID                  s|u
                            yylval->rvalue.reg.id = LC0 + (yytext[8] - '0');
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = true;
                            return REG; }
 "LC"[01]                 { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = LC0 + (yytext[2] - '0');
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.is_unsigned = true;
                            return REG; }
 "fREAD_SA"[01]           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;

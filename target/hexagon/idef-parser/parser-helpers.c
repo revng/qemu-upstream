@@ -1193,6 +1193,7 @@ HexValue gen_read_creg(Context *c, YYLTYPE *locp, HexValue *reg)
     yyassert(c, locp, reg->type == REGISTER, "reg must be a register!");
     if (reg->reg.id < 'a') {
         HexValue tmp = gen_tmp_value(c, locp, "0", 32);
+        tmp.is_unsigned = reg->is_unsigned;
         const char *id = creg_str[(uint8_t)reg->reg.id];
         OUT(c, locp, "READ_REG(", &tmp, ", ", id, ");\n");
         rvalue_free(c, locp, reg);
