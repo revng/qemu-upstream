@@ -283,6 +283,7 @@ SIGN_ID                  s|u
 "fCAST4u"                { yylval->cast.bit_width = 32;
                            yylval->cast.is_unsigned = true;
                            return CAST; }
+"fNEWREG"                |
 "fCAST4s"                { yylval->cast.bit_width = 32;
                            yylval->cast.is_unsigned = false;
                            return CAST; }
@@ -410,7 +411,6 @@ SIGN_ID                  s|u
                            yylval->mpy.first_unsigned = false;
                            yylval->mpy.second_unsigned = true;
                            return MPY; }
-"fNEWREG"                |
 "fNEWREG_ST"             |
 "fIMMEXT"                |
 "fMUST_IMMEXT"           |
