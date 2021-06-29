@@ -55,20 +55,10 @@
 typedef enum {GENERAL_PURPOSE, CONTROL, MODIFIER, DOTNEW} RegType;
 
 /**
- * Types of control registers, assigned to the HexReg.id field
- */
-typedef enum {SP, FP, LR, GP, LC0, LC1, SA0, SA1} CregType;
-
-/**
- * Identifier string of the control registers, indexed by the CregType enum
- */
-extern const char *creg_str[];
-
-/**
  * Semantic record of the REG tokens, identifying registers
  */
 typedef struct HexReg {
-    CregType id;            /**< Identifier of the register                  */
+    uint8_t id;             /**< Identifier of the register                  */
     RegType type;           /**< Type of the register                        */
     unsigned bit_width;     /**< Bit width of the reg, 32 or 64 bits         */
 } HexReg;
@@ -173,7 +163,7 @@ typedef struct Var {
  * Enum of the possible rvalue types, used in the HexValue.type field
  */
 typedef enum RvalueUnionTag {
-    REGISTER, TEMP, IMMEDIATE, PREDICATE, VARID
+    REGISTER, REGISTER_ARG, TEMP, IMMEDIATE, PREDICATE, VARID
 } RvalueUnionTag;
 
 /**

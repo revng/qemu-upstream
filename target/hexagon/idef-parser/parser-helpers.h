@@ -60,6 +60,8 @@ bool is_direct_predicate(HexValue *value);
 /* Print functions */
 void str_print(Context *c, YYLTYPE *locp, const char *string);
 
+void uint8_print(Context *c, YYLTYPE *locp, uint8_t *num);
+
 void uint64_print(Context *c, YYLTYPE *locp, uint64_t *num);
 
 void int_print(Context *c, YYLTYPE *locp, int *num);
@@ -88,6 +90,7 @@ void commit(Context *c);
 #define OUT_IMPL(c, locp, x)                    \
     QEMU_GENERIC(typeof(*x),                \
         (char,      str_print),             \
+        (uint8_t,   uint8_print),           \
         (uint64_t,  uint64_print),          \
         (int,       int_print),             \
         (unsigned,  uint_print),            \
@@ -218,12 +221,9 @@ HexValue gen_extract_op(Context *c,
                            HexValue *index,
                            HexExtract *extract);
 
-HexValue gen_read_creg(Context *c, YYLTYPE *locp, HexValue *reg);
+HexValue gen_read_reg(Context *c, YYLTYPE *locp, HexValue *reg);
 
-void gen_write_creg(Context *c,
-                           YYLTYPE *locp,
-                           HexValue *reg,
-                           HexValue *value);
+void gen_write_reg(Context *c, YYLTYPE *locp, HexValue *reg, HexValue *value);
 
 void gen_assign(Context *c,
                 YYLTYPE *locp,

@@ -429,8 +429,8 @@ rvalue : FAIL
        | assign_statement
        | REG
          {
-             if ($1.reg.type == CONTROL) {
-                 $$ = gen_read_creg(c, &@1, &$1);
+             if ($1.type == REGISTER_ARG) {
+                 $$ = gen_read_reg(c, &@1, &$1);
              } else {
                  $$ = $1;
              }

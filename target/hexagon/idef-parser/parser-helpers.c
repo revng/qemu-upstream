@@ -30,10 +30,6 @@
 #include "idef-parser.tab.h"
 #include "idef-parser.yy.h"
 
-const char *creg_str[] = {"HEX_REG_SP", "HEX_REG_FP", "HEX_REG_LR",
-                          "HEX_REG_GP", "HEX_REG_LC0", "HEX_REG_LC1",
-                          "HEX_REG_SA0", "HEX_REG_SA1"};
-
 void yyerror(YYLTYPE *locp,
              yyscan_t scanner __attribute__((unused)),
              Context *c,
@@ -87,6 +83,10 @@ void str_print(Context *c, YYLTYPE *locp, const char *string)
     EMIT(c, "%s", string);
 }
 
+void uint8_print(Context *c, YYLTYPE *locp, uint8_t *num)
+{
+    EMIT(c, "%u", *num);
+}
 
 void uint64_print(Context *c, YYLTYPE *locp, uint64_t *num)
 {
@@ -145,15 +145,20 @@ void reg_compose(Context *c, YYLTYPE *locp, HexReg *reg, char reg_id[5])
     }
 }
 
+void reg_arg_print(Context *c, YYLTYPE *locp, HexReg *reg)
+{
+    if (reg->type == DOTNEW) {
+        EMIT(c, "N%cN", reg->id);
+    } else {
+        char reg_id[5] = { 0 };
+        reg_compose(c, locp, reg, reg_id);
+        EMIT(c, "%s", reg_id);
+    }
+}
+
 void reg_print(Context *c, YYLTYPE *locp, HexReg *reg)
 {
-  if (reg->type == DOTNEW) {
-    EMIT(c, "N%cN", reg->id);
-  } else {
-    char reg_id[5] = { 0 };
-    reg_compose(c, locp, reg, reg_id);
-    EMIT(c, "%s", reg_id);
-  }
+    EMIT(c, "hex_gpr[%u]", reg->id);
 }
 
 void imm_print(Context *c, YYLTYPE *locp, HexImm *imm)
@@ -196,6 +201,9 @@ void rvalue_out(Context *c, YYLTYPE *locp, void *pointer)
   switch (rvalue->type) {
   case REGISTER:
       reg_print(c, locp, &rvalue->reg);
+      break;
+  case REGISTER_ARG:
+      reg_arg_print(c, locp, &rvalue->reg);
       break;
   case TEMP:
       tmp_print(c, locp, &rvalue->tmp);
@@ -1188,24 +1196,21 @@ HexValue gen_extract_op(Context *c,
     return res;
 }
 
-HexValue gen_read_creg(Context *c, YYLTYPE *locp, HexValue *reg)
+HexValue gen_read_reg(Context *c, YYLTYPE *locp, HexValue *reg)
 {
-    yyassert(c, locp, reg->type == REGISTER, "reg must be a register!");
-    if (reg->reg.id < 'a') {
-        HexValue tmp = gen_tmp_value(c, locp, "0", 32);
+    yyassert(c, locp, reg->type == REGISTER_ARG || reg->type == REGISTER,
+             "reg must be a register arg or register!");
+    if (reg->type == REGISTER) {
+        HexValue tmp = gen_tmp(c, locp, 32);
         tmp.is_unsigned = reg->is_unsigned;
-        const char *id = creg_str[(uint8_t)reg->reg.id];
-        OUT(c, locp, "READ_REG(", &tmp, ", ", id, ");\n");
+        OUT(c, locp, "gen_read_reg(", &tmp, ", ", &reg->reg.id, ");\n");
         rvalue_free(c, locp, reg);
         return tmp;
     }
     return *reg;
 }
 
-void gen_write_creg(Context *c,
-                    YYLTYPE *locp,
-                    HexValue *reg,
-                    HexValue *value)
+void gen_write_reg(Context *c, YYLTYPE *locp, HexValue *reg, HexValue *value)
 {
     yyassert(c, locp, reg->type == REGISTER, "reg must be a register!");
     HexValue value_m = *value;
@@ -1213,11 +1218,12 @@ void gen_write_creg(Context *c,
     value_m = rvalue_materialize(c, locp, &value_m);
     OUT(c,
         locp,
-        "gen_log_reg_write(", creg_str[(uint8_t)reg->reg.id], ", ",
+        "gen_log_reg_write(", &reg->reg.id, ", ",
         &value_m, ");\n");
     OUT(c,
         locp,
-        "ctx_log_reg_write(ctx, ", creg_str[(uint8_t)reg->reg.id], ");\n");
+        "ctx_log_reg_write(ctx, ", &reg->reg.id,
+        ");\n");
     rvalue_free(c, locp, reg);
     rvalue_free(c, locp, &value_m);
 }
@@ -1230,13 +1236,12 @@ void gen_assign(Context *c,
     yyassert(c,
              locp,
              !is_inside_ternary(c)
-             || !(dest->type == REGISTER && dest->reg.type == CONTROL),
-             "control assign in ternary");
+             || !(dest->type == REGISTER),
+             "register assign in ternary");
 
     HexValue value_m = *value;
-    if (dest->type == REGISTER &&
-        dest->reg.type == CONTROL && dest->reg.id < 'a') {
-        gen_write_creg(c, locp, dest, &value_m);
+    if (dest->type == REGISTER) {
+        gen_write_reg(c, locp, dest, &value_m);
         return;
     }
     /* Create (if not present) and assign to temporary variable */
@@ -1796,7 +1801,9 @@ void gen_inst_args(Context *c, YYLTYPE *locp)
     /* non-conditional instructions */
     for (int i = 0; i < c->inst.init_list->len; i++) {
         HexValue *reg = &g_array_index(c->inst.init_list, HexValue, i);
-        if (reg->type == REGISTER || reg->type == PREDICATE) {
+        if (reg->type == REGISTER
+                || reg->type == REGISTER_ARG
+                || reg->type == PREDICATE) {
             OUT(c, locp, "tcg_gen_movi_i", &reg->bit_width, "(",
                 reg, ", 0);\n");
         }
@@ -2326,7 +2333,7 @@ const char *cond_to_str(TCGCond cond)
 void emit_arg(Context *c, YYLTYPE *locp, HexValue *arg)
 {
     switch (arg->type) {
-    case REGISTER:
+    case REGISTER_ARG:
         if (arg->reg.type == DOTNEW) {
             EMIT_SIG(c, ", TCGv N%cN", arg->reg.id);
         } else {
