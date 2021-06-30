@@ -491,7 +491,7 @@ SIGN_ID                  s|u
 "fREAD_LC"[01]           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = HEX_REG_LC0
-                                                 + (yytext[8] - '0');
+                                                 + (yytext[8] - '0') * 2;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_unsigned = true;
@@ -499,7 +499,7 @@ SIGN_ID                  s|u
 "LC"[01]                 { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = HEX_REG_LC0
-                                                 + (yytext[2] - '0');
+                                                 + (yytext[2] - '0') * 2;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_unsigned = true;
@@ -507,7 +507,7 @@ SIGN_ID                  s|u
 "fREAD_SA"[01]           { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = HEX_REG_SA0
-                                                 + (yytext[8] - '0');
+                                                 + (yytext[8] - '0') * 2;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_unsigned = true;
@@ -515,7 +515,7 @@ SIGN_ID                  s|u
 "SA"[01]                 { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = HEX_REG_SA0
-                                                 + (yytext[2] - '0');
+                                                 + (yytext[2] - '0') * 2;
                            yylval->rvalue.reg.bit_width = 32;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_unsigned = true;
