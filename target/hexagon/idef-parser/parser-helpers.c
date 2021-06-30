@@ -1879,11 +1879,6 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
         varid_allocate(c, locp, dst, bit_width, is_unsigned);
     }
     snprintf(size_suffix, 4, "%" PRIu64, size->imm.value * 8);
-    if (bit_width == 32) {
-        *dst = rvalue_truncate(c, locp, dst);
-    } else {
-        *dst = rvalue_extend(c, locp, dst);
-    }
     int var_id = find_variable(c, locp, ea);
     yyassert(c, locp, var_id != -1, "Load variable must exist!\n");
     /* We need to enforce the variable size */
