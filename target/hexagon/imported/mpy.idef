@@ -1087,7 +1087,7 @@ Q6INSN(M4_pmpyw,"Rdd32=pmpyw(Rs32,Rt32)",ATTRIBS(),"Polynomial 32bit Multiplicat
         x = fGETUWORD(0, RsV);
         y = fGETUWORD(0, RtV);
 
-        prod = 0;
+        prod = 0ULL;
         for(i=0; i < 32; i++) {
             if((y >> i) & 1) prod ^= (x << i);
         }
@@ -1123,7 +1123,7 @@ Q6INSN(M4_pmpyw_acc,"Rxx32^=pmpyw(Rs32,Rt32)",ATTRIBS(),"Polynomial 32bit Multip
         x = fGETUWORD(0, RsV);
         y = fGETUWORD(0, RtV);
 
-        prod = 0;
+        prod = 0ULL;
         for(i=0; i < 32; i++) {
             if((y >> i) & 1) prod ^= (x << i);
         }

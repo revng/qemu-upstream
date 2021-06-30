@@ -1898,13 +1898,6 @@ void gen_store(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
     HexValue src_m = *src;
     /* Memop width is specified in the store macro */
     int mem_width = size->imm.value;
-    /* Adjust operand bit width to memop bit width */
-    if (mem_width < 8 && src->bit_width != 32) {
-        /* Adjust contants */
-        yyassert(c, locp, src_m.type == IMMEDIATE,
-                 "store truncation on non-immediate!\n");
-        src_m = rvalue_truncate(c, locp, src);
-    }
     assert(ea->type == VARID);
     int var_id = find_variable(c, locp, ea);
     yyassert(c, locp, var_id != -1, "Load variable must exist!\n");

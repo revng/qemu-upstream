@@ -555,7 +555,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.imm.value = 127;
                            return IMM; }
 {DIGIT}+                 { yylval->rvalue.type = IMMEDIATE;
-                           yylval->rvalue.bit_width = 64;
+                           yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = atoi(yytext);
@@ -565,6 +565,14 @@ SIGN_ID                  s|u
                            yylval->rvalue.is_unsigned = false;
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = strtoll(yytext, NULL, 10);
+                           return IMM; }
+{DIGIT}+"ULL"            { yylval->rvalue.type = IMMEDIATE;
+                           yylval->rvalue.bit_width = 64;
+                           yylval->rvalue.is_unsigned = true;
+                           yylval->rvalue.imm.type = VALUE;
+                           yylval->rvalue.imm.value = strtoull(yytext,
+                                                               NULL,
+                                                               10);
                            return IMM; }
 "0x"{HEX_DIGIT}+         { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
