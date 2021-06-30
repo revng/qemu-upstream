@@ -241,6 +241,7 @@ SIGN_ID                  s|u
 "fFRAME_SCRAMBLE"        { return FSCR; }
 "fFRAME_UNSCRAMBLE"      { return FSCR; }
 "fFRAMECHECK"            { return FCHK; }
+"Constant_extended"      { return CONSTEXT; }
 "fCL1_"{DIGIT}           { return LOCNT; }
 "fBREV_8"                { return BREV_8; }
 "fBREV_4"                { return BREV_4; }
