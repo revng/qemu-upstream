@@ -57,7 +57,7 @@
 %token INAME DREG DIMM DPRE DEA RREG WREG FREG FIMM RPRE WPRE FPRE FWRAP FEA VAR
 %token POW ABS CROUND ROUND CIRCADD COUNTONES INC DEC ANDA ORA XORA PLUSPLUS ASL
 %token ASR LSR EQ NEQ LTE GTE MIN MAX ANDL ORL FOR ICIRC IF MUN FSCR FCHK SXT
-%token ZXT CONSTEXT LOCNT BREV SIGN LOAD STORE CONSTLL CONSTULL PC NPC LPCFG
+%token ZXT LOCNT BREV SIGN LOAD STORE CONSTLL CONSTULL PC NPC LPCFG
 %token CANCEL IDENTITY PART1 BREV_4 BREV_8 ROTL INSBITS SETBITS EXTBITS EXTRANGE
 %token CAST4_8U SETOVF FAIL DEINTERLEAVE INTERLEAVE CARRY_FROM_ADD LSBNEW
 
@@ -474,16 +474,6 @@ rvalue : FAIL
              rvalue.imm.type = IMM_NPC;
              rvalue.bit_width = 32;
              rvalue.is_unsigned = true;
-             $$ = rvalue;
-         }
-       | CONSTEXT
-         {
-             HexValue rvalue;
-             rvalue.type = IMMEDIATE;
-             rvalue.imm.type = IMM_CONSTEXT;
-             rvalue.is_unsigned = true;
-             rvalue.is_dotnew = false;
-             rvalue.is_manual = false;
              $$ = rvalue;
          }
        | var

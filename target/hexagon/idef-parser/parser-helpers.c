@@ -1883,9 +1883,6 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
     yyassert(c, locp, var_id != -1, "Load variable must exist!\n");
     /* We need to enforce the variable size */
     ea->bit_width = g_array_index(c->inst.allocated, Var, var_id).bit_width;
-    if (ea->bit_width != 32) {
-        *ea = rvalue_truncate(c, locp, ea);
-    }
     OUT(c, locp, "if (insn->slot == 0 && pkt->pkt_has_store_s1) {\n");
     OUT(c, locp, "process_store(ctx, pkt, 1);\n");
     OUT(c, locp, "}\n");
@@ -1898,26 +1895,25 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
 void gen_store(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
                HexValue *ea, HexValue *src)
 {
+    HexValue src_m = *src;
     /* Memop width is specified in the store macro */
     int mem_width = size->imm.value;
     /* Adjust operand bit width to memop bit width */
-    if (mem_width < 8) {
-        *src = rvalue_truncate(c, locp, src);
-    } else {
-        *src = rvalue_extend(c, locp, src);
+    if (mem_width < 8 && src->bit_width != 32) {
+        /* Adjust contants */
+        yyassert(c, locp, src_m.type == IMMEDIATE,
+                 "store truncation on non-immediate!\n");
+        src_m = rvalue_truncate(c, locp, src);
     }
     assert(ea->type == VARID);
     int var_id = find_variable(c, locp, ea);
     yyassert(c, locp, var_id != -1, "Load variable must exist!\n");
     /* We need to enforce the variable size */
     ea->bit_width = g_array_index(c->inst.allocated, Var, var_id).bit_width;
-    if (ea->bit_width != 32) {
-        *ea = rvalue_truncate(c, locp, ea);
-    }
-    *src = rvalue_materialize(c, locp, src);
-    OUT(c, locp, "gen_store", &mem_width, "(cpu_env, ", ea, ", ", src);
+    src_m = rvalue_materialize(c, locp, &src_m);
+    OUT(c, locp, "gen_store", &mem_width, "(cpu_env, ", ea, ", ", &src_m);
     OUT(c, locp, ", ctx, insn->slot);\n");
-    rvalue_free(c, locp, src);
+    rvalue_free(c, locp, &src_m);
     /* If the var in ea was truncated it is now a tmp HexValue, so free it. */
     rvalue_free(c, locp, ea);
 }

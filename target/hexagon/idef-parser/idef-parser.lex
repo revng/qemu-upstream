@@ -241,7 +241,6 @@ SIGN_ID                  s|u
 "fFRAME_SCRAMBLE"        { return FSCR; }
 "fFRAME_UNSCRAMBLE"      { return FSCR; }
 "fFRAMECHECK"            { return FCHK; }
-"Constant_extended"      { return CONSTEXT; }
 "fCL1_"{DIGIT}           { return LOCNT; }
 "fBREV_8"                { return BREV_8; }
 "fBREV_4"                { return BREV_4; }
@@ -481,6 +480,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_unsigned = true;
                            return REG; }
+"fREAD_GP()"             |
 "GP"                     { yylval->rvalue.type = REGISTER;
                            yylval->rvalue.reg.type = CONTROL;
                            yylval->rvalue.reg.id = HEX_REG_GP;
