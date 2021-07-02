@@ -274,7 +274,7 @@ assign_statement : lvalue '=' rvalue
                        @1.last_column = @3.last_column;
                        yyassert(c, &@1, c->ternary->len == 0,
                                 "Assignment side-effect not modeled!");
-                       $3 = rvalue_truncate(c, &@1, &$3);
+                       $3 = gen_rvalue_truncate(c, &@1, &$3);
                        $3 = rvalue_materialize(c, &@1, &$3);
                        OUT(c, &@1, "gen_write_new_pc(", &$3, ");\n");
                        gen_rvalue_free(c, &@1, &$3); /* Free temporary value */
@@ -299,7 +299,7 @@ assign_statement : lvalue '=' rvalue
                        @1.last_column = @3.last_column;
                        yyassert(c, &@1, c->ternary->len == 0,
                                 "Assignment side-effect not modeled!");
-                       $3 = rvalue_truncate(c, &@1, &$3);
+                       $3 = gen_rvalue_truncate(c, &@1, &$3);
                        $3 = rvalue_materialize(c, &@1, &$3);
                        OUT(c, &@1, "SET_USR_FIELD(USR_LPCFG, ", &$3, ");\n");
                        gen_rvalue_free(c, &@1, &$3);
@@ -779,7 +779,7 @@ rvalue : FAIL
        | CAST4_8U '(' rvalue ')'
          {
              @1.last_column = @4.last_column;
-             $$ = rvalue_truncate(c, &@1, &$3);
+             $$ = gen_rvalue_truncate(c, &@1, &$3);
              $$.is_unsigned = true;
              $$ = rvalue_materialize(c, &@1, &$$);
              $$ = gen_rvalue_extend(c, &@1, &$$);

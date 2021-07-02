@@ -381,7 +381,7 @@ HexValue gen_rvalue_extend(Context *c, YYLTYPE *locp, HexValue *rvalue)
     return *rvalue;
 }
 
-HexValue rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue)
+HexValue gen_rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue)
 {
     if (rvalue->type == IMMEDIATE) {
         HexValue res = *rvalue;
@@ -1083,7 +1083,7 @@ void gen_rdeposit_op(Context *c,
     res = gen_bin_op(c, locp, ORB_OP, &res, &value_m);
 
     if (dest->bit_width != res.bit_width) {
-        res = rvalue_truncate(c, locp, &res);
+        res = gen_rvalue_truncate(c, locp, &res);
     }
 
     HexValue zero = gen_tmp_value(c, locp, "0", res.bit_width);
@@ -1111,7 +1111,7 @@ void gen_deposit_op(Context *c,
     /* If the destination value is 32, truncate the value, otherwise extend */
     if (dest->bit_width != value->bit_width) {
         if (bit_width == 32) {
-            value_m = rvalue_truncate(c, locp, &value_m);
+            value_m = gen_rvalue_truncate(c, locp, &value_m);
         } else {
             value_m = gen_rvalue_extend(c, locp, &value_m);
         }
@@ -1192,7 +1192,7 @@ void gen_write_reg(Context *c, YYLTYPE *locp, HexValue *reg, HexValue *value)
 {
     yyassert(c, locp, reg->type == REGISTER, "reg must be a register!");
     HexValue value_m = *value;
-    value_m = rvalue_truncate(c, locp, &value_m);
+    value_m = gen_rvalue_truncate(c, locp, &value_m);
     value_m = rvalue_materialize(c, locp, &value_m);
     OUT(c,
         locp,
@@ -1231,7 +1231,7 @@ void gen_assign(Context *c,
         if (bit_width == 64) {
             value_m = gen_rvalue_extend(c, locp, &value_m);
         } else {
-            value_m = rvalue_truncate(c, locp, &value_m);
+            value_m = gen_rvalue_truncate(c, locp, &value_m);
         }
     }
     if (is_inside_ternary(c)) {
@@ -1239,7 +1239,7 @@ void gen_assign(Context *c,
         HexValue cond = get_ternary_cond(c, locp);
         if (cond.bit_width != bit_width) {
             if (cond.bit_width == 64) {
-                cond = rvalue_truncate(c, locp, &cond);
+                cond = gen_rvalue_truncate(c, locp, &cond);
             } else {
                 cond = gen_rvalue_extend(c, locp, &cond);
             }
@@ -1420,7 +1420,7 @@ HexValue gen_convround_n(Context *c,
     gen_rvalue_free(c, locp, &n_64);
     gen_rvalue_free(c, locp, &zero);
 
-    res = rvalue_truncate(c, locp, &res);
+    res = gen_rvalue_truncate(c, locp, &res);
     return res;
 }
 
@@ -1530,7 +1530,7 @@ HexValue gen_fbrev_4(Context *c, YYLTYPE *locp, HexValue *source)
     HexValue tmp2 = gen_tmp(c, locp, 32);
 
     source_m = rvalue_materialize(c, locp, &source_m);
-    source_m = rvalue_truncate(c, locp, &source_m);
+    source_m = gen_rvalue_truncate(c, locp, &source_m);
 
     OUT(c, locp, "tcg_gen_mov_tl(", &res, ", ", &source_m, ");\n");
     OUT(c, locp, "tcg_gen_andi_tl(", &tmp1, ", ", &res, ", 0xaaaaaaaa);\n");
@@ -1632,7 +1632,7 @@ HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n)
     if (amount.bit_width < source->bit_width) {
         amount = gen_rvalue_extend(c, locp, &amount);
     } else {
-        amount = rvalue_truncate(c, locp, &amount);
+        amount = gen_rvalue_truncate(c, locp, &amount);
     }
     amount = rvalue_materialize(c, locp, &amount);
     const char *suffix = source->bit_width == 64 ? "i64" : "i32";
@@ -1699,9 +1699,9 @@ HexValue gen_interleave(Context *c,
                         HexValue *odd,
                         HexValue *even)
 {
-    HexValue a = rvalue_truncate(c, locp, odd);
+    HexValue a = gen_rvalue_truncate(c, locp, odd);
     a.is_unsigned = true;
-    HexValue b = rvalue_truncate(c, locp, even);
+    HexValue b = gen_rvalue_truncate(c, locp, even);
     a.is_unsigned = true;
 
     a = gen_rvalue_extend(c, locp, &a);
@@ -1815,7 +1815,7 @@ void gen_pre_assign(Context *c, YYLTYPE *locp, HexValue *lp, HexValue *rp)
         *lp = gen_tmp_value(c, locp, "0", 32);
     }
     HexValue r = rvalue_materialize(c, locp, rp);
-    r = rvalue_truncate(c, locp, &r);
+    r = gen_rvalue_truncate(c, locp, &r);
     /* Extract first 8 bits, and store new predicate value */
     if (is_inside_ternary(c)) {
         yyassert(c, locp, !is_direct, "direct pre assign inside ternary op");
@@ -1920,7 +1920,7 @@ void gen_setbits(Context *c, YYLTYPE *locp, HexValue *hi, HexValue *lo,
              lo->imm.type == VALUE,
              "Range deposit needs immediate values!\n");
 
-    *val = rvalue_truncate(c, locp, val);
+    *val = gen_rvalue_truncate(c, locp, val);
     unsigned len = hi->imm.value + 1 - lo->imm.value;
     HexValue tmp = gen_tmp(c, locp, 32);
     OUT(c, locp, "tcg_gen_neg_i32(", &tmp, ", ", val, ");\n");
@@ -2094,7 +2094,7 @@ void gen_set_overflow(Context *c, YYLTYPE *locp, HexValue *vp)
         OUT(c, locp, "tcg_gen_or_i", &bit_width, "(",
             &ovfl, ", ", &ovfl, ", ", &tmp, ");\n");
         if (is_64bit) {
-            ovfl = rvalue_truncate(c, locp, &ovfl);
+            ovfl = gen_rvalue_truncate(c, locp, &ovfl);
         }
         gen_rvalue_free(c, locp, &tmp);
         gen_rvalue_free(c, locp, &cond);
@@ -2217,7 +2217,7 @@ HexValue gen_rvalue_ternary(Context *c, YYLTYPE *locp, HexValue *cond,
         *t = gen_rvalue_extend(c, locp, t);
         *e = gen_rvalue_extend(c, locp, e);
     } else {
-        *cond = rvalue_truncate(c, locp, cond);
+        *cond = gen_rvalue_truncate(c, locp, cond);
     }
     *cond = rvalue_materialize(c, locp, cond);
     *t = rvalue_materialize(c, locp, t);
