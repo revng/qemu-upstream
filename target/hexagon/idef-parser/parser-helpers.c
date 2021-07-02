@@ -1498,7 +1498,7 @@ void gen_circ_op(Context *c,
     HexValue increment_m = *increment;
     HexValue cs = gen_tmp(c, locp, 32);
     increment_m = rvalue_materialize(c, locp, &increment_m);
-    OUT(c, locp, "READ_REG(", &cs, ", HEX_REG_CS0 + MuN);\n");
+    OUT(c, locp, "gen_read_reg(", &cs, ", HEX_REG_CS0 + MuN);\n");
     OUT(c,
         locp,
         "gen_helper_fcircadd(",
@@ -2166,7 +2166,7 @@ HexValue gen_rvalue_fscr(Context *c, YYLTYPE *locp, HexValue *v)
     HexValue res = gen_tmp(c, locp, 64);
     *v = rvalue_extend(c, locp, v);
     HexValue frame_key = gen_tmp(c, locp, 32);
-    OUT(c, locp, "READ_REG(", &frame_key, ", HEX_REG_FRAMEKEY);\n");
+    OUT(c, locp, "gen_read_reg(", &frame_key, ", HEX_REG_FRAMEKEY);\n");
     OUT(c, locp, "tcg_gen_concat_i32_i64(",
         &key, ", ", &frame_key, ", ", &frame_key, ");\n");
     OUT(c, locp, "tcg_gen_xor_i64(", &res, ", ", v, ", ", &key, ");\n");
