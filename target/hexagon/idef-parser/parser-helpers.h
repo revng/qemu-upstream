@@ -155,7 +155,7 @@ void gen_rvalue_free(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
 HexValue rvalue_materialize(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
-HexValue rvalue_extend(Context *c, YYLTYPE *locp, HexValue *rvalue);
+HexValue gen_rvalue_extend(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
 HexValue rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue);
 

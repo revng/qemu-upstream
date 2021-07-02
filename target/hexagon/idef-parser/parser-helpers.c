@@ -362,7 +362,7 @@ HexValue rvalue_materialize(Context *c, YYLTYPE *locp, HexValue *rvalue)
     return *rvalue;
 }
 
-HexValue rvalue_extend(Context *c, YYLTYPE *locp, HexValue *rvalue)
+HexValue gen_rvalue_extend(Context *c, YYLTYPE *locp, HexValue *rvalue)
 {
     if (rvalue->type == IMMEDIATE) {
         HexValue res = *rvalue;
@@ -469,14 +469,14 @@ HexValue gen_bin_cmp(Context *c,
         case IMM_IMM:
             break;
         case IMM_REG:
-            op2 = rvalue_extend(c, locp, &op2);
+            op2 = gen_rvalue_extend(c, locp, &op2);
             break;
         case REG_IMM:
-            op1 = rvalue_extend(c, locp, &op1);
+            op1 = gen_rvalue_extend(c, locp, &op1);
             break;
         case REG_REG:
-            op1 = rvalue_extend(c, locp, &op1);
-            op2 = rvalue_extend(c, locp, &op2);
+            op1 = gen_rvalue_extend(c, locp, &op1);
+            op2 = gen_rvalue_extend(c, locp, &op2);
             break;
         }
     }
@@ -614,7 +614,7 @@ static void gen_asl_op(Context *c, YYLTYPE *locp, unsigned bit_width,
         edge = rvalue_materialize(c, locp, &edge);
         HexValue zero = gen_tmp_value(c, locp, "0", bit_width);
         if (op_is64bit) {
-            op2 = rvalue_extend(c, locp, &op2);
+            op2 = gen_rvalue_extend(c, locp, &op2);
         }
         op1 = rvalue_materialize(c, locp, &op1);
         op2 = rvalue_materialize(c, locp, &op2);
@@ -663,7 +663,7 @@ static void gen_asr_op(Context *c, YYLTYPE *locp, unsigned bit_width,
         HexValue tmp = gen_tmp(c, locp, bit_width);
         HexValue zero = gen_tmp_value(c, locp, "0", bit_width);
         if (op_is64bit) {
-            op2 = rvalue_extend(c, locp, &op2);
+            op2 = gen_rvalue_extend(c, locp, &op2);
         }
         op1 = rvalue_materialize(c, locp, &op1);
         op2 = rvalue_materialize(c, locp, &op2);
@@ -718,7 +718,7 @@ static void gen_lsr_op(Context *c, YYLTYPE *locp, unsigned bit_width,
         edge = rvalue_materialize(c, locp, &edge);
         HexValue zero = gen_tmp_value(c, locp, "0", bit_width);
         if (op_is64bit) {
-            op2 = rvalue_extend(c, locp, &op2);
+            op2 = gen_rvalue_extend(c, locp, &op2);
         }
         op1 = rvalue_materialize(c, locp, &op1);
         op2 = rvalue_materialize(c, locp, &op2);
@@ -872,14 +872,14 @@ HexValue gen_bin_op(Context *c,
         case IMM_IMM:
             break;
         case IMM_REG:
-            op2 = rvalue_extend(c, locp, &op2);
+            op2 = gen_rvalue_extend(c, locp, &op2);
             break;
         case REG_IMM:
-            op1 = rvalue_extend(c, locp, &op1);
+            op1 = gen_rvalue_extend(c, locp, &op1);
             break;
         case REG_REG:
-            op1 = rvalue_extend(c, locp, &op1);
-            op2 = rvalue_extend(c, locp, &op2);
+            op1 = gen_rvalue_extend(c, locp, &op1);
+            op2 = gen_rvalue_extend(c, locp, &op2);
             break;
         }
     }
@@ -1013,8 +1013,8 @@ HexValue gen_extend_op(Context *c,
     HexValue src_width = *src_width_ptr;
     HexValue dst_width = *dst_width_ptr;
     HexValue value = *value_ptr;
-    src_width = rvalue_extend(c, locp, &src_width);
-    value = rvalue_extend(c, locp, &value);
+    src_width = gen_rvalue_extend(c, locp, &src_width);
+    value = gen_rvalue_extend(c, locp, &value);
     src_width = rvalue_materialize(c, locp, &src_width);
     value = rvalue_materialize(c, locp, &value);
 
@@ -1059,11 +1059,11 @@ void gen_rdeposit_op(Context *c,
     HexValue dest_m = *dest;
     dest_m.is_manual = true;
 
-    HexValue value_m = rvalue_extend(c, locp, value);
-    HexValue begin_m = rvalue_extend(c, locp, begin);
+    HexValue value_m = gen_rvalue_extend(c, locp, value);
+    HexValue begin_m = gen_rvalue_extend(c, locp, begin);
     HexValue width_orig = *width;
     width_orig.is_manual = true;
-    HexValue width_m = rvalue_extend(c, locp, &width_orig);
+    HexValue width_m = gen_rvalue_extend(c, locp, &width_orig);
     width_m = rvalue_materialize(c, locp, &width_m);
 
     HexValue mask = gen_tmp_value(c, locp, "0xffffffffffffffffUL", 64);
@@ -1113,7 +1113,7 @@ void gen_deposit_op(Context *c,
         if (bit_width == 32) {
             value_m = rvalue_truncate(c, locp, &value_m);
         } else {
-            value_m = rvalue_extend(c, locp, &value_m);
+            value_m = gen_rvalue_extend(c, locp, &value_m);
         }
     }
     value_m = rvalue_materialize(c, locp, &value_m);
@@ -1229,7 +1229,7 @@ void gen_assign(Context *c,
     int bit_width = dest->bit_width == 64 ? 64 : 32;
     if (bit_width != value_m.bit_width) {
         if (bit_width == 64) {
-            value_m = rvalue_extend(c, locp, &value_m);
+            value_m = gen_rvalue_extend(c, locp, &value_m);
         } else {
             value_m = rvalue_truncate(c, locp, &value_m);
         }
@@ -1241,7 +1241,7 @@ void gen_assign(Context *c,
             if (cond.bit_width == 64) {
                 cond = rvalue_truncate(c, locp, &cond);
             } else {
-                cond = rvalue_extend(c, locp, &cond);
+                cond = gen_rvalue_extend(c, locp, &cond);
             }
         }
         HexValue zero = gen_tmp_value(c, locp, "0", bit_width);
@@ -1561,7 +1561,7 @@ HexValue gen_fbrev_8(Context *c, YYLTYPE *locp, HexValue *source)
 {
     HexValue source_m = *source;
 
-    source_m = rvalue_extend(c, locp, &source_m);
+    source_m = gen_rvalue_extend(c, locp, &source_m);
     source_m = rvalue_materialize(c, locp, &source_m);
 
     HexValue res = gen_tmp(c, locp, 64);
@@ -1630,7 +1630,7 @@ HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n)
 {
     HexValue amount = *n;
     if (amount.bit_width < source->bit_width) {
-        amount = rvalue_extend(c, locp, &amount);
+        amount = gen_rvalue_extend(c, locp, &amount);
     } else {
         amount = rvalue_truncate(c, locp, &amount);
     }
@@ -1658,7 +1658,7 @@ const char *INTERLEAVE_MASKS[6] = {
 
 HexValue gen_deinterleave(Context *c, YYLTYPE *locp, HexValue *mixed)
 {
-    HexValue src = rvalue_extend(c, locp, mixed);
+    HexValue src = gen_rvalue_extend(c, locp, mixed);
 
     HexValue a = gen_tmp(c, locp, 64);
     a.is_unsigned = true;
@@ -1704,8 +1704,8 @@ HexValue gen_interleave(Context *c,
     HexValue b = rvalue_truncate(c, locp, even);
     a.is_unsigned = true;
 
-    a = rvalue_extend(c, locp, &a);
-    b = rvalue_extend(c, locp, &b);
+    a = gen_rvalue_extend(c, locp, &a);
+    b = gen_rvalue_extend(c, locp, &b);
 
     HexValue res = gen_tmp(c, locp, 64);
     res.is_unsigned = true;
@@ -1741,7 +1741,7 @@ HexValue gen_carry_from_add(Context *c,
     HexValue opa = rvalue_materialize(c, locp, op1);
     HexValue opb = rvalue_materialize(c, locp, op2);
     HexValue opc = rvalue_materialize(c, locp, op3);
-    opc = rvalue_extend(c, locp, &opc);
+    opc = gen_rvalue_extend(c, locp, &opc);
 
     HexValue zero = gen_tmp_value(c, locp, "0", 64);
     HexValue res = gen_tmp(c, locp, 64);
@@ -2084,8 +2084,8 @@ void gen_set_overflow(Context *c, YYLTYPE *locp, HexValue *vp)
         bool is_64bit = cond.bit_width == 64;
         unsigned bit_width = cond.bit_width;
         if (is_64bit) {
-            ovfl = rvalue_extend(c, locp, &ovfl);
-            v = rvalue_extend(c, locp, &v);
+            ovfl = gen_rvalue_extend(c, locp, &ovfl);
+            v = gen_rvalue_extend(c, locp, &v);
         }
         HexValue tmp = gen_tmp_value(c, locp, "0", cond.bit_width);
         OUT(c, locp, "tcg_gen_movcond_i", &bit_width,
@@ -2142,7 +2142,7 @@ HexValue gen_rvalue_fscr(Context *c, YYLTYPE *locp, HexValue *v)
 {
     HexValue key = gen_tmp(c, locp, 64);
     HexValue res = gen_tmp(c, locp, 64);
-    *v = rvalue_extend(c, locp, v);
+    *v = gen_rvalue_extend(c, locp, v);
     HexValue frame_key = gen_tmp(c, locp, 32);
     OUT(c, locp, "gen_read_reg(", &frame_key, ", HEX_REG_FRAMEKEY);\n");
     OUT(c, locp, "tcg_gen_concat_i32_i64(",
@@ -2213,9 +2213,9 @@ HexValue gen_rvalue_ternary(Context *c, YYLTYPE *locp, HexValue *cond,
     bool is_64bit = (t->bit_width == 64) || (e->bit_width == 64);
     int bit_width = (is_64bit) ? 64 : 32;
     if (is_64bit) {
-        *cond = rvalue_extend(c, locp, cond);
-        *t = rvalue_extend(c, locp, t);
-        *e = rvalue_extend(c, locp, e);
+        *cond = gen_rvalue_extend(c, locp, cond);
+        *t = gen_rvalue_extend(c, locp, t);
+        *e = gen_rvalue_extend(c, locp, e);
     } else {
         *cond = rvalue_truncate(c, locp, cond);
     }

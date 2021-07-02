@@ -782,7 +782,7 @@ rvalue : FAIL
              $$ = rvalue_truncate(c, &@1, &$3);
              $$.is_unsigned = true;
              $$ = rvalue_materialize(c, &@1, &$$);
-             $$ = rvalue_extend(c, &@1, &$$);
+             $$ = gen_rvalue_extend(c, &@1, &$$);
          }
        | BREV '(' rvalue ')'
          {
