@@ -167,8 +167,6 @@ void gen_varid_allocate(Context *c,
                         int width,
                         bool is_unsigned);
 
-void ea_free(Context *c, YYLTYPE *locp);
-
 HexValue gen_bin_cmp(Context *c,
                      YYLTYPE *locp,
                      TCGCond type,

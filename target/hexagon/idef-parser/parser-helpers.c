@@ -436,11 +436,6 @@ void gen_varid_allocate(Context *c,
     }
 }
 
-void ea_free(Context *c, YYLTYPE *locp)
-{
-    OUT(c, locp, "tcg_temp_free(EA);\n");
-}
-
 enum OpTypes {
     IMM_IMM = 0,
     IMM_REG = 1,
