@@ -127,8 +127,10 @@ void reg_compose(Context *c, YYLTYPE *locp, HexReg *reg, char reg_id[5])
         reg_id[0] = 'M';
         break;
     case DOTNEW:
-        /* The DOTNEW case is managed by the upper level function */
-        break;
+        reg_id[0] = 'N';
+        reg_id[1] = reg->id;
+        reg_id[2] = 'N';
+        return;
     }
     switch (reg->bit_width) {
     case 32:
@@ -147,13 +149,9 @@ void reg_compose(Context *c, YYLTYPE *locp, HexReg *reg, char reg_id[5])
 
 void reg_arg_print(Context *c, YYLTYPE *locp, HexReg *reg)
 {
-    if (reg->type == DOTNEW) {
-        EMIT(c, "N%cN", reg->id);
-    } else {
-        char reg_id[5] = { 0 };
-        reg_compose(c, locp, reg, reg_id);
-        EMIT(c, "%s", reg_id);
-    }
+    char reg_id[5] = { 0 };
+    reg_compose(c, locp, reg, reg_id);
+    EMIT(c, "%s", reg_id);
 }
 
 void reg_print(Context *c, YYLTYPE *locp, HexReg *reg)
