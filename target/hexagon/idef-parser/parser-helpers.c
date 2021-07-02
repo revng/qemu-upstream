@@ -1021,6 +1021,7 @@ HexValue gen_cast_op(Context *c,
                     &res, ", ", source, ");\n");
             }
         }
+        res.is_unsigned = source->is_unsigned;
         rvalue_free(c, locp, source);
         return res;
     }
