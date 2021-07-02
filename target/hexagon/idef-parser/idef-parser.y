@@ -206,7 +206,7 @@ statements : statements statement
 statement : control_statement
           | rvalue ';'
             {
-                rvalue_free(c, &@1, &$1);
+                gen_rvalue_free(c, &@1, &$1);
             }
           | code_block
           | ';'
@@ -277,7 +277,7 @@ assign_statement : lvalue '=' rvalue
                        $3 = rvalue_truncate(c, &@1, &$3);
                        $3 = rvalue_materialize(c, &@1, &$3);
                        OUT(c, &@1, "gen_write_new_pc(", &$3, ");\n");
-                       rvalue_free(c, &@1, &$3); /* Free temporary value */
+                       gen_rvalue_free(c, &@1, &$3); /* Free temporary value */
                    }
                  | LOAD '(' IMM ',' IMM ',' SIGN ',' var ',' lvalue ')'
                    {
@@ -302,7 +302,7 @@ assign_statement : lvalue '=' rvalue
                        $3 = rvalue_truncate(c, &@1, &$3);
                        $3 = rvalue_materialize(c, &@1, &$3);
                        OUT(c, &@1, "SET_USR_FIELD(USR_LPCFG, ", &$3, ");\n");
-                       rvalue_free(c, &@1, &$3);
+                       gen_rvalue_free(c, &@1, &$3);
                    }
                  | DEPOSIT '(' rvalue ',' rvalue ',' rvalue ')'
                    {
@@ -348,8 +348,8 @@ control_statement : frame_check
 
 frame_check : FCHK '(' rvalue ',' rvalue ')' ';'
               {
-                  rvalue_free(c, &@1, &$3);
-                  rvalue_free(c, &@1, &$5);
+                  gen_rvalue_free(c, &@1, &$3);
+                  gen_rvalue_free(c, &@1, &$5);
               }
             ;
 
@@ -720,7 +720,7 @@ rvalue : FAIL
              @1.last_column = @6.last_column;
              $$ = gen_tmp(c, &@1, 32);
              OUT(c, &@1, "gen_read_ireg(", &$$, ", ", &$3, ", ", &$6, ");\n");
-             rvalue_free(c, &@1, &$3);
+             gen_rvalue_free(c, &@1, &$3);
          }
        | CIRCADD '(' rvalue ',' rvalue ',' rvalue ')'
          {

@@ -151,7 +151,7 @@ HexValue gen_imm_value(Context *c __attribute__((unused)),
                           int value,
                           int bit_width);
 
-void rvalue_free(Context *c, YYLTYPE *locp, HexValue *rvalue);
+void gen_rvalue_free(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
 HexValue rvalue_materialize(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
