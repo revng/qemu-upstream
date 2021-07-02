@@ -2178,7 +2178,6 @@ HexValue gen_rvalue_fscr(Context *c, YYLTYPE *locp, HexValue *v)
 
 HexValue gen_rvalue_abs(Context *c, YYLTYPE *locp, HexValue *v)
 {
-    const char *bit_suffix = (v->bit_width == 64) ? "i64" : "i32";
     int bit_width = (v->bit_width == 64) ? 64 : 32;
     HexValue res;
     res.is_unsigned = v->is_unsigned;
@@ -2192,12 +2191,7 @@ HexValue gen_rvalue_abs(Context *c, YYLTYPE *locp, HexValue *v)
         c->inst.qemu_tmp_count++;
     } else {
         res = gen_tmp(c, locp, bit_width);
-        HexValue zero = gen_tmp_value(c, locp, "0", bit_width);
-        OUT(c, locp, "tcg_gen_neg_", bit_suffix, "(", &res, ", ", v, ");\n");
-        OUT(c, locp, "tcg_gen_movcond_i", &bit_width);
-        OUT(c, locp, "(TCG_COND_GT, ", &res, ", ", v, ", ", &zero);
-        OUT(c, locp, ", ", v, ", ", &res, ");\n");
-        rvalue_free(c, locp, &zero);
+        OUT(c, locp, "tcg_gen_abs_i", &bit_width, "(", &res, ", ", v, ");\n");
         rvalue_free(c, locp, v);
     }
     return res;
