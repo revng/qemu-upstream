@@ -772,53 +772,32 @@ static void gen_andl_op(Context *c, YYLTYPE *locp, unsigned bit_width,
     }
 }
 
-static void gen_mini_op(Context *c, YYLTYPE *locp, unsigned bit_width,
-                        HexValue *res, enum OpTypes op_types,
-                        HexValue *op1_ptr, HexValue *op2_ptr)
+static void gen_minmax_op(Context *c, YYLTYPE *locp, unsigned bit_width,
+                          HexValue *res, enum OpTypes op_types,
+                          HexValue *op1_ptr, HexValue *op2_ptr, bool minmax)
 {
     HexValue op1 = *op1_ptr;
     HexValue op2 = *op2_ptr;
-    const char *min = res->is_unsigned ? "tcg_gen_umin" : "tcg_gen_smin";
-    switch (op_types) {
-    case IMM_IMM:
-        OUT(c, locp, "int", &bit_width, "_t ", res, " = (", &op1, " <= ");
-        OUT(c, locp, &op2, ") ? ", &op1, " : ", &op2, ";\n");
-        break;
-    case IMM_REG:
-        op1.bit_width = bit_width;
-        op1 = rvalue_materialize(c, locp, &op1);
-        OUT(c, locp, min, "_i", &bit_width, "(");
-        OUT(c, locp, res, ", ", &op1, ", ", &op2, ");\n");
-        break;
-    case REG_IMM:
-        op2.bit_width = bit_width;
-        op2 = rvalue_materialize(c, locp, &op2);
-        /* Fallthrough */
-    case REG_REG:
-        OUT(c, locp, min, "_i", &bit_width, "(");
-        OUT(c, locp, res, ", ", &op1, ", ", &op2, ");\n");
-        break;
+    const char *mm;
+    if (minmax) {
+        // Max
+        mm = res->is_unsigned ? "tcg_gen_umax" : "tcg_gen_smax";
+    } else {
+        // Min
+        mm = res->is_unsigned ? "tcg_gen_umin" : "tcg_gen_smin";
     }
-    rvalue_free(c, locp, &op1);
-    rvalue_free(c, locp, &op2);
-}
-
-static void gen_maxi_op(Context *c, YYLTYPE *locp, unsigned bit_width,
-                        HexValue *res, enum OpTypes op_types,
-                        HexValue *op1_ptr, HexValue *op2_ptr)
-{
-    HexValue op1 = *op1_ptr;
-    HexValue op2 = *op2_ptr;
-    const char *min = res->is_unsigned ? "tcg_gen_umax" : "tcg_gen_smax";
     switch (op_types) {
     case IMM_IMM:
-        OUT(c, locp, "int", &bit_width, "_t ", res, " = (", &op1, " <= ");
-        OUT(c, locp, &op2, ") ? ", &op2, " : ", &op1, ";\n");
+        {
+            const char *s = minmax ? " <= " : " >= ";
+            OUT(c, locp, "int", &bit_width, "_t ", res, " = (", &op1, s);
+            OUT(c, locp, &op2, ") ? ", &op1, " : ", &op2, ";\n");
+        }
         break;
     case IMM_REG:
         op1.bit_width = bit_width;
         op1 = rvalue_materialize(c, locp, &op1);
-        OUT(c, locp, min, "_i", &bit_width, "(");
+        OUT(c, locp, mm, "_i", &bit_width, "(");
         OUT(c, locp, res, ", ", &op1, ", ", &op2, ");\n");
         break;
     case REG_IMM:
@@ -826,7 +805,7 @@ static void gen_maxi_op(Context *c, YYLTYPE *locp, unsigned bit_width,
         op2 = rvalue_materialize(c, locp, &op2);
         /* Fallthrough */
     case REG_REG:
-        OUT(c, locp, min, "_i", &bit_width, "(");
+        OUT(c, locp, mm, "_i", &bit_width, "(");
         OUT(c, locp, res, ", ", &op1, ", ", &op2, ");\n");
         break;
     }
@@ -980,10 +959,10 @@ HexValue gen_bin_op(Context *c,
         gen_andl_op(c, locp, bit_width, bit_suffix, &res, op_types, &op1, &op2);
         break;
     case MINI_OP:
-        gen_mini_op(c, locp, bit_width, &res, op_types, &op1, &op2);
+        gen_minmax_op(c, locp, bit_width, &res, op_types, &op1, &op2, false);
         break;
     case MAXI_OP:
-        gen_maxi_op(c, locp, bit_width, &res, op_types, &op1, &op2);
+        gen_minmax_op(c, locp, bit_width, &res, op_types, &op1, &op2, true);
         break;
     case MOD_OP:
         gen_mod_op(c, locp, &res, op_types, &op1, &op2);
