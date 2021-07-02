@@ -161,11 +161,11 @@ HexValue gen_rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
 int find_variable(Context *c, YYLTYPE *locp, HexValue *varid);
 
-void varid_allocate(Context *c,
-                    YYLTYPE *locp,
-                    HexValue *varid,
-                    int width,
-                    bool is_unsigned);
+void gen_varid_allocate(Context *c,
+                        YYLTYPE *locp,
+                        HexValue *varid,
+                        int width,
+                        bool is_unsigned);
 
 void ea_free(Context *c, YYLTYPE *locp);
 

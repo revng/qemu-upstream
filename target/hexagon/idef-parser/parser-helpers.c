@@ -409,11 +409,11 @@ int find_variable(Context *c, YYLTYPE *locp, HexValue *varid)
     return -1;
 }
 
-void varid_allocate(Context *c,
-                    YYLTYPE *locp,
-                    HexValue *varid,
-                    int width,
-                    bool is_unsigned)
+void gen_varid_allocate(Context *c,
+                        YYLTYPE *locp,
+                        HexValue *varid,
+                        int width,
+                        bool is_unsigned)
 {
     varid->bit_width = width;
     const char *bit_suffix = width == 64 ? "64" : "32";
@@ -1224,7 +1224,8 @@ void gen_assign(Context *c,
     }
     /* Create (if not present) and assign to temporary variable */
     if (dest->type == VARID) {
-        varid_allocate(c, locp, dest, value_m.bit_width, value_m.is_unsigned);
+        gen_varid_allocate(c, locp, dest, value_m.bit_width,
+                           value_m.is_unsigned);
     }
     int bit_width = dest->bit_width == 64 ? 64 : 32;
     if (bit_width != value_m.bit_width) {
@@ -1854,7 +1855,7 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
     /* Create temporary variable (if not present) */
     if (dst->type == VARID) {
         /* TODO: this is a common pattern, the parser should be varid-aware. */
-        varid_allocate(c, locp, dst, bit_width, is_unsigned);
+        gen_varid_allocate(c, locp, dst, bit_width, is_unsigned);
     }
     snprintf(size_suffix, 4, "%" PRIu64, size->imm.value * 8);
     int var_id = find_variable(c, locp, ea);
