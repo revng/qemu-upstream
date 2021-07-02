@@ -276,7 +276,7 @@ HexValue gen_tmp(Context *c, YYLTYPE *locp, int bit_width)
 {
     HexValue rvalue;
     rvalue.type = TEMP;
-    bit_width = (bit_width == 64) ? 64 : 32;
+    assert(bit_width == 32 || bit_width == 64);
     rvalue.bit_width = bit_width;
     rvalue.is_unsigned = false;
     rvalue.is_dotnew = false;
