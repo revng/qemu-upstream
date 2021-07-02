@@ -28,7 +28,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "qemu/compiler.h"
 #include "tcg/tcg-cond.h"
 
 #include "idef-parser.tab.h"
