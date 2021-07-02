@@ -88,15 +88,15 @@ void out_assert(Context *c, YYLTYPE *locp, void *dummy);
 void commit(Context *c);
 
 #define OUT_IMPL(c, locp, x)                    \
-    QEMU_GENERIC(typeof(*x),                \
-        (char,      str_print),             \
-        (uint8_t,   uint8_print),           \
-        (uint64_t,  uint64_print),          \
-        (int,       int_print),             \
-        (unsigned,  uint_print),            \
-        (HexValue,  rvalue_out),            \
-        out_assert                          \
-    )(c, locp, x);                          \
+    _Generic(*x,                                \
+        char:      str_print,                   \
+        uint8_t:   uint8_print,                 \
+        uint64_t:  uint64_print,                \
+        int:       int_print,                   \
+        unsigned:  uint_print,                  \
+        HexValue:  rvalue_out,                  \
+        default:   out_assert                   \
+    )(c, locp, x);
 
 /* Make a FOREACH macro */
 #define FE_1(c, locp, WHAT, X) WHAT(c, locp, X)
@@ -304,8 +304,6 @@ HexValue gen_rvalue_var(Context *c, YYLTYPE *locp, HexValue *var);
 
 HexValue gen_rvalue_mpy(Context *c, YYLTYPE *locp, HexMpy *mpy, HexValue *a,
                         HexValue *b);
-
-HexValue gen_rvalue_pow(Context *c, YYLTYPE *locp, HexValue *l, HexValue *r);
 
 HexValue gen_rvalue_not(Context *c, YYLTYPE *locp, HexValue *v);
 

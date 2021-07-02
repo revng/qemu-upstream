@@ -2040,19 +2040,6 @@ HexValue gen_rvalue_mpy(Context *c, YYLTYPE *locp, HexMpy *mpy, HexValue *a,
     return ret;
 }
 
-HexValue gen_rvalue_pow(Context *c, YYLTYPE *locp, HexValue *l, HexValue *r)
-{
-    /* We assume that this is a shorthand for a shift */
-    yyassert(c, locp, l->type == IMMEDIATE && r->imm.value == 2,
-             "Exponentiation is not a left shift!\n");
-    HexValue one = gen_imm_value(c, locp, 1, 32);
-    HexValue shift = gen_bin_op(c, locp, SUB_OP, r, &one);
-    HexValue res = gen_bin_op(c, locp, ASL_OP, l, &shift);
-    rvalue_free(c, locp, &one);
-    rvalue_free(c, locp, &shift);
-    return res;
-}
-
 HexValue gen_rvalue_not(Context *c, YYLTYPE *locp, HexValue *v)
 {
     const char *bit_suffix = (v->bit_width == 64) ? "i64" : "i32";

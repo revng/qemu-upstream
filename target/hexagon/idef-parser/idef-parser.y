@@ -55,7 +55,7 @@
 %expect 1
 
 %token INAME DREG DIMM DPRE DEA RREG WREG FREG FIMM RPRE WPRE FPRE FWRAP FEA VAR
-%token POW ABS CROUND ROUND CIRCADD COUNTONES INC DEC ANDA ORA XORA PLUSPLUS ASL
+%token ABS CROUND ROUND CIRCADD COUNTONES INC DEC ANDA ORA XORA PLUSPLUS ASL
 %token ASR LSR EQ NEQ LTE GTE MIN MAX ANDL ORL FOR ICIRC IF MUN FSCR FCHK SXT
 %token ZXT CONSTEXT LOCNT BREV SIGN LOAD STORE CONSTLL CONSTULL PC NPC LPCFG
 %token CANCEL IDENTITY PART1 BREV_4 BREV_8 ROTL INSBITS SETBITS EXTBITS EXTRANGE
@@ -91,7 +91,6 @@
 %left ASL ASR LSR
 %right ABS
 %left '-' '+'
-%left POW
 %left '*' '/' '%' MPY
 %right '~' '!'
 %left '['
@@ -509,11 +508,6 @@ rvalue : FAIL
          {
              @1.last_column = @3.last_column;
              $$ = gen_bin_op(c, &@1, MUL_OP, &$1, &$3);
-         }
-       | rvalue POW rvalue
-         {
-             @1.last_column = @3.last_column;
-             $$ = gen_rvalue_pow(c, &@1, &$1, &$3);
          }
        | rvalue '%' rvalue
          {

@@ -217,7 +217,6 @@ SIGN_ID                  s|u
 "fGEN_TCG_"{INST_NAME}"(" { return FWRAP; }
 "IV1DEAD()"              |
 "fPAUSE(uiV);"           { return ';'; }
-"**"                     { return POW; }
 "+="                     { return INC; }
 "-="                     { return DEC; }
 "++"                     { return PLUSPLUS; }
