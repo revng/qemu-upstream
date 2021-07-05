@@ -51,7 +51,6 @@ HEX_TESTS += fpstuff
 
 HEX_TESTS += test_abs
 HEX_TESTS += test_add
-HEX_TESTS += test_andp
 HEX_TESTS += test_bitcnt
 HEX_TESTS += test_bitsplit
 HEX_TESTS += test_call
