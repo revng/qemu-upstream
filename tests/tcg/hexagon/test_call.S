@@ -38,14 +38,11 @@ _start:
     .size    _start, .Ltmp1-_start
 write:
     {
-        r2=##dummy_buffer
+        r0=##dummy_buffer
     }
-    { r0=r2; }
     {
-        r2=#256
+        r1=#256
     }
-    { r1=r2; }
-    { trap0(#7); }
     {
         jumpr r31
     }

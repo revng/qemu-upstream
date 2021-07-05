@@ -1,6 +1,4 @@
-/* Purpose: simple C Program to test hardware loops.
- * It should print numbersfrom 0 to 9.
- */
+/* Purpose: simple C Program to test hardware loops. */
 
     .text
     .globl _start
@@ -13,7 +11,6 @@ _start:
         loop0(.LBB0_1,#10)
         r2=#0
     }
-.Ltmp0:
 .LBB0_1:
     {
         r2=add(r2,#1)

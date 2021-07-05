@@ -3,8 +3,6 @@
  * Here we perform a jump that skips the code resetting R2 from 0xDEADBEEF to 0,
  * only if P0.new is true, but P0 is assigned to 1 (R4) in the next instruction
  * in the packet.
- * A successful run of the program will show R2 retaining the 0xDEADBEEF value
- * in the CPU dump.
  */
 
     .text

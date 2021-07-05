@@ -1,6 +1,4 @@
-/* Purpose: test immediate extender instructions.
- * In the CPU dump R0 should contain 0xDEADBEEF.
- */
+/* Purpose: test immediate extender instructions. */
 
     .text
     .globl _start

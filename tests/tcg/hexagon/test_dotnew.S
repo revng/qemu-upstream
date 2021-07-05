@@ -1,7 +1,4 @@
-/* Purpose: test the .new operator while performing memory stores.
- * In the final CPU dump R0 should contain 3, R1 should contain 2 and R2 should
- * contain 1.
- */
+/* Purpose: test the .new operator while performing memory stores. */
     .text
     .globl _start
 
