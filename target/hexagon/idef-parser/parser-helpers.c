@@ -443,6 +443,29 @@ enum OpTypes {
     REG_REG = 3,
 };
 
+void gen_operands_extend(Context *c,
+                         YYLTYPE *locp,
+                         HexValue *op1,
+                         HexValue *op2) {
+    enum OpTypes op_types = (op1->type != IMMEDIATE) << 1
+                            | (op2->type != IMMEDIATE);
+
+    switch (op_types) {
+    case IMM_IMM:
+        break;
+    case IMM_REG:
+        *op2 = gen_rvalue_extend(c, locp, op2);
+        break;
+    case REG_IMM:
+        *op1 = gen_rvalue_extend(c, locp, op1);
+        break;
+    case REG_REG:
+        *op1 = gen_rvalue_extend(c, locp, op1);
+        *op2 = gen_rvalue_extend(c, locp, op2);
+        break;
+    }
+}
+
 HexValue gen_bin_cmp(Context *c,
                      YYLTYPE *locp,
                      TCGCond type,
@@ -454,28 +477,14 @@ HexValue gen_bin_cmp(Context *c,
     enum OpTypes op_types = (op1.type != IMMEDIATE) << 1
                             | (op2.type != IMMEDIATE);
 
-    /* Find bit width of the two operands, if at least one is 64 bit use a */
-    /* 64bit operation, eventually extend 32bit operands. */
     bool op_is64bit = op1.bit_width == 64 || op2.bit_width == 64;
+
+    // Extend to 64-bits, if required
+    if (op_is64bit)
+        gen_operands_extend(c, locp, &op1, &op2);
+
     const char *bit_suffix = op_is64bit ? "i64" : "i32";
     int bit_width = (op_is64bit) ? 64 : 32;
-    if (op_is64bit) {
-        switch (op_types) {
-        case IMM_IMM:
-            break;
-        case IMM_REG:
-            op2 = gen_rvalue_extend(c, locp, &op2);
-            break;
-        case REG_IMM:
-            op1 = gen_rvalue_extend(c, locp, &op1);
-            break;
-        case REG_REG:
-            op1 = gen_rvalue_extend(c, locp, &op1);
-            op2 = gen_rvalue_extend(c, locp, &op2);
-            break;
-        }
-    }
-
     HexValue res = gen_tmp(c, locp, bit_width);
 
     switch (op_types) {
@@ -852,33 +861,20 @@ HexValue gen_bin_op(Context *c,
     enum OpTypes op_types = (op1.type != IMMEDIATE) << 1
                             | (op2.type != IMMEDIATE);
 
-    /* Find bit width of the two operands, if at least one is 64 bit use a */
-    /* 64bit operation, eventually extend 32bit operands. */
     bool op_is64bit = op1.bit_width == 64 || op2.bit_width == 64;
+
     /* Shift greater than 32 are 64 bits wide */
     if (type == ASL_OP && op2.type == IMMEDIATE &&
         op2.imm.type == VALUE && op2.imm.value >= 32)
         op_is64bit = true;
+
+    // Extend to 64-bits, if required
+    if (op_is64bit)
+        gen_operands_extend(c, locp, &op1, &op2);
+
+    HexValue res;
     const char *bit_suffix = op_is64bit ? "i64" : "i32";
     int bit_width = (op_is64bit) ? 64 : 32;
-    /* Handle bit width */
-    if (op_is64bit) {
-        switch (op_types) {
-        case IMM_IMM:
-            break;
-        case IMM_REG:
-            op2 = gen_rvalue_extend(c, locp, &op2);
-            break;
-        case REG_IMM:
-            op1 = gen_rvalue_extend(c, locp, &op1);
-            break;
-        case REG_REG:
-            op1 = gen_rvalue_extend(c, locp, &op1);
-            op2 = gen_rvalue_extend(c, locp, &op2);
-            break;
-        }
-    }
-    HexValue res;
     if (op_types != IMM_IMM) {
         res = gen_tmp(c, locp, bit_width);
     } else {
