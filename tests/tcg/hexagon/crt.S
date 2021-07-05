@@ -13,8 +13,6 @@ init:
         dealloc_return
     }
 
-    .space 240
-
     .globl pass
 pass:
     r0 = #0
