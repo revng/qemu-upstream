@@ -149,7 +149,8 @@ hexagon_ss.add(files(
 idef_parser_input_generated = custom_target(
     'idef_parser_input.h.inc',
     output: 'idef_parser_input.h.inc',
-    depend_files: [hex_common_py],
+    depends: [semantics_generated],
+    depend_files: [hex_common_py, gen_tcg_h],
     command: [python, files('gen_idef_parser_funcs.py'), semantics_generated, attribs_def, gen_tcg_h, '@OUTPUT@'],
 )
 
@@ -157,9 +158,7 @@ preprocessed_idef_parser_input_generated = custom_target(
     'idef_parser_input.preprocessed.h.inc',
     output: 'idef_parser_input.preprocessed.h.inc',
     input: idef_parser_input_generated,
-    capture: true,
-    depend_files: [hex_common_py],
-    command: [idef_parser_dir / 'prepare', '@INPUT@', '-I' + idef_parser_dir],
+    command: [idef_parser_dir / 'prepare', '@INPUT@', '-I' + idef_parser_dir, '-o', '@OUTPUT@'],
 )
 
 flex = generator(find_program('flex'),
@@ -190,9 +189,22 @@ idef_generated_tcg = custom_target(
     command: [idef_parser, '@INPUT@', '@OUTPUT0@', '@OUTPUT1@', '@OUTPUT2@'],
 )
 
+indent = find_program('indent', required: false)
+if indent.found()
+  idef_generated_tcg_c = custom_target('asd',
+                                       input: idef_generated_tcg[0],
+                                       output: 'idef-generated-emitter.indented.c',
+                                       command: [indent, '-linux', '@INPUT@', '-o', '@OUTPUT@'])
+else
+  idef_generated_tcg_c = custom_target('asd',
+                                       input: idef_generated_tcg[0],
+                                       output: 'idef-generated-emitter.indented.c',
+                                       command: ['cp', '@INPUT@', '@OUTPUT@'])
+endif
+
 idef_generated_list = idef_generated_tcg[2].full_path()
 
-hexagon_ss.add(idef_generated_tcg)
+hexagon_ss.add(idef_generated_tcg_c)
 
 #
 # Step 5
@@ -204,7 +216,7 @@ hexagon_ss.add(idef_generated_tcg)
 helper_protos_generated = custom_target(
     'helper_protos_generated.h.inc',
     output: 'helper_protos_generated.h.inc',
-    depends: [semantics_generated, idef_generated_tcg],
+    depends: [semantics_generated, idef_generated_tcg_c, idef_generated_tcg],
     depend_files: [hex_common_py, attribs_def, gen_tcg_h],
     command: [python, files('gen_helper_protos.py'), semantics_generated, attribs_def, gen_tcg_h, idef_generated_list, '@OUTPUT@'],
 )
@@ -213,7 +225,7 @@ hexagon_ss.add(helper_protos_generated)
 helper_funcs_generated = custom_target(
     'helper_funcs_generated.c.inc',
     output: 'helper_funcs_generated.c.inc',
-    depends: [semantics_generated, idef_generated_tcg],
+    depends: [semantics_generated, idef_generated_tcg_c, idef_generated_tcg],
     depend_files: [hex_common_py, attribs_def, gen_tcg_h],
     command: [python, files('gen_helper_funcs.py'), semantics_generated, attribs_def, gen_tcg_h, idef_generated_list, '@OUTPUT@'],
 )
@@ -222,7 +234,7 @@ hexagon_ss.add(helper_funcs_generated)
 tcg_funcs_generated = custom_target(
     'tcg_funcs_generated.c.inc',
     output: 'tcg_funcs_generated.c.inc',
-    depends: [semantics_generated, idef_generated_tcg],
+    depends: [semantics_generated, idef_generated_tcg_c, idef_generated_tcg],
     depend_files: [hex_common_py, attribs_def, gen_tcg_h],
     command: [python, files('gen_tcg_funcs.py'), semantics_generated, attribs_def, gen_tcg_h, idef_generated_list, '@OUTPUT@'],
 )
