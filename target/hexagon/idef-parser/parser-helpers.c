@@ -272,7 +272,7 @@ static HexValue get_ternary_cond(Context *c, YYLTYPE *locp)
 /* Temporary values creation */
 HexValue gen_tmp(Context *c, YYLTYPE *locp, int bit_width)
 {
-    HexValue rvalue;
+    HexValue rvalue = { 0 };
     rvalue.type = TEMP;
     assert(bit_width == 32 || bit_width == 64);
     rvalue.bit_width = bit_width;
@@ -291,7 +291,7 @@ HexValue gen_tmp_value(Context *c,
                        const char *value,
                        int bit_width)
 {
-    HexValue rvalue;
+    HexValue rvalue = { 0 };
     rvalue.type = TEMP;
     rvalue.bit_width = bit_width;
     rvalue.is_unsigned = false;
@@ -309,7 +309,7 @@ static HexValue gen_tmp_value_from_imm(Context *c,
                                        HexValue *value)
 {
     assert(value->type == IMMEDIATE);
-    HexValue rvalue;
+    HexValue rvalue = { 0 };
     rvalue.type = TEMP;
     rvalue.bit_width = value->bit_width;
     rvalue.is_unsigned = value->is_unsigned;
@@ -327,7 +327,7 @@ HexValue gen_imm_value(Context *c __attribute__((unused)),
                        int value,
                        int bit_width)
 {
-    HexValue rvalue;
+    HexValue rvalue = { 0 };
     rvalue.type = IMMEDIATE;
     rvalue.bit_width = bit_width;
     rvalue.is_unsigned = false;
@@ -740,7 +740,7 @@ static void gen_andl_op(Context *c, YYLTYPE *locp, unsigned bit_width,
                         const char *bit_suffix, HexValue *res,
                         enum OpTypes op_types, HexValue *op1, HexValue *op2)
 {
-    HexValue zero, tmp1, tmp2;
+    HexValue zero = { 0 }, tmp1 = { 0 }, tmp2 = { 0 };
     switch (op_types) {
     case IMM_IMM:
         OUT(c, locp, "int", &bit_width, "_t ",
@@ -872,7 +872,7 @@ HexValue gen_bin_op(Context *c,
     if (op_is64bit)
         gen_operands_extend(c, locp, &op1, &op2);
 
-    HexValue res;
+    HexValue res = { 0 };
     const char *bit_suffix = op_is64bit ? "i64" : "i32";
     int bit_width = (op_is64bit) ? 64 : 32;
     if (op_types != IMM_IMM) {
@@ -2014,7 +2014,7 @@ HexValue gen_rvalue_not(Context *c, YYLTYPE *locp, HexValue *v)
 {
     const char *bit_suffix = (v->bit_width == 64) ? "i64" : "i32";
     int bit_width = (v->bit_width == 64) ? 64 : 32;
-    HexValue res;
+    HexValue res = { 0 };
     res.is_unsigned = v->is_unsigned;
     res.is_dotnew = false;
     res.is_manual = false;
@@ -2037,7 +2037,7 @@ HexValue gen_rvalue_notl(Context *c, YYLTYPE *locp, HexValue *v)
 {
     const char *bit_suffix = (v->bit_width == 64) ? "i64" : "i32";
     int bit_width = (v->bit_width == 64) ? 64 : 32;
-    HexValue res;
+    HexValue res = { 0 };
     res.is_unsigned = v->is_unsigned;
     res.is_dotnew = false;
     res.is_manual = false;
@@ -2149,7 +2149,7 @@ HexValue gen_rvalue_fscr(Context *c, YYLTYPE *locp, HexValue *v)
 HexValue gen_rvalue_abs(Context *c, YYLTYPE *locp, HexValue *v)
 {
     int bit_width = (v->bit_width == 64) ? 64 : 32;
-    HexValue res;
+    HexValue res = { 0 };
     res.is_unsigned = v->is_unsigned;
     res.is_dotnew = false;
     res.is_manual = false;
@@ -2171,7 +2171,7 @@ HexValue gen_rvalue_neg(Context *c, YYLTYPE *locp, HexValue *v)
 {
     const char *bit_suffix = (v->bit_width == 64) ? "i64" : "i32";
     int bit_width = (v->bit_width == 64) ? 64 : 32;
-    HexValue res;
+    HexValue res = { 0 };
     res.is_unsigned = v->is_unsigned;
     res.is_dotnew = false;
     res.is_manual = false;

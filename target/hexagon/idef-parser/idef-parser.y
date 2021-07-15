@@ -457,7 +457,7 @@ rvalue : FAIL
        | PC
          {
              /* Read PC from the CR */
-             HexValue rvalue;
+             HexValue rvalue = { 0 };
              rvalue.type = IMMEDIATE;
              rvalue.imm.type = IMM_PC;
              rvalue.bit_width = 32;
@@ -468,7 +468,7 @@ rvalue : FAIL
          {
              /* NPC is only read from CALLs, so we can hardcode it
                 at translation time */
-             HexValue rvalue;
+             HexValue rvalue = { 0 };
              rvalue.type = IMMEDIATE;
              rvalue.imm.type = IMM_NPC;
              rvalue.bit_width = 32;
@@ -477,7 +477,7 @@ rvalue : FAIL
          }
        | CONSTEXT
          {
-             HexValue rvalue;
+             HexValue rvalue = { 0 };
              rvalue.type = IMMEDIATE;
              rvalue.imm.type = IMM_CONSTEXT;
              rvalue.is_unsigned = true;
@@ -648,7 +648,7 @@ rvalue : FAIL
        | rvalue '?'
          {
              $1.is_manual = true;
-             Ternary t = {0};
+             Ternary t = { 0 };
              t.state = IN_LEFT;
              t.cond = $1;
              g_array_append_val(c->ternary, t);
