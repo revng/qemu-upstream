@@ -276,7 +276,7 @@ HexValue gen_tmp(Context *c, YYLTYPE *locp, int bit_width)
     rvalue.type = TEMP;
     assert(bit_width == 32 || bit_width == 64);
     rvalue.bit_width = bit_width;
-    rvalue.is_unsigned = false;
+    rvalue.signedness = SIGNED;
     rvalue.is_dotnew = false;
     rvalue.is_manual = false;
     rvalue.tmp.index = c->inst.tmp_count;
@@ -294,7 +294,7 @@ HexValue gen_tmp_value(Context *c,
     HexValue rvalue;
     rvalue.type = TEMP;
     rvalue.bit_width = bit_width;
-    rvalue.is_unsigned = false;
+    rvalue.signedness = SIGNED;
     rvalue.is_dotnew = false;
     rvalue.is_manual = false;
     rvalue.tmp.index = c->inst.tmp_count;
@@ -312,7 +312,7 @@ static HexValue gen_tmp_value_from_imm(Context *c,
     HexValue rvalue;
     rvalue.type = TEMP;
     rvalue.bit_width = value->bit_width;
-    rvalue.is_unsigned = value->is_unsigned;
+    rvalue.signedness = value->signedness;
     rvalue.is_dotnew = false;
     rvalue.is_manual = false;
     rvalue.tmp.index = c->inst.tmp_count;
@@ -330,7 +330,7 @@ HexValue gen_imm_value(Context *c __attribute__((unused)),
     HexValue rvalue;
     rvalue.type = IMMEDIATE;
     rvalue.bit_width = bit_width;
-    rvalue.is_unsigned = false;
+    rvalue.signedness = SIGNED;
     rvalue.is_dotnew = false;
     rvalue.is_manual = false;
     rvalue.imm.type = VALUE;
@@ -371,7 +371,8 @@ HexValue gen_rvalue_extend(Context *c, YYLTYPE *locp, HexValue *rvalue)
     } else {
         if (rvalue->bit_width == 32) {
             HexValue res = gen_tmp(c, locp, 64);
-            const char *sign_suffix = (rvalue->is_unsigned) ? "u" : "";
+            assert_signedness(c, locp, rvalue->signedness);
+            const char *sign_suffix = (rvalue->signedness == UNSIGNED) ? "u" : "";
             OUT(c, locp, "tcg_gen_ext", sign_suffix,
                 "_i32_i64(", &res, ", ", rvalue, ");\n");
             gen_rvalue_free(c, locp, rvalue);
@@ -413,8 +414,9 @@ void gen_varid_allocate(Context *c,
                         YYLTYPE *locp,
                         HexValue *varid,
                         int width,
-                        bool is_unsigned)
+                        HexSignedness signedness)
 {
+    assert_signedness(c, locp, signedness);
     varid->bit_width = width;
     const char *bit_suffix = width == 64 ? "64" : "32";
     int index = find_variable(c, locp, varid);
@@ -423,14 +425,14 @@ void gen_varid_allocate(Context *c,
         Var *other = &g_array_index(c->inst.allocated, Var, index);
         varid->var.name = other->name;
         varid->bit_width = other->bit_width;
-        varid->is_unsigned = other->is_unsigned;
+        varid->signedness = other->signedness;
     } else {
         EMIT_HEAD(c, "TCGv_i%s %s", bit_suffix, varid->var.name->str);
         EMIT_HEAD(c, " = tcg_temp_local_new_i%s();\n", bit_suffix);
         Var new_var = {
             .name = varid->var.name,
             .bit_width = width,
-            .is_unsigned = is_unsigned,
+            .signedness = signedness,
         };
         g_array_append_val(c->inst.allocated, new_var);
     }
@@ -781,12 +783,14 @@ static void gen_minmax_op(Context *c, YYLTYPE *locp, unsigned bit_width,
     HexValue op1 = *op1_ptr;
     HexValue op2 = *op2_ptr;
     const char *mm;
+    assert_signedness(c, locp, res->signedness);
+    bool is_unsigned = res->signedness == UNSIGNED;
     if (minmax) {
         // Max
-        mm = res->is_unsigned ? "tcg_gen_umax" : "tcg_gen_smax";
+        mm = is_unsigned ? "tcg_gen_umax" : "tcg_gen_smax";
     } else {
         // Min
-        mm = res->is_unsigned ? "tcg_gen_umin" : "tcg_gen_smin";
+        mm = is_unsigned ? "tcg_gen_umin" : "tcg_gen_smin";
     }
     switch (op_types) {
     case IMM_IMM:
@@ -886,7 +890,10 @@ HexValue gen_bin_op(Context *c,
         res.bit_width = bit_width;
     }
     /* Handle signedness, if both unsigned -> result is unsigned, else signed */
-    res.is_unsigned = op1.is_unsigned && op2.is_unsigned;
+    assert_signedness(c, locp, op1.signedness);
+    assert_signedness(c, locp, op2.signedness);
+    res.signedness = (op1.signedness == UNSIGNED
+                      && op2.signedness == UNSIGNED) ? UNSIGNED : SIGNED;
 
     switch (type) {
     case ADD_OP:
@@ -979,7 +986,8 @@ HexValue gen_cast_op(Context *c,
         if (source->bit_width > target_width) {
             OUT(c, locp, "tcg_gen_trunc_i64_tl(", &res, ", ", source, ");\n");
         } else {
-            if (source->is_unsigned) {
+            assert_signedness(c, locp, source->signedness);
+            if (source->signedness == UNSIGNED) {
                 /* Extend unsigned */
                 OUT(c, locp, "tcg_gen_extu_i32_i64(",
                     &res, ", ", source, ");\n");
@@ -989,7 +997,7 @@ HexValue gen_cast_op(Context *c,
                     &res, ", ", source, ");\n");
             }
         }
-        res.is_unsigned = source->is_unsigned;
+        res.signedness = source->signedness;
         gen_rvalue_free(c, locp, source);
         return res;
     }
@@ -1000,7 +1008,7 @@ HexValue gen_extend_op(Context *c,
                        HexValue *src_width_ptr,
                        HexValue *dst_width_ptr,
                        HexValue *value_ptr,
-                       bool is_unsigned) {
+                       HexSignedness signedness) {
     HexValue src_width = *src_width_ptr;
     HexValue dst_width = *dst_width_ptr;
     HexValue value = *value_ptr;
@@ -1014,7 +1022,8 @@ HexValue gen_extend_op(Context *c,
     HexValue zero = gen_tmp_value(c, locp, "0", 64);
     OUT(c, locp, "tcg_gen_sub_i64(",
         &shift, ", ", &shift, ", ", &src_width, ");\n");
-    if (is_unsigned) {
+    assert_signedness(c, locp, signedness);
+    if (signedness == UNSIGNED) {
         HexValue mask = gen_tmp_value(c, locp, "0xffffffffffffffff", 64);
         OUT(c, locp, "tcg_gen_shr_i64(",
             &mask, ", ", &mask, ", ", &shift, ");\n");
@@ -1036,7 +1045,7 @@ HexValue gen_extend_op(Context *c,
     gen_rvalue_free(c, locp, &shift);
     gen_rvalue_free(c, locp, &zero);
 
-    res.is_unsigned = is_unsigned;
+    res.signedness = signedness;
     return res;
 }
 
@@ -1058,7 +1067,7 @@ void gen_rdeposit_op(Context *c,
     width_m = rvalue_materialize(c, locp, &width_m);
 
     HexValue mask = gen_tmp_value(c, locp, "0xffffffffffffffffUL", 64);
-    mask.is_unsigned = true;
+    mask.signedness = UNSIGNED;
     HexValue k64 = gen_tmp_value(c, locp, "64", 64);
     k64 = gen_bin_op(c, locp, SUB_OP, &k64, &width_m);
     mask = gen_bin_op(c, locp, LSR_OP, &mask, &k64);
@@ -1135,10 +1144,11 @@ HexValue gen_extract_op(Context *c,
     yyassert(c, locp, index->type == IMMEDIATE,
              "Extract index must be immediate!\n");
     int bit_width = (source->bit_width == 64) ? 64 : 32;
-    const char *sign_prefix = (extract->is_unsigned) ? "" : "s";
+    assert_signedness(c, locp, extract->signedness);
+    const char *sign_prefix = (extract->signedness == UNSIGNED) ? "" : "s";
     int width = extract->bit_width;
     HexValue res = gen_tmp(c, locp, bit_width);
-    res.is_unsigned = extract->is_unsigned;
+    res.signedness = extract->signedness;
     OUT(c, locp, "tcg_gen_", sign_prefix, "extract_i", &bit_width,
         "(", &res, ", ", source);
     OUT(c, locp, ", ", index, " * ", &width, ", ", &width, ");\n");
@@ -1146,8 +1156,8 @@ HexValue gen_extract_op(Context *c,
     /* Some extract operations have bit_width != storage_bit_width */
     if (extract->storage_bit_width > bit_width) {
         HexValue tmp = gen_tmp(c, locp, extract->storage_bit_width);
-        tmp.is_unsigned = extract->is_unsigned;
-        if (extract->is_unsigned) {
+        tmp.signedness = extract->signedness;
+        if (extract->signedness == UNSIGNED) {
             /* Extend unsigned */
             OUT(c, locp, "tcg_gen_extu_i32_i64(",
                 &tmp, ", ", &res, ");\n");
@@ -1171,7 +1181,7 @@ HexValue gen_read_reg(Context *c, YYLTYPE *locp, HexValue *reg)
              "reg must be a register arg or register!");
     if (reg->type == REGISTER) {
         HexValue tmp = gen_tmp(c, locp, 32);
-        tmp.is_unsigned = reg->is_unsigned;
+        tmp.signedness = reg->signedness;
         OUT(c, locp, "gen_read_reg(", &tmp, ", ", &reg->reg.id, ");\n");
         gen_rvalue_free(c, locp, reg);
         return tmp;
@@ -1215,8 +1225,9 @@ void gen_assign(Context *c,
     }
     /* Create (if not present) and assign to temporary variable */
     if (dest->type == VARID) {
+        assert_signedness(c, locp, value_m.signedness);
         gen_varid_allocate(c, locp, dest, value_m.bit_width,
-                           value_m.is_unsigned);
+                           value_m.signedness);
     }
     int bit_width = dest->bit_width == 64 ? 64 : 32;
     if (bit_width != value_m.bit_width) {
@@ -1428,11 +1439,11 @@ HexValue gen_round(Context *c,
 
     HexValue src_width = gen_imm_value(c, locp, src.bit_width, 32);
     HexValue dst_width = gen_imm_value(c, locp, 64, 32);
-    HexValue a = gen_extend_op(c, locp, &src_width, &dst_width, &src, false);
+    HexValue a = gen_extend_op(c, locp, &src_width, &dst_width, &src, SIGNED);
 
     src_width = gen_imm_value(c, locp, 5, 32);
     dst_width = gen_imm_value(c, locp, 64, 32);
-    HexValue b = gen_extend_op(c, locp, &src_width, &dst_width, &pos, true);
+    HexValue b = gen_extend_op(c, locp, &src_width, &dst_width, &pos, UNSIGNED);
 
     /* Disable auto-free of values used more than once */
     a.is_manual = true;
@@ -1630,7 +1641,7 @@ HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n)
     const char *suffix = source->bit_width == 64 ? "i64" : "i32";
 
     HexValue res = gen_tmp(c, locp, source->bit_width);
-    res.is_unsigned = source->is_unsigned;
+    res.signedness = source->signedness;
     OUT(c, locp, "tcg_gen_rotl_", suffix, "(",
         &res, ", ", source, ", ", &amount, ");\n");
     gen_rvalue_free(c, locp, source);
@@ -1653,9 +1664,9 @@ HexValue gen_deinterleave(Context *c, YYLTYPE *locp, HexValue *mixed)
     HexValue src = gen_rvalue_extend(c, locp, mixed);
 
     HexValue a = gen_tmp(c, locp, 64);
-    a.is_unsigned = true;
+    a.signedness = UNSIGNED;
     HexValue b = gen_tmp(c, locp, 64);
-    b.is_unsigned = true;
+    b.signedness = UNSIGNED;
 
     const char **masks = INTERLEAVE_MASKS;
 
@@ -1664,7 +1675,7 @@ HexValue gen_deinterleave(Context *c, YYLTYPE *locp, HexValue *mixed)
     OUT(c, locp, "tcg_gen_andi_i64(", &b, ", ", &src, ", ", masks[0], ");\n");
 
     HexValue res = gen_tmp(c, locp, 64);
-    res.is_unsigned = true;
+    res.signedness = UNSIGNED;
 
     unsigned shift = 1;
     for (unsigned i = 1; i < 6; ++i) {
@@ -1692,15 +1703,15 @@ HexValue gen_interleave(Context *c,
                         HexValue *even)
 {
     HexValue a = gen_rvalue_truncate(c, locp, odd);
-    a.is_unsigned = true;
+    a.signedness = UNSIGNED;
     HexValue b = gen_rvalue_truncate(c, locp, even);
-    a.is_unsigned = true;
+    a.signedness = UNSIGNED;
 
     a = gen_rvalue_extend(c, locp, &a);
     b = gen_rvalue_extend(c, locp, &b);
 
     HexValue res = gen_tmp(c, locp, 64);
-    res.is_unsigned = true;
+    res.signedness = UNSIGNED;
 
     const char **masks = INTERLEAVE_MASKS;
 
@@ -1835,18 +1846,19 @@ void gen_pre_assign(Context *c, YYLTYPE *locp, HexValue *lp, HexValue *rp)
 }
 
 void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
-              bool is_unsigned, HexValue *ea, HexValue *dst)
+              HexSignedness signedness, HexValue *ea, HexValue *dst)
 {
     /* Memop width is specified in the load macro */
     int bit_width = (size->imm.value > 4) ? 64 : 32;
+    assert_signedness(c, locp, signedness);
     const char *sign_suffix = (size->imm.value > 4)
                               ? ""
-                              : ((is_unsigned) ? "u" : "s");
+                              : ((signedness == UNSIGNED) ? "u" : "s");
     char size_suffix[4] = { 0 };
     /* Create temporary variable (if not present) */
     if (dst->type == VARID) {
         /* TODO: this is a common pattern, the parser should be varid-aware. */
-        gen_varid_allocate(c, locp, dst, bit_width, is_unsigned);
+        gen_varid_allocate(c, locp, dst, bit_width, signedness);
     }
     snprintf(size_suffix, 4, "%" PRIu64, size->imm.value * 8);
     int var_id = find_variable(c, locp, ea);
@@ -1890,7 +1902,7 @@ void gen_sethalf(Context *c, YYLTYPE *locp, HexCast *sh, HexValue *n,
         int var_id = find_variable(c, locp, dst);
         if (var_id == -1) {
             HexValue zero = gen_imm_value(c, locp, 0, 64);
-            zero.is_unsigned = true;
+            zero.signedness = UNSIGNED;
             dst->bit_width = 64;
             gen_assign(c, locp, dst, &zero);
         } else {
@@ -1979,7 +1991,7 @@ HexValue gen_rvalue_var(Context *c, YYLTYPE *locp, HexValue *var)
             found = true;
             other->name = var->var.name;
             var->bit_width = other->bit_width;
-            var->is_unsigned = other->is_unsigned;
+            var->signedness = other->signedness;
             break;
         }
     }
@@ -1990,8 +2002,11 @@ HexValue gen_rvalue_var(Context *c, YYLTYPE *locp, HexValue *var)
 HexValue gen_rvalue_mpy(Context *c, YYLTYPE *locp, HexMpy *mpy, HexValue *a,
                         HexValue *b)
 {
-    a->is_unsigned = mpy->first_unsigned;
-    b->is_unsigned = mpy->second_unsigned;
+    assert_signedness(c, locp, mpy->first_signedness);
+    assert_signedness(c, locp, mpy->second_signedness);
+    // WIP
+    a->signedness = mpy->first_signedness;
+    b->signedness = mpy->second_signedness;
     *a = gen_cast_op(c, locp, a, mpy->first_bit_width * 2);
     /* Handle fMPTY3216.. */
     if (mpy->first_bit_width == 32) {
@@ -2004,8 +2019,12 @@ HexValue gen_rvalue_mpy(Context *c, YYLTYPE *locp, HexMpy *mpy, HexValue *a,
     if (mpy->first_bit_width == 16 && mpy->second_bit_width == 16) {
         HexValue src_width = gen_imm_value(c, locp, 32, 32);
         HexValue dst_width = gen_imm_value(c, locp, 64, 32);
+        assert_signedness(c, locp, mpy->first_signedness);
+        assert_signedness(c, locp, mpy->second_signedness);
+        HexSignedness signedness = (mpy->first_signedness == UNSIGNED
+                                    && mpy->second_signedness == UNSIGNED) ? UNSIGNED : SIGNED;
         ret = gen_extend_op(c, locp, &src_width, &dst_width, &ret,
-                            mpy->first_unsigned && mpy->second_unsigned);
+                            signedness);
     }
     return ret;
 }
@@ -2015,7 +2034,7 @@ HexValue gen_rvalue_not(Context *c, YYLTYPE *locp, HexValue *v)
     const char *bit_suffix = (v->bit_width == 64) ? "i64" : "i32";
     int bit_width = (v->bit_width == 64) ? 64 : 32;
     HexValue res;
-    res.is_unsigned = v->is_unsigned;
+    res.signedness = v->signedness;
     res.is_dotnew = false;
     res.is_manual = false;
     if (v->type == IMMEDIATE) {
@@ -2038,7 +2057,7 @@ HexValue gen_rvalue_notl(Context *c, YYLTYPE *locp, HexValue *v)
     const char *bit_suffix = (v->bit_width == 64) ? "i64" : "i32";
     int bit_width = (v->bit_width == 64) ? 64 : 32;
     HexValue res;
-    res.is_unsigned = v->is_unsigned;
+    res.signedness = v->signedness;
     res.is_dotnew = false;
     res.is_manual = false;
     if (v->type == IMMEDIATE) {
@@ -2066,7 +2085,7 @@ void gen_set_overflow(Context *c, YYLTYPE *locp, HexValue *vp)
     HexValue v = *vp;
 
     HexValue ovfl = gen_tmp(c, locp, 32);
-    ovfl.is_unsigned = true;
+    ovfl.signedness = UNSIGNED;
     OUT(c, locp, "GET_USR_FIELD(USR_OVF, ", &ovfl, ");\n");
 
     if (is_inside_ternary(c)) {
@@ -2115,7 +2134,8 @@ HexValue gen_rvalue_sat(Context *c, YYLTYPE *locp, HexSat *sat, HexValue *n,
     }
     HexValue res = gen_tmp(c, locp, v->bit_width);
     const char *bit_suffix = (v->bit_width == 64) ? "i64" : "i32";
-    const char *unsigned_str = (sat->is_unsigned) ? "u" : "";
+    assert_signedness(c, locp, sat->signedness);
+    const char *unsigned_str = (sat->signedness == UNSIGNED) ? "u" : "";
     if (sat->set_overflow) {
         HexValue ovfl = gen_tmp(c, locp, 32);
         OUT(c, locp, "gen_sat", unsigned_str, "_", bit_suffix, "_ovfl(");
@@ -2125,7 +2145,7 @@ HexValue gen_rvalue_sat(Context *c, YYLTYPE *locp, HexSat *sat, HexValue *n,
         OUT(c, locp, "gen_sat", unsigned_str, "_", bit_suffix, "(", &res, ", ");
         OUT(c, locp, v, ", ", &n->imm.value, ");\n");
     }
-    res.is_unsigned = sat->is_unsigned;
+    res.signedness = sat->signedness;
     gen_rvalue_free(c, locp, v);
     return res;
 }
@@ -2150,7 +2170,7 @@ HexValue gen_rvalue_abs(Context *c, YYLTYPE *locp, HexValue *v)
 {
     int bit_width = (v->bit_width == 64) ? 64 : 32;
     HexValue res;
-    res.is_unsigned = v->is_unsigned;
+    res.signedness = v->signedness;
     res.is_dotnew = false;
     res.is_manual = false;
     if (v->type == IMMEDIATE) {
@@ -2172,7 +2192,7 @@ HexValue gen_rvalue_neg(Context *c, YYLTYPE *locp, HexValue *v)
     const char *bit_suffix = (v->bit_width == 64) ? "i64" : "i32";
     int bit_width = (v->bit_width == 64) ? 64 : 32;
     HexValue res;
-    res.is_unsigned = v->is_unsigned;
+    res.signedness = v->signedness;
     res.is_dotnew = false;
     res.is_manual = false;
     if (v->type == IMMEDIATE) {

@@ -45,7 +45,7 @@
     HexCast cast;
     HexExtract extract;
     HexMpy mpy;
-    bool is_unsigned;
+    HexSignedness signedness;
     int index;
 }
 
@@ -71,7 +71,7 @@
 %type <rvalue> rvalue lvalue VAR assign_statement var
 %type <rvalue> DREG DIMM DPRE RREG RPRE FAIL
 %type <index> if_stmt IF
-%type <is_unsigned> SIGN
+%type <signedness> SIGN
 
 /* Operator Precedences */
 %left MIN MAX
@@ -440,13 +440,13 @@ rvalue : FAIL
          }
        | CONSTLL '(' IMM ')'
          {
-             $3.is_unsigned = false;
+             $3.signedness = SIGNED;
              $3.bit_width = 64;
              $$ = $3;
          }
        | CONSTULL '(' IMM ')'
          {
-             $3.is_unsigned = true;
+             $3.signedness = UNSIGNED;
              $3.bit_width = 64;
              $$ = $3;
          }
@@ -461,7 +461,7 @@ rvalue : FAIL
              rvalue.type = IMMEDIATE;
              rvalue.imm.type = IMM_PC;
              rvalue.bit_width = 32;
-             rvalue.is_unsigned = true;
+             rvalue.signedness = UNSIGNED;
              $$ = rvalue;
          }
        | NPC
@@ -472,7 +472,7 @@ rvalue : FAIL
              rvalue.type = IMMEDIATE;
              rvalue.imm.type = IMM_NPC;
              rvalue.bit_width = 32;
-             rvalue.is_unsigned = true;
+             rvalue.signedness = UNSIGNED;
              $$ = rvalue;
          }
        | CONSTEXT
@@ -480,7 +480,7 @@ rvalue : FAIL
              HexValue rvalue;
              rvalue.type = IMMEDIATE;
              rvalue.imm.type = IMM_CONSTEXT;
-             rvalue.is_unsigned = true;
+             rvalue.signedness = UNSIGNED;
              rvalue.is_dotnew = false;
              rvalue.is_manual = false;
              $$ = rvalue;
@@ -522,9 +522,10 @@ rvalue : FAIL
        | rvalue ASR rvalue
          {
              @1.last_column = @3.last_column;
-             if ($1.is_unsigned) {
+             assert_signedness(c, &@1, $1.signedness);
+             if ($1.signedness == UNSIGNED) {
                  $$ = gen_bin_op(c, &@1, LSR_OP, &$1, &$3);
-             } else {
+             } else if ($1.signedness == SIGNED) {
                  $$ = gen_bin_op(c, &@1, ASR_OP, &$1, &$3);
              }
          }
@@ -582,9 +583,9 @@ rvalue : FAIL
          {
              @1.last_column = @2.last_column;
              /* Assign target signedness */
-             $2.is_unsigned = $1.is_unsigned;
+             $2.signedness = $1.signedness;
              $$ = gen_cast_op(c, &@1, &$2, $1.bit_width);
-             $$.is_unsigned = $1.is_unsigned;
+             $$.signedness = $1.signedness;
          }
        | rvalue '[' rvalue ']'
          {
@@ -612,7 +613,10 @@ rvalue : FAIL
        | rvalue '<' rvalue
          {
              @1.last_column = @3.last_column;
-             if ($1.is_unsigned || $3.is_unsigned) {
+
+             assert_signedness(c, &@1, $1.signedness);
+             assert_signedness(c, &@1, $3.signedness);
+             if ($1.signedness == UNSIGNED || $3.signedness == UNSIGNED) {
                  $$ = gen_bin_cmp(c, &@1, TCG_COND_LTU, &$1, &$3);
              } else {
                  $$ = gen_bin_cmp(c, &@1, TCG_COND_LT, &$1, &$3);
@@ -621,7 +625,10 @@ rvalue : FAIL
        | rvalue '>' rvalue
          {
              @1.last_column = @3.last_column;
-             if ($1.is_unsigned || $3.is_unsigned) {
+
+             assert_signedness(c, &@1, $1.signedness);
+             assert_signedness(c, &@1, $3.signedness);
+             if ($1.signedness == UNSIGNED || $3.signedness == UNSIGNED) {
                  $$ = gen_bin_cmp(c, &@1, TCG_COND_GTU, &$1, &$3);
              } else {
                  $$ = gen_bin_cmp(c, &@1, TCG_COND_GT, &$1, &$3);
@@ -630,7 +637,10 @@ rvalue : FAIL
        | rvalue LTE rvalue
          {
              @1.last_column = @3.last_column;
-             if ($1.is_unsigned || $3.is_unsigned) {
+
+             assert_signedness(c, &@1, $1.signedness);
+             assert_signedness(c, &@1, $3.signedness);
+             if ($1.signedness == UNSIGNED || $3.signedness == UNSIGNED) {
                  $$ = gen_bin_cmp(c, &@1, TCG_COND_LEU, &$1, &$3);
              } else {
                  $$ = gen_bin_cmp(c, &@1, TCG_COND_LE, &$1, &$3);
@@ -639,7 +649,10 @@ rvalue : FAIL
        | rvalue GTE rvalue
          {
              @1.last_column = @3.last_column;
-             if ($1.is_unsigned || $3.is_unsigned) {
+
+             assert_signedness(c, &@1, $1.signedness);
+             assert_signedness(c, &@1, $3.signedness);
+             if ($1.signedness == UNSIGNED || $3.signedness == UNSIGNED) {
                  $$ = gen_bin_cmp(c, &@1, TCG_COND_GEU, &$1, &$3);
              } else {
                  $$ = gen_bin_cmp(c, &@1, TCG_COND_GE, &$1, &$3);
@@ -676,7 +689,7 @@ rvalue : FAIL
                       $5.imm.type == VALUE,
                       "SXT expects immediate values\n");
              $5.imm.value = 64;
-             $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, false);
+             $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, SIGNED);
          }
        | ZXT '(' rvalue ',' IMM ',' rvalue ')'
          {
@@ -684,7 +697,7 @@ rvalue : FAIL
              yyassert(c, &@1, $5.type == IMMEDIATE &&
                       $5.imm.type == VALUE,
                       "ZXT expects immediate values\n");
-             $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, true);
+             $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, UNSIGNED);
          }
        | '(' rvalue ')'
          {
@@ -780,7 +793,7 @@ rvalue : FAIL
          {
              @1.last_column = @4.last_column;
              $$ = gen_rvalue_truncate(c, &@1, &$3);
-             $$.is_unsigned = true;
+             $$.signedness = UNSIGNED;
              $$ = rvalue_materialize(c, &@1, &$$);
              $$ = gen_rvalue_extend(c, &@1, &$$);
          }

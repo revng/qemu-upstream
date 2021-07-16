@@ -165,7 +165,7 @@ void gen_varid_allocate(Context *c,
                         YYLTYPE *locp,
                         HexValue *varid,
                         int width,
-                        bool is_unsigned);
+                        HexSignedness signedness);
 
 HexValue gen_bin_cmp(Context *c,
                      YYLTYPE *locp,
@@ -190,7 +190,7 @@ HexValue gen_extend_op(Context *c,
                           HexValue *src_width_ptr,
                           HexValue *dst_width_ptr,
                           HexValue *value_ptr,
-                          bool is_unsigned);
+                          HexSignedness signedness);
 
 void gen_rdeposit_op(Context *c,
                      YYLTYPE *locp,
@@ -280,7 +280,7 @@ void gen_inst_code(Context *c, YYLTYPE *locp);
 void gen_pre_assign(Context *c, YYLTYPE *locp, HexValue *lp, HexValue *rp);
 
 void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
-              bool is_unsigned, HexValue *ea, HexValue *dst);
+              HexSignedness signedness, HexValue *ea, HexValue *dst);
 
 void gen_store(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
                HexValue *ea, HexValue *src);
@@ -338,5 +338,12 @@ void track_string(Context *c, GString *s);
 void free_variables(Context *c, YYLTYPE *locp);
 
 void free_instruction(Context *c);
+
+// WIP: move to parser-helpers.c
+static void assert_signedness(Context *c, YYLTYPE *locp, HexSignedness signedness) {
+    yyassert(c, locp, signedness != UNKNOWN_SIGNEDNESS, "Unspecified signedness");
+    if (signedness == UNKNOWN_SIGNEDNESS)
+        abort();
+}
 
 #endif /* PARSER_HELPERS_h */
