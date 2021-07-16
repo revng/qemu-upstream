@@ -54,6 +54,8 @@
  */
 typedef enum {GENERAL_PURPOSE, CONTROL, MODIFIER, DOTNEW} RegType;
 
+typedef enum { UNKNOWN_SIGNEDNESS, SIGNED, UNSIGNED } HexSignedness;
+
 /**
  * Semantic record of the REG tokens, identifying registers
  */
@@ -108,7 +110,7 @@ typedef struct HexPre {
  */
 typedef struct HexSat {
     bool set_overflow;      /**< Set-overflow feature for the sat operator   */
-    bool is_unsigned;       /**< Unsigned flag for the saturate operator     */
+    HexSignedness signedness;       /**< Unsigned flag for the saturate operator     */
 } HexSat;
 
 /**
@@ -116,7 +118,7 @@ typedef struct HexSat {
  */
 typedef struct HexCast {
     int bit_width;          /**< Bit width of the cast operator              */
-    bool is_unsigned;       /**< Unsigned flag for the cast operator         */
+    HexSignedness signedness;       /**< Unsigned flag for the cast operator         */
 } HexCast;
 
 /**
@@ -125,7 +127,7 @@ typedef struct HexCast {
 typedef struct HexExtract {
     int bit_width;          /**< Bit width of the extract operator           */
     int storage_bit_width;  /**< Actual bit width of the extract operator    */
-    bool is_unsigned;       /**< Unsigned flag for the extract operator      */
+    HexSignedness signedness;       /**< Unsigned flag for the extract operator      */
 } HexExtract;
 
 /**
@@ -135,8 +137,8 @@ typedef struct HexExtract {
 typedef struct HexMpy {
     int first_bit_width;    /**< Bit width of the first operand of fMPY op   */
     int second_bit_width;   /**< Bit width of the second operand of fMPY     */
-    bool first_unsigned;    /**< Unsigned flag for the first operand of fMPY */
-    bool second_unsigned;   /**< Unsigned flag for second operand of fMPY    */
+    HexSignedness first_signedness;    /**< Signedness flag for the first operand of fMPY */
+    HexSignedness second_signedness;   /**< Signedness flag for second operand of fMPY    */
 } HexMpy;
 
 /**
@@ -156,7 +158,7 @@ typedef struct HexVar {
 typedef struct Var {
     GString *name;          /**< Name of the VARID automatic variable        */
     uint8_t bit_width;      /**< Bit width of the VARID automatic variable   */
-    bool is_unsigned;       /**< Unsigned flag for the VARID automatic var   */
+    HexSignedness signedness;       /**< Unsigned flag for the VARID automatic var   */
 } Var;
 
 /**
@@ -181,7 +183,7 @@ typedef struct HexValue {
     };
     RvalueUnionTag type;    /**< Type of the rvalue                          */
     unsigned bit_width;     /**< Bit width of the rvalue                     */
-    bool is_unsigned;       /**< Unsigned flag for the rvalue                */
+    HexSignedness signedness;       /**< Unsigned flag for the rvalue                */
     bool is_dotnew;         /**< rvalue of predicate type is dotnew?         */
     bool is_manual;         /**< Opt out of automatic freeing of params      */
 } HexValue;

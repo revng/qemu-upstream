@@ -230,7 +230,7 @@ idef-parser features a simple type system which is used to correctly implement
 the signedness and bit width of the operations.
 
 The type of each ``rvalue`` is determined by two attributes: its bit width
-(``unsigned bit_width``) and its signedness (``bool is_unsigned``).
+(``unsigned bit_width``) and its signedness (``HexSignedness signedness``).
 
 For each operation, the type of ``rvalue``\ s influence the way in which the
 operands are handled and emitted. For example a right shift between signed
