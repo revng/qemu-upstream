@@ -80,36 +80,43 @@ bool is_inside_ternary(Context *c)
 /* Print functions */
 void str_print(Context *c, YYLTYPE *locp, const char *string)
 {
+	(void)locp;
     EMIT(c, "%s", string);
 }
 
 void uint8_print(Context *c, YYLTYPE *locp, uint8_t *num)
 {
+	(void)locp;
     EMIT(c, "%u", *num);
 }
 
 void uint64_print(Context *c, YYLTYPE *locp, uint64_t *num)
 {
+	(void)locp;
     EMIT(c, "%" PRIu64, *num);
 }
 
 void int_print(Context *c, YYLTYPE *locp, int *num)
 {
+	(void)locp;
     EMIT(c, "%d", *num);
 }
 
 void uint_print(Context *c, YYLTYPE *locp, unsigned *num)
 {
+	(void)locp;
     EMIT(c, "%u", *num);
 }
 
 void tmp_print(Context *c, YYLTYPE *locp, HexTmp *tmp)
 {
+	(void)locp;
     EMIT(c, "tmp_%d", tmp->index);
 }
 
 void pre_print(Context *c, YYLTYPE *locp, HexPre *pre, bool is_dotnew)
 {
+	(void)locp;
     char suffix = is_dotnew ? 'N' : 'V';
     EMIT(c, "P%c%c", pre->id, suffix);
 }
@@ -156,6 +163,7 @@ void reg_arg_print(Context *c, YYLTYPE *locp, HexReg *reg)
 
 void reg_print(Context *c, YYLTYPE *locp, HexReg *reg)
 {
+	(void)locp;
     EMIT(c, "hex_gpr[%u]", reg->id);
 }
 
@@ -190,6 +198,7 @@ void imm_print(Context *c, YYLTYPE *locp, HexImm *imm)
 
 void var_print(Context *c, YYLTYPE *locp, HexVar *var)
 {
+	(void)locp;
     EMIT(c, "%s", var->name->str);
 }
 
@@ -270,7 +279,7 @@ static HexValue get_ternary_cond(Context *c, YYLTYPE *locp)
 }
 
 /* Temporary values creation */
-HexValue gen_tmp(Context *c, YYLTYPE *locp, int bit_width)
+HexValue gen_tmp(Context *c, YYLTYPE *locp, unsigned bit_width)
 {
     HexValue rvalue = { 0 };
     rvalue.type = TEMP;
@@ -289,7 +298,7 @@ HexValue gen_tmp(Context *c, YYLTYPE *locp, int bit_width)
 HexValue gen_tmp_value(Context *c,
                        YYLTYPE *locp,
                        const char *value,
-                       int bit_width)
+                       unsigned bit_width)
 {
     HexValue rvalue = { 0 };
     rvalue.type = TEMP;
@@ -325,8 +334,9 @@ static HexValue gen_tmp_value_from_imm(Context *c,
 HexValue gen_imm_value(Context *c __attribute__((unused)),
                        YYLTYPE *locp,
                        int value,
-                       int bit_width)
+                       unsigned bit_width)
 {
+	(void)locp;
     HexValue rvalue = { 0 };
     rvalue.type = IMMEDIATE;
     rvalue.bit_width = bit_width;
@@ -400,7 +410,8 @@ HexValue gen_rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue)
 
 int find_variable(Context *c, YYLTYPE *locp, HexValue *varid)
 {
-    for (int i = 0; i < c->inst.allocated->len; i++) {
+	(void)locp;
+    for (unsigned i = 0; i < c->inst.allocated->len; i++) {
         Var *curr = &g_array_index(c->inst.allocated, Var, i);
         if (g_string_equal(varid->var.name, curr->name)) {
             return i;
@@ -1218,7 +1229,7 @@ void gen_assign(Context *c,
         gen_varid_allocate(c, locp, dest, value_m.bit_width,
                            value_m.is_unsigned);
     }
-    int bit_width = dest->bit_width == 64 ? 64 : 32;
+    unsigned bit_width = dest->bit_width == 64 ? 64 : 32;
     if (bit_width != value_m.bit_width) {
         if (bit_width == 64) {
             value_m = gen_rvalue_extend(c, locp, &value_m);
@@ -1290,6 +1301,7 @@ static HexValue gen_convround_n_a(Context *c,
                                   HexValue *a,
                                   HexValue *n)
 {
+	(void)n;
     HexValue res = gen_tmp(c, locp, 64);
     OUT(c, locp, "tcg_gen_ext_i32_i64(", &res, ", ", a, ");\n");
     return res;
@@ -1769,7 +1781,7 @@ void gen_inst_args(Context *c, YYLTYPE *locp)
 
     /* Initialize declared but uninitialized registers, but only for */
     /* non-conditional instructions */
-    for (int i = 0; i < c->inst.init_list->len; i++) {
+    for (unsigned i = 0; i < c->inst.init_list->len; i++) {
         HexValue *reg = &g_array_index(c->inst.init_list, HexValue, i);
         if (reg->type == REGISTER
                 || reg->type == REGISTER_ARG
@@ -1837,6 +1849,7 @@ void gen_pre_assign(Context *c, YYLTYPE *locp, HexValue *lp, HexValue *rp)
 void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
               bool is_unsigned, HexValue *ea, HexValue *dst)
 {
+	(void)num;
     /* Memop width is specified in the load macro */
     int bit_width = (size->imm.value > 4) ? 64 : 32;
     const char *sign_suffix = (size->imm.value > 4)
@@ -1865,6 +1878,7 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
 void gen_store(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
                HexValue *ea, HexValue *src)
 {
+	(void)num;
     HexValue src_m = *src;
     /* Memop width is specified in the store macro */
     int mem_width = size->imm.value;
@@ -1973,7 +1987,7 @@ HexValue gen_rvalue_var(Context *c, YYLTYPE *locp, HexValue *var)
 {
     /* Assign correct bit width and signedness */
     bool found = false;
-    for (int i = 0; i < c->inst.allocated->len; i++) {
+    for (unsigned i = 0; i < c->inst.allocated->len; i++) {
         Var *other = &g_array_index(c->inst.allocated, Var, i);
         if (g_string_equal(var->var.name, other->name)) {
             found = true;
@@ -2325,7 +2339,7 @@ void free_instruction(Context *c)
     g_string_truncate(c->out_str, 0);
     g_string_truncate(c->header_str, 0);
     /* Free strings allocated by the instruction */
-    for (int i = 0; i < c->inst.strings->len; i++) {
+    for (unsigned i = 0; i < c->inst.strings->len; i++) {
         g_string_free(g_array_index(c->inst.strings, GString*, i), TRUE);
     }
     g_array_free(c->inst.strings, TRUE);

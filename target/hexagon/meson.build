@@ -177,6 +177,7 @@ idef_parser = executable('idef-parser',
                           idef_parser_dir / 'parser-helpers.c'],
                          include_directories: ['idef-parser', '../../include/'],
                          dependencies: [glib_dep],
+						 c_args: ['-std=c11', '-Wextra', '-Wall'],
                          native: true)
 
 idef_generated_tcg = custom_target(

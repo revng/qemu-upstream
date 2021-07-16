@@ -921,7 +921,7 @@ int main(int argc, char **argv)
                               sizeof(char),
                               input_size,
                               input_file);
-    if (read_chars != input_size) {
+    if (read_chars != (size_t)input_size) {
         fprintf(stderr, "Error: an error occurred while reading input file!\n");
         return -1;
     }

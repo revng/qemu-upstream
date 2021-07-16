@@ -139,17 +139,17 @@ void commit(Context *c);
 const char *cmp_swap(Context *c, YYLTYPE *locp, const char *type);
 
 /* Temporary values creation */
-HexValue gen_tmp(Context *c, YYLTYPE *locp, int bit_width);
+HexValue gen_tmp(Context *c, YYLTYPE *locp, unsigned bit_width);
 
 HexValue gen_tmp_value(Context *c,
                           YYLTYPE *locp,
                           const char *value,
-                          int bit_width);
+                          unsigned bit_width);
 
 HexValue gen_imm_value(Context *c __attribute__((unused)),
                           YYLTYPE *locp,
                           int value,
-                          int bit_width);
+                          unsigned bit_width);
 
 void gen_rvalue_free(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
