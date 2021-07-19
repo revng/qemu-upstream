@@ -28,9 +28,6 @@
 #include <string.h>
 #include <unistd.h>
 
-/* For QEMU_GENERIC macro */
-#include <qemu/compiler.h>
-
 #include "tcg/tcg-cond.h"
 
 #include "idef-parser.tab.h"
@@ -90,14 +87,14 @@ void out_assert(Context *c, YYLTYPE *locp, void *dummy);
 void commit(Context *c);
 
 #define OUT_IMPL(c, locp, x)                    \
-    QEMU_GENERIC(*x,                            \
-        (char,     str_print),                  \
-        (uint8_t,  uint8_print),                \
-        (uint64_t, uint64_print),               \
-        (int,      int_print),                  \
-        (unsigned, uint_print),                 \
-        (HexValue, rvalue_out),                 \
-        out_assert                              \
+    _Generic(*x,                                \
+        char:      str_print,                   \
+        uint8_t:   uint8_print,                 \
+        uint64_t:  uint64_print,                \
+        int:       int_print,                   \
+        unsigned:  uint_print,                  \
+        HexValue:  rvalue_out,                  \
+        default:   out_assert                   \
     )(c, locp, x);
 
 /* Make a FOREACH macro */
