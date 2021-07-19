@@ -2,7 +2,6 @@
 %option 8bit reentrant bison-bridge
 %option warn nodefault
 %option bison-locations
-%option never-interactive
 
 %{
 /*
