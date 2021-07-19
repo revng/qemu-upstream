@@ -282,11 +282,11 @@ void gen_inst_code(Context *c, YYLTYPE *locp);
 
 void gen_pre_assign(Context *c, YYLTYPE *locp, HexValue *lp, HexValue *rp);
 
-void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
+void gen_load(Context *c, YYLTYPE *locp, HexValue *size,
               HexSignedness signedness, HexValue *ea, HexValue *dst);
 
-void gen_store(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
-               HexValue *ea, HexValue *src);
+void gen_store(Context *c, YYLTYPE *locp, HexValue *size, HexValue *ea,
+               HexValue *src);
 
 void gen_sethalf(Context *c, YYLTYPE *locp, HexCast *sh, HexValue *n,
                  HexValue *dst, HexValue *val);

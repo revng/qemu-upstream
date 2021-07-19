@@ -284,7 +284,9 @@ assign_statement : lvalue '=' rvalue
                        @1.last_column = @12.last_column;
                        yyassert(c, &@1, c->ternary->len == 0,
                                 "Assignment side-effect not modeled!");
-                       gen_load(c, &@1, &$3, &$5, $7, &$9, &$11);
+                       yyassert(c, &@1, $3.imm.value == 1,
+                                "LOAD of arrays not supported!");
+                       gen_load(c, &@1, &$5, $7, &$9, &$11);
                    }
                  | STORE '(' IMM ',' IMM ',' var ',' rvalue ')'
                    /* Store primitive */
@@ -292,7 +294,9 @@ assign_statement : lvalue '=' rvalue
                        @1.last_column = @10.last_column;
                        yyassert(c, &@1, c->ternary->len == 0,
                                 "Assignment side-effect not modeled!");
-                       gen_store(c, &@1, &$3, &$5, &$7, &$9);
+                       yyassert(c, &@1, $3.imm.value == 1,
+                                "STORE of arrays not supported!");
+                       gen_store(c, &@1, &$5, &$7, &$9);
                    }
                  | LPCFG '=' rvalue
                    {
@@ -934,7 +938,7 @@ int main(int argc, char **argv)
                               sizeof(char),
                               input_size,
                               input_file);
-    if (read_chars != (size_t)input_size) {
+    if (read_chars != (size_t) input_size) {
         fprintf(stderr, "Error: an error occurred while reading input file!\n");
         return -1;
     }

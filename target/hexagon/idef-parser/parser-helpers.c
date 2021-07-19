@@ -80,43 +80,43 @@ bool is_inside_ternary(Context *c)
 /* Print functions */
 void str_print(Context *c, YYLTYPE *locp, const char *string)
 {
-	(void)locp;
+    (void) locp;
     EMIT(c, "%s", string);
 }
 
 void uint8_print(Context *c, YYLTYPE *locp, uint8_t *num)
 {
-	(void)locp;
+    (void) locp;
     EMIT(c, "%u", *num);
 }
 
 void uint64_print(Context *c, YYLTYPE *locp, uint64_t *num)
 {
-	(void)locp;
+    (void) locp;
     EMIT(c, "%" PRIu64, *num);
 }
 
 void int_print(Context *c, YYLTYPE *locp, int *num)
 {
-	(void)locp;
+    (void) locp;
     EMIT(c, "%d", *num);
 }
 
 void uint_print(Context *c, YYLTYPE *locp, unsigned *num)
 {
-	(void)locp;
+    (void) locp;
     EMIT(c, "%u", *num);
 }
 
 void tmp_print(Context *c, YYLTYPE *locp, HexTmp *tmp)
 {
-	(void)locp;
+    (void) locp;
     EMIT(c, "tmp_%d", tmp->index);
 }
 
 void pre_print(Context *c, YYLTYPE *locp, HexPre *pre, bool is_dotnew)
 {
-	(void)locp;
+    (void) locp;
     char suffix = is_dotnew ? 'N' : 'V';
     EMIT(c, "P%c%c", pre->id, suffix);
 }
@@ -154,7 +154,7 @@ void reg_compose(Context *c, YYLTYPE *locp, HexReg *reg, char reg_id[5])
     }
 }
 
-void reg_arg_print(Context *c, YYLTYPE *locp, HexReg *reg)
+static void reg_arg_print(Context *c, YYLTYPE *locp, HexReg *reg)
 {
     char reg_id[5] = { 0 };
     reg_compose(c, locp, reg, reg_id);
@@ -163,7 +163,7 @@ void reg_arg_print(Context *c, YYLTYPE *locp, HexReg *reg)
 
 void reg_print(Context *c, YYLTYPE *locp, HexReg *reg)
 {
-	(void)locp;
+    (void) locp;
     EMIT(c, "hex_gpr[%u]", reg->id);
 }
 
@@ -198,7 +198,7 @@ void imm_print(Context *c, YYLTYPE *locp, HexImm *imm)
 
 void var_print(Context *c, YYLTYPE *locp, HexVar *var)
 {
-	(void)locp;
+    (void) locp;
     EMIT(c, "%s", var->name->str);
 }
 
@@ -336,7 +336,7 @@ HexValue gen_imm_value(Context *c __attribute__((unused)),
                        int value,
                        unsigned bit_width)
 {
-	(void)locp;
+    (void) locp;
     HexValue rvalue = { 0 };
     rvalue.type = IMMEDIATE;
     rvalue.bit_width = bit_width;
@@ -411,7 +411,7 @@ HexValue gen_rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue)
 
 int find_variable(Context *c, YYLTYPE *locp, HexValue *varid)
 {
-	(void)locp;
+    (void) locp;
     for (unsigned i = 0; i < c->inst.allocated->len; i++) {
         Var *curr = &g_array_index(c->inst.allocated, Var, i);
         if (g_string_equal(varid->var.name, curr->name)) {
@@ -1312,7 +1312,7 @@ static HexValue gen_convround_n_a(Context *c,
                                   HexValue *a,
                                   HexValue *n)
 {
-	(void)n;
+    (void) n;
     HexValue res = gen_tmp(c, locp, 64);
     OUT(c, locp, "tcg_gen_ext_i32_i64(", &res, ", ", a, ");\n");
     return res;
@@ -1857,10 +1857,9 @@ void gen_pre_assign(Context *c, YYLTYPE *locp, HexValue *lp, HexValue *rp)
     gen_rvalue_free(c, locp, &r);  /* Free temporary value */
 }
 
-void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
+void gen_load(Context *c, YYLTYPE *locp, HexValue *size,
               HexSignedness signedness, HexValue *ea, HexValue *dst)
 {
-	(void)num;
     /* Memop width is specified in the load macro */
     int bit_width = (size->imm.value > 4) ? 64 : 32;
     assert_signedness(c, locp, signedness);
@@ -1887,10 +1886,9 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
     gen_rvalue_free(c, locp, ea);
 }
 
-void gen_store(Context *c, YYLTYPE *locp, HexValue *num, HexValue *size,
-               HexValue *ea, HexValue *src)
+void gen_store(Context *c, YYLTYPE *locp, HexValue *size, HexValue *ea,
+               HexValue *src)
 {
-	(void)num;
     HexValue src_m = *src;
     /* Memop width is specified in the store macro */
     int mem_width = size->imm.value;
