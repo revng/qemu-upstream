@@ -60,6 +60,7 @@
 %token ZXT CONSTEXT LOCNT BREV SIGN LOAD STORE CONSTLL CONSTULL PC NPC LPCFG
 %token CANCEL IDENTITY PART1 BREV_4 BREV_8 ROTL INSBITS SETBITS EXTBITS EXTRANGE
 %token CAST4_8U SETOVF FAIL DEINTERLEAVE INTERLEAVE CARRY_FROM_ADD LSBNEW
+%token TYPE_SIZE_T TYPE_INT TYPE_SIGNED TYPE_UNSIGNED TYPE_LONG
 
 %token <rvalue> REG IMM PRE
 %token <index> ELSE
@@ -68,8 +69,9 @@
 %token <cast> CAST DEPOSIT SETHALF
 %token <extract> EXTRACT
 %type <string> INAME
-%type <rvalue> rvalue lvalue VAR assign_statement var
+%type <rvalue> rvalue lvalue VAR assign_statement var var_decl var_type
 %type <rvalue> DREG DIMM DPRE RREG RPRE FAIL
+%type <rvalue> TYPE_SIGNED TYPE_UNSIGNED TYPE_INT TYPE_LONG TYPE_SIZE_T
 %type <index> if_stmt IF
 %type <signedness> SIGN
 
@@ -143,6 +145,92 @@ var : VAR
       }
     ;
 
+/*
+ * Here the integer types are defined from valid combinations of
+ * "signed", "unsigned", "int", and "long" tokens.  The "signed"
+ * and "unsigned" tokens are here assumed to always be placed
+ * first in the type declaration, which is not the case in
+ * normal C. Similarly, "int" is assumed to be placed in the type.
+ */
+type_int : TYPE_INT
+         | TYPE_SIGNED
+         | TYPE_SIGNED TYPE_INT;
+type_uint : TYPE_UNSIGNED
+          | TYPE_UNSIGNED TYPE_INT;
+type_long : TYPE_LONG
+          | TYPE_LONG TYPE_INT
+          | TYPE_SIGNED TYPE_LONG
+          | TYPE_SIGNED TYPE_LONG TYPE_INT;
+type_ulong : TYPE_UNSIGNED TYPE_LONG
+           | TYPE_UNSIGNED TYPE_LONG TYPE_INT;
+type_longlong : TYPE_LONG TYPE_LONG
+              | TYPE_LONG TYPE_LONG TYPE_INT
+              | TYPE_SIGNED TYPE_LONG TYPE_LONG
+              | TYPE_SIGNED TYPE_LONG TYPE_LONG TYPE_INT;
+type_ulonglong : TYPE_UNSIGNED TYPE_LONG TYPE_LONG
+               | TYPE_UNSIGNED TYPE_LONG TYPE_LONG TYPE_INT;
+
+/*
+ * Here the various valid int types defined above specify
+ * their `signedness` and `bit_width`. The LP64 convention
+ * is assumed where longs are 64-bit, long longs are then
+ * assumed to also be 64-bit.abvove
+ */
+var_type : TYPE_SIZE_T
+           {
+              $$ = $1;
+           }
+         | type_int
+           {
+              $$.signedness = SIGNED;
+              $$.bit_width  = 32;
+           }
+         | type_uint
+           {
+              $$.signedness = UNSIGNED;
+              $$.bit_width  = 32;
+           }
+         | type_long
+           {
+              $$.signedness = SIGNED;
+              $$.bit_width  = 64;
+           }
+         | type_ulong
+           {
+              $$.signedness = UNSIGNED;
+              $$.bit_width  = 64;
+           }
+         | type_longlong
+           {
+              $$.signedness = SIGNED;
+              $$.bit_width  = 64;
+           }
+         | type_ulonglong
+           {
+              $$.signedness = UNSIGNED;
+              $$.bit_width  = 64;
+           }
+         ;
+
+/* Rule to capture declarations of VARs */
+var_decl : var_type IMM
+           {
+              /*
+               * Rule to capture "int i;" declarations since "i" is special
+               * and assumed to be IMM and only used in for-loops.
+               * Therefore we want to NOP these declarations.
+               */
+           }
+         | var_type var
+           {
+              /*
+               * We currently don't do anything with the extra type info,
+               * just return the var.
+               */
+              $$ = $2;
+           }
+         ;
+
 /* Return the modified registers list */
 code : '{' statements '}'
        {
@@ -204,6 +292,7 @@ statements : statements statement
 
 /* Statements can be assignment (rvalue ';'), control or memory statements */
 statement : control_statement
+          | var_decl ';'
           | rvalue ';'
             {
                 gen_rvalue_free(c, &@1, &$1);
@@ -213,6 +302,12 @@ statement : control_statement
           ;
 
 assign_statement : lvalue '=' rvalue
+                   {
+                       @1.last_column = @3.last_column;
+                       gen_assign(c, &@1, &$1, &$3);
+                       $$ = $1;
+                   }
+                 | var_decl '=' rvalue
                    {
                        @1.last_column = @3.last_column;
                        gen_assign(c, &@1, &$1, &$3);

@@ -148,6 +148,8 @@
 #define fROTL(SRC, SHAMT, REGSTYPE) fROTL(SRC, SHAMT)
 #define fASHIFTL(SRC, SHAMT, REGSTYPE) (fCAST##REGSTYPE##s(SRC) << SHAMT)
 
+/* Include fHIDE macros which hide type declarations */
+#define fHIDE(A) A
+
 /* Purge non-relavant parts */
-#define fHIDE(A)
 #define fBRANCH_SPECULATE_STALL(A, B, C, D, E)

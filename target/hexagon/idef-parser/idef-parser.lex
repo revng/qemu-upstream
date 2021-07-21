@@ -55,6 +55,7 @@ LOWER_PRE                d|s|t|u|v|e|x|x
 IMM_ID                   r|s|S|u|U
 VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
 SIGN_ID                  s|u
+STRING_LIT               \"(\\.|[^"\\])*\"
 
 /* Tokens */
 %%
@@ -629,6 +630,28 @@ SIGN_ID                  s|u
 "fDEINTERLEAVE"          { return DEINTERLEAVE; }
 "fINTERLEAVE"            { return INTERLEAVE; }
 "fCARRY_FROM_ADD"        { return CARRY_FROM_ADD; }
+"size"[1248][us]"_t"     { /* Handles "size_t" variants of int types */
+                           const unsigned int bits_per_byte = 8;
+                           const unsigned int bytes = yytext[4] - '0';
+                           yylval->rvalue.bit_width = bits_per_byte*bytes;
+                           if (yytext[5] == 'u') {
+                               yylval->rvalue.signedness = UNSIGNED;
+                           } else {
+                               yylval->rvalue.signedness = SIGNED;
+                           }
+                           return TYPE_SIZE_T; }
+"size16"[us]"_t"         { /* Handles "size_t" variants of int types */
+                           yylval->rvalue.bit_width = 128;
+                           if (yytext[6] == 'u') {
+                               yylval->rvalue.signedness = UNSIGNED;
+                           } else {
+                               yylval->rvalue.signedness = SIGNED;
+                           }
+                           return TYPE_SIZE_T; }
+"signed"                 { return TYPE_SIGNED; }
+"unsigned"               { return TYPE_UNSIGNED; }
+"long"                   { return TYPE_LONG; }
+"int"                    { return TYPE_INT; }
 {VAR_ID}                 { /* Variable name, we adopt the C names convention */
                            yylval->rvalue.type = VARID;
                            yylval->rvalue.var.name = g_string_new(yytext);
@@ -636,6 +659,7 @@ SIGN_ID                  s|u
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.signedness = SIGNED;
                            return VAR; }
+"fatal("{STRING_LIT}")"  { /* Emit no token */ }
 "fHINTJR(RsV)"           { /* Emit no token */ }
 .                        { return yytext[0]; }
 
