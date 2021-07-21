@@ -566,6 +566,7 @@ STRING_LIT               \"(\\.|[^"\\])*\"
                            return IMM; }
 "i"                      { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.signedness = SIGNED;
                            yylval->rvalue.imm.type = I;
                            return IMM; }
 {SIGN_ID}                { if (yytext[0] == 'u') {
@@ -655,9 +656,15 @@ STRING_LIT               \"(\\.|[^"\\])*\"
 {VAR_ID}                 { /* Variable name, we adopt the C names convention */
                            yylval->rvalue.type = VARID;
                            yylval->rvalue.var.name = g_string_new(yytext);
-                           /* Default types are int */
-                           yylval->rvalue.bit_width = 32;
-                           yylval->rvalue.signedness = SIGNED;
+                           /*
+                            * Default to an unknown signedness so we error out
+                            * with assert_signedness if the VAR hasn't been
+                            * declared.
+                            * TODO: This is of course a shitty way to handle
+                            *       undeclared variables.
+                            */
+                           yylval->rvalue.bit_width = 0;
+                           yylval->rvalue.signedness = UNKNOWN_SIGNEDNESS;
                            return VAR; }
 "fatal("{STRING_LIT}")"  { /* Emit no token */ }
 "fHINTJR(RsV)"           { /* Emit no token */ }

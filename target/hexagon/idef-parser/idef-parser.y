@@ -224,10 +224,15 @@ var_decl : var_type IMM
          | var_type var
            {
               /*
-               * We currently don't do anything with the extra type info,
-               * just return the var.
+               * Allocate new var with our type
+               * TODO: assert the var hasn't already been declared.
                */
+              gen_varid_allocate(c, &@1, &$2, $1.bit_width, $1.signedness);
+              /* Copy var for variable name */
               $$ = $2;
+              /* Copy type info from var_type */
+              $$.signedness = $1.signedness;
+              $$.bit_width  = $1.bit_width;
            }
          ;
 

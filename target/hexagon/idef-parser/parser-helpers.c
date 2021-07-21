@@ -875,12 +875,14 @@ HexValue gen_bin_op(Context *c,
         yyassert(c, locp, c->inst.allocated->len > 0,
                  "Variable in bin_op must exist!\n");
         op1.bit_width = g_array_index(c->inst.allocated, Var, index).bit_width;
+        op1.signedness = g_array_index(c->inst.allocated, Var, index).signedness;
     }
     if (op2.type == VARID) {
         int index = find_variable(c, locp, &op2);
         yyassert(c, locp, c->inst.allocated->len > 0,
                  "Variable in bin_op must exist!\n");
         op2.bit_width = g_array_index(c->inst.allocated, Var, index).bit_width;
+        op2.signedness = g_array_index(c->inst.allocated, Var, index).signedness;
     }
 
     enum OpTypes op_types = (op1.type != IMMEDIATE) << 1
