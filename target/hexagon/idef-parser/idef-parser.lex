@@ -305,6 +305,9 @@ STRING_LIT               \"(\\.|[^"\\])*\"
 "fCAST4s"                { yylval->cast.bit_width = 32;
                            yylval->cast.signedness = SIGNED;
                            return CAST; }
+"fCAST8_8s"              { yylval->cast.bit_width = 64;
+                           yylval->cast.signedness = SIGNED;
+                           return CAST; }
 "fCAST8_8u"              { yylval->cast.bit_width = 64;
                            yylval->cast.signedness = UNSIGNED;
                            return CAST; }
@@ -435,7 +438,6 @@ STRING_LIT               \"(\\.|[^"\\])*\"
 "fCAST2_2s"              |
 "fCAST2_2u"              |
 "fCAST4_4s"              |
-"fCAST8_8s"              |
 "fZE8_16"                |
 "fSE8_16"                |
 "fZE16_32"               |
