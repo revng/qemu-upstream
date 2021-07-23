@@ -178,6 +178,8 @@ type_ulonglong : TYPE_UNSIGNED TYPE_LONG TYPE_LONG
  */
 var_type : TYPE_SIZE_T
            {
+              yyassert(c, &@1, $1.bit_width != 128,
+                       "128-bit variables are not supported!");
               $$ = $1;
            }
          | type_int

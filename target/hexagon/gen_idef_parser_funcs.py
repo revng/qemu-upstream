@@ -68,6 +68,11 @@ def main():
             ## Skip 128-bit instructions
             if ( tag in {'A7_croundd_ri', 'A7_croundd_rr'} ) :
                 continue
+            if ( tag in {'M7_wcmpyrw', 'M7_wcmpyrwc',
+                         'M7_wcmpyiw', 'M7_wcmpyiwc',
+                         'M7_wcmpyrw_rnd', 'M7_wcmpyrwc_rnd',
+                         'M7_wcmpyiw_rnd', 'M7_wcmpyiwc_rnd'} ) :
+                continue
             ## Skip other unsupported instructions
             if ( tag.startswith('S2_cabacdecbin') ) :
                 continue
