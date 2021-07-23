@@ -658,13 +658,7 @@ STRING_LIT               \"(\\.|[^"\\])*\"
 {VAR_ID}                 { /* Variable name, we adopt the C names convention */
                            yylval->rvalue.type = VARID;
                            yylval->rvalue.var.name = g_string_new(yytext);
-                           /*
-                            * Default to an unknown signedness so we error out
-                            * with assert_signedness if the VAR hasn't been
-                            * declared.
-                            * TODO: This is of course a shitty way to handle
-                            *       undeclared variables.
-                            */
+                           /* Default to an unknown signedness and 0 width. */
                            yylval->rvalue.bit_width = 0;
                            yylval->rvalue.signedness = UNKNOWN_SIGNEDNESS;
                            return VAR; }

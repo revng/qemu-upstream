@@ -427,6 +427,16 @@ int find_variable(Context *c, YYLTYPE *locp, HexValue *varid)
     return -1;
 }
 
+static unsigned find_variable_and_assert_declared(Context *c,
+                                                  YYLTYPE *locp,
+                                                  HexValue *varid)
+{
+    int index = find_variable(c, locp, varid);
+    yyassert(c, locp, index != -1, "Use of undeclared variable!\n");
+    return index;
+}
+
+
 void gen_varid_allocate(Context *c,
                         YYLTYPE *locp,
                         HexValue *varid,
@@ -869,16 +879,16 @@ HexValue gen_bin_op(Context *c,
     HexValue op1 = *operand1;
     HexValue op2 = *operand2;
 
-    /* Enforce variables' size */
+    /* Enforce variables' size and signedness */
     if (op1.type == VARID) {
-        int index = find_variable(c, locp, &op1);
+        unsigned index = find_variable_and_assert_declared(c, locp, &op1);
         yyassert(c, locp, c->inst.allocated->len > 0,
                  "Variable in bin_op must exist!\n");
         op1.bit_width = g_array_index(c->inst.allocated, Var, index).bit_width;
         op1.signedness = g_array_index(c->inst.allocated, Var, index).signedness;
     }
     if (op2.type == VARID) {
-        int index = find_variable(c, locp, &op2);
+        unsigned index = find_variable_and_assert_declared(c, locp, &op2);
         yyassert(c, locp, c->inst.allocated->len > 0,
                  "Variable in bin_op must exist!\n");
         op2.bit_width = g_array_index(c->inst.allocated, Var, index).bit_width;
@@ -1248,11 +1258,26 @@ void gen_assign(Context *c,
         gen_write_reg(c, locp, dest, &value_m);
         return;
     }
-    /* Create (if not present) and assign to temporary variable */
+
     if (dest->type == VARID) {
-        assert_signedness(c, locp, value_m.signedness);
-        gen_varid_allocate(c, locp, dest, value_m.bit_width,
-                           value_m.signedness);
+        if (strcmp(dest->var.name->str, "EA") == 0) {
+            /* If the var is EA then create it with the type of value */
+             assert_signedness(c, locp, value_m.signedness);
+             gen_varid_allocate(c, locp, dest, value_m.bit_width,
+                                value_m.signedness);
+        } else {
+            /*
+             * If the var is not EA and a regular typed variable, then assert
+             * that it has been declared and load its' type.
+             */
+            unsigned index = find_variable_and_assert_declared(c, locp, dest);
+            dest->bit_width = g_array_index(c->inst.allocated,
+                                           Var,
+                                           index).bit_width;
+            dest->signedness = g_array_index(c->inst.allocated,
+                                             Var,
+                                             index).signedness;
+        }
     }
     unsigned bit_width = dest->bit_width == 64 ? 64 : 32;
     if (bit_width != value_m.bit_width) {
@@ -1875,20 +1900,23 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *size,
               HexSignedness signedness, HexValue *ea, HexValue *dst)
 {
     /* Memop width is specified in the load macro */
-    int bit_width = (size->imm.value > 4) ? 64 : 32;
     assert_signedness(c, locp, signedness);
     const char *sign_suffix = (size->imm.value > 4)
                               ? ""
                               : ((signedness == UNSIGNED) ? "u" : "s");
     char size_suffix[4] = { 0 };
-    /* Create temporary variable (if not present) */
+    /* If dst is a variable, assert that is declared and load the type info */
     if (dst->type == VARID) {
-        /* TODO: this is a common pattern, the parser should be varid-aware. */
-        gen_varid_allocate(c, locp, dst, bit_width, signedness);
+        unsigned index = find_variable_and_assert_declared(c, locp, dst);
+        dst->bit_width = g_array_index(c->inst.allocated,
+                                       Var,
+                                       index).bit_width;
+        dst->signedness = g_array_index(c->inst.allocated,
+                                       Var,
+                                       index).signedness;
     }
     snprintf(size_suffix, 4, "%" PRIu64, size->imm.value * 8);
-    int var_id = find_variable(c, locp, ea);
-    yyassert(c, locp, var_id != -1, "Load variable must exist!\n");
+    unsigned var_id = find_variable_and_assert_declared(c, locp, ea);
     /* We need to enforce the variable size */
     ea->bit_width = g_array_index(c->inst.allocated, Var, var_id).bit_width;
     OUT(c, locp, "if (insn->slot == 0 && pkt->pkt_has_store_s1) {\n");
@@ -1907,8 +1935,7 @@ void gen_store(Context *c, YYLTYPE *locp, HexValue *size, HexValue *ea,
     /* Memop width is specified in the store macro */
     int mem_width = size->imm.value;
     assert(ea->type == VARID);
-    int var_id = find_variable(c, locp, ea);
-    yyassert(c, locp, var_id != -1, "Load variable must exist!\n");
+    unsigned var_id = find_variable_and_assert_declared(c, locp, ea);
     /* We need to enforce the variable size */
     ea->bit_width = g_array_index(c->inst.allocated, Var, var_id).bit_width;
     src_m = rvalue_materialize(c, locp, &src_m);
@@ -1925,18 +1952,11 @@ void gen_sethalf(Context *c, YYLTYPE *locp, HexCast *sh, HexValue *n,
     yyassert(c, locp, n->type == IMMEDIATE,
              "Deposit index must be immediate!\n");
     if (dst->type == VARID) {
-        int var_id = find_variable(c, locp, dst);
-        if (var_id == -1) {
-            HexValue zero = gen_imm_value(c, locp, 0, 64);
-            zero.signedness = UNSIGNED;
-            dst->bit_width = 64;
-            gen_assign(c, locp, dst, &zero);
-        } else {
-            /* We need to enforce the variable size (default is 32) */
-            dst->bit_width = g_array_index(c->inst.allocated,
-                                           Var,
-                                           var_id).bit_width;
-        }
+        unsigned var_id = find_variable_and_assert_declared(c, locp, dst);
+        /* We need to enforce the variable size (default is 32) */
+        dst->bit_width = g_array_index(c->inst.allocated,
+                                       Var,
+                                       var_id).bit_width;
     }
     gen_deposit_op(c, locp, dst, val, n, sh);
 }
