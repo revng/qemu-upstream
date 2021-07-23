@@ -1260,24 +1260,17 @@ void gen_assign(Context *c,
     }
 
     if (dest->type == VARID) {
-        if (strcmp(dest->var.name->str, "EA") == 0) {
-            /* If the var is EA then create it with the type of value */
-             assert_signedness(c, locp, value_m.signedness);
-             gen_varid_allocate(c, locp, dest, value_m.bit_width,
-                                value_m.signedness);
-        } else {
-            /*
-             * If the var is not EA and a regular typed variable, then assert
-             * that it has been declared and load its' type.
-             */
-            unsigned index = find_variable_and_assert_declared(c, locp, dest);
-            dest->bit_width = g_array_index(c->inst.allocated,
-                                           Var,
-                                           index).bit_width;
-            dest->signedness = g_array_index(c->inst.allocated,
-                                             Var,
-                                             index).signedness;
-        }
+        /*
+         * Assert that the var has been declared and get its' width
+         * and signedness.
+         */
+        unsigned index = find_variable_and_assert_declared(c, locp, dest);
+        dest->bit_width = g_array_index(c->inst.allocated,
+                Var,
+                index).bit_width;
+        dest->signedness = g_array_index(c->inst.allocated,
+                Var,
+                index).signedness;
     }
     unsigned bit_width = dest->bit_width == 64 ? 64 : 32;
     if (bit_width != value_m.bit_width) {
@@ -1832,12 +1825,18 @@ void gen_inst_args(Context *c, YYLTYPE *locp)
     /* Initialize declared but uninitialized registers, but only for */
     /* non-conditional instructions */
     for (unsigned i = 0; i < c->inst.init_list->len; i++) {
-        HexValue *reg = &g_array_index(c->inst.init_list, HexValue, i);
-        if (reg->type == REGISTER
-                || reg->type == REGISTER_ARG
-                || reg->type == PREDICATE) {
-            OUT(c, locp, "tcg_gen_movi_i", &reg->bit_width, "(",
-                reg, ", 0);\n");
+        HexValue *val = &g_array_index(c->inst.init_list, HexValue, i);
+        if (val->type == REGISTER
+                || val->type == REGISTER_ARG
+                || val->type == PREDICATE) {
+            OUT(c, locp, "tcg_gen_movi_i", &val->bit_width, "(",
+                val, ", 0);\n");
+        } else if (val->type == VARID) {
+            /*
+             * The only VARID allowed in arguments list is EA,
+             * so we initialize it here as a 32-bit signed int.
+             */
+            gen_varid_allocate(c, locp, val, 32, SIGNED);
         }
     }
 }

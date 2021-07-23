@@ -273,6 +273,11 @@ arg_decl : REG
            {
                yyassert(c, &@1, !strcmp($1.var.name->str, "EA"),
                         "Unknown argument variable!");
+               /*
+                * Enqueue EA into initialization list so we can
+                * setup its type corretly.
+                */
+               g_array_append_val(c->inst.init_list, $1);
            }
          | RREG
            {
