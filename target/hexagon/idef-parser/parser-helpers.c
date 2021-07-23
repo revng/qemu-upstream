@@ -1923,7 +1923,16 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *size,
     OUT(c, locp, "process_store(ctx, pkt, 1);\n");
     OUT(c, locp, "}\n");
     OUT(c, locp, "tcg_gen_qemu_ld", size_suffix, sign_suffix);
-    OUT(c, locp, "(", dst, ", ", ea, ", 0);\n");
+    OUT(c, locp, "(");
+    if (dst->bit_width > size->imm.value*8) {
+        /*
+         * Cast to the correct TCG type if necessary, to avoid implict cast
+         * warnings. This is needed when the width of the destination var is
+         * larger than the size of the requested load.
+         */
+        OUT(c, locp, "(TCGv) ");
+    }
+    OUT(c, locp, dst, ", ", ea, ", 0);\n");
     /* If the var in EA was truncated it is now a tmp HexValue, so free it. */
     gen_rvalue_free(c, locp, ea);
 }
