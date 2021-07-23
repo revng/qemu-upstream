@@ -87,11 +87,11 @@
     (fZXTN(WIDTH, 32, fBIDIR_LSHIFTR((INREG), (OFFSET), 4_8)))
 
 #define fADDSAT64(DST, A, B)                                            \
-    __a = fCAST8u(A);                                                   \
-    __b = fCAST8u(B);                                                   \
-    __sum = __a + __b;                                                  \
-    __xor = __a ^ __b;                                                  \
-    __mask = fCAST8s(0x8000000000000000ULL);                            \
+    size8u_t __a = fCAST8u(A);                                          \
+    size8u_t __b = fCAST8u(B);                                          \
+    size8u_t __sum = __a + __b;                                         \
+    size8u_t __xor = __a ^ __b;                                         \
+    size8s_t __mask = fCAST8s(0x8000000000000000ULL);                   \
     if (((__a ^ __b) | ~(__a ^ __sum)) & __mask) {                      \
         DST = __sum;                                                    \
     } else {                                                            \
