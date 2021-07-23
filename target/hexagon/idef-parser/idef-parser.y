@@ -134,8 +134,8 @@ instruction : INAME
 arguments : '(' ')'
           | '(' argument_list ')';
 
-argument_list : decl ',' argument_list
-              | decl
+argument_list : arg_decl ',' argument_list
+              | arg_decl
               ;
 
 var : VAR
@@ -251,42 +251,42 @@ code : '{' statements '}'
        '}'
      ;
 
-decl : REG
-       {
-           emit_arg(c, &@1, &$1);
-           /* Enqueue register into initialization list */
-           g_array_append_val(c->inst.init_list, $1);
-       }
-     | IMM
-       {
-           EMIT_SIG(c, ", int %ciV", $1.imm.id);
-       }
-     | PRE
-       {
-           emit_arg(c, &@1, &$1);
-           /* Enqueue predicate into initialization list */
-           g_array_append_val(c->inst.init_list, $1);
-       }
-     | var
-       {
-           yyassert(c, &@1, !strcmp($1.var.name->str, "EA"),
-                    "Unknown argument variable!");
-       }
-     | RREG
-       {
-           emit_arg(c, &@1, &$1);
-       }
-     | WREG
-     | FREG
-     | FIMM
-     | RPRE
-       {
-           emit_arg(c, &@1, &$1);
-       }
-     | WPRE
-     | FPRE
-     | FEA
-     ;
+arg_decl : REG
+           {
+               emit_arg(c, &@1, &$1);
+               /* Enqueue register into initialization list */
+               g_array_append_val(c->inst.init_list, $1);
+           }
+         | IMM
+           {
+               EMIT_SIG(c, ", int %ciV", $1.imm.id);
+           }
+         | PRE
+           {
+               emit_arg(c, &@1, &$1);
+               /* Enqueue predicate into initialization list */
+               g_array_append_val(c->inst.init_list, $1);
+           }
+         | var
+           {
+               yyassert(c, &@1, !strcmp($1.var.name->str, "EA"),
+                        "Unknown argument variable!");
+           }
+         | RREG
+           {
+               emit_arg(c, &@1, &$1);
+           }
+         | WREG
+         | FREG
+         | FIMM
+         | RPRE
+           {
+               emit_arg(c, &@1, &$1);
+           }
+         | WPRE
+         | FPRE
+         | FEA
+         ;
 
 code_block : '{' statements '}'
            | '{' '}'
