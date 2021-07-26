@@ -415,9 +415,8 @@ HexValue gen_rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue)
     return *rvalue;
 }
 
-int find_variable(Context *c, YYLTYPE *locp, HexValue *varid)
+static int find_variable(Context *c, HexValue *varid)
 {
-    (void) locp;
     for (unsigned i = 0; i < c->inst.allocated->len; i++) {
         Var *curr = &g_array_index(c->inst.allocated, Var, i);
         if (g_string_equal(varid->var.name, curr->name)) {
@@ -431,7 +430,7 @@ static unsigned find_variable_and_assert_declared(Context *c,
                                                   YYLTYPE *locp,
                                                   HexValue *varid)
 {
-    int index = find_variable(c, locp, varid);
+    int index = find_variable(c, varid);
     yyassert(c, locp, index != -1, "Use of undeclared variable!\n");
     return index;
 }
@@ -444,25 +443,18 @@ void gen_varid_allocate(Context *c,
                         HexSignedness signedness)
 {
     assert_signedness(c, locp, signedness);
-    varid->bit_width = width;
+    int index = find_variable(c, varid);
+    yyassert(c, locp, index == -1, "Redeclaration of variables not allowed!");
+
     const char *bit_suffix = width == 64 ? "64" : "32";
-    int index = find_variable(c, locp, varid);
-    bool found = index != -1;
-    if (found) {
-        Var *other = &g_array_index(c->inst.allocated, Var, index);
-        varid->var.name = other->name;
-        varid->bit_width = other->bit_width;
-        varid->signedness = other->signedness;
-    } else {
-        EMIT_HEAD(c, "TCGv_i%s %s", bit_suffix, varid->var.name->str);
-        EMIT_HEAD(c, " = tcg_temp_local_new_i%s();\n", bit_suffix);
-        Var new_var = {
-            .name = varid->var.name,
-            .bit_width = width,
-            .signedness = signedness,
-        };
-        g_array_append_val(c->inst.allocated, new_var);
-    }
+    EMIT_HEAD(c, "TCGv_i%s %s", bit_suffix, varid->var.name->str);
+    EMIT_HEAD(c, " = tcg_temp_local_new_i%s();\n", bit_suffix);
+    Var new_var = {
+        .name = varid->var.name,
+        .bit_width = width,
+        .signedness = signedness,
+    };
+    g_array_append_val(c->inst.allocated, new_var);
 }
 
 enum OpTypes {

@@ -159,8 +159,6 @@ HexValue gen_rvalue_extend(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
 HexValue gen_rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
-int find_variable(Context *c, YYLTYPE *locp, HexValue *varid);
-
 void gen_varid_allocate(Context *c,
                         YYLTYPE *locp,
                         HexValue *varid,

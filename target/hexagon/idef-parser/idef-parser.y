@@ -226,11 +226,9 @@ var_decl : var_type IMM
          | var_type var
            {
               /*
-               * Assert that var hasn't already been declared, and if so
-               * allocate new var with var_type
+               * Allocate new variable, this checks that it hasn't aldready
+               * been declared.
                */
-              int index = find_variable(c, &@2, &$2);
-              yyassert(c, &@2, index == -1, "Redeclaration of variables not allowed!");
               gen_varid_allocate(c, &@1, &$2, $1.bit_width, $1.signedness);
               /* Copy var for variable name */
               $$ = $2;
