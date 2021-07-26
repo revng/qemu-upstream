@@ -884,15 +884,23 @@ HexValue gen_bin_op(Context *c,
         unsigned index = find_variable_and_assert_declared(c, locp, &op1);
         yyassert(c, locp, c->inst.allocated->len > 0,
                  "Variable in bin_op must exist!\n");
-        op1.bit_width = g_array_index(c->inst.allocated, Var, index).bit_width;
-        op1.signedness = g_array_index(c->inst.allocated, Var, index).signedness;
+        op1.bit_width = g_array_index(c->inst.allocated,
+                                      Var,
+                                      index).bit_width;
+        op1.signedness = g_array_index(c->inst.allocated,
+                                       Var,
+                                       index).signedness;
     }
     if (op2.type == VARID) {
         unsigned index = find_variable_and_assert_declared(c, locp, &op2);
         yyassert(c, locp, c->inst.allocated->len > 0,
                  "Variable in bin_op must exist!\n");
-        op2.bit_width = g_array_index(c->inst.allocated, Var, index).bit_width;
-        op2.signedness = g_array_index(c->inst.allocated, Var, index).signedness;
+        op2.bit_width = g_array_index(c->inst.allocated,
+                                      Var,
+                                      index).bit_width;
+        op2.signedness = g_array_index(c->inst.allocated,
+                                       Var,
+                                       index).signedness;
     }
 
     enum OpTypes op_types = (op1.type != IMMEDIATE) << 1
@@ -1923,7 +1931,7 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *size,
     OUT(c, locp, "}\n");
     OUT(c, locp, "tcg_gen_qemu_ld", size_suffix, sign_suffix);
     OUT(c, locp, "(");
-    if (dst->bit_width > size->imm.value*8) {
+    if (dst->bit_width > size->imm.value * 8) {
         /*
          * Cast to the correct TCG type if necessary, to avoid implict cast
          * warnings. This is needed when the width of the destination var is

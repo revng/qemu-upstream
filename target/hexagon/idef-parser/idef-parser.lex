@@ -636,7 +636,7 @@ STRING_LIT               \"(\\.|[^"\\])*\"
 "size"[1248][us]"_t"     { /* Handles "size_t" variants of int types */
                            const unsigned int bits_per_byte = 8;
                            const unsigned int bytes = yytext[4] - '0';
-                           yylval->rvalue.bit_width = bits_per_byte*bytes;
+                           yylval->rvalue.bit_width = bits_per_byte * bytes;
                            if (yytext[5] == 'u') {
                                yylval->rvalue.signedness = UNSIGNED;
                            } else {
