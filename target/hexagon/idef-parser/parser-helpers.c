@@ -415,7 +415,12 @@ HexValue gen_rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue)
     return *rvalue;
 }
 
-static int find_variable(Context *c, HexValue *varid)
+/*
+ * Attempts to lookup the `Var` struct associated with the given `varid`,
+ * returns the index of the `Var` in the `c->inst.allocated` array, and -1
+ * in case of failure.
+ */
+static int try_find_variable(Context *c, HexValue *varid)
 {
     for (unsigned i = 0; i < c->inst.allocated->len; i++) {
         Var *curr = &g_array_index(c->inst.allocated, Var, i);
@@ -426,11 +431,12 @@ static int find_variable(Context *c, HexValue *varid)
     return -1;
 }
 
-static unsigned find_variable_and_assert_declared(Context *c,
-                                                  YYLTYPE *locp,
-                                                  HexValue *varid)
+/* Calls `try_find_variable` and asserts succcess. */
+static unsigned find_variable(Context *c,
+                              YYLTYPE *locp,
+                              HexValue *varid)
 {
-    int index = find_variable(c, varid);
+    int index = try_find_variable(c, varid);
     yyassert(c, locp, index != -1, "Use of undeclared variable!\n");
     return index;
 }
@@ -443,7 +449,7 @@ void gen_varid_allocate(Context *c,
                         HexSignedness signedness)
 {
     assert_signedness(c, locp, signedness);
-    int index = find_variable(c, varid);
+    int index = try_find_variable(c, varid);
     yyassert(c, locp, index == -1, "Redeclaration of variables not allowed!");
 
     const char *bit_suffix = width == 64 ? "64" : "32";
@@ -873,7 +879,7 @@ HexValue gen_bin_op(Context *c,
 
     /* Enforce variables' size and signedness */
     if (op1.type == VARID) {
-        unsigned index = find_variable_and_assert_declared(c, locp, &op1);
+        unsigned index = find_variable(c, locp, &op1);
         yyassert(c, locp, c->inst.allocated->len > 0,
                  "Variable in bin_op must exist!\n");
         op1.bit_width = g_array_index(c->inst.allocated,
@@ -884,7 +890,7 @@ HexValue gen_bin_op(Context *c,
                                        index).signedness;
     }
     if (op2.type == VARID) {
-        unsigned index = find_variable_and_assert_declared(c, locp, &op2);
+        unsigned index = find_variable(c, locp, &op2);
         yyassert(c, locp, c->inst.allocated->len > 0,
                  "Variable in bin_op must exist!\n");
         op2.bit_width = g_array_index(c->inst.allocated,
@@ -1264,7 +1270,7 @@ void gen_assign(Context *c,
          * Assert that the var has been declared and get its' width
          * and signedness.
          */
-        unsigned index = find_variable_and_assert_declared(c, locp, dest);
+        unsigned index = find_variable(c, locp, dest);
         dest->bit_width = g_array_index(c->inst.allocated,
                 Var,
                 index).bit_width;
@@ -1906,7 +1912,7 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *size,
     char size_suffix[4] = { 0 };
     /* If dst is a variable, assert that is declared and load the type info */
     if (dst->type == VARID) {
-        unsigned index = find_variable_and_assert_declared(c, locp, dst);
+        unsigned index = find_variable(c, locp, dst);
         dst->bit_width = g_array_index(c->inst.allocated,
                                        Var,
                                        index).bit_width;
@@ -1915,7 +1921,7 @@ void gen_load(Context *c, YYLTYPE *locp, HexValue *size,
                                        index).signedness;
     }
     snprintf(size_suffix, 4, "%" PRIu64, size->imm.value * 8);
-    unsigned var_id = find_variable_and_assert_declared(c, locp, ea);
+    unsigned var_id = find_variable(c, locp, ea);
     /* We need to enforce the variable size */
     ea->bit_width = g_array_index(c->inst.allocated, Var, var_id).bit_width;
     OUT(c, locp, "if (insn->slot == 0 && pkt->pkt_has_store_s1) {\n");
@@ -1943,7 +1949,7 @@ void gen_store(Context *c, YYLTYPE *locp, HexValue *size, HexValue *ea,
     /* Memop width is specified in the store macro */
     int mem_width = size->imm.value;
     assert(ea->type == VARID);
-    unsigned var_id = find_variable_and_assert_declared(c, locp, ea);
+    unsigned var_id = find_variable(c, locp, ea);
     /* We need to enforce the variable size */
     ea->bit_width = g_array_index(c->inst.allocated, Var, var_id).bit_width;
     src_m = rvalue_materialize(c, locp, &src_m);
@@ -1960,7 +1966,7 @@ void gen_sethalf(Context *c, YYLTYPE *locp, HexCast *sh, HexValue *n,
     yyassert(c, locp, n->type == IMMEDIATE,
              "Deposit index must be immediate!\n");
     if (dst->type == VARID) {
-        unsigned var_id = find_variable_and_assert_declared(c, locp, dst);
+        unsigned var_id = find_variable(c, locp, dst);
         /* We need to enforce the variable size (default is 32) */
         dst->bit_width = g_array_index(c->inst.allocated,
                                        Var,
