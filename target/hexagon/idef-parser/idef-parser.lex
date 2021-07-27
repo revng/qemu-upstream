@@ -636,6 +636,7 @@ STRING_LIT               \"(\\.|[^"\\])*\"
 "unsigned"               { return TYPE_UNSIGNED; }
 "long"                   { return TYPE_LONG; }
 "int"                    { return TYPE_INT; }
+"const"                  { /* Emit no token */ }
 {VAR_ID}                 { /* Variable name, we adopt the C names convention */
                            yylval->rvalue.type = VARID;
                            yylval->rvalue.var.name = g_string_new(yytext);

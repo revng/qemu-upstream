@@ -87,16 +87,28 @@
     (fZXTN(WIDTH, 32, fBIDIR_LSHIFTR((INREG), (OFFSET), 4_8)))
 
 #define fADDSAT64(DST, A, B)                                            \
-    size8u_t __a = fCAST8u(A);                                          \
-    size8u_t __b = fCAST8u(B);                                          \
-    size8u_t __sum = __a + __b;                                         \
-    size8u_t __xor = __a ^ __b;                                         \
-    size8s_t __mask = fCAST8s(0x8000000000000000ULL);                   \
-    if (((__a ^ __b) | ~(__a ^ __sum)) & __mask) {                      \
-        DST = __sum;                                                    \
-    } else {                                                            \
-        DST = ((__sum & __mask) >> 63) + __mask;                        \
-        fSET_OVERFLOW();                                                \
+    {                                                                   \
+        size8u_t __a = fCAST8u(A);                                      \
+        size8u_t __b = fCAST8u(B);                                      \
+        size8u_t __sum = __a + __b;                                     \
+        size8u_t __xor = __a ^ __b;                                     \
+        const size8u_t __mask = 0x8000000000000000ULL;                  \
+        if (__xor & __mask) {                                           \
+            /* Opposite signs, OK */                                    \
+            DST = __sum;                                                \
+        } else if ((__a ^ __sum) & __mask) {                            \
+            /* Signs mismatch */                                        \
+            if (__sum & __mask) {                                       \
+                /* overflowed to negative, make max pos */              \
+                DST=0x7FFFFFFFFFFFFFFFLL; fSET_OVERFLOW();              \
+            } else {                                                    \
+                /* overflowed to positive, make max neg */              \
+                DST=0x8000000000000000LL; fSET_OVERFLOW();              \
+            }                                                           \
+        } else {                                                        \
+            /* signs did not mismatch, OK */                            \
+            DST = __sum;                                                \
+        }                                                               \
     }
 
 /* Least significant bit operations */
