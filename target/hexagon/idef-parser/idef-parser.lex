@@ -584,45 +584,26 @@ STRING_LIT               \"(\\.|[^"\\])*\"
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = 127;
                            return IMM; }
+"0x"{HEX_DIGIT}+         |
 {DIGIT}+                 { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.signedness = SIGNED;
                            yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = atoi(yytext);
+                           yylval->rvalue.imm.value = strtoull(yytext, NULL, 0);
                            return IMM; }
+"0x"{HEX_DIGIT}+"LL"     |
 {DIGIT}+"LL"             { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.signedness = SIGNED;
                            yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = strtoll(yytext, NULL, 10);
+                           yylval->rvalue.imm.value = strtoull(yytext, NULL, 0);
                            return IMM; }
+"0x"{HEX_DIGIT}+"ULL"    |
 {DIGIT}+"ULL"            { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.signedness = UNSIGNED;
                            yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = strtoull(yytext,
-                                                               NULL,
-                                                               10);
-                           return IMM; }
-"0x"{HEX_DIGIT}+         { yylval->rvalue.type = IMMEDIATE;
-                           yylval->rvalue.bit_width = 32;
-                           yylval->rvalue.signedness = SIGNED;
-                           yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = strtoul(yytext, NULL, 16);
-                           return IMM; }
-"0x"{HEX_DIGIT}+"LL"     { yylval->rvalue.type = IMMEDIATE;
-                           yylval->rvalue.bit_width = 64;
-                           yylval->rvalue.signedness = SIGNED;
-                           yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = strtoll(yytext, NULL, 16);
-                           return IMM; }
-"0x"{HEX_DIGIT}+"ULL"    { yylval->rvalue.type = IMMEDIATE;
-                           yylval->rvalue.bit_width = 64;
-                           yylval->rvalue.signedness = UNSIGNED;
-                           yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = strtoull(yytext,
-                                                               NULL,
-                                                               16);
+                           yylval->rvalue.imm.value = strtoull(yytext, NULL, 0);
                            return IMM; }
 "fCONSTLL"               { return CONSTLL; }
 "fCONSTULL"              { return CONSTULL; }
