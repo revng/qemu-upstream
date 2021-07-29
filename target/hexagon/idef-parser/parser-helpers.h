@@ -48,9 +48,10 @@ void yyerror(YYLTYPE *locp,
              const char *s);
 
 #ifndef NDEBUG
-#define yyassert(context, locp, condition, msg) \
-    if (!(condition)) { \
+#define yyassert(context, locp, condition, msg)              \
+    if (!(condition)) {                                      \
         yyerror(locp, (context)->scanner, (context), (msg)); \
+        abort();                                             \
     }
 #endif
 
