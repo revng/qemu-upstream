@@ -2044,18 +2044,14 @@ HexValue gen_rvalue_pre(Context *c, YYLTYPE *locp, HexValue *pre)
 HexValue gen_rvalue_var(Context *c, YYLTYPE *locp, HexValue *var)
 {
     /* Assign correct bit width and signedness */
-    bool found = false;
-    for (unsigned i = 0; i < c->inst.allocated->len; i++) {
-        Var *other = &g_array_index(c->inst.allocated, Var, i);
-        if (g_string_equal(var->var.name, other->name)) {
-            found = true;
-            other->name = var->var.name;
-            var->bit_width = other->bit_width;
-            var->signedness = other->signedness;
-            break;
-        }
-    }
-    yyassert(c, locp, found, "Undefined symbol!\n");
+    unsigned index = find_variable(c, locp, var);
+
+    /* TODO: necessary? */
+    g_array_index(c->inst.allocated, Var, index).name = var->var.name;
+
+    var->bit_width  = g_array_index(c->inst.allocated, Var, index).bit_width;
+    var->signedness = g_array_index(c->inst.allocated, Var, index).signedness;
+
     return *var;
 }
 
