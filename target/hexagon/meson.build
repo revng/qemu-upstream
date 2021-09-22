@@ -154,8 +154,8 @@ idef_parser_input_generated = custom_target(
     'idef_parser_input.h.inc',
     output: 'idef_parser_input.h.inc',
     depends: [semantics_generated],
-    depend_files: [hex_common_py, gen_tcg_h],
-    command: [python, files('gen_idef_parser_funcs.py'), semantics_generated, attribs_def, gen_tcg_h, '@OUTPUT@'],
+    depend_files: [hex_common_py],
+    command: [python, files('gen_idef_parser_funcs.py'), semantics_generated, attribs_def, '@OUTPUT@'],
 )
 
 preprocessed_idef_parser_input_generated = custom_target(

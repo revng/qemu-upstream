@@ -44,12 +44,11 @@ import hex_common
 def main():
     hex_common.read_semantics_file(sys.argv[1])
     hex_common.read_attribs_file(sys.argv[2])
-    hex_common.read_overrides_file(sys.argv[3])
     hex_common.calculate_attribs()
     tagregs = hex_common.get_tagregs()
     tagimms = hex_common.get_tagimms()
 
-    with open(sys.argv[4], 'w') as f:
+    with open(sys.argv[3], 'w') as f:
         f.write('#include "macros.inc"\n\n')
 
         for tag in hex_common.tags:
@@ -68,8 +67,18 @@ def main():
             ## Skip 128-bit instructions
             if ( tag in {'A7_croundd_ri', 'A7_croundd_rr'} ) :
                 continue
+            if ( tag in {'M7_wcmpyrw', 'M7_wcmpyrwc',
+                         'M7_wcmpyiw', 'M7_wcmpyiwc',
+                         'M7_wcmpyrw_rnd', 'M7_wcmpyrwc_rnd',
+                         'M7_wcmpyiw_rnd', 'M7_wcmpyiwc_rnd'} ) :
+                continue
+            ## Skip interleave/deinterleave instructions
+            if ( tag in {'S2_interleave', 'S2_deinterleave'} ) :
+                continue
             ## Skip other unsupported instructions
             if ( tag.startswith('S2_cabacdecbin') ) :
+                continue
+            if ( tag.startswith('A5_ACS') ) :
                 continue
             if ( tag.startswith('Y') ) :
                 continue

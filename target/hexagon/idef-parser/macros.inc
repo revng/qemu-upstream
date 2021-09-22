@@ -29,8 +29,6 @@
 #define fCALLR(A) fWRITE_LR(fREAD_NPC()); fWRITE_NPC(A);
 #define fCAST2_8s(A) fSXTN(16, 64, A)
 #define fCAST2_8u(A) fZXTN(16, 64, A)
-#define fCAST8S_16S(A) (fSXTN(64, 128, A))
-#define fCAST16S_8S(A) (fSXTN(128, 64, A))
 #define fVSATW(A) fVSATN(32, fCAST8_8s(A))
 #define fSATW(A) fSATN(32, fCAST8_8s(A))
 #define fVSAT(A) fVSATN(32, A)
@@ -86,19 +84,6 @@
 #define fEXTRACTU_BIDIR(INREG, WIDTH, OFFSET)                           \
     (fZXTN(WIDTH, 32, fBIDIR_LSHIFTR((INREG), (OFFSET), 4_8)))
 
-#define fADDSAT64(DST, A, B)                                            \
-    __a = fCAST8u(A);                                                   \
-    __b = fCAST8u(B);                                                   \
-    __sum = __a + __b;                                                  \
-    __xor = __a ^ __b;                                                  \
-    __mask = fCAST8s(0x8000000000000000ULL);                            \
-    if (((__a ^ __b) | ~(__a ^ __sum)) & __mask) {                      \
-        DST = __sum;                                                    \
-    } else {                                                            \
-        DST = ((__sum & __mask) >> 63) + __mask;                        \
-        fSET_OVERFLOW();                                                \
-    }
-
 /* Least significant bit operations */
 #define fLSBNEW0 fLSBNEW(P0N)
 #define fLSBNEW1 fLSBNEW(P1N)
@@ -112,6 +97,11 @@
 #define fWRITE_LR(A) (LR = A)
 #define fWRITE_FP(A) (FP = A)
 #define fWRITE_SP(A) (SP = A)
+/*
+ * Note: There is a rule in the parser that matches `PC = ...` and emits
+ * a call to `gen_write_new_pc`. We need to call `gen_write_new_pc` to
+ * get the correct semantics when there are multiple stores in a packet.
+ */
 #define fBRANCH(LOC, TYPE) (PC = LOC)
 #define fJUMPR(REGNO, TARGET, TYPE) (PC = TARGET)
 #define fWRITE_LOOP_REGS0(START, COUNT) SA0 = START; (LC0 = COUNT)
@@ -137,17 +127,14 @@
 #define fROUND(A) (A + 0x8000)
 
 /* Binary operators */
-#define fADD128(A, B) (A + B)
-#define fSUB128(A, B) (A - B)
-#define fSHIFTR128(A, B) (size8s_t) (A >> B)
-#define fSHIFTL128(A, B) (A << B)
-#define fAND128(A, B) (A & B)
 #define fSCALE(N, A) (A << N)
-#define fASHIFTR(SRC, SHAMT, REGSTYPE) (SRC >> SHAMT)
+#define fASHIFTR(SRC, SHAMT, REGSTYPE) (fCAST##REGSTYPE##s(SRC) >> SHAMT)
 #define fLSHIFTR(SRC, SHAMT, REGSTYPE) (SRC >>> SHAMT)
 #define fROTL(SRC, SHAMT, REGSTYPE) fROTL(SRC, SHAMT)
 #define fASHIFTL(SRC, SHAMT, REGSTYPE) (fCAST##REGSTYPE##s(SRC) << SHAMT)
 
+/* Include fHIDE macros which hide type declarations */
+#define fHIDE(A) A
+
 /* Purge non-relavant parts */
-#define fHIDE(A)
 #define fBRANCH_SPECULATE_STALL(A, B, C, D, E)
