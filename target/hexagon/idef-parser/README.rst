@@ -28,7 +28,6 @@ idef-parser will compile the above code into the following code:
                     TCGv_i32 RsV, TCGv_i32 RtV)
    /*  { RdV=RsV+RtV;} */
    {
-       tcg_gen_movi_i32(RdV, 0);
        TCGv_i32 tmp_0 = tcg_temp_new_i32();
        tcg_gen_add_i32(tmp_0, RsV, RtV);
        tcg_gen_mov_i32(RdV, tmp_0);
@@ -83,25 +82,16 @@ Now let's have a quick look at the generated code, line by line.
 
 ::
 
-   tcg_gen_movi_i32(RdV, 0);
-
-This code starts by zero-initializing ``RdV``, since reading from that register
-without initialization will cause a segmentation fault by QEMU.  This is emitted
-since a declaration of the ``RdV`` register was parsed, but we got no indication
-that the variable has been initialized by the caller.
-
-::
-
    TCGv_i32 tmp_0 = tcg_temp_new_i32();
 
-Then we are declaring a temporary TCGv to hold the result from the sum
+This code starts by declaring a temporary TCGv to hold the result from the sum
 operation.
 
 ::
 
    tcg_gen_add_i32(tmp_0, RsV, RtV);
 
-Now we are actually generating the sum tinycode operator between the selected
+Then, we are generating the sum tinycode operator between the selected
 registers, storing the result in the just declared temporary.
 
 ::
@@ -109,14 +99,70 @@ registers, storing the result in the just declared temporary.
    tcg_gen_mov_i32(RdV, tmp_0);
 
 The result of the addition is now stored in the temporary, we move it into the
-correct destination register. This might not seem an efficient code, but QEMU
-will perform some tinycode optimization, reducing the unnecessary copy.
+correct destination register. This code may seem inefficient, but QEMU will
+perform some optimizations on the tinycode, reducing the unnecessary copy.
 
 ::
 
    tcg_temp_free_i32(tmp_0);
 
 Finally, we free the temporary we used to hold the addition result.
+
+Parser Input
+------------
+
+Before moving on to the structure of idef-parser itself, let us spend some words
+on its' input. There are two preprocessing steps applied to the generated
+instruction semantics in ``semantics_generated.pyinc`` that we need to consider.
+Firstly,
+
+::
+
+    gen_idef_parser_funcs.py
+
+which takes instruction semantics in ``semantics_generated.pyinc`` to C-like
+pseudo code, output into ``idef_parser_input.h.inc``. For instance, the
+``J2_jumpr`` instruction which jumps to an address stored in a register
+argument. This is instruction is defined as
+
+::
+
+    SEMANTICS( \
+        "J2_jumpr", \
+        "jumpr Rs32", \
+        """{fJUMPR(RsN,RsV,COF_TYPE_JUMPR);}""" \
+    )
+
+in ``semantics_generated.pyinc``. Running ``gen_idef_parser_funcs.py``
+we obtain the pseudo code
+
+::
+
+    J2_jumpr(in RsV) {
+        {fJUMPR(RsN,RsV,COF_TYPE_JUMPR);}
+    }
+
+with macros such as ``fJUMPR`` intact.
+
+The second step is to expand macros into a form suitable for our parser.
+These macros are defined in ``idef-parser/macros.inc`` and the step is
+carried out by the ``prepare`` script which runs the C preprocessor on
+``idef_parser_input.h.inc`` to produce
+``idef_parser_input.preprocessed.h.inc``.
+
+To finish the above example, after preprocessing ``J2_jumpr`` we obtain
+
+::
+
+    J2_jumpr(in RsV) {
+        {(PC = RsV);}
+    }
+
+where ``fJUMPR(RsN,RsV,COF_TYPE_JUMPR);`` was expanded to ``(PC = RsV)``,
+signifying a write to the Program Counter ``PC``.  Note, that ``PC`` in
+this expression is not a variable in the strict C sense since it is not
+declared anywhere, but rather a symbol which is easy to match in
+idef-parser later on.
 
 Parser Structure
 ----------------
@@ -151,77 +197,148 @@ rule, representing the structure of the input file shown above:
 
 ::
 
-   instruction : INAME code
+   instruction : INAME arguments code
+               | error
 
-   code        : LBR decls statements decls RBR
+   arguments : '(' ')'
+             | '(' argument_list ')';
+
+   argument_list : argument_decl ',' argument_list
+                 | argument_decl
+
+   argument_decl : REG
+                 | PRED
+                 | IN REG
+                 | IN PRED
+                 | IMM
+                 | var
+                 ;
+
+   code        : '{' statements '}'
 
    statements  : statements statement
                | statement
 
    statement   : control_statement
-               | rvalue SEMI
+               | var_decl ';'
+               | rvalue ';'
                | code_block
-               | SEMI
+               | ';'
 
-   code_block  : LBR statements RBR
-               | LBR RBR
+   code_block  : '{' statements '}'
+               | '{' '}'
 
-With this initial portion of the grammar we are defining the instruction
-statements, which are enclosed by the declarations. Each statement can be a
-``control_statement``, a code block, which is just a bracket-enclosed list of
-statements, a ``SEMI``, which is a ``nop`` instruction, and an ``rvalue SEMI``.
+With this initial portion of the grammar we are defining the instruction, its'
+arguments, and its' statements. Each argument is defined by the
+``argument_decl`` rule, and can be either
+
+::
+
+    Description                  Example
+    ----------------------------------------
+    output register              RsV
+    output predicate register    P0
+    input register               in RsV
+    input predicate register     in P0
+    immediate value              1234
+    local variable               EA
+
+Note, the only local variable allowed to be used as an argument is the effective
+address ``EA``. Similarly, each statement can be a ``control_statement``, a
+variable declaration such as ``int a;``, a code block, which is just a
+bracket-enclosed list of statements, a ``';'``, which is a ``nop`` instruction,
+and an ``rvalue ';'``.
 
 Expressions
 ~~~~~~~~~~~
 
-``rvalue`` is the nonterminal representing expressions, which are everything
-that could be assigned to a variable. ``rvalue SEMI`` can be a statement on its
-own because the assign statement, just as in the C language, is itself an
-expression.
+Allowed in the input code are C language expressions with a few exceptions
+to simplify parsing. For instance, variable names such as ``RdV``, ``RssV``,
+``PdV``, ``CsV``, and other idiomatic register names from Hexagon, are
+reserved specifically for register arguments. These arguments then map to
+``TCGv_i32`` or ``TCGv_i64`` depending on the register size. Similarly, ``UiV``,
+``riV``, etc. refer to immediate arguments and will map to C integers.
 
-``rvalue``\ s can be registers, immediates, predicates, control registers,
-variables, or any combination of other ``rvalue``\ s through operators. An
-``rvalue`` can be either an immediate or a TCGv, the actual type is determined
-by the ``t_hex_value.type`` field. In case it is an immediate, its combination
-with other immediates can be performed at compile-time (constant folding), only
-the result will be written into the code. If the ``rvalue`` instead is a TCGv,
-the operations performed on it will have to be emitted as tinycode instructions,
-therefore their result will be known only at runtime. An immediate can be copied
-into a TCGv through the ``rvalue_materialize`` function, which allocates a
-temporary TCGv and copies the value of the immediate in it. Each temporary
-should be freed after that it is no more used, we usually free both operands of
-each operator, in an SSA fashion.
+Also, as mentioned earlier, the names ``PC``, ``SP``, ``FP``, etc. are used to
+refer to Hexagon registers such as the program counter, stack pointer, and frame
+pointer seen here. Writes to these registers then correspond to assignments
+``PC = ...``, and reads correspond to uses of the variable ``PC``.
 
-``lvalue``\ s instead represents all the variables which can be assigned to a
-value, and are specialized into registers and variables:
+Moreover, another example of one such exception is the selective expansion of
+macros present in ``macros.h``. As an example, consider the ``fABS`` macro which
+in plain C is defined as
 
 ::
 
-   lvalue        : REG
-                 | VAR
+    #define fABS(A) (((A) < 0) ? (-(A)) : (A))
 
-The effective assignment of ``lvalue``\ s is handled by the ``gen_assign()``
-function.
+and returns the absolute value of the argument ``A``. This macro is not included
+in ``idef-parser/macros.inc`` and as such is not expanded and kept as a "call"
+``fABS(...)``. Reason being, that ``fABS`` is easier to match and map to
+``tcg_gen_abs_<width>``, compared to the full ternary expression above. Loads of
+macros in ``macros.h`` are kept unexpanded to aid in parsing, as seen in the
+example above, for more information see ``idef-parser/idef-parser.lex``.
 
-Automatic Variables
-~~~~~~~~~~~~~~~~~~~
+Finally, in mapping these input expressions to tinycode generators, idef-parser
+tries to perform as much as possible in plain C. Such as, performing binary
+operations in C instead of tinycode generators, thus effectively constant
+folding the expression.
 
-The input code can contain implicitly declared automatic variables, which are
-initialized with a value and then used. We performed a dedicated handling of
-such variables, because they will be matched by a generic ``VARID`` token, which
-will feature the variable name as a decoration. Each time that the variable is
-found, we have to check if that's the first variable use, in that case we
-declare a new automatic variable in the tinycode, which can be considered at all
-effects as an immediate. Special care is taken to make sure that each variable
-is declared only the first time it is seen. Furthermore the variable might
-inherit some characteristics like the signedness and the bit width, which must
-be propagated from the initialization of the variable to all the further uses of
-the variable.
+Variables and Variable Declarations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The combination of ``rvalue``\ s are handled through the use of the
-``gen_bin_op`` and ``gen_bin_cmp`` helper functions. These two functions handle
-the appropriate compile-time or run-time emission of operations to perform the
-required computation.
+Similarly to C, variables in the input code must be explicitly declared, such as
+``int var1;`` which declares an uninitialized variable ``var1``. Initialization
+``int var2 = 0;`` is also allowed and behaves as expected. In tinycode
+generators the previous declarations are mapped to
+
+::
+
+    int var1;           ->      TCGv_i32 var1 = tcg_temp_local_new_i32();
+
+    int var2 = 0;       ->      TCGv_i32 var1 = tcg_temp_local_new_i32();
+                                tcg_gen_movi_i32(j, ((int64_t) 0ULL));
+
+which are later automatically freed at the end of the function they're declared
+in. Contrary to C, we only allow variables to be declared with an integer type
+specified in the following table (without permutation of keywords)
+
+::
+
+    type                        bit-width    signedness
+    ----------------------------------------------------------
+    int                         32           signed
+    signed
+    signed int
+
+    unsigned                    32           unsigned
+    unsigned int
+
+    long                        64           signed
+    long int
+    signed long
+    signed long int
+
+    unsigned long               64           unsigned
+    unsigned long int
+
+    long long                   64           signed
+    long long int
+    signed long long
+    signed long long int
+
+    unsigned long long          64           unsigned
+    unsigned long long int
+
+    size[1,2,4,8][s,u]_t        8-64         signed or unsigned
+
+In idef-parser, variable names are matched by a generic ``VARID`` token,
+which will feature the variable name as a decoration. For a variable declaration
+idef-parser calls ``gen_varid_allocate`` with the ``VARID`` token to save the
+name, size, and bit width of the newly declared variable. In addition, this
+function also ensures that variables aren't declared multiple times, and prints
+and error message if that is the case. Upon use of a variable, the ``VARID``
+token is used to lookup the size and bit width of the variable.
 
 Type System
 ~~~~~~~~~~~
@@ -234,9 +351,9 @@ The type of each ``rvalue`` is determined by two attributes: its bit width
 
 For each operation, the type of ``rvalue``\ s influence the way in which the
 operands are handled and emitted. For example a right shift between signed
-operators will be an algebraic shift, while one between unsigned operators will
-be a logical shift. If one of the two operands is signed, and the other is
-unsigned, the operation will be signed.
+operators will be an arithmetic shift, while one between unsigned operators
+will be a logical shift. If one of the two operands is signed, and the other
+is unsigned, the operation will be signed.
 
 The bit width also influences the outcome of the operations, in particular while
 the input languages features a fine granularity type system, with types of 8,
@@ -245,9 +362,14 @@ features 32 and 64 bit widths. We propagate as much as possible the fine
 granularity type, until the value has to be used inside an operation between
 ``rvalue``\ s; in that case if one of the two operands is greater than 32 bits
 we promote the whole operation to 64 bit, taking care of properly extending the
-two operands.  Fortunately, the most critical instructions already feature
+two operands. Fortunately, the most critical instructions already feature
 explicit casts and zero/sign extensions which are properly propagated down to
 our parser.
+
+The combination of ``rvalue``\ s are handled through the use of the
+``gen_bin_op`` and ``gen_bin_cmp`` helper functions. These two functions handle
+the appropriate compile-time or run-time emission of operations to perform the
+required computation.
 
 Control Statements
 ~~~~~~~~~~~~~~~~~~
@@ -266,7 +388,10 @@ by the following grammar rule:
 
 ``if_statement``\ s require the emission of labels and branch instructions which
 effectively perform conditional jumps (``tcg_gen_brcondi``) according to the
-value of an expression. All the predicated instructions, and in general all the
+value of an expression. Note, the tinycode generators we produce for conditional
+statements do not perfectly mirror what would be expected in C, for instance we
+do not reproduce short-circuiting of the ``&&`` operator, and use of the ``||``
+operator is disallowed. All the predicated instructions, and in general all the
 instructions where there could be alternative values assigned to an ``lvalue``,
 like C-style ternary expressions:
 
@@ -274,7 +399,7 @@ like C-style ternary expressions:
 
    rvalue            : rvalue QMARK rvalue COLON rvalue
 
-Are handled using the conditional move tinycode instruction
+are handled using the conditional move tinycode instruction
 (``tcg_gen_movcond``), which avoids the additional complexity of managing labels
 and jumps.
 
@@ -295,7 +420,7 @@ context is explicitly passed to all the functions because the parser we generate
 is a reentrant one, meaning that it does not have any global variable, and
 therefore the instruction compilation could easily be parallelized in the
 future. Finally for each rule we propagate information about the location of the
-involved tokens to generate a pretty error reporting, able to highlight the
+involved tokens to generate pretty error reporting, able to highlight the
 portion of the input code which generated each error.
 
 Debugging
@@ -321,7 +446,7 @@ correctly, while reduce/reduce conflicts are solved by redesigning the
 interested part of the grammar.
 
 Run-time errors can be divided between lexing and parsing errors, lexing errors
-are hard to detect, since the ``VAR`` token will catch everything which is not
+are hard to detect, since the ``var`` token will catch everything which is not
 catched by other tokens, but easy to fix, because most of the time a simple
 regex editing will be enough.
 
@@ -342,7 +467,7 @@ suggestions to make each instruction proceed to the next step.
 
 -  emitted
 
-   This instruction class contains all the instruction which are emitted but
+   This instruction class contains all the instructions which are emitted but
    fail to compile when included in QEMU. The compilation errors are shown by
    the QEMU building process and will lead to fixing the bug.  Most common
    errors regard the mismatch of parameters for tinycode generator functions,
@@ -358,6 +483,9 @@ suggestions to make each instruction proceed to the next step.
    instruction, thus will require less execution trace navigation. If a
    multi-threaded test fail, fixing all the other tests will be the easier
    option, hoping that the multi-threaded one will be indirectly fixed.
+
+   An example of debugging this type of failure is provided in the following
+   section.
 
 -  tests-passed
 
@@ -377,6 +505,148 @@ where the instruction pass the test, and run it with the following command:
 And do the same for your implementation, the generated execution traces will be
 inherently aligned and can be inspected for behavioral differences using the
 ``diff`` tool.
+
+Example of debugging erroneous tinycode generator code
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The goal of this section is to provide a complete example of debugging
+incorrectly emitted tinycode generator for a single instruction.
+
+Let's first introduce a bug in the tinycode generator of the ``A2_add``
+instruction,
+
+::
+
+    void emit_A2_add(DisasContext *ctx, Insn *insn, Packet *pkt, TCGv_i32 RdV,
+                     TCGv_i32 RsV, TCGv_i32 RtV)
+    /*  RdV=RsV+RtV;} */
+    {
+        TCGv_i32 tmp_0 = tcg_temp_new_i32();
+        tcg_gen_add_i32(tmp_0, RsV, RsV);
+        tcg_gen_mov_i32(RdV, tmp_0);
+        tcg_temp_free_i32(tmp_0);
+    }
+
+Here the bug, albeit hard to spot, is in ``tcg_gen_add_i32(tmp_0, RsV, RsV);``
+where we compute ``RsV + RsV`` instead of ``RsV + RtV``, as would be expected.
+This particular bug is a bit tricky to pinpoint when debugging, since the
+``A2_add`` instruction is so ubiquitous. As a result, pretty much all tests will
+fail and therefore not provide a lot of information about the bug.
+
+For example, let's run the ``check-tcg`` tests
+
+::
+
+    make check-tcg TIMEOUT=1200 \
+                   DOCKER_IMAGE=debian-hexagon-cross \
+                   ENGINE=podman V=1 \
+                   DOCKER_CROSS_CC_GUEST=hexagon-unknown-linux-musl-clang
+
+In the output, we find a failure in the very first test case ``float_convs``
+due to a segmentation fault. Similarly, all harness and libc tests will fail as
+well. At this point we have no clue where the actual bug lies, and need to start
+ruling out instructions. As such a good starting point is to utilize the debug
+options ``-d in_asm,cpu`` of QEMU to inspect the Hexagon instructions being run,
+alongside the CPU state. We additionally need a working version of the emulator
+to compare our buggy CPU state against, running
+
+::
+
+    meson configure -Dhexagon_idef_parser_enabled=false
+
+will disable the idef-parser for all instructions and fallback on manual
+tinycode generator overrides, or on helper function implementations. Recompiling
+gives us ``qemu-hexagon`` which passes all tests. If ``qemu-heaxgon-buggy`` is
+our binary with the incorrect tinycode generators, we can compare the CPU state
+between the two versions
+
+::
+
+    ./qemu-hexagon-buggy -d in_asm,cpu float_convs &> out_buggy
+    ./qemu-hexagon       -d in_asm,cpu float_convs &> out_working
+
+Looking at ``diff out_buggy out_working`` shows us that the CPU state begins to
+diverge on line 141, with an incorrect value in the ``R1`` register
+
+::
+
+    141c141
+    <   r1 = 0x00042108
+    ---
+    >   r1 = 0x00000000
+
+If we also look into ``out_buggy`` directly we can inspect the input assembly
+which the caused the incorrect CPU state, around line 141 we find
+
+::
+
+    116 |  ----------------
+    117 |  IN: _start_c
+    118 |  0x000210b0:  0xa09dc002	{	allocframe(R29,#0x10):raw }
+    ... |  ...
+    137 |  0x000210fc:  0x5a00c4aa	{	call PC+2388 }
+    138 |
+    139 |  General Purpose Registers = {
+    140 |    r0 = 0x4100fa70
+    141 |    r1 = 0x00042108
+    142 |    r2 = 0x00021084
+    143 |    r3 = 0x00000000
+
+Importantly, we see some Hexagon assembly followed by a dump of the CPU state,
+now the CPU state is actually dumped before the input assembly above is ran.
+As such, we are actually interested in the instructions ran before this.
+
+Scrolling up a bit, we find
+
+::
+
+    54 |  ----------------
+    55 |  IN: _start
+    56 |  0x00021088:  0x6a09c002	{	R2 = C9/pc }
+    57 |  0x0002108c:  0xbfe2ff82	{	R2 = add(R2,#0xfffffffc) }
+    58 |  0x00021090:  0x9182c001	{	R1 = memw(R2+#0x0) }
+    59 |  0x00021094:  0xf302c101	{	R1 = add(R2,R1) }
+    60 |  0x00021098:  0x7800c01e	{	R30 = #0x0 }
+    61 |  0x0002109c:  0x707dc000	{	R0 = R29 }
+    62 |  0x000210a0:  0x763dfe1d	{	R29 = and(R29,#0xfffffff0) }
+    63 |  0x000210a4:  0xa79dfdfe	{	memw(R29+#0xfffffff8) = R29 }
+    64 |  0x000210a8:  0xbffdff1d	{	R29 = add(R29,#0xfffffff8) }
+    65 |  0x000210ac:  0x5a00c002	{	call PC+4 }
+    66 |
+    67 |  General Purpose Registers = {
+    68 |    r0 = 0x00000000
+    69 |    r1 = 0x00000000
+    70 |    r2 = 0x00000000
+    71 |    r3 = 0x00000000
+
+Remember, the instructions on lines 56-65 are ran on the CPU state shown below
+instructions, and as the CPU state has not diverged at this point, we know the
+starting state is accurate. The bug must then lie within the instructions shown
+here. Next we may notice that ``R1`` is only touched by lines 57 and 58, that is
+by
+
+::
+
+    58 |  0x00021090:  0x9182c001	{	R1 = memw(R2+#0x0) }
+    59 |  0x00021094:  0xf302c101	{	R1 = add(R2,R1) }
+
+Therefore, we are either dealing with an correct load instruction
+``R1 = memw(R2+#0x0)`` or with an incorrect add ``R1 = add(R2,R1)``. At this
+point it might be easy enough to go directly to the emitted code for the
+instructions mentioned and look for bugs, but we could also run
+``./qemu-heaxgon -d op,in_asm float_conv`` where we find for the following
+tinycode for the Hexagon ``add`` instruction
+
+::
+
+   ---- 00021094
+   mov_i32 pkt_has_store_s1,$0x0
+   add_i32 tmp0,r2,r2
+   mov_i32 loc2,tmp0
+   mov_i32 new_r1,loc2
+   mov_i32 r1,new_r1
+
+Here we have finally located our bug ``add_i32 tmp0,r2,r2``.
 
 Limitations and Future Development
 ----------------------------------
@@ -408,7 +678,7 @@ Which can be easily matched by the following parser rules:
 
 ::
 
-   statement             | rvalue SEMI
+   statement             | rvalue ';'
 
    rvalue                : rvalue QMARK rvalue COLON rvalue
                          | rvalue EQ rvalue
@@ -416,7 +686,7 @@ Which can be easily matched by the following parser rules:
                          | assign_statement
                          | IMM
 
-   assign_statement      : pre ASSIGN rvalue
+   assign_statement      : pred ASSIGN rvalue
 
 Another example that highlight the limitation of the flex/bison parser can be
 found even in the add operation we already saw:
