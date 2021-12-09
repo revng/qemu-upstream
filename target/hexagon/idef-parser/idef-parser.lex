@@ -51,10 +51,11 @@ REG_ID_32                e|s|d|t|u|v|x|y
 REG_ID_64                ee|ss|dd|tt|uu|vv|xx|yy
 SYS_ID_32                s|d
 SYS_ID_64                ss|dd
-LOWER_PRE                d|s|t|u|v|e|x|x
+PRED_ID                  d|s|t|u|v|e|x|x
 IMM_ID                   r|s|S|u|U
 VAR_ID                   [a-zA-Z_][a-zA-Z0-9_]*
 SIGN_ID                  s|u
+STRING_LIT               \"(\\.|[^"\\])*\"
 
 /* Tokens */
 %%
@@ -72,6 +73,7 @@ SIGN_ID                  s|u
 "0.0"                    |
 "0x1.0p52"               |
 "0x1.0p-52"              { return FAIL; }
+"in"                     { return IN; }
 "R"{REG_ID_32}"V" {
                            yylval->rvalue.type = REGISTER_ARG;
                            yylval->rvalue.reg.type = GENERAL_PURPOSE;
@@ -142,97 +144,20 @@ SIGN_ID                  s|u
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            return IMM; }
-"P"{LOWER_PRE}"V" {
+"P"{PRED_ID}"V" {
                            yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = yytext[1];
+                           yylval->rvalue.pred.id = yytext[1];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
                            yylval->rvalue.signedness = SIGNED;
-                           return PRE; }
-"P"{LOWER_PRE}"N" {
+                           return PRED; }
+"P"{PRED_ID}"N" {
                            yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = yytext[1];
+                           yylval->rvalue.pred.id = yytext[1];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
                            yylval->rvalue.signedness = SIGNED;
-                           return PRE; }
-"in R"{REG_ID_32}"V" {
-                           yylval->rvalue.type = REGISTER_ARG;
-                           yylval->rvalue.reg.type = GENERAL_PURPOSE;
-                           yylval->rvalue.reg.id = yytext[4];
-                           yylval->rvalue.reg.bit_width = 32;
-                           yylval->rvalue.bit_width = 32;
-                           yylval->rvalue.is_dotnew = false;
-                           yylval->rvalue.signedness = SIGNED;
-                           return RREG; }
-"in R"{REG_ID_64}"V" {
-                           yylval->rvalue.type = REGISTER_ARG;
-                           yylval->rvalue.reg.type = GENERAL_PURPOSE;
-                           yylval->rvalue.reg.id = yytext[4];
-                           yylval->rvalue.reg.bit_width = 64;
-                           yylval->rvalue.bit_width = 64;
-                           yylval->rvalue.is_dotnew = false;
-                           yylval->rvalue.signedness = SIGNED;
-                           return RREG; }
-"in N"{REG_ID_32}"N" {
-                           yylval->rvalue.type = REGISTER_ARG;
-                           yylval->rvalue.reg.type = DOTNEW;
-                           yylval->rvalue.reg.id = yytext[4];
-                           yylval->rvalue.reg.bit_width = 32;
-                           yylval->rvalue.bit_width = 32;
-                           yylval->rvalue.is_dotnew = true;
-                           yylval->rvalue.signedness = SIGNED;
-                           return RREG; }
-"in N"{REG_ID_64}"N" {
-                           yylval->rvalue.type = REGISTER_ARG;
-                           yylval->rvalue.reg.type = DOTNEW;
-                           yylval->rvalue.reg.id = yytext[4];
-                           yylval->rvalue.reg.bit_width = 64;
-                           yylval->rvalue.bit_width = 64;
-                           yylval->rvalue.is_dotnew = true;
-                           yylval->rvalue.signedness = SIGNED;
-                           return RREG; }
-"in P"{LOWER_PRE}"V" {
-                           yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = yytext[4];
-                           yylval->rvalue.bit_width = 32;
-                           yylval->rvalue.is_dotnew = false;
-                           yylval->rvalue.signedness = SIGNED;
-                           return RPRE; }
-"in P"{LOWER_PRE}"N" {
-                           yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = yytext[4];
-                           yylval->rvalue.bit_width = 32;
-                           yylval->rvalue.is_dotnew = true;
-                           yylval->rvalue.signedness = SIGNED;
-                           return RPRE; }
-"in MuV" {
-                           yylval->rvalue.type = REGISTER_ARG;
-                           yylval->rvalue.reg.type = MODIFIER;
-                           yylval->rvalue.reg.id = 'u';
-                           yylval->rvalue.reg.bit_width = 32;
-                           yylval->rvalue.bit_width = 32;
-                           yylval->rvalue.signedness = SIGNED;
-                           return RREG; }
-"in C"{REG_ID_32}"V" {
-                           yylval->rvalue.type = REGISTER_ARG;
-                           yylval->rvalue.reg.type = CONTROL;
-                           yylval->rvalue.reg.id = yytext[4];
-                           yylval->rvalue.reg.bit_width = 32;
-                           yylval->rvalue.bit_width = 32;
-                           yylval->rvalue.is_dotnew = false;
-                           yylval->rvalue.signedness = SIGNED;
-                           return RREG; }
-"in C"{REG_ID_64}"V" {
-                           yylval->rvalue.type = REGISTER_ARG;
-                           yylval->rvalue.reg.type = CONTROL;
-                           yylval->rvalue.reg.id = yytext[4];
-                           yylval->rvalue.reg.bit_width = 64;
-                           yylval->rvalue.bit_width = 64;
-                           yylval->rvalue.is_dotnew = false;
-                           yylval->rvalue.signedness = SIGNED;
-                           return RREG; }
-"fGEN_TCG_"{INST_NAME}"(" { return FWRAP; }
+                           return PRED; }
 "IV1DEAD()"              |
 "fPAUSE(uiV);"           { return ';'; }
 "+="                     { return INC; }
@@ -249,7 +174,6 @@ SIGN_ID                  s|u
 "<="                     { return LTE; }
 ">="                     { return GTE; }
 "&&"                     { return ANDL; }
-"||"                     { return ORL; }
 "else"                   { return ELSE; }
 "for"                    { return FOR; }
 "fREAD_IREG"             { return ICIRC; }
@@ -287,6 +211,12 @@ SIGN_ID                  s|u
 "fSATUN"                 { yylval->sat.set_overflow = false;
                            yylval->sat.signedness = UNSIGNED;
                            return SAT; }
+"fCONSTLL"               { yylval->cast.bit_width = 64;
+                           yylval->cast.signedness = SIGNED;
+                           return CAST; }
+"fCONSTULL"              { yylval->cast.bit_width = 64;
+                           yylval->cast.signedness = UNSIGNED;
+                           return CAST; }
 "fSE32_64"               { yylval->cast.bit_width = 64;
                            yylval->cast.signedness = SIGNED;
                            return CAST; }
@@ -301,7 +231,11 @@ SIGN_ID                  s|u
                            yylval->cast.signedness = UNSIGNED;
                            return CAST; }
 "fNEWREG"                |
+"fCAST4_4s"              |
 "fCAST4s"                { yylval->cast.bit_width = 32;
+                           yylval->cast.signedness = SIGNED;
+                           return CAST; }
+"fCAST8_8s"              { yylval->cast.bit_width = 64;
                            yylval->cast.signedness = SIGNED;
                            return CAST; }
 "fCAST8_8u"              { yylval->cast.bit_width = 64;
@@ -310,6 +244,7 @@ SIGN_ID                  s|u
 "fCAST8u"                { yylval->cast.bit_width = 64;
                            yylval->cast.signedness = UNSIGNED;
                            return CAST; }
+"fCAST8_8s"              |
 "fCAST8s"                { yylval->cast.bit_width = 64;
                            yylval->cast.signedness = SIGNED;
                            return CAST; }
@@ -431,15 +366,6 @@ SIGN_ID                  s|u
 "fNEWREG_ST"             |
 "fIMMEXT"                |
 "fMUST_IMMEXT"           |
-"fCAST2_2s"              |
-"fCAST2_2u"              |
-"fCAST4_4s"              |
-"fCAST8_8s"              |
-"fZE8_16"                |
-"fSE8_16"                |
-"fZE16_32"               |
-"fSE16_32"               |
-"fZE32_64"               |
 "fPASS"                  |
 "fECHO"                  { return IDENTITY; }
 "(size8"[us]"_t)"        { yylval->cast.bit_width = 64;
@@ -544,19 +470,19 @@ SIGN_ID                  s|u
                            return REG; }
 "MuN"                    { return MUN; }
 "fREAD_P0()"             { yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = '0';
+                           yylval->rvalue.pred.id = '0';
                            yylval->rvalue.bit_width = 32;
-                           return PRE; }
+                           return PRED; }
 [pP]{DIGIT}              { yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = yytext[1];
+                           yylval->rvalue.pred.id = yytext[1];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = false;
-                           return PRE; }
+                           return PRED; }
 [pP]{DIGIT}[nN]          { yylval->rvalue.type = PREDICATE;
-                           yylval->rvalue.pre.id = yytext[1];
+                           yylval->rvalue.pred.id = yytext[1];
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.is_dotnew = true;
-                           return PRE; }
+                           return PRED; }
 "fLSBNEW"                { return LSBNEW; }
 "N"                      { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
@@ -565,6 +491,7 @@ SIGN_ID                  s|u
                            return IMM; }
 "i"                      { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
+                           yylval->rvalue.signedness = SIGNED;
                            yylval->rvalue.imm.type = I;
                            return IMM; }
 {SIGN_ID}                { if (yytext[0] == 'u') {
@@ -580,62 +507,64 @@ SIGN_ID                  s|u
                            yylval->rvalue.imm.type = VALUE;
                            yylval->rvalue.imm.value = 127;
                            return IMM; }
+"0x"{HEX_DIGIT}+         |
 {DIGIT}+                 { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 32;
                            yylval->rvalue.signedness = SIGNED;
                            yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = atoi(yytext);
+                           yylval->rvalue.imm.value = strtoull(yytext, NULL, 0);
                            return IMM; }
+"0x"{HEX_DIGIT}+"LL"     |
 {DIGIT}+"LL"             { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.signedness = SIGNED;
                            yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = strtoll(yytext, NULL, 10);
+                           yylval->rvalue.imm.value = strtoull(yytext, NULL, 0);
                            return IMM; }
+"0x"{HEX_DIGIT}+"ULL"    |
 {DIGIT}+"ULL"            { yylval->rvalue.type = IMMEDIATE;
                            yylval->rvalue.bit_width = 64;
                            yylval->rvalue.signedness = UNSIGNED;
                            yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = strtoull(yytext,
-                                                               NULL,
-                                                               10);
+                           yylval->rvalue.imm.value = strtoull(yytext, NULL, 0);
                            return IMM; }
-"0x"{HEX_DIGIT}+         { yylval->rvalue.type = IMMEDIATE;
-                           yylval->rvalue.bit_width = 32;
-                           yylval->rvalue.signedness = SIGNED;
-                           yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = strtoul(yytext, NULL, 16);
-                           return IMM; }
-"0x"{HEX_DIGIT}+"LL"     { yylval->rvalue.type = IMMEDIATE;
-                           yylval->rvalue.bit_width = 64;
-                           yylval->rvalue.signedness = SIGNED;
-                           yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = strtoll(yytext, NULL, 16);
-                           return IMM; }
-"0x"{HEX_DIGIT}+"ULL"    { yylval->rvalue.type = IMMEDIATE;
-                           yylval->rvalue.bit_width = 64;
-                           yylval->rvalue.signedness = UNSIGNED;
-                           yylval->rvalue.imm.type = VALUE;
-                           yylval->rvalue.imm.value = strtoull(yytext,
-                                                               NULL,
-                                                               16);
-                           return IMM; }
-"fCONSTLL"               { return CONSTLL; }
-"fCONSTULL"              { return CONSTULL; }
 "fLOAD"                  { return LOAD; }
 "fSTORE"                 { return STORE; }
 "fROTL"                  { return ROTL; }
 "fSET_OVERFLOW"          { return SETOVF; }
-"fDEINTERLEAVE"          { return DEINTERLEAVE; }
-"fINTERLEAVE"            { return INTERLEAVE; }
 "fCARRY_FROM_ADD"        { return CARRY_FROM_ADD; }
+"fADDSAT64"              { return ADDSAT64; }
+"size"[1248][us]"_t"     { /* Handles "size_t" variants of int types */
+                           const unsigned int bits_per_byte = 8;
+                           const unsigned int bytes = yytext[4] - '0';
+                           yylval->rvalue.bit_width = bits_per_byte * bytes;
+                           if (yytext[5] == 'u') {
+                               yylval->rvalue.signedness = UNSIGNED;
+                           } else {
+                               yylval->rvalue.signedness = SIGNED;
+                           }
+                           return TYPE_SIZE_T; }
+"size16"[us]"_t"         { /* Handles "size_t" variants of int types */
+                           yylval->rvalue.bit_width = 128;
+                           if (yytext[6] == 'u') {
+                               yylval->rvalue.signedness = UNSIGNED;
+                           } else {
+                               yylval->rvalue.signedness = SIGNED;
+                           }
+                           return TYPE_SIZE_T; }
+"signed"                 { return TYPE_SIGNED; }
+"unsigned"               { return TYPE_UNSIGNED; }
+"long"                   { return TYPE_LONG; }
+"int"                    { return TYPE_INT; }
+"const"                  { /* Emit no token */ }
 {VAR_ID}                 { /* Variable name, we adopt the C names convention */
                            yylval->rvalue.type = VARID;
                            yylval->rvalue.var.name = g_string_new(yytext);
-                           /* Default types are int */
-                           yylval->rvalue.bit_width = 32;
-                           yylval->rvalue.signedness = SIGNED;
+                           /* Default to an unknown signedness and 0 width. */
+                           yylval->rvalue.bit_width = 0;
+                           yylval->rvalue.signedness = UNKNOWN_SIGNEDNESS;
                            return VAR; }
+"fatal("{STRING_LIT}")"  { /* Emit no token */ }
 "fHINTJR(RsV)"           { /* Emit no token */ }
 .                        { return yytext[0]; }
 

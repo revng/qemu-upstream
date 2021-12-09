@@ -52,7 +52,7 @@
 /**
  * Type of register, assigned to the HexReg.type field
  */
-typedef enum {GENERAL_PURPOSE, CONTROL, MODIFIER, DOTNEW} RegType;
+typedef enum { GENERAL_PURPOSE, CONTROL, MODIFIER, DOTNEW } HexRegType;
 
 typedef enum { UNKNOWN_SIGNEDNESS, SIGNED, UNSIGNED } HexSignedness;
 
@@ -61,7 +61,7 @@ typedef enum { UNKNOWN_SIGNEDNESS, SIGNED, UNSIGNED } HexSignedness;
  */
 typedef struct HexReg {
     uint8_t id;             /**< Identifier of the register                  */
-    RegType type;           /**< Type of the register                        */
+    HexRegType type;        /**< Type of the register                        */
     unsigned bit_width;     /**< Bit width of the reg, 32 or 64 bits         */
 } HexReg;
 
@@ -95,15 +95,15 @@ typedef struct HexImm {
         uint64_t value;     /**< Immediate value (for VALUE type immediates) */
         uint64_t index;     /**< Index of the immediate (for int temp vars)  */
     };
-    enum ImmUnionTag type;  /**< Type of the immediate                      */
+    enum ImmUnionTag type;  /**< Type of the immediate                       */
 } HexImm;
 
 /**
- * Semantic record of the PRE token, identifying a predicate
+ * Semantic record of the PRED token, identifying a predicate
  */
-typedef struct HexPre {
+typedef struct HexPred {
     char id;                /**< Identifier of the predicate                 */
-} HexPre;
+} HexPred;
 
 /**
  * Semantic record of the SAT token, identifying the saturate operator
@@ -146,23 +146,23 @@ typedef struct HexMpy {
 } HexMpy;
 
 /**
- * Semantic record of the VARID token, identifying automatic variables
+ * Semantic record of the VARID token, identifying declared variables
  * of the input language
  */
 typedef struct HexVar {
-    GString *name;          /**< Name of the VARID automatic variable        */
+    GString *name;          /**< Name of the VARID variable        */
 } HexVar;
 
 /**
- * Data structure uniquely identifying an automatic VARID variable, used for
+ * Data structure uniquely identifying a declared VARID variable, used for
  * keeping track of declared variable, so that any variable is declared only
  * once, and its properties are propagated through all the subsequent instances
  * of that variable
  */
 typedef struct Var {
-    GString *name;            /**< Name of the VARID automatic variable       */
-    uint8_t bit_width;        /**< Bit width of the VARID automatic variable  */
-    HexSignedness signedness; /**< Unsigned flag for the VARID automatic var  */
+    GString *name;            /**< Name of the VARID variable       */
+    uint8_t bit_width;        /**< Bit width of the VARID variable  */
+    HexSignedness signedness; /**< Unsigned flag for the VARID var  */
 } Var;
 
 /**
@@ -182,8 +182,8 @@ typedef struct HexValue {
         HexReg reg;      /**< rvalue of register type                     */
         HexTmp tmp;      /**< rvalue of temporary type                    */
         HexImm imm;      /**< rvalue of immediate type                    */
-        HexPre pre;      /**< rvalue of predicate type                    */
-        HexVar var;      /**< rvalue of automatic variable type           */
+        HexPred pred;    /**< rvalue of predicate type                    */
+        HexVar var;      /**< rvalue of declared variable type            */
     };
     RvalueUnionTag type;      /**< Type of the rvalue                         */
     unsigned bit_width;       /**< Bit width of the rvalue                    */
@@ -227,7 +227,8 @@ typedef struct Inst {
     int qemu_tmp_count;           /**< Index of the last declared int temp   */
     int if_count;                 /**< Index of the last declared if label   */
     int error_count;              /**< Number of generated errors            */
-    GArray *allocated;            /**< Allocated VARID automatic vars        */
+    HexValue *EA;                 /**< Effective Address (EA)                */
+    GArray *allocated;            /**< Allocated declaredVARID vars          */
     GArray *init_list;            /**< List of initialized registers         */
     GArray *strings;              /**< Strings allocated by the instruction  */
 } Inst;
@@ -245,7 +246,7 @@ typedef struct Context {
     char *input_buffer;           /**< Buffer containing the input code      */
     GString *out_str;             /**< String containing the output code     */
     GString *signature_str;       /**< String containing the signatures code */
-    GString *header_str;          /**< String containing the output code     */
+    GString *header_str;          /**< String containing the header code     */
     FILE *defines_file;           /**< FILE * of the generated header        */
     FILE *output_file;            /**< FILE * of the C output file           */
     FILE *enabled_file;           /**< FILE * of the list of enabled inst    */
