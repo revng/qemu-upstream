@@ -48,15 +48,18 @@ void yyerror(YYLTYPE *locp,
              const char *s);
 
 #ifndef NDEBUG
-#define yyassert(context, locp, condition, msg) \
-    if (!(condition)) { \
+#define yyassert(context, locp, condition, msg)              \
+    if (!(condition)) {                                      \
         yyerror(locp, (context)->scanner, (context), (msg)); \
     }
 #endif
 
 bool is_direct_predicate(HexValue *value);
 
-/* Print functions */
+/**
+ * Print functions
+ */
+
 void str_print(Context *c, YYLTYPE *locp, const char *string);
 
 void uint8_print(Context *c, YYLTYPE *locp, uint8_t *num);
@@ -69,7 +72,7 @@ void uint_print(Context *c, YYLTYPE *locp, unsigned *num);
 
 void tmp_print(Context *c, YYLTYPE *locp, HexTmp *tmp);
 
-void pre_print(Context *c, YYLTYPE *locp, HexPre *pre, bool is_dotnew);
+void pred_print(Context *c, YYLTYPE *locp, HexPred *pred, bool is_dotnew);
 
 void reg_compose(Context *c, YYLTYPE *locp, HexReg *reg, char reg_id[5]);
 
@@ -79,11 +82,13 @@ void imm_print(Context *c, YYLTYPE *locp, HexImm *imm);
 
 void var_print(Context *c, YYLTYPE *locp, HexVar *var);
 
-void rvalue_out(Context *c, YYLTYPE *locp, void *pointer);
+void rvalue_print(Context *c, YYLTYPE *locp, void *pointer);
 
 void out_assert(Context *c, YYLTYPE *locp, void *dummy);
 
-/* Copy output code buffer into stdout */
+/**
+ * Copies output code buffer into stdout
+ * */
 void commit(Context *c);
 
 #define OUT_IMPL(c, locp, x)                    \
@@ -93,11 +98,11 @@ void commit(Context *c);
         uint64_t:  uint64_print,                \
         int:       int_print,                   \
         unsigned:  uint_print,                  \
-        HexValue:  rvalue_out,                  \
+        HexValue:  rvalue_print,                \
         default:   out_assert                   \
     )(c, locp, x);
 
-/* Make a FOREACH macro */
+/* FOREACH macro */
 #define FE_1(c, locp, WHAT, X) WHAT(c, locp, X)
 #define FE_2(c, locp, WHAT, X, ...) \
     WHAT(c, locp, X)FE_1(c, locp, WHAT, __VA_ARGS__)
@@ -138,18 +143,29 @@ void commit(Context *c);
 
 const char *cmp_swap(Context *c, YYLTYPE *locp, const char *type);
 
-/* Temporary values creation */
-HexValue gen_tmp(Context *c, YYLTYPE *locp, unsigned bit_width);
+/**
+ * Temporary values creation
+ */
+
+HexValue gen_tmp(Context *c,
+                 YYLTYPE *locp,
+                 unsigned bit_width,
+                 HexSignedness signedness);
 
 HexValue gen_tmp_value(Context *c,
-                          YYLTYPE *locp,
-                          const char *value,
-                          unsigned bit_width);
+                       YYLTYPE *locp,
+                       const char *value,
+                       unsigned bit_width,
+                       HexSignedness signedness);
 
 HexValue gen_imm_value(Context *c __attribute__((unused)),
-                          YYLTYPE *locp,
-                          int value,
-                          unsigned bit_width);
+                       YYLTYPE *locp,
+                       int value,
+                       unsigned bit_width,
+                       HexSignedness signedness);
+
+HexValue gen_imm_qemu_tmp(Context *c, YYLTYPE *locp, unsigned bit_width,
+                          HexSignedness signedness);
 
 void gen_rvalue_free(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
@@ -159,64 +175,72 @@ HexValue gen_rvalue_extend(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
 HexValue gen_rvalue_truncate(Context *c, YYLTYPE *locp, HexValue *rvalue);
 
-int find_variable(Context *c, YYLTYPE *locp, HexValue *varid);
-
 void gen_varid_allocate(Context *c,
                         YYLTYPE *locp,
                         HexValue *varid,
-                        int width,
+                        unsigned bit_width,
                         HexSignedness signedness);
+
+/**
+ * Code generation functions
+ */
 
 HexValue gen_bin_cmp(Context *c,
                      YYLTYPE *locp,
                      TCGCond type,
-                     HexValue *op1_ptr,
-                     HexValue *op2_ptr);
+                     HexValue *op1,
+                     HexValue *op2);
 
-/* Code generation functions */
 HexValue gen_bin_op(Context *c,
-                       YYLTYPE *locp,
-                       OpType type,
-                       HexValue *operand1,
-                       HexValue *operand2);
+                    YYLTYPE *locp,
+                    OpType type,
+                    HexValue *op1,
+                    HexValue *op2);
 
 HexValue gen_cast_op(Context *c,
-                        YYLTYPE *locp,
-                        HexValue *source,
-                        unsigned target_width);
+                     YYLTYPE *locp,
+                     HexValue *src,
+                     unsigned target_width,
+                     HexSignedness signedness);
 
+/**
+ * gen_extend_op extends a region of src_width_ptr bits stored in a
+ * value_ptr to the size of dst_width. Note: src_width_ptr is a
+ * HexValue * to handle the special case where it is unknown at
+ * translation time.
+ */
 HexValue gen_extend_op(Context *c,
-                          YYLTYPE *locp,
-                          HexValue *src_width_ptr,
-                          HexValue *dst_width_ptr,
-                          HexValue *value_ptr,
-                          HexSignedness signedness);
+                       YYLTYPE *locp,
+                       HexValue *src_width,
+                       unsigned dst_width,
+                       HexValue *value,
+                       HexSignedness signedness);
 
 void gen_rdeposit_op(Context *c,
                      YYLTYPE *locp,
-                     HexValue *dest,
+                     HexValue *dst,
                      HexValue *value,
                      HexValue *begin,
                      HexValue *width);
 
 void gen_deposit_op(Context *c,
-                           YYLTYPE *locp,
-                           HexValue *dest,
-                           HexValue *value,
-                           HexValue *index,
-                           HexCast *cast);
+                    YYLTYPE *locp,
+                    HexValue *dst,
+                    HexValue *value,
+                    HexValue *index,
+                    HexCast *cast);
 
 HexValue gen_rextract_op(Context *c,
                          YYLTYPE *locp,
-                         HexValue *source,
+                         HexValue *src,
                          int begin,
                          int width);
 
 HexValue gen_extract_op(Context *c,
-                           YYLTYPE *locp,
-                           HexValue *source,
-                           HexValue *index,
-                           HexExtract *extract);
+                        YYLTYPE *locp,
+                        HexValue *src,
+                        HexValue *index,
+                        HexExtract *extract);
 
 HexValue gen_read_reg(Context *c, YYLTYPE *locp, HexValue *reg);
 
@@ -224,39 +248,41 @@ void gen_write_reg(Context *c, YYLTYPE *locp, HexValue *reg, HexValue *value);
 
 void gen_assign(Context *c,
                 YYLTYPE *locp,
-                HexValue *dest,
+                HexValue *dst,
                 HexValue *value);
 
 HexValue gen_convround(Context *c,
-                          YYLTYPE *locp,
-                          HexValue *source);
+                       YYLTYPE *locp,
+                       HexValue *src);
 
 HexValue gen_round(Context *c,
                    YYLTYPE *locp,
-                   HexValue *source,
+                   HexValue *src,
                    HexValue *position);
 
 HexValue gen_convround_n(Context *c,
                          YYLTYPE *locp,
-                         HexValue *source_ptr,
-                         HexValue *bit_pos_ptr);
+                         HexValue *src,
+                         HexValue *pos);
 
-/* Circular addressing mode with auto-increment */
+/**
+ * Circular addressing mode with auto-increment
+ */
 void gen_circ_op(Context *c,
                  YYLTYPE *locp,
                  HexValue *addr,
                  HexValue *increment,
                  HexValue *modifier);
 
-HexValue gen_locnt_op(Context *c, YYLTYPE *locp, HexValue *source);
+HexValue gen_locnt_op(Context *c, YYLTYPE *locp, HexValue *src);
 
-HexValue gen_ctpop_op(Context *c, YYLTYPE *locp, HexValue *source);
+HexValue gen_ctpop_op(Context *c, YYLTYPE *locp, HexValue *src);
 
-HexValue gen_fbrev_4(Context *c, YYLTYPE *locp, HexValue *source);
+HexValue gen_fbrev_4(Context *c, YYLTYPE *locp, HexValue *src);
 
-HexValue gen_fbrev_8(Context *c, YYLTYPE *locp, HexValue *source);
+HexValue gen_fbrev_8(Context *c, YYLTYPE *locp, HexValue *src);
 
-HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *source, HexValue *n);
+HexValue gen_rotl(Context *c, YYLTYPE *locp, HexValue *src, HexValue *n);
 
 HexValue gen_deinterleave(Context *c, YYLTYPE *locp, HexValue *mixed);
 
@@ -271,13 +297,20 @@ HexValue gen_carry_from_add(Context *c,
                             HexValue *op2,
                             HexValue *op3);
 
+void gen_addsat64(Context *c,
+                  YYLTYPE *locp,
+                  HexValue *dst,
+                  HexValue *op1,
+                  HexValue *op2);
+
 void gen_inst(Context *c, GString *iname);
 
-void gen_inst_args(Context *c, YYLTYPE *locp);
+void gen_inst_init_args(Context *c, YYLTYPE *locp);
 
 void gen_inst_code(Context *c, YYLTYPE *locp);
 
-void gen_pre_assign(Context *c, YYLTYPE *locp, HexValue *lp, HexValue *rp);
+void gen_pred_assign(Context *c, YYLTYPE *locp, HexValue *left_pred,
+                     HexValue *right_pred);
 
 void gen_load(Context *c, YYLTYPE *locp, HexValue *size,
               HexSignedness signedness, HexValue *ea, HexValue *dst);
@@ -286,44 +319,44 @@ void gen_store(Context *c, YYLTYPE *locp, HexValue *size, HexValue *ea,
                HexValue *src);
 
 void gen_sethalf(Context *c, YYLTYPE *locp, HexCast *sh, HexValue *n,
-                 HexValue *dst, HexValue *val);
+                 HexValue *dst, HexValue *value);
 
 void gen_setbits(Context *c, YYLTYPE *locp, HexValue *hi, HexValue *lo,
-                 HexValue *dst, HexValue *val);
+                 HexValue *dst, HexValue *value);
 
 int gen_if_cond(Context *c, YYLTYPE *locp, HexValue *cond);
 
 int gen_if_else(Context *c, YYLTYPE *locp, int index);
 
-HexValue gen_rvalue_pre(Context *c, YYLTYPE *locp, HexValue *pre);
+HexValue gen_rvalue_pred(Context *c, YYLTYPE *locp, HexValue *pred);
 
 HexValue gen_rvalue_var(Context *c, YYLTYPE *locp, HexValue *var);
 
-HexValue gen_rvalue_mpy(Context *c, YYLTYPE *locp, HexMpy *mpy, HexValue *a,
-                        HexValue *b);
+HexValue gen_rvalue_mpy(Context *c, YYLTYPE *locp, HexMpy *mpy, HexValue *op1,
+                        HexValue *op2);
 
-HexValue gen_rvalue_not(Context *c, YYLTYPE *locp, HexValue *v);
+HexValue gen_rvalue_not(Context *c, YYLTYPE *locp, HexValue *value);
 
-HexValue gen_rvalue_notl(Context *c, YYLTYPE *locp, HexValue *v);
+HexValue gen_rvalue_notl(Context *c, YYLTYPE *locp, HexValue *value);
 
 HexValue gen_rvalue_sat(Context *c, YYLTYPE *locp, HexSat *sat, HexValue *n,
-                        HexValue *v);
+                        HexValue *value);
 
 HexValue gen_rvalue_ternary(Context *c, YYLTYPE *locp, HexValue *cond,
-                            HexValue *t, HexValue *e);
+                            HexValue *true_branch, HexValue *false_branch);
 
-HexValue gen_rvalue_fscr(Context *c, YYLTYPE *locp, HexValue *v);
+HexValue gen_rvalue_fscr(Context *c, YYLTYPE *locp, HexValue *value);
 
-HexValue gen_rvalue_abs(Context *c, YYLTYPE *locp, HexValue *v);
+HexValue gen_rvalue_abs(Context *c, YYLTYPE *locp, HexValue *value);
 
-HexValue gen_rvalue_neg(Context *c, YYLTYPE *locp, HexValue *v);
+HexValue gen_rvalue_neg(Context *c, YYLTYPE *locp, HexValue *value);
 
-HexValue gen_rvalue_brev(Context *c, YYLTYPE *locp, HexValue *v);
+HexValue gen_rvalue_brev(Context *c, YYLTYPE *locp, HexValue *value);
 
-void gen_set_overflow(Context *c, YYLTYPE *locp, HexValue *vp);
+void gen_set_overflow(Context *c, YYLTYPE *locp, HexValue *value);
 
 HexValue gen_rvalue_ternary(Context *c, YYLTYPE *locp, HexValue *cond,
-                            HexValue *t, HexValue *e);
+                            HexValue *true_branch, HexValue *false_branch);
 
 const char *cond_to_str(TCGCond cond);
 

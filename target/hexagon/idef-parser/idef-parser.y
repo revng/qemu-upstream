@@ -54,22 +54,24 @@
 
 %expect 1
 
-%token INAME DREG DIMM DPRE DEA RREG WREG FREG FIMM RPRE WPRE FPRE FWRAP FEA VAR
+%token IN INAME VAR
 %token ABS CROUND ROUND CIRCADD COUNTONES INC DEC ANDA ORA XORA PLUSPLUS ASL
-%token ASR LSR EQ NEQ LTE GTE MIN MAX ANDL ORL FOR ICIRC IF MUN FSCR FCHK SXT
-%token ZXT CONSTEXT LOCNT BREV SIGN LOAD STORE CONSTLL CONSTULL PC NPC LPCFG
+%token ASR LSR EQ NEQ LTE GTE MIN MAX ANDL FOR ICIRC IF MUN FSCR FCHK SXT
+%token ZXT CONSTEXT LOCNT BREV SIGN LOAD STORE PC NPC LPCFG
 %token CANCEL IDENTITY PART1 BREV_4 BREV_8 ROTL INSBITS SETBITS EXTBITS EXTRANGE
-%token CAST4_8U SETOVF FAIL DEINTERLEAVE INTERLEAVE CARRY_FROM_ADD LSBNEW
+%token CAST4_8U SETOVF FAIL CARRY_FROM_ADD ADDSAT64 LSBNEW
+%token TYPE_SIZE_T TYPE_INT TYPE_SIGNED TYPE_UNSIGNED TYPE_LONG
 
-%token <rvalue> REG IMM PRE
+%token <rvalue> REG IMM PRED
 %token <index> ELSE
 %token <mpy> MPY
 %token <sat> SAT
 %token <cast> CAST DEPOSIT SETHALF
 %token <extract> EXTRACT
 %type <string> INAME
-%type <rvalue> rvalue lvalue VAR assign_statement var
-%type <rvalue> DREG DIMM DPRE RREG RPRE FAIL
+%type <rvalue> rvalue lvalue VAR assign_statement var var_decl var_type
+%type <rvalue> FAIL
+%type <rvalue> TYPE_SIGNED TYPE_UNSIGNED TYPE_INT TYPE_LONG TYPE_SIZE_T
 %type <index> if_stmt IF
 %type <signedness> SIGN
 
@@ -81,7 +83,6 @@
 %right CIRCADD
 %right INC DEC ANDA ORA XORA
 %left '?' ':'
-%left ORL
 %left ANDL
 %left '|'
 %left '^' ANDOR
@@ -117,7 +118,16 @@ instruction : INAME
               }
               arguments
               {
-                  gen_inst_args(c, &@1);
+                  EMIT_SIG(c, ")");
+                  EMIT_HEAD(c, "{\n");
+
+                  /*
+                   * The effective address EA is the only variable passed to
+                   * function which needs to be "created".
+                   */
+                  if (c->inst.EA) {
+                      gen_varid_allocate(c, &@1, c->inst.EA, 32, SIGNED);
+                  }
               }
               code
               {
@@ -132,8 +142,8 @@ instruction : INAME
 arguments : '(' ')'
           | '(' argument_list ')';
 
-argument_list : decl ',' argument_list
-              | decl
+argument_list : argument_decl ',' argument_list
+              | argument_decl
               ;
 
 var : VAR
@@ -143,10 +153,109 @@ var : VAR
       }
     ;
 
+/*
+ * Here the integer types are defined from valid combinations of
+ * "signed", "unsigned", "int", and "long" tokens.  The "signed"
+ * and "unsigned" tokens are here assumed to always be placed
+ * first in the type declaration, which is not the case in
+ * normal C. Similarly, "int" is assumed to be placed in the type.
+ */
+type_int : TYPE_INT
+         | TYPE_SIGNED
+         | TYPE_SIGNED TYPE_INT;
+type_uint : TYPE_UNSIGNED
+          | TYPE_UNSIGNED TYPE_INT;
+type_long : TYPE_LONG
+          | TYPE_LONG TYPE_INT
+          | TYPE_SIGNED TYPE_LONG
+          | TYPE_SIGNED TYPE_LONG TYPE_INT;
+type_ulong : TYPE_UNSIGNED TYPE_LONG
+           | TYPE_UNSIGNED TYPE_LONG TYPE_INT;
+type_longlong : TYPE_LONG TYPE_LONG
+              | TYPE_LONG TYPE_LONG TYPE_INT
+              | TYPE_SIGNED TYPE_LONG TYPE_LONG
+              | TYPE_SIGNED TYPE_LONG TYPE_LONG TYPE_INT;
+type_ulonglong : TYPE_UNSIGNED TYPE_LONG TYPE_LONG
+               | TYPE_UNSIGNED TYPE_LONG TYPE_LONG TYPE_INT;
+
+/*
+ * Here the various valid int types defined above specify
+ * their `signedness` and `bit_width`. The LP64 convention
+ * is assumed where longs are 64-bit, long longs are then
+ * assumed to also be 64-bit.abvove
+ */
+var_type : TYPE_SIZE_T
+           {
+              yyassert(c, &@1, $1.bit_width <= 64,
+                       "Variables with size > 64-bit are not supported!");
+              $$ = $1;
+           }
+         | type_int
+           {
+              $$.signedness = SIGNED;
+              $$.bit_width  = 32;
+           }
+         | type_uint
+           {
+              $$.signedness = UNSIGNED;
+              $$.bit_width  = 32;
+           }
+         | type_long
+           {
+              $$.signedness = SIGNED;
+              $$.bit_width  = 64;
+           }
+         | type_ulong
+           {
+              $$.signedness = UNSIGNED;
+              $$.bit_width  = 64;
+           }
+         | type_longlong
+           {
+              $$.signedness = SIGNED;
+              $$.bit_width  = 64;
+           }
+         | type_ulonglong
+           {
+              $$.signedness = UNSIGNED;
+              $$.bit_width  = 64;
+           }
+         ;
+
+/* Rule to capture declarations of VARs */
+var_decl : var_type IMM
+           {
+              /*
+               * Rule to capture "int i;" declarations since "i" is special
+               * and assumed to be always be IMM. Moreover, "i" is only
+               * assumed to be used in for-loops.
+               *
+               * Therefore we want to NOP these declarations.
+               */
+              yyassert(c, &@2, $2.imm.type == I,
+                       "Variable declaration with immedaties only allowed"
+                       " for the loop induction variable \"i\"");
+              $$ = $2;
+           }
+         | var_type var
+           {
+              /*
+               * Allocate new variable, this checks that it hasn't aldready
+               * been declared.
+               */
+              gen_varid_allocate(c, &@1, &$2, $1.bit_width, $1.signedness);
+              /* Copy var for variable name */
+              $$ = $2;
+              /* Copy type info from var_type */
+              $$.signedness = $1.signedness;
+              $$.bit_width  = $1.bit_width;
+           }
+         ;
+
 /* Return the modified registers list */
 code : '{' statements '}'
        {
-           c->inst.code_begin = c->input_buffer + @2.first_column;
+           c->inst.code_begin = c->input_buffer + @2.first_column - 1;
            c->inst.code_end = c->input_buffer + @2.last_column - 1;
        }
      | '{'
@@ -156,42 +265,38 @@ code : '{' statements '}'
        '}'
      ;
 
-decl : REG
-       {
-           emit_arg(c, &@1, &$1);
-           /* Enqueue register into initialization list */
-           g_array_append_val(c->inst.init_list, $1);
-       }
-     | IMM
-       {
-           EMIT_SIG(c, ", int %ciV", $1.imm.id);
-       }
-     | PRE
-       {
-           emit_arg(c, &@1, &$1);
-           /* Enqueue predicate into initialization list */
-           g_array_append_val(c->inst.init_list, $1);
-       }
-     | var
-       {
-           yyassert(c, &@1, !strcmp($1.var.name->str, "EA"),
-                    "Unknown argument variable!");
-       }
-     | RREG
-       {
-           emit_arg(c, &@1, &$1);
-       }
-     | WREG
-     | FREG
-     | FIMM
-     | RPRE
-       {
-           emit_arg(c, &@1, &$1);
-       }
-     | WPRE
-     | FPRE
-     | FEA
-     ;
+argument_decl : REG
+                {
+                    emit_arg(c, &@1, &$1);
+                    /* Enqueue register into initialization list */
+                    g_array_append_val(c->inst.init_list, $1);
+                }
+              | PRED
+                {
+                    emit_arg(c, &@1, &$1);
+                    /* Enqueue predicate into initialization list */
+                    g_array_append_val(c->inst.init_list, $1);
+                }
+              | IN REG
+                {
+                    emit_arg(c, &@2, &$2);
+                }
+              | IN PRED
+                {
+                    emit_arg(c, &@2, &$2);
+                }
+              | IMM
+                {
+                    EMIT_SIG(c, ", int %ciV", $1.imm.id);
+                }
+              | var
+                {
+                    yyassert(c, &@1, !strcmp($1.var.name->str, "EA"),
+                             "Unknown argument variable!");
+                    /* The instruction take EA, so set it */
+                    c->inst.EA = &$1;
+                }
+              ;
 
 code_block : '{' statements '}'
            | '{' '}'
@@ -204,6 +309,7 @@ statements : statements statement
 
 /* Statements can be assignment (rvalue ';'), control or memory statements */
 statement : control_statement
+          | var_decl ';'
           | rvalue ';'
             {
                 gen_rvalue_free(c, &@1, &$1);
@@ -213,6 +319,12 @@ statement : control_statement
           ;
 
 assign_statement : lvalue '=' rvalue
+                   {
+                       @1.last_column = @3.last_column;
+                       gen_assign(c, &@1, &$1, &$3);
+                       $$ = $1;
+                   }
+                 | var_decl '=' rvalue
                    {
                        @1.last_column = @3.last_column;
                        gen_assign(c, &@1, &$1, &$3);
@@ -253,10 +365,10 @@ assign_statement : lvalue '=' rvalue
                        gen_assign(c, &@1, &$1, &tmp);
                        $$ = $1;
                    }
-                 | PRE '=' rvalue
+                 | PRED '=' rvalue
                    {
                        @1.last_column = @3.last_column;
-                       gen_pre_assign(c, &@1, &$1, &$3);
+                       gen_pred_assign(c, &@1, &$1, &$3);
                    }
                  | IMM '=' rvalue
                    {
@@ -381,6 +493,11 @@ if_statement : if_stmt
 
 for_statement : FOR '(' IMM '=' IMM ';' IMM '<' IMM ';' IMM PLUSPLUS ')'
                 {
+                    yyassert(c, &@3,
+                             $3.imm.type == I &&
+                             $7.imm.type == I &&
+                             $11.imm.type == I,
+                             "Loop induction variable must be \"i\"");
                     @1.last_column = @13.last_column;
                     OUT(c, &@1, "for (int ", &$3, " = ", &$5, "; ",
                         &$7, " < ", &$9);
@@ -392,6 +509,11 @@ for_statement : FOR '(' IMM '=' IMM ';' IMM '<' IMM ';' IMM PLUSPLUS ')'
                 }
               | FOR '(' IMM '=' IMM ';' IMM '<' IMM ';' IMM INC IMM ')'
                 {
+                    yyassert(c, &@3,
+                             $3.imm.type == I &&
+                             $7.imm.type == I &&
+                             $11.imm.type == I,
+                             "Loop induction variable must be \"i\"");
                     @1.last_column = @14.last_column;
                     OUT(c, &@1, "for (int ", &$3, " = ", &$5, "; ",
                         &$7, " < ", &$9);
@@ -442,21 +564,9 @@ rvalue : FAIL
          {
              $$ = $1;
          }
-       | CONSTLL '(' IMM ')'
+       | PRED
          {
-             $3.signedness = SIGNED;
-             $3.bit_width = 64;
-             $$ = $3;
-         }
-       | CONSTULL '(' IMM ')'
-         {
-             $3.signedness = UNSIGNED;
-             $3.bit_width = 64;
-             $$ = $3;
-         }
-       | PRE
-         {
-             $$ = gen_rvalue_pre(c, &@1, &$1);
+             $$ = gen_rvalue_pred(c, &@1, &$1);
          }
        | PC
          {
@@ -471,8 +581,10 @@ rvalue : FAIL
          }
        | NPC
          {
-             /* NPC is only read from CALLs, so we can hardcode it
-                at translation time */
+             /*
+              * NPC is only read from CALLs, so we can hardcode it
+              * at translation time
+              */
              HexValue rvalue;
              memset(&rvalue, 0, sizeof(HexValue));
              rvalue.type = IMMEDIATE;
@@ -591,21 +703,7 @@ rvalue : FAIL
              @1.last_column = @2.last_column;
              /* Assign target signedness */
              $2.signedness = $1.signedness;
-             $$ = gen_cast_op(c, &@1, &$2, $1.bit_width);
-             $$.signedness = $1.signedness;
-         }
-       | rvalue '[' rvalue ']'
-         {
-             @1.last_column = @4.last_column;
-             if ($3.type == IMMEDIATE) {
-                 $$ = gen_tmp(c, &@1, $1.bit_width);
-                 OUT(c, &@1, "tcg_gen_extract_i", &$$.bit_width, "(");
-                 OUT(c, &@1, &$$, ", ", &$1, ", ", &$3, ", 1);\n");
-             } else {
-                 HexValue one = gen_imm_value(c, &@1, 1, $3.bit_width);
-                 HexValue tmp = gen_bin_op(c, &@1, ASR_OP, &$1, &$3);
-                 $$ = gen_bin_op(c, &@1, ANDB_OP, &tmp, &one);
-             }
+             $$ = gen_cast_op(c, &@1, &$2, $1.bit_width, $1.signedness);
          }
        | rvalue EQ rvalue
          {
@@ -695,8 +793,7 @@ rvalue : FAIL
              yyassert(c, &@1, $5.type == IMMEDIATE &&
                       $5.imm.type == VALUE,
                       "SXT expects immediate values\n");
-             $5.imm.value = 64;
-             $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, SIGNED);
+             $$ = gen_extend_op(c, &@1, &$3, $5.imm.value, &$7, SIGNED);
          }
        | ZXT '(' rvalue ',' IMM ',' rvalue ')'
          {
@@ -704,7 +801,7 @@ rvalue : FAIL
              yyassert(c, &@1, $5.type == IMMEDIATE &&
                       $5.imm.type == VALUE,
                       "ZXT expects immediate values\n");
-             $$ = gen_extend_op(c, &@1, &$3, &$5, &$7, UNSIGNED);
+             $$ = gen_extend_op(c, &@1, &$3, $5.imm.value, &$7, UNSIGNED);
          }
        | '(' rvalue ')'
          {
@@ -738,7 +835,7 @@ rvalue : FAIL
        | ICIRC '(' rvalue ')' ASL IMM
          {
              @1.last_column = @6.last_column;
-             $$ = gen_tmp(c, &@1, 32);
+             $$ = gen_tmp(c, &@1, 32, UNSIGNED);
              OUT(c, &@1, "gen_read_ireg(", &$$, ", ", &$3, ", ", &$6, ");\n");
              gen_rvalue_free(c, &@1, &$3);
          }
@@ -761,11 +858,8 @@ rvalue : FAIL
          }
        | LPCFG
          {
-             $$ = gen_tmp_value(c, &@1, "0", 32);
-             OUT(c, &@1, "tcg_gen_extract_tl(", &$$,
-                 ", hex_gpr[HEX_REG_USR], ");
-             OUT(c, &@1, "reg_field_info[USR_LPCFG].offset, ");
-             OUT(c, &@1, "reg_field_info[USR_LPCFG].width);\n");
+             $$ = gen_tmp_value(c, &@1, "0", 32, UNSIGNED);
+             OUT(c, &@1, "GET_USR_FIELD(USR_LPCFG, ", &$$, ");\n");
          }
        | EXTRACT '(' rvalue ',' rvalue ')'
          {
@@ -827,26 +921,21 @@ rvalue : FAIL
        | SETOVF '(' ')'
          {
              @1.last_column = @3.last_column;
-             HexValue ovfl = gen_imm_value(c, &@1, 1, 32);
+             HexValue ovfl = gen_imm_value(c, &@1, 1, 32, UNSIGNED);
              gen_set_overflow(c, &@1, &ovfl);
          }
        | SETOVF '(' rvalue ')'
          {
              /* Convenience fSET_OVERFLOW with pass-through */
              @1.last_column = @3.last_column;
-             HexValue ovfl = gen_imm_value(c, &@1, 1, 32);
+             HexValue ovfl = gen_imm_value(c, &@1, 1, 32, UNSIGNED);
              gen_set_overflow(c, &@1, &ovfl);
              $$ = $3;
          }
-       | DEINTERLEAVE '(' rvalue ')'
+       | ADDSAT64 '(' rvalue ',' rvalue ',' rvalue ')'
          {
-             @1.last_column = @4.last_column;
-             $$ = gen_deinterleave(c, &@1, &$3);
-         }
-       | INTERLEAVE '(' rvalue ',' rvalue ')'
-         {
-             @1.last_column = @6.last_column;
-             $$ = gen_interleave(c, &@1, &$3, &$5);
+             @1.last_column = @8.last_column;
+             gen_addsat64(c, &@1, &$3, &$5, &$7);
          }
        | CARRY_FROM_ADD '(' rvalue ',' rvalue ',' rvalue ')'
          {
@@ -856,7 +945,7 @@ rvalue : FAIL
        | LSBNEW '(' rvalue ')'
          {
              @1.last_column = @4.last_column;
-             HexValue one = gen_imm_value(c, &@1, 1, 32);
+             HexValue one = gen_imm_value(c, &@1, 1, 32, UNSIGNED);
              $$ = gen_bin_op(c, &@1, ANDB_OP, &$3, &one);
          }
        ;
