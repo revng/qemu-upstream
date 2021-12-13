@@ -56,6 +56,7 @@ void gen_sat_i64(TCGv_i64 dest, TCGv_i64 source, int width);
 void gen_sat_i64_ovfl(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width);
 void gen_satu_i64(TCGv_i64 dest, TCGv_i64 source, int width);
 void gen_satu_i64_ovfl(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width);
+void gen_add_sat_i64(TCGv_i64 ret, TCGv_i64 a, TCGv_i64 b);
 TCGv gen_8bitsof(TCGv result, TCGv value);
 void gen_set_byte_i64(int N, TCGv_i64 result, TCGv src);
 TCGv gen_get_byte(TCGv result, int N, TCGv src, bool sign);

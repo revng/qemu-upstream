@@ -650,7 +650,7 @@ static void vec_to_qvec(size_t size, intptr_t dstoff, intptr_t srcoff)
 
 void gen_set_usr_field(int field, TCGv val)
 {
-    tcg_gen_deposit_tl(hex_gpr[HEX_REG_USR], hex_gpr[HEX_REG_USR], val,
+    tcg_gen_deposit_tl(hex_new_value[HEX_REG_USR], hex_new_value[HEX_REG_USR], val,
                        reg_field_info[field].offset,
                        reg_field_info[field].width);
 }
@@ -740,6 +740,57 @@ void gen_satu_i64_ovfl(TCGv ovfl, TCGv_i64 dest, TCGv_i64 source, int width)
     tcg_gen_setcond_i64(TCG_COND_NE, ovfl_64, dest, source);
     tcg_gen_trunc_i64_tl(ovfl, ovfl_64);
     tcg_temp_free_i64(ovfl_64);
+}
+
+/* Implements the fADDSAT64 macro in TCG */
+void gen_add_sat_i64(TCGv_i64 ret, TCGv_i64 a, TCGv_i64 b) {
+    TCGv_i64 sum = tcg_temp_local_new_i64();
+    tcg_gen_add_i64(sum, a, b);
+
+    TCGv_i64 xor = tcg_temp_new_i64();
+    tcg_gen_xor_i64(xor, a, b);
+
+    TCGv_i64 mask = tcg_constant_i64(0x8000000000000000ULL);
+
+    TCGv_i64 cond1 = tcg_temp_local_new_i64();
+    tcg_gen_and_i64(cond1, xor, mask);
+    tcg_temp_free_i64(xor);
+
+    TCGv_i64 cond2 = tcg_temp_local_new_i64();
+    tcg_gen_xor_i64(cond2, a, sum);
+    tcg_gen_and_i64(cond2, cond2, mask);
+
+    TCGLabel *no_ovfl_label = gen_new_label();
+    TCGLabel *ovfl_label = gen_new_label();
+    TCGLabel *ret_label = gen_new_label();
+
+    tcg_gen_brcondi_i64(TCG_COND_NE, cond1, 0, no_ovfl_label);
+    tcg_temp_free_i64(cond1);
+    tcg_gen_brcondi_i64(TCG_COND_NE, cond2, 0, ovfl_label);
+    tcg_temp_free_i64(cond2);
+    tcg_gen_br(no_ovfl_label);
+
+    gen_set_label(no_ovfl_label);
+    tcg_gen_mov_i64(ret, sum);
+    tcg_gen_br(ret_label);
+
+    gen_set_label(ovfl_label);
+    TCGv_i64 cond3 = tcg_temp_new_i64();
+    tcg_gen_and_i64(cond3, sum, mask);
+    tcg_temp_free_i64(mask);
+    tcg_temp_free_i64(sum);
+    TCGv_i64 max_pos = tcg_constant_i64(0x7FFFFFFFFFFFFFFFLL);
+    TCGv_i64 max_neg = tcg_constant_i64(0x8000000000000000LL);
+    TCGv_i64 zero = tcg_constant_i64(0);
+    tcg_gen_movcond_i64(TCG_COND_NE, ret, cond3, zero, max_pos, max_neg);
+    tcg_temp_free_i64(max_pos);
+    tcg_temp_free_i64(max_neg);
+    tcg_temp_free_i64(zero);
+    tcg_temp_free_i64(cond3);
+    SET_USR_FIELD(USR_OVF, 1);
+    tcg_gen_br(ret_label);
+
+    gen_set_label(ret_label);
 }
 
 #include "tcg_funcs_generated.c.inc"
