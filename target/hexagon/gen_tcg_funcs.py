@@ -699,11 +699,22 @@ def main():
     hex_common.read_overrides_file(sys.argv[3])
     hex_common.read_overrides_file(sys.argv[4])
     hex_common.calculate_attribs()
-    hex_common.read_idef_parser_enabled_file(sys.argv[4])
+    ## Whether or not idef-parser is enabled is
+    ## determined by the number of arguments to
+    ## this script:
+    ##
+    ##   5 args. -> not enabled,
+    ##   6 args. -> idef-parser enabled.
+    ##
+    ## The 6:th arg. then holds a list of the successfully
+    ## parsed instructions.
+    if len(sys.argv) > 6:
+        hex_common.read_idef_parser_enabled_file(sys.argv[5])
     tagregs = hex_common.get_tagregs()
     tagimms = hex_common.get_tagimms()
 
-    with open(sys.argv[5], 'w') as f:
+    output_file = sys.argv[-1]
+    with open(output_file, 'w') as f:
         f.write("#ifndef HEXAGON_TCG_FUNCS_H\n")
         f.write("#define HEXAGON_TCG_FUNCS_H\n\n")
         f.write("#include \"idef-generated-emitter.h.inc\"\n\n")

@@ -150,6 +150,8 @@ hexagon_ss.add(files(
     'mmvec/system_ext_mmvec.c',
 ))
 
+idef_parser_enabled = get_option('hexagon_idef_parser_enabled')
+
 idef_parser_input_generated = custom_target(
     'idef_parser_input.h.inc',
     output: 'idef_parser_input.h.inc',
@@ -218,30 +220,39 @@ hexagon_ss.add(idef_generated_tcg_c)
 #     helper_funcs_generated.c.inc
 #     tcg_funcs_generated.c.inc
 #
+if idef_parser_enabled
+  helper_dep = [semantics_generated, idef_generated_tcg_c, idef_generated_tcg]
+  helper_in = [semantics_generated, attribs_def, gen_tcg_h, gen_tcg_hvx_h,
+               idef_generated_list]
+else
+  helper_dep = [semantics_generated]
+  helper_in = [semantics_generated, attribs_def, gen_tcg_h, gen_tcg_hvx_h]
+endif
+
 helper_protos_generated = custom_target(
     'helper_protos_generated.h.inc',
     output: 'helper_protos_generated.h.inc',
-    depends: [semantics_generated, idef_generated_tcg_c, idef_generated_tcg],
+    depends: helper_dep,
     depend_files: [hex_common_py, attribs_def, gen_tcg_h, gen_tcg_hvx_h],
-    command: [python, files('gen_helper_protos.py'), semantics_generated, attribs_def, gen_tcg_h, gen_tcg_hvx_h, idef_generated_list, '@OUTPUT@'],
+    command: [python, files('gen_helper_protos.py'), helper_in, '@OUTPUT@'],
 )
 hexagon_ss.add(helper_protos_generated)
 
 helper_funcs_generated = custom_target(
     'helper_funcs_generated.c.inc',
     output: 'helper_funcs_generated.c.inc',
-    depends: [semantics_generated, idef_generated_tcg_c, idef_generated_tcg],
+    depends: helper_dep,
     depend_files: [hex_common_py, attribs_def, gen_tcg_h, gen_tcg_hvx_h],
-    command: [python, files('gen_helper_funcs.py'), semantics_generated, attribs_def, gen_tcg_h, gen_tcg_hvx_h, idef_generated_list, '@OUTPUT@'],
+    command: [python, files('gen_helper_funcs.py'), helper_in, '@OUTPUT@'],
 )
 hexagon_ss.add(helper_funcs_generated)
 
 tcg_funcs_generated = custom_target(
     'tcg_funcs_generated.c.inc',
     output: 'tcg_funcs_generated.c.inc',
-    depends: [semantics_generated, idef_generated_tcg_c, idef_generated_tcg],
+    depends: helper_dep,
     depend_files: [hex_common_py, attribs_def, gen_tcg_h, gen_tcg_hvx_h],
-    command: [python, files('gen_tcg_funcs.py'), semantics_generated, attribs_def, gen_tcg_h, gen_tcg_hvx_h, idef_generated_list, '@OUTPUT@'],
+    command: [python, files('gen_tcg_funcs.py'), helper_in, '@OUTPUT@'],
 )
 hexagon_ss.add(tcg_funcs_generated)
 
