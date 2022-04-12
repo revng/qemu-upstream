@@ -85,6 +85,8 @@ enable_modules = get_option('modules') \
            error_message: 'Modules are incompatible with static linking') \
   .allowed()
 have_block = have_system or have_tools
+# TODO(anjo): Rename to `have_*`?
+llvm_to_tcg_enabled = get_option('hexagon_llvm_to_tcg_enabled')
 
 python = import('python').find_installation()
 
@@ -2891,6 +2893,11 @@ foreach target : target_dirs
         get_option('interp_prefix').replace('%M', config_target['TARGET_NAME'])
     }
   endif
+  if llvm_to_tcg_enabled
+    config_target += {
+      'CONFIG_LLVM_TO_TCG': 'y',
+    }
+  endif
 
   accel_kconfig = []
   foreach sym: accelerators
@@ -3010,6 +3017,7 @@ config_all += {
   'CONFIG_XEN': xen.found(),
   'CONFIG_SYSTEM_ONLY': have_system,
   'CONFIG_USER_ONLY': have_user,
+  'CONFIG_LLVM_TO_TCG': llvm_to_tcg_enabled,
   'CONFIG_ALL': true,
 }
 
@@ -3088,6 +3096,10 @@ if fdt_required.length() > 0 or fdt_opt == 'enabled'
   endif
 else
   fdt_opt = 'disabled'
+endif
+
+if llvm_to_tcg_enabled
+    subdir('helper2tcg')
 endif
 
 config_host_data.set('CONFIG_CAPSTONE', capstone.found())
@@ -3724,6 +3736,7 @@ foreach target : target_dirs
   if targetos == 'linux'
     target_inc += include_directories('linux-headers', is_system: true)
   endif
+
   if target.endswith('-softmmu')
     target_type='system'
     t = target_system_arch[target_base_arch].apply(config_target, strict: false)

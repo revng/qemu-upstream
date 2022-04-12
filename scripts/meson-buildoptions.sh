@@ -16,6 +16,10 @@ meson_options_help() {
   printf "%s\n" '  --disable-hexagon-idef-parser'
   printf "%s\n" '                           use idef-parser to automatically generate TCG'
   printf "%s\n" '                           code for the Hexagon frontend'
+  printf "%s\n" '  --disable-hexagon-llvm-to-tcg-enabled'
+  printf "%s\n" '                           Whether the llvm-to-tcg parser should be used to'
+  printf "%s\n" '                           automatically generate TCG code for the Hexagon'
+  printf "%s\n" '                           frontend'
   printf "%s\n" '  --disable-install-blobs  install provided firmware blobs'
   printf "%s\n" '  --disable-qom-cast-debug cast debugging support'
   printf "%s\n" '  --disable-relocatable    toggle relocatable install'
@@ -333,6 +337,8 @@ _meson_option_parse() {
     --disable-guest-agent-msi) printf "%s" -Dguest_agent_msi=disabled ;;
     --enable-hexagon-idef-parser) printf "%s" -Dhexagon_idef_parser=true ;;
     --disable-hexagon-idef-parser) printf "%s" -Dhexagon_idef_parser=false ;;
+    --enable-hexagon-llvm-to-tcg-enabled) printf "%s" -Dhexagon_llvm_to_tcg_enabled=true ;;
+    --disable-hexagon-llvm-to-tcg-enabled) printf "%s" -Dhexagon_llvm_to_tcg_enabled=false ;;
     --enable-hvf) printf "%s" -Dhvf=enabled ;;
     --disable-hvf) printf "%s" -Dhvf=disabled ;;
     --iasl=*) quote_sh "-Diasl=$2" ;;

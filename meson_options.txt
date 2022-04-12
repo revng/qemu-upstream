@@ -363,4 +363,5 @@ option('qemu_ga_version', type: 'string', value: '',
        description: 'version number for qemu-ga installer')
 
 option('hexagon_idef_parser', type : 'boolean', value : true,
-       description: 'use idef-parser to automatically generate TCG code for the Hexagon frontend')
+option('hexagon_llvm_to_tcg_enabled', type : 'boolean', value : true,
+       description: 'Whether the llvm-to-tcg parser should be used to automatically generate TCG code for the Hexagon frontend')
