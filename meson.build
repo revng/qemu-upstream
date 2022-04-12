@@ -3098,10 +3098,6 @@ else
   fdt_opt = 'disabled'
 endif
 
-if llvm_to_tcg_enabled
-    subdir('helper2tcg')
-endif
-
 config_host_data.set('CONFIG_CAPSTONE', capstone.found())
 config_host_data.set('CONFIG_FDT', fdt.found())
 config_host_data.set('CONFIG_SLIRP', slirp.found())
