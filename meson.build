@@ -230,6 +230,7 @@ have_ga = get_option('guest_agent') \
            error_message: 'unsupported OS for QEMU guest agent') \
   .allowed()
 have_block = have_system or have_tools
+helper_to_tcg_enabled = get_option('hexagon_helper_to_tcg')
 
 enable_modules = get_option('modules') \
   .require(host_os != 'windows',
@@ -3245,6 +3246,11 @@ foreach target : target_dirs
       'CONFIG_QEMU_RTSIG_MAP': get_option('rtsig_map'),
     }
   endif
+  if helper_to_tcg_enabled
+    config_target += {
+      'CONFIG_HELPER_TO_TCG': 'y',
+    }
+  endif
 
   target_kconfig = []
   foreach sym: accelerators
@@ -4122,6 +4128,7 @@ foreach target : target_dirs
   if host_os == 'linux'
     target_inc += include_directories('linux-headers', is_system: true)
   endif
+
   if target.endswith('-softmmu')
     target_type='system'
     t = target_system_arch[target_base_arch].apply(config_target, strict: false)
