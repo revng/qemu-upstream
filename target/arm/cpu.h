@@ -3275,6 +3275,31 @@ static inline bool arm_cpu_bswap_data(CPUARMState *env)
 void cpu_get_tb_cpu_state(CPUARMState *env, vaddr *pc,
                           uint64_t *cs_base, uint32_t *flags);
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    /*
+     * NOTE(anjo): we are returning the core mmu index here, which seems to be
+     *             the most commonly used index:
+     *
+     *               - `ctx->mmu_idx` is set to
+     *                 `core_to_{arm|aa64}_mmu_index(core_idx)`
+     *
+     *               - most often `get_mmu_index(ctx)` is used which calls
+     *                 `arm_to_core_mmu_index(ctx->mmu_idx)` to extract the core
+     *                 mmu index again.
+     *
+     *               - "unprivileged" instructions use
+     *                 `get_{a32|a64}_user_mem_index(ctx)` which requires the
+     *                 full ARM mmu index. We assume these are never translated
+     *                 by llvm-to-tcg.
+     *
+     *               - We can't access AARCH64 specific flags since we don't
+     *                 have flags2 aka `tb->cs_base`.
+     */
+    CPUARMTBFlags tb_flags = { .flags = flags, .flags2 = 0 };
+    return EX_TBFLAG_ANY(tb_flags, MMUIDX);
+}
+
 enum {
     QEMU_PSCI_CONDUIT_DISABLED = 0,
     QEMU_PSCI_CONDUIT_SMC = 1,

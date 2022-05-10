@@ -616,6 +616,15 @@ static inline void cpu_get_tb_cpu_state(CPUM68KState *env, vaddr *pc,
     }
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+#ifdef CONFIG_USER_ONLY
+    return 1;
+#else
+    return !(flags & TB_FLAGS_MSR_S);
+#end
+}
+
 void dump_mmu(CPUM68KState *env);
 
 #endif

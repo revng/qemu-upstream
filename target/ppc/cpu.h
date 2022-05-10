@@ -2532,6 +2532,15 @@ static inline void cpu_get_tb_cpu_state(CPUPPCState *env, vaddr *pc,
 }
 #endif
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+#ifdef CONFIG_USER_ONLY
+    return MMU_USER_IDX;
+#else
+    return (flags >> HFLAGS_DMMU_IDX) & 7;
+#endif
+}
+
 G_NORETURN void raise_exception(CPUPPCState *env, uint32_t exception);
 G_NORETURN void raise_exception_ra(CPUPPCState *env, uint32_t exception,
                                    uintptr_t raddr);

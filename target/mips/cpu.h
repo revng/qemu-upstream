@@ -1364,6 +1364,11 @@ static inline void cpu_get_tb_cpu_state(CPUMIPSState *env, vaddr *pc,
                             MIPS_HFLAG_HWRENA_ULR);
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    return hflags_mmu_index(flags);
+}
+
 /**
  * mips_cpu_create_with_clock:
  * @typename: a MIPS CPU type.

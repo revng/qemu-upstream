@@ -156,6 +156,11 @@ static inline int cpu_mmu_index(CPURXState *env, bool ifetch)
     return 0;
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    return 0;
+}
+
 static inline uint32_t rx_cpu_pack_psw(CPURXState *env)
 {
     uint32_t psw = 0;

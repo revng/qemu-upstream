@@ -382,4 +382,10 @@ static inline void cpu_get_tb_cpu_state(CPUSH4State *env, vaddr *pc,
 #endif
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    /* NOTE(anjo): `SR_MD` checks for user vs system mode. */
+    return (flags & (1u << SR_MD)) == 0 ? 1 : 0;
+}
+
 #endif /* SH4_CPU_H */

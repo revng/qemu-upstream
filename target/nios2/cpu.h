@@ -313,4 +313,9 @@ static inline void cpu_get_tb_cpu_state(CPUNios2State *env, vaddr *pc,
            | (env->regs[0] ? 0 : R_TBFLAGS_R0_0_MASK);
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    return (flags & CR_STATUS_U) ? MMU_USER_IDX : MMU_SUPERVISOR_IDX;
+}
+
 #endif /* NIOS2_CPU_H */

@@ -174,6 +174,15 @@ static inline int cpu_mmu_index(CPUHexagonState *env, bool ifetch)
 #endif
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+#ifdef CONFIG_USER_ONLY
+    return MMU_USER_IDX;
+#else
+#error System mode not supported on Hexagon yet
+#endif
+}
+
 typedef HexagonCPU ArchCPU;
 
 void hexagon_translate_init(void);

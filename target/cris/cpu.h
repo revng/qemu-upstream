@@ -275,6 +275,11 @@ static inline void cpu_get_tb_cpu_state(CPUCRISState *env, vaddr *pc,
 				     | X_FLAG | PFIX_FLAG));
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    return !!(flags & U_FLAG);
+}
+
 #define cpu_list cris_cpu_list
 void cris_cpu_list(void);
 

@@ -412,6 +412,17 @@ static inline void cpu_get_tb_cpu_state(CPUMBState *env, vaddr *pc,
     *cs_base = (*flags & IMM_FLAG ? env->imm : 0);
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    if (!(flags & MSR_VM)) {
+        return MMU_NOMMU_IDX;
+    } else if (flags & MSR_UM) {
+        return MMU_USER_IDX;
+    } else {
+        return MMU_KERNEL_IDX;
+    }
+}
+
 #if !defined(CONFIG_USER_ONLY)
 bool mb_cpu_tlb_fill(CPUState *cs, vaddr address, int size,
                      MMUAccessType access_type, int mmu_idx,

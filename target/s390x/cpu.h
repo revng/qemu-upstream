@@ -407,6 +407,29 @@ static inline void cpu_get_tb_cpu_state(CPUS390XState *env, vaddr *pc,
     }
 }
 
+
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+#ifdef CONFIG_USER_ONLY
+    return MMU_USER_IDX;
+#else
+    if (!(flags & FLAG_MASK_DAT)) {
+        return MMU_REAL_IDX;
+    }
+
+    switch (flags & FLAG_MASK_ASC) {
+    case PSW_ASC_PRIMARY >> FLAG_MASK_PSW_SHIFT:
+        return MMU_PRIMARY_IDX;
+    case PSW_ASC_SECONDARY >> FLAG_MASK_PSW_SHIFT:
+        return MMU_SECONDARY_IDX;
+    case PSW_ASC_HOME >> FLAG_MASK_PSW_SHIFT:
+        return MMU_HOME_IDX;
+    default:
+        g_assert_not_reached();
+    }
+#endif
+}
+
 /* PER bits from control register 9 */
 #define PER_CR9_EVENT_BRANCH           0x80000000
 #define PER_CR9_EVENT_IFETCH           0x40000000

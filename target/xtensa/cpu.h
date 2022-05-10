@@ -794,6 +794,12 @@ static inline void cpu_get_tb_cpu_state(CPUXtensaState *env, vaddr *pc,
     }
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    uint32_t ring = flags & XTENSA_TBFLAG_RING_MASK;
+    return (flags & XTENSA_TBFLAG_EXCM) ? 0 : ring;
+}
+
 XtensaCPU *xtensa_cpu_create_with_clock(const char *cpu_type,
                                         Clock *cpu_refclk);
 

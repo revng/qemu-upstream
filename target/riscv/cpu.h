@@ -635,6 +635,11 @@ static inline uint32_t vext_get_vlmax(RISCVCPU *cpu, target_ulong vtype)
 void cpu_get_tb_cpu_state(CPURISCVState *env, vaddr *pc,
                           uint64_t *cs_base, uint32_t *pflags);
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    return FIELD_EX32(flags, TB_FLAGS, MEM_IDX);
+}
+
 void riscv_cpu_update_mask(CPURISCVState *env);
 
 RISCVException riscv_csrrw(CPURISCVState *env, int csrno,

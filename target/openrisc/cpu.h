@@ -376,6 +376,15 @@ static inline void cpu_get_tb_cpu_state(CPUOpenRISCState *env, vaddr *pc,
            | (env->sr & (SR_SM | SR_DME | SR_IME | SR_OVE));
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    int ret = MMU_NOMMU_IDX;
+    if (flags & SR_DME) {
+        ret = (flags & SR_SM) ? MMU_SUPERVISOR_IDX : MMU_USER_IDX;
+    }
+    return ret;
+}
+
 static inline int cpu_mmu_index(CPUOpenRISCState *env, bool ifetch)
 {
     int ret = MMU_NOMMU_IDX;  /* mmu is disabled */

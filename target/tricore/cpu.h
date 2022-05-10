@@ -270,6 +270,11 @@ static inline void cpu_get_tb_cpu_state(CPUTriCoreState *env, vaddr *pc,
     *flags = new_flags;
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    return 0;
+}
+
 #define TRICORE_CPU_TYPE_SUFFIX "-" TYPE_TRICORE_CPU
 #define TRICORE_CPU_TYPE_NAME(model) model TRICORE_CPU_TYPE_SUFFIX
 #define CPU_RESOLVING_TYPE TYPE_TRICORE_CPU

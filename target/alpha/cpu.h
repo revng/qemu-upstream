@@ -472,6 +472,15 @@ static inline void cpu_get_tb_cpu_state(CPUAlphaState *env, vaddr *pc,
 #endif
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    int ret = (flags & ENV_FLAG_PS_USER) ? MMU_USER_IDX : MMU_KERNEL_IDX;
+    if (flags & ENV_FLAG_PAL_MODE) {
+        ret = MMU_KERNEL_IDX;
+    }
+    return ret;
+}
+
 #ifdef CONFIG_USER_ONLY
 /* Copied from linux ieee_swcr_to_fpcr.  */
 static inline uint64_t alpha_ieee_swcr_to_fpcr(uint64_t swcr)

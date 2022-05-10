@@ -328,6 +328,16 @@ static inline void cpu_get_tb_cpu_state(CPUHPPAState *env, vaddr *pc,
     *pflags = flags;
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+#ifdef CONFIG_USER_ONLY
+    return MMU_USER_INDEX;
+#else
+    uint32_t privilege = (flags >> TB_FLAG_PRIV_SHIFT) & 3;
+    return (flags & PSW_D ? privilege : MMU_PHYS_IDX);
+#endif
+}
+
 target_ureg cpu_hppa_get_psw(CPUHPPAState *env);
 void cpu_hppa_put_psw(CPUHPPAState *env, target_ureg);
 void cpu_hppa_loaded_fr0(CPUHPPAState *env);

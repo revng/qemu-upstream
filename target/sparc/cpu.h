@@ -796,6 +796,11 @@ static inline void cpu_get_tb_cpu_state(CPUSPARCState *env, vaddr *pc,
     *pflags = flags;
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    return flags & TB_FLAG_MMU_MASK;
+}
+
 static inline bool tb_fpu_enabled(int tb_flags)
 {
 #if defined(CONFIG_USER_ONLY)

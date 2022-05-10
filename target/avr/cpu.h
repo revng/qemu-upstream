@@ -207,6 +207,11 @@ static inline void cpu_get_tb_cpu_state(CPUAVRState *env, vaddr *pc,
     *pflags = flags;
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+    return MMU_DATA_IDX;
+}
+
 static inline int cpu_interrupts_enabled(CPUAVRState *env)
 {
     return env->sregI != 0;

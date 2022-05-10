@@ -2295,6 +2295,17 @@ static inline void cpu_get_tb_cpu_state(CPUX86State *env, vaddr *pc,
         (env->eflags & (IOPL_MASK | TF_MASK | RF_MASK | VM_MASK | AC_MASK));
 }
 
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+#ifndef CONFIG_SOFTMMU
+    return (flags & HF_CPL_MASK) == 3 ? MMU_USER_IDX :
+        (!(flags & HF_SMAP_MASK) || (flags & AC_MASK))
+        ? MMU_KNOSMAP_IDX : MMU_KSMAP_IDX;
+#else
+    return 0;
+#endif
+}
+
 void do_cpu_init(X86CPU *cpu);
 
 #define MCE_INJECT_BROADCAST    1
