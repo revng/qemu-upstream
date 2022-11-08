@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  * x86 host CPU functions, and "host" cpu type initialization
  *

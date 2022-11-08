@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  *  x86 exception helpers - user-mode specific code
  *

@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  *  x86 segmentation related helpers (user-mode code):
  *  TSS, interrupts, system calls, jumps and call/task gates, descriptors

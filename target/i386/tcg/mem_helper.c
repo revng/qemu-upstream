@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  *  x86 memory access helpers
  *

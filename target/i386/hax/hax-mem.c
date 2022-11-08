@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  * HAX memory mapping operations
  *

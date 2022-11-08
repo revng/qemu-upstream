@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  * QEMU KVM x86 specific function stubs
  *

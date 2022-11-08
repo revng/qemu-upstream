@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  * Copyright (c) 2018-2019 Maxime Villard, All rights reserved.
  *

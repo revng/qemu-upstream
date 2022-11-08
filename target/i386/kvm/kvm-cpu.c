@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  * x86 KVM CPU type initialization
  *

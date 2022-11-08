@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  * QEMU Windows Hypervisor Platform accelerator (WHPX)
  *

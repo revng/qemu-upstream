@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  * i386 TCG cpu class initialization functions specific to sysemu
  *

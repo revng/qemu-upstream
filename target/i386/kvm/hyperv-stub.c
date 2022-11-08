@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  * Stubs for CONFIG_HYPERV=n
  *

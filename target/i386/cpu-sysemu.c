@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  *  i386 CPUID, CPU class, definitions, models: sysemu-only code
  *
