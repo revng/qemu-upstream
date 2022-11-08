@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
     NetWinder Floating Point Emulator
     (c) Rebel.COM, 1998,1999

@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 #include "qemu/osdep.h"
 
 #include <sys/ipc.h>

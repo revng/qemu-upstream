@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * QEMU LoongArch user cpu_loop.

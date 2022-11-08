@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /* User memory access */
 #include "qemu/osdep.h"
 #include "qemu/cutils.h"

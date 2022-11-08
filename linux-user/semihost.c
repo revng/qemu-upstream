@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  * ARM Compatible Semihosting Console Support.
  *

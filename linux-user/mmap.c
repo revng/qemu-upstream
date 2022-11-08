@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  *  mmap support for qemu
  *

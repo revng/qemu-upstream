@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  *  cpu to uname machine name map
  *

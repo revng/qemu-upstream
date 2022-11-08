@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /****************************************************************************/
 /*
  *  QEMU bFLT binary loader.  Based on linux/fs/binfmt_flat.c

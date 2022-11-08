@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  *  vm86 linux syscall support
  *

@@ -1,3 +1,4 @@
+#define TARGET_SPECIFIC
 /*
  *  exit support for qemu
  *
