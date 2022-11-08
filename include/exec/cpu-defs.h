@@ -33,6 +33,7 @@
 
 #include "cpu-param.h"
 
+#ifdef TARGET_SPECIFIC
 #ifndef TARGET_LONG_BITS
 # error TARGET_LONG_BITS must be defined in cpu-param.h
 #endif
@@ -54,6 +55,7 @@
 #  error TARGET_PAGE_BITS must be defined in cpu-param.h
 # endif
 #endif
+
 #ifndef TARGET_TB_PCREL
 # define TARGET_TB_PCREL 0
 #endif
@@ -267,5 +269,7 @@ typedef struct CPUNegativeOffsetState {
     CPUTLB tlb;
     IcountDecr icount_decr;
 } CPUNegativeOffsetState;
+
+#endif
 
 #endif

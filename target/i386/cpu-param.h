@@ -8,6 +8,8 @@
 #ifndef I386_CPU_PARAM_H
 #define I386_CPU_PARAM_H
 
+#ifdef TARGET_SPECIFIC
+
 #ifdef TARGET_X86_64
 # define TARGET_LONG_BITS             64
 # define TARGET_PHYS_ADDR_SPACE_BITS  52
@@ -27,6 +29,8 @@
 
 #ifndef CONFIG_USER_ONLY
 # define TARGET_TB_PCREL 1
+#endif
+
 #endif
 
 #endif

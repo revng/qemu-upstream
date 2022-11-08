@@ -20,6 +20,8 @@
 #ifndef I386_CPU_H
 #define I386_CPU_H
 
+#ifdef TARGET_SPECIFIC
+
 #include "sysemu/tcg.h"
 #include "cpu-qom.h"
 #include "kvm/hyperv-proto.h"
@@ -2427,6 +2429,8 @@ static inline bool ctl_has_irq(CPUX86State *env)
     defined(CONFIG_USER_ONLY) && \
     defined(CONFIG_LINUX)
 # define TARGET_VSYSCALL_PAGE  (UINT64_C(-10) << 20)
+#endif
+
 #endif
 
 #endif /* I386_CPU_H */
