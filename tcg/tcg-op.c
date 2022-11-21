@@ -2841,39 +2841,39 @@ static inline MemOp tcg_canonicalize_memop(MemOp op, bool is64, bool st)
     return op;
 }
 
-static void gen_ldst_i32(TCGOpcode opc, TCGv_i32 val, TCGv addr,
+static void gen_ldst_i32(TCGOpcode opc, TCGv_i32 val, TCGv_dyn addr,
                          MemOp memop, TCGArg idx)
 {
     MemOpIdx oi = make_memop_idx(memop, idx);
-#if TARGET_LONG_BITS == 32
-    tcg_gen_op3i_i32(opc, val, addr, oi);
-#else
-    if (TCG_TARGET_REG_BITS == 32) {
-        tcg_gen_op4i_i32(opc, val, TCGV_LOW(addr), TCGV_HIGH(addr), oi);
+    if (addr.size == 32) {
+        tcg_gen_op3i_i32(opc, val, addr.i32, oi);
     } else {
-        tcg_gen_op3(opc, tcgv_i32_arg(val), tcgv_i64_arg(addr), oi);
+        if (TCG_TARGET_REG_BITS == 32) {
+            tcg_gen_op4i_i32(opc, val, TCGV_LOW(addr.i64), TCGV_HIGH(addr.i64), oi);
+        } else {
+            tcg_gen_op3(opc, tcgv_i32_arg(val), tcgv_i64_arg(addr.i64), oi);
+        }
     }
-#endif
 }
 
-static void gen_ldst_i64(TCGOpcode opc, TCGv_i64 val, TCGv addr,
+static void gen_ldst_i64(TCGOpcode opc, TCGv_i64 val, TCGv_dyn addr,
                          MemOp memop, TCGArg idx)
 {
     MemOpIdx oi = make_memop_idx(memop, idx);
-#if TARGET_LONG_BITS == 32
-    if (TCG_TARGET_REG_BITS == 32) {
-        tcg_gen_op4i_i32(opc, TCGV_LOW(val), TCGV_HIGH(val), addr, oi);
+    if (addr.size == 32) {
+        if (TCG_TARGET_REG_BITS == 32) {
+            tcg_gen_op4i_i32(opc, TCGV_LOW(val), TCGV_HIGH(val), addr.i32, oi);
+        } else {
+            tcg_gen_op3(opc, tcgv_i64_arg(val), tcgv_i32_arg(addr.i32), oi);
+        }
     } else {
-        tcg_gen_op3(opc, tcgv_i64_arg(val), tcgv_i32_arg(addr), oi);
+        if (TCG_TARGET_REG_BITS == 32) {
+            tcg_gen_op5i_i32(opc, TCGV_LOW(val), TCGV_HIGH(val),
+                             TCGV_LOW(addr.i64), TCGV_HIGH(addr.i64), oi);
+        } else {
+            tcg_gen_op3i_i64(opc, val, addr.i64, oi);
+        }
     }
-#else
-    if (TCG_TARGET_REG_BITS == 32) {
-        tcg_gen_op5i_i32(opc, TCGV_LOW(val), TCGV_HIGH(val),
-                         TCGV_LOW(addr), TCGV_HIGH(addr), oi);
-    } else {
-        tcg_gen_op3i_i64(opc, val, addr, oi);
-    }
-#endif
 }
 
 static void tcg_gen_req_mo(TCGBar type)
@@ -2887,7 +2887,7 @@ static void tcg_gen_req_mo(TCGBar type)
     }
 }
 
-static inline TCGv plugin_prep_mem_callbacks(TCGv vaddr)
+static inline TCGv_dyn plugin_prep_mem_callbacks(TCGv_dyn vaddr)
 {
 #ifdef CONFIG_PLUGIN
     if (tcg_ctx->plugin_insn != NULL) {
@@ -2900,19 +2900,19 @@ static inline TCGv plugin_prep_mem_callbacks(TCGv vaddr)
     return vaddr;
 }
 
-static void plugin_gen_mem_callbacks(TCGv vaddr, MemOpIdx oi,
+static void plugin_gen_mem_callbacks(TCGv_dyn vaddr, MemOpIdx oi,
                                      enum qemu_plugin_mem_rw rw)
 {
 #ifdef CONFIG_PLUGIN
     if (tcg_ctx->plugin_insn != NULL) {
         qemu_plugin_meminfo_t info = make_plugin_meminfo(oi, rw);
         plugin_gen_empty_mem_callback(vaddr, info);
-        tcg_temp_free(vaddr);
+        tcg_temp_free_dyn(vaddr);
     }
 #endif
 }
 
-void tcg_gen_qemu_ld_i32(TCGv_i32 val, TCGv addr, TCGArg idx, MemOp memop)
+void tcg_gen_qemu_ld_i32_dyn(TCGv_i32 val, TCGv_dyn addr, TCGArg idx, MemOp memop)
 {
     MemOp orig_memop;
     MemOpIdx oi;
@@ -2950,7 +2950,7 @@ void tcg_gen_qemu_ld_i32(TCGv_i32 val, TCGv addr, TCGArg idx, MemOp memop)
     }
 }
 
-void tcg_gen_qemu_st_i32(TCGv_i32 val, TCGv addr, TCGArg idx, MemOp memop)
+void tcg_gen_qemu_st_i32_dyn(TCGv_i32 val, TCGv_dyn addr, TCGArg idx, MemOp memop)
 {
     TCGv_i32 swap = NULL;
     MemOpIdx oi;
@@ -2988,13 +2988,13 @@ void tcg_gen_qemu_st_i32(TCGv_i32 val, TCGv addr, TCGArg idx, MemOp memop)
     }
 }
 
-void tcg_gen_qemu_ld_i64(TCGv_i64 val, TCGv addr, TCGArg idx, MemOp memop)
+void tcg_gen_qemu_ld_i64_dyn(TCGv_i64 val, TCGv_dyn addr, TCGArg idx, MemOp memop)
 {
     MemOp orig_memop;
     MemOpIdx oi;
 
     if (TCG_TARGET_REG_BITS == 32 && (memop & MO_SIZE) < MO_64) {
-        tcg_gen_qemu_ld_i32(TCGV_LOW(val), addr, idx, memop);
+        tcg_gen_qemu_ld_i32_dyn(TCGV_LOW(val), addr, idx, memop);
         if (memop & MO_SIGN) {
             tcg_gen_sari_i32(TCGV_HIGH(val), TCGV_LOW(val), 31);
         } else {
@@ -3040,13 +3040,13 @@ void tcg_gen_qemu_ld_i64(TCGv_i64 val, TCGv addr, TCGArg idx, MemOp memop)
     }
 }
 
-void tcg_gen_qemu_st_i64(TCGv_i64 val, TCGv addr, TCGArg idx, MemOp memop)
+void tcg_gen_qemu_st_i64_dyn(TCGv_i64 val, TCGv_dyn addr, TCGArg idx, MemOp memop)
 {
     TCGv_i64 swap = NULL;
     MemOpIdx oi;
 
     if (TCG_TARGET_REG_BITS == 32 && (memop & MO_SIZE) < MO_64) {
-        tcg_gen_qemu_st_i32(TCGV_LOW(val), addr, idx, memop);
+        tcg_gen_qemu_st_i32_dyn(TCGV_LOW(val), addr, idx, memop);
         return;
     }
 

@@ -844,6 +844,11 @@ static inline void tcg_gen_plugin_cb_end(void)
     tcg_emit_op(INDEX_op_plugin_cb_end);
 }
 
+void tcg_gen_qemu_ld_i32_dyn(TCGv_i32, TCGv_dyn, TCGArg, MemOp);
+void tcg_gen_qemu_st_i32_dyn(TCGv_i32, TCGv_dyn, TCGArg, MemOp);
+void tcg_gen_qemu_ld_i64_dyn(TCGv_i64, TCGv_dyn, TCGArg, MemOp);
+void tcg_gen_qemu_st_i64_dyn(TCGv_i64, TCGv_dyn, TCGArg, MemOp);
+
 #if TARGET_LONG_BITS == 32
 #define tcg_temp_new() tcg_temp_new_i32()
 #define tcg_global_mem_new tcg_global_mem_new_i32
