@@ -3082,6 +3082,7 @@ void tcg_gen_qemu_st_i64_dyn(TCGv_i64 val, TCGv_dyn addr, TCGArg idx, MemOp memo
     }
 }
 
+#ifdef WIP_MULTI_TCG_ATOMIC
 static void tcg_gen_ext_i32(TCGv_i32 ret, TCGv_i32 val, MemOp opc)
 {
     switch (opc & MO_SSIZE) {
@@ -3406,5 +3407,6 @@ static void tcg_gen_mov2_i64(TCGv_i64 r, TCGv_i64 a, TCGv_i64 b)
 }
 
 GEN_ATOMIC_HELPER(xchg, mov2, 0)
+#endif // WIP_MULTI_TCG_ATOMIC
 
 #undef GEN_ATOMIC_HELPER
