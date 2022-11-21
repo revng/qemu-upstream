@@ -382,6 +382,15 @@ typedef struct TCGv_i64_d *TCGv_i64;
 typedef struct TCGv_ptr_d *TCGv_ptr;
 typedef struct TCGv_vec_d *TCGv_vec;
 typedef TCGv_ptr TCGv_env;
+
+typedef struct {
+    union {
+        TCGv_i32 i32;
+        TCGv_i64 i64;
+    };
+    unsigned size;
+} TCGv_dyn;
+
 #if TARGET_LONG_BITS == 32
 #define TCGv TCGv_i32
 #elif TARGET_LONG_BITS == 64
@@ -859,6 +868,15 @@ static inline void tcg_temp_free_i32(TCGv_i32 arg)
 static inline void tcg_temp_free_i64(TCGv_i64 arg)
 {
     tcg_temp_free_internal(tcgv_i64_temp(arg));
+}
+
+static inline void tcg_temp_free_dyn(TCGv_dyn arg)
+{
+    if (arg.size == 32) {
+        tcg_temp_free_i32(arg.i32);
+    } else {
+        tcg_temp_free_i64(arg.i64);
+    }
 }
 
 static inline void tcg_temp_free_ptr(TCGv_ptr arg)
