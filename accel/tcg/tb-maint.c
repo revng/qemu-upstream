@@ -518,7 +518,7 @@ tb_invalidate_phys_page_range__locked(struct page_collection *pages,
         } else {
             tb_start = tb_page_addr1(tb);
             tb_end = tb_start + ((tb_page_addr0(tb) + tb->size)
-                                 & ~TARGET_PAGE_MASK);
+                                 & ~tb->target_page_mask);
         }
         if (!(tb_end <= start || tb_start >= end)) {
 #ifdef TARGET_HAS_PRECISE_SMC
