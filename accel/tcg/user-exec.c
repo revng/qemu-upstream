@@ -173,7 +173,7 @@ static int probe_access_internal(CPUArchState *env, uint64_t addr,
     cpu_loop_exit_sigsegv(env_cpu(env), addr, access_type, maperr, ra);
 }
 
-int probe_access_flags(CPUArchState *env, target_ulong addr,
+int probe_access_flags(CPUArchState *env, uint64_t addr,
                        MMUAccessType access_type, int mmu_idx,
                        bool nonfault, void **phost, uintptr_t ra)
 {
@@ -184,7 +184,7 @@ int probe_access_flags(CPUArchState *env, target_ulong addr,
     return flags;
 }
 
-void *probe_access(CPUArchState *env, target_ulong addr, int size,
+void *probe_access(CPUArchState *env, uint64_t addr, int size,
                    MMUAccessType access_type, int mmu_idx, uintptr_t ra)
 {
     int flags;
@@ -196,7 +196,7 @@ void *probe_access(CPUArchState *env, target_ulong addr, int size,
     return size ? g2h(env_cpu(env), addr) : NULL;
 }
 
-tb_page_addr_t get_page_addr_code_hostp(CPUArchState *env, target_ulong addr,
+tb_page_addr_t get_page_addr_code_hostp(CPUArchState *env, uint64_t addr,
                                         void **hostp)
 {
     int flags;
@@ -205,15 +205,17 @@ tb_page_addr_t get_page_addr_code_hostp(CPUArchState *env, target_ulong addr,
     g_assert(flags == 0);
 
     if (hostp) {
+#if 0
         *hostp = g2h_untagged(addr);
+#endif
     }
     return addr;
 }
 
-void page_reset_target_data(target_ulong start, target_ulong end)
+void page_reset_target_data(uint64_t start, uint64_t end)
 {
 #ifdef TARGET_PAGE_DATA_SIZE
-    target_ulong addr, len;
+    uint64_t addr, len;
 
     /*
      * This function should never be called with addresses outside the

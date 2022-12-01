@@ -21,7 +21,7 @@ struct CPUJumpCache {
     struct {
         TranslationBlock *tb;
 #if TARGET_TB_PCREL
-        target_ulong pc;
+        uint64_t pc;
 #endif
     } array[TB_JMP_CACHE_SIZE];
 };
@@ -38,7 +38,7 @@ tb_jmp_cache_get_tb(CPUJumpCache *jc, uint32_t hash)
 #endif
 }
 
-static inline target_ulong
+static inline uint64_t
 tb_jmp_cache_get_pc(CPUJumpCache *jc, uint32_t hash, TranslationBlock *tb)
 {
 #if TARGET_TB_PCREL
@@ -50,7 +50,7 @@ tb_jmp_cache_get_pc(CPUJumpCache *jc, uint32_t hash, TranslationBlock *tb)
 
 static inline void
 tb_jmp_cache_set(CPUJumpCache *jc, uint32_t hash,
-                 TranslationBlock *tb, target_ulong pc)
+                 TranslationBlock *tb, uint64_t pc)
 {
 #if TARGET_TB_PCREL
     jc->array[hash].pc = pc;

@@ -192,11 +192,11 @@ static target_long decode_sleb128(const uint8_t **pp)
 
     do {
         byte = *p++;
-        val |= (target_ulong)(byte & 0x7f) << shift;
+        val |= (uint64_t)(byte & 0x7f) << shift;
         shift += 7;
     } while (byte & 0x80);
     if (shift < TARGET_LONG_BITS && (byte & 0x40)) {
-        val |= -(target_ulong)1 << shift;
+        val |= -(uint64_t)1 << shift;
     }
 
     *pp = p;
@@ -222,7 +222,7 @@ static int encode_search(TranslationBlock *tb, uint8_t *block)
     int i, j, n;
 
     for (i = 0, n = tb->icount; i < n; ++i) {
-        target_ulong prev;
+        uint64_t prev;
 
         for (j = 0; j < TARGET_INSN_START_WORDS; ++j) {
             if (i == 0) {
@@ -1094,7 +1094,7 @@ void cpu_io_recompile(CPUState *cpu, uintptr_t retaddr)
     cpu->cflags_next_tb = curr_cflags(cpu) | CF_MEMI_ONLY | CF_LAST_IO | n;
 
     if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
-        target_ulong pc = log_pc(cpu, tb);
+        uint64_t pc = log_pc(cpu, tb);
         if (qemu_log_in_addr_range(pc)) {
             qemu_log("cpu_io_recompile: rewound execution of TB to "
                      TARGET_FMT_lx "\n", pc);
@@ -1249,12 +1249,12 @@ void cpu_interrupt(CPUState *cpu, int mask)
 struct walk_memory_regions_data {
     walk_memory_regions_fn fn;
     void *priv;
-    target_ulong start;
+    uint64_t start;
     int prot;
 };
 
 static int walk_memory_regions_end(struct walk_memory_regions_data *data,
-                                   target_ulong end, int new_prot)
+                                   uint64_t end, int new_prot)
 {
     if (data->start != -1u) {
         int rc = data->fn(data->priv, data->start, end, data->prot);
@@ -1269,10 +1269,12 @@ static int walk_memory_regions_end(struct walk_memory_regions_data *data,
     return 0;
 }
 
-static int walk_memory_regions_1(struct walk_memory_regions_data *data,
-                                 target_ulong base, int level, void **lp)
+int walk_memory_regions_1(struct walk_memory_regions_data *data,
+                          uint64_t base, int level, void **lp);
+int walk_memory_regions_1(struct walk_memory_regions_data *data,
+                          uint64_t base, int level, void **lp)
 {
-    target_ulong pa;
+    uint64_t pa;
     int i, rc;
 
     if (*lp == NULL) {
@@ -1322,7 +1324,7 @@ int walk_memory_regions(void *priv, walk_memory_regions_fn fn)
     data.prot = 0;
 
     for (i = 0; i < l1_sz; i++) {
-        target_ulong base = i << (v_l1_shift + TARGET_PAGE_BITS);
+        uint64_t base = i << (v_l1_shift + TARGET_PAGE_BITS);
         int rc = walk_memory_regions_1(&data, base, v_l2_levels, l1_map + i);
         if (rc != 0) {
             return rc;
@@ -1332,8 +1334,8 @@ int walk_memory_regions(void *priv, walk_memory_regions_fn fn)
     return walk_memory_regions_end(&data, 0, 0);
 }
 
-static int dump_region(void *priv, target_ulong start,
-    target_ulong end, unsigned long prot)
+static int dump_region(void *priv, uint64_t start,
+    uint64_t end, unsigned long prot)
 {
     FILE *f = (FILE *)priv;
 
@@ -1350,13 +1352,13 @@ static int dump_region(void *priv, target_ulong start,
 /* dump memory mappings */
 void page_dump(FILE *f)
 {
-    const int length = sizeof(target_ulong) * 2;
+    const int length = sizeof(uint64_t) * 2;
     (void) fprintf(f, "%-*s %-*s %-*s %s\n",
             length, "start", length, "end", length, "size", "prot");
     walk_memory_regions(f, dump_region);
 }
 
-int page_get_flags(target_ulong address)
+int page_get_flags(uint64_t address)
 {
     PageDesc *p;
 
@@ -1379,7 +1381,7 @@ int page_get_flags(target_ulong address)
 /* Modify the flags of a page and invalidate the code if necessary.
    The flag PAGE_WRITE_ORG is positioned automatically depending
    on PAGE_WRITE.  The mmap_lock should already be held.  */
-void page_set_flags(target_ulong start, target_ulong end, int flags)
+void page_set_flags(uint64_t start, uint64_t end, int flags)
 {
     target_ulong addr, len;
     bool reset, inval_tb = false;
@@ -1429,7 +1431,7 @@ void page_set_flags(target_ulong start, target_ulong end, int flags)
     }
 }
 
-int page_check_range(target_ulong start, target_ulong len, int flags)
+int page_check_range(uint64_t start, uint64_t len, int flags)
 {
     PageDesc *p;
     target_ulong end;
@@ -1439,7 +1441,7 @@ int page_check_range(target_ulong start, target_ulong len, int flags)
        guest address space.  If this assert fires, it probably indicates
        a missing call to h2g_valid.  */
     if (TARGET_ABI_BITS > L1_MAP_ADDR_SPACE_BITS) {
-        assert(start < ((target_ulong)1 << L1_MAP_ADDR_SPACE_BITS));
+        assert(start < ((uint64_t)1 << L1_MAP_ADDR_SPACE_BITS));
     }
 
     if (len == 0) {
@@ -1486,7 +1488,7 @@ int page_check_range(target_ulong start, target_ulong len, int flags)
 
 void page_protect(tb_page_addr_t page_addr)
 {
-    target_ulong addr;
+    uint64_t addr;
     PageDesc *p;
     int prot;
 
@@ -1519,7 +1521,7 @@ void page_protect(tb_page_addr_t page_addr)
  * immediately exited. (We can only return 2 if the 'pc' argument is
  * non-zero.)
  */
-int page_unprotect(target_ulong address, uintptr_t pc)
+int page_unprotect(uint64_t address, uintptr_t pc)
 {
     unsigned int prot;
     bool current_tb_invalidated;

@@ -244,8 +244,8 @@ static TranslationBlock *tb_htable_lookup(CPUState *cpu, uint64_t pc,
 }
 
 /* Might cause an exception, so have a longjmp destination ready */
-static inline TranslationBlock *tb_lookup(CPUState *cpu, target_ulong pc,
-                                          target_ulong cs_base,
+static inline TranslationBlock *tb_lookup(CPUState *cpu, uint64_t pc,
+                                          uint64_t cs_base,
                                           uint32_t flags, uint32_t cflags)
 {
     TranslationBlock *tb;
@@ -275,7 +275,7 @@ static inline TranslationBlock *tb_lookup(CPUState *cpu, target_ulong pc,
     return tb;
 }
 
-static void log_cpu_exec(target_ulong pc, CPUState *cpu,
+static void log_cpu_exec(uint64_t pc, CPUState *cpu,
                          const TranslationBlock *tb)
 {
     if (qemu_log_in_addr_range(pc)) {
@@ -465,7 +465,7 @@ cpu_tb_exec(CPUState *cpu, TranslationBlock *itb, int *tb_exit)
             cc->set_pc(cpu, tb_pc(last_tb));
         }
         if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
-            target_ulong pc = log_pc(cpu, last_tb);
+            uint64_t pc = log_pc(cpu, last_tb);
             if (qemu_log_in_addr_range(pc)) {
                 qemu_log("Stopped execution of TB chain before %p ["
                          TARGET_FMT_lx "] %s\n",

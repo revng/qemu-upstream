@@ -31,7 +31,7 @@ void translator_loop_temp_check(DisasContextBase *db)
     }
 }
 
-bool translator_use_goto_tb(DisasContextBase *db, target_ulong dest)
+bool translator_use_goto_tb(DisasContextBase *db, uint64_t dest)
 {
     /* Suppress goto_tb if requested. */
     if (tb_cflags(db->tb) & CF_NO_GOTO_TB) {
@@ -43,7 +43,7 @@ bool translator_use_goto_tb(DisasContextBase *db, target_ulong dest)
 }
 
 void translator_loop(CPUState *cpu, TranslationBlock *tb, int max_insns,
-                     target_ulong pc, void *host_pc,
+                     uint64_t pc, void *host_pc,
                      const TranslatorOps *ops, DisasContextBase *db)
 {
     uint32_t cflags = tb_cflags(tb);
