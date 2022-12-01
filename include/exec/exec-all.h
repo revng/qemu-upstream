@@ -32,7 +32,7 @@
    addresses in userspace mode.  Define tb_page_addr_t to be an appropriate
    type.  */
 #if defined(CONFIG_USER_ONLY)
-typedef abi_ulong tb_page_addr_t;
+typedef uint64_t tb_page_addr_t;
 #define TB_PAGE_ADDR_FMT TARGET_ABI_FMT_lx
 #else
 typedef ram_addr_t tb_page_addr_t;
@@ -745,7 +745,7 @@ MMUAccessType adjust_signal_pc(uintptr_t *pc, bool is_write);
  * Return true if the write fault has been handled, and should be re-tried.
  */
 bool handle_sigsegv_accerr_write(CPUState *cpu, sigset_t *old_set,
-                                 uintptr_t host_pc, abi_ptr guest_addr);
+                                 uintptr_t host_pc, uint64_t guest_addr);
 
 /**
  * cpu_loop_exit_sigsegv:

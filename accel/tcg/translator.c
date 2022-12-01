@@ -190,7 +190,7 @@ static void *translator_access(CPUArchState *env, DisasContextBase *db,
     return host + (pc - base);
 }
 
-uint8_t translator_ldub(CPUArchState *env, DisasContextBase *db, abi_ptr pc)
+uint8_t translator_ldub(CPUArchState *env, DisasContextBase *db, uint64_t pc)
 {
     uint8_t ret;
     void *p = translator_access(env, db, pc, sizeof(ret));

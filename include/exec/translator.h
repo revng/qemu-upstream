@@ -173,14 +173,14 @@ bool translator_use_goto_tb(DisasContextBase *db, uint64_t dest);
  * the relevant information at translation time.
  */
 
-uint8_t translator_ldub(CPUArchState *env, DisasContextBase *db, abi_ptr pc);
-uint16_t translator_lduw(CPUArchState *env, DisasContextBase *db, abi_ptr pc);
-uint32_t translator_ldl(CPUArchState *env, DisasContextBase *db, abi_ptr pc);
-uint64_t translator_ldq(CPUArchState *env, DisasContextBase *db, abi_ptr pc);
+uint8_t translator_ldub(CPUArchState *env, DisasContextBase *db, uint64_t pc);
+uint16_t translator_lduw(CPUArchState *env, DisasContextBase *db, uint64_t pc);
+uint32_t translator_ldl(CPUArchState *env, DisasContextBase *db, uint64_t pc);
+uint64_t translator_ldq(CPUArchState *env, DisasContextBase *db, uint64_t pc);
 
 static inline uint16_t
 translator_lduw_swap(CPUArchState *env, DisasContextBase *db,
-                     abi_ptr pc, bool do_swap)
+                     uint64_t pc, bool do_swap)
 {
     uint16_t ret = translator_lduw(env, db, pc);
     if (do_swap) {
@@ -191,7 +191,7 @@ translator_lduw_swap(CPUArchState *env, DisasContextBase *db,
 
 static inline uint32_t
 translator_ldl_swap(CPUArchState *env, DisasContextBase *db,
-                    abi_ptr pc, bool do_swap)
+                    uint64_t pc, bool do_swap)
 {
     uint32_t ret = translator_ldl(env, db, pc);
     if (do_swap) {
@@ -202,7 +202,7 @@ translator_ldl_swap(CPUArchState *env, DisasContextBase *db,
 
 static inline uint64_t
 translator_ldq_swap(CPUArchState *env, DisasContextBase *db,
-                    abi_ptr pc, bool do_swap)
+                    uint64_t pc, bool do_swap)
 {
     uint64_t ret = translator_ldq(env, db, pc);
     if (do_swap) {
@@ -222,7 +222,7 @@ translator_ldq_swap(CPUArchState *env, DisasContextBase *db,
  * the translator with details of the executed instruction.
  */
 
-static inline void translator_fake_ldb(uint8_t insn8, abi_ptr pc)
+static inline void translator_fake_ldb(uint8_t insn8, uint64_t pc)
 {
     plugin_insn_append(pc, &insn8, sizeof(insn8));
 }
