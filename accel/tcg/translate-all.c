@@ -1237,7 +1237,9 @@ void cpu_interrupt(CPUState *cpu, int mask)
 {
     g_assert(qemu_mutex_iothread_locked());
     cpu->interrupt_request |= mask;
+#if 0
     qatomic_set(&cpu_neg(cpu)->icount_decr.u16.high, -1);
+#endif
 }
 
 /*
