@@ -407,7 +407,7 @@ static inline void tlb_flush_range_by_mmuidx_all_cpus(CPUState *cpu,
 }
 static inline void tlb_flush_range_by_mmuidx_all_cpus_synced(CPUState *cpu,
                                                              uint64_t addr,
-                                                             target_long len,
+                                                             int64_t len,
                                                              uint16_t idxmap,
                                                              unsigned bits)
 {
