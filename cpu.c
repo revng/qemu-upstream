@@ -491,8 +491,10 @@ void page_size_init(void)
     if (qemu_host_page_size == 0) {
         qemu_host_page_size = qemu_real_host_page_size();
     }
+    #if 0
     if (qemu_host_page_size < TARGET_PAGE_SIZE) {
         qemu_host_page_size = TARGET_PAGE_SIZE;
     }
+    #endif
     qemu_host_page_mask = -(intptr_t)qemu_host_page_size;
 }
