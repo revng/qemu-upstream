@@ -277,11 +277,11 @@ static void do_tb_phys_invalidate(TranslationBlock *tb, bool rm_from_page_list)
 
     /* remove the TB from the page list */
     if (rm_from_page_list) {
-        p = page_find(phys_pc >> TARGET_PAGE_BITS);
+        p = page_find(phys_pc >> tb->target_page_bits);
         tb_page_remove(p, tb);
         phys_pc = tb_page_addr1(tb);
         if (phys_pc != -1) {
-            p = page_find(phys_pc >> TARGET_PAGE_BITS);
+            p = page_find(phys_pc >> tb->target_page_bits);
             tb_page_remove(p, tb);
         }
     }
@@ -317,8 +317,9 @@ static void page_lock_pair(PageDesc **ret_p1, tb_page_addr_t phys1,
     assert_memory_lock();
     g_assert(phys1 != -1);
 
-    page1 = phys1 >> TARGET_PAGE_BITS;
-    page2 = phys2 >> TARGET_PAGE_BITS;
+    int target_page_bits = 1;
+    page1 = phys1 >> target_page_bits;
+    page2 = phys2 >> target_page_bits;
 
     p1 = page_find_alloc(page1, alloc);
     if (ret_p1) {

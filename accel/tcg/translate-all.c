@@ -1279,7 +1279,9 @@ static int walk_memory_regions_1(struct walk_memory_regions_data *data,
         for (i = 0; i < V_L2_SIZE; ++i) {
             int prot = pd[i].flags;
 
+#if 0
             pa = base | (i << TARGET_PAGE_BITS);
+#endif
             if (prot != data->prot) {
                 rc = walk_memory_regions_end(data, pa, prot);
                 if (rc != 0) {
