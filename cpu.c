@@ -259,6 +259,8 @@ const char *parse_cpu_option(const char *cpu_option)
         exit(1);
     }
 
+    // WIP
+    #define CPU_RESOLVING_TYPE ""
     oc = cpu_class_by_name(CPU_RESOLVING_TYPE, model_pieces[0]);
     if (oc == NULL) {
         error_report("unable to find CPU model '%s'", model_pieces[0]);
