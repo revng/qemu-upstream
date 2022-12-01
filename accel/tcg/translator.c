@@ -167,7 +167,11 @@ static void *translator_access(CPUArchState *env, DisasContextBase *db,
         base = db->pc_first;
     } else {
         host = db->host_addr[1];
+#if 0
         base = TARGET_PAGE_ALIGN(db->pc_first);
+#else
+        base = 0;
+#endif
         if (host == NULL) {
             tb_page_addr_t phys_page =
                 get_page_addr_code_hostp(env, base, &db->host_addr[1]);
