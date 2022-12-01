@@ -83,7 +83,11 @@ G_NORETURN void cpu_loop_exit_atomic(CPUState *cpu, uintptr_t pc);
  */
 static inline bool cpu_loop_exit_requested(CPUState *cpu)
 {
+#if 0
     return (int32_t)qatomic_read(&cpu_neg(cpu)->icount_decr.u32) < 0;
+#else
+    abort();
+#endif
 }
 
 #if !defined(CONFIG_USER_ONLY) && defined(CONFIG_TCG)
