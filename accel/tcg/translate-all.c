@@ -914,9 +914,11 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
 
             /* Dump header and the first instruction */
             fprintf(logfile, "OUT: [size=%d]\n", gen_code_size);
+#if 0
             fprintf(logfile,
                     "  -- guest addr 0x" TARGET_FMT_lx " + tb prologue\n",
                     tcg_ctx->gen_insn_data[insn][0]);
+#endif
             chunk_start = tcg_ctx->gen_insn_end_off[insn];
             disas(logfile, tb->tc.ptr, chunk_start);
 
@@ -928,8 +930,10 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
             while (insn < tb->icount) {
                 size_t chunk_end = tcg_ctx->gen_insn_end_off[insn];
                 if (chunk_end > chunk_start) {
+#if 0
                     fprintf(logfile, "  -- guest addr 0x" TARGET_FMT_lx "\n",
                             tcg_ctx->gen_insn_data[insn][0]);
+#endif
                     disas(logfile, tb->tc.ptr + chunk_start,
                           chunk_end - chunk_start);
                     chunk_start = chunk_end;
