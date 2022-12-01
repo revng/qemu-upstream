@@ -406,9 +406,11 @@ bool qemu_plugin_bool_parse(const char *name, const char *value, bool *ret)
 const char *qemu_plugin_path_to_binary(void)
 {
     char *path = NULL;
+#if 0
 #ifdef CONFIG_USER_ONLY
     TaskState *ts = (TaskState *) current_cpu->opaque;
     path = g_strdup(ts->bprm->filename);
+#endif
 #endif
     return path;
 }
@@ -416,9 +418,11 @@ const char *qemu_plugin_path_to_binary(void)
 uint64_t qemu_plugin_start_code(void)
 {
     uint64_t start = 0;
+#if 0
 #ifdef CONFIG_USER_ONLY
     TaskState *ts = (TaskState *) current_cpu->opaque;
     start = ts->info->start_code;
+#endif
 #endif
     return start;
 }
@@ -426,9 +430,11 @@ uint64_t qemu_plugin_start_code(void)
 uint64_t qemu_plugin_end_code(void)
 {
     uint64_t end = 0;
+#if 0
 #ifdef CONFIG_USER_ONLY
     TaskState *ts = (TaskState *) current_cpu->opaque;
     end = ts->info->end_code;
+#endif
 #endif
     return end;
 }
@@ -436,9 +442,11 @@ uint64_t qemu_plugin_end_code(void)
 uint64_t qemu_plugin_entry_code(void)
 {
     uint64_t entry = 0;
+#if 0
 #ifdef CONFIG_USER_ONLY
     TaskState *ts = (TaskState *) current_cpu->opaque;
     entry = ts->info->entry;
+#endif
 #endif
     return entry;
 }
