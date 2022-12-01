@@ -898,7 +898,7 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
         FILE *logfile = qemu_log_trylock();
         if (logfile) {
             int code_size, data_size;
-            const tcg_target_ulong *rx_data_gen_ptr;
+            const uint64_t *rx_data_gen_ptr;
             size_t chunk_start;
             int insn = 0;
 
