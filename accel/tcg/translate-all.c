@@ -261,7 +261,7 @@ static int cpu_unwind_data_from_tb(TranslationBlock *tb, uintptr_t host_pc,
     }
 
     memset(data, 0, sizeof(uint64_t) * TARGET_INSN_START_WORDS);
-    if (!TARGET_TB_PCREL) {
+    if (!tb->target_tb_pcrel) {
         data[0] = tb_pc(tb);
     }
 
@@ -787,9 +787,8 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
 
     gen_code_buf = tcg_ctx->code_gen_ptr;
     tb->tc.ptr = tcg_splitwx_to_rx(gen_code_buf);
-#if !TARGET_TB_PCREL
-    tb->pc = pc;
-#endif
+    if (!tb->target_tb_pcrel)
+        tb->pc = pc;
     tb->cs_base = cs_base;
     tb->flags = flags;
     tb->cflags = cflags;
