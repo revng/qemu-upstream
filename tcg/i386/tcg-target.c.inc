@@ -1750,7 +1750,7 @@ static inline void tcg_out_tlb_load(TCGContext *s, TCGReg addrlo, TCGReg addrhi,
     target_ulong tlb_mask;
 
     if (TCG_TARGET_REG_BITS == 64) {
-        if (TARGET_LONG_BITS == 64) {
+        if (s->target_long_bits == 64) {
             ttype = TCG_TYPE_I64;
             trexw = P_REXW;
         }
@@ -1798,7 +1798,7 @@ static inline void tcg_out_tlb_load(TCGContext *s, TCGReg addrlo, TCGReg addrhi,
     label_ptr[0] = s->code_ptr;
     s->code_ptr += 4;
 
-    if (TARGET_LONG_BITS > TCG_TARGET_REG_BITS) {
+    if (s->target_long_bits > TCG_TARGET_REG_BITS) {
         /* cmp 4(r0), addrhi */
         tcg_out_modrm_offset(s, OPC_CMP_GvEv, addrhi, r0, which + 4);
 
@@ -1837,7 +1837,7 @@ static void add_qemu_ldst_label(TCGContext *s, bool is_ld, bool is_64,
     label->addrhi_reg = addrhi;
     label->raddr = tcg_splitwx_to_rx(raddr);
     label->label_ptr[0] = label_ptr[0];
-    if (TARGET_LONG_BITS > TCG_TARGET_REG_BITS) {
+    if (s->target_long_bits > TCG_TARGET_REG_BITS) {
         label->label_ptr[1] = label_ptr[1];
     }
 }
@@ -1855,7 +1855,7 @@ static bool tcg_out_qemu_ld_slow_path(TCGContext *s, TCGLabelQemuLdst *l)
 
     /* resolve label address */
     tcg_patch32(label_ptr[0], s->code_ptr - label_ptr[0] - 4);
-    if (TARGET_LONG_BITS > TCG_TARGET_REG_BITS) {
+    if (s->target_long_bits > TCG_TARGET_REG_BITS) {
         tcg_patch32(label_ptr[1], s->code_ptr - label_ptr[1] - 4);
     }
 
@@ -1868,7 +1868,7 @@ static bool tcg_out_qemu_ld_slow_path(TCGContext *s, TCGLabelQemuLdst *l)
         tcg_out_st(s, TCG_TYPE_I32, l->addrlo_reg, TCG_REG_ESP, ofs);
         ofs += 4;
 
-        if (TARGET_LONG_BITS == 64) {
+        if (s->target_long_bits == 64) {
             tcg_out_st(s, TCG_TYPE_I32, l->addrhi_reg, TCG_REG_ESP, ofs);
             ofs += 4;
         }
@@ -1940,7 +1940,7 @@ static bool tcg_out_qemu_st_slow_path(TCGContext *s, TCGLabelQemuLdst *l)
 
     /* resolve label address */
     tcg_patch32(label_ptr[0], s->code_ptr - label_ptr[0] - 4);
-    if (TARGET_LONG_BITS > TCG_TARGET_REG_BITS) {
+    if (s->target_long_bits > TCG_TARGET_REG_BITS) {
         tcg_patch32(label_ptr[1], s->code_ptr - label_ptr[1] - 4);
     }
 
@@ -1953,7 +1953,7 @@ static bool tcg_out_qemu_st_slow_path(TCGContext *s, TCGLabelQemuLdst *l)
         tcg_out_st(s, TCG_TYPE_I32, l->addrlo_reg, TCG_REG_ESP, ofs);
         ofs += 4;
 
-        if (TARGET_LONG_BITS == 64) {
+        if (s->target_long_bits == 64) {
             tcg_out_st(s, TCG_TYPE_I32, l->addrhi_reg, TCG_REG_ESP, ofs);
             ofs += 4;
         }
@@ -2223,7 +2223,7 @@ static void tcg_out_qemu_ld(TCGContext *s, const TCGArg *args, bool is64)
     datalo = *args++;
     datahi = (TCG_TARGET_REG_BITS == 32 && is64 ? *args++ : 0);
     addrlo = *args++;
-    addrhi = (TARGET_LONG_BITS > TCG_TARGET_REG_BITS ? *args++ : 0);
+    addrhi = (s->target_long_bits > TCG_TARGET_REG_BITS ? *args++ : 0);
     oi = *args++;
     opc = get_memop(oi);
 
@@ -2319,7 +2319,7 @@ static void tcg_out_qemu_st(TCGContext *s, const TCGArg *args, bool is64)
     datalo = *args++;
     datahi = (TCG_TARGET_REG_BITS == 32 && is64 ? *args++ : 0);
     addrlo = *args++;
-    addrhi = (TARGET_LONG_BITS > TCG_TARGET_REG_BITS ? *args++ : 0);
+    addrhi = (s->target_long_bits > TCG_TARGET_REG_BITS ? *args++ : 0);
     oi = *args++;
     opc = get_memop(oi);
 
@@ -3170,6 +3170,7 @@ static void tcg_out_vec_op(TCGContext *s, TCGOpcode opc,
 
 static TCGConstraintSetIndex tcg_target_op_def(TCGOpcode op)
 {
+    TCGContext *s = NULL;
     switch (op) {
     case INDEX_op_goto_ptr:
         return C_O0_I1(r);
@@ -3318,24 +3319,24 @@ static TCGConstraintSetIndex tcg_target_op_def(TCGOpcode op)
         return have_lzcnt ? C_N1_I2(r, r, rW) : C_N1_I2(r, r, r);
 
     case INDEX_op_qemu_ld_i32:
-        return (TARGET_LONG_BITS <= TCG_TARGET_REG_BITS
+        return (s->target_long_bits <= TCG_TARGET_REG_BITS
                 ? C_O1_I1(r, L) : C_O1_I2(r, L, L));
 
     case INDEX_op_qemu_st_i32:
-        return (TARGET_LONG_BITS <= TCG_TARGET_REG_BITS
+        return (s->target_long_bits <= TCG_TARGET_REG_BITS
                 ? C_O0_I2(L, L) : C_O0_I3(L, L, L));
     case INDEX_op_qemu_st8_i32:
-        return (TARGET_LONG_BITS <= TCG_TARGET_REG_BITS
+        return (s->target_long_bits <= TCG_TARGET_REG_BITS
                 ? C_O0_I2(s, L) : C_O0_I3(s, L, L));
 
     case INDEX_op_qemu_ld_i64:
         return (TCG_TARGET_REG_BITS == 64 ? C_O1_I1(r, L)
-                : TARGET_LONG_BITS <= TCG_TARGET_REG_BITS ? C_O2_I1(r, r, L)
+                : s->target_long_bits <= TCG_TARGET_REG_BITS ? C_O2_I1(r, r, L)
                 : C_O2_I2(r, r, L, L));
 
     case INDEX_op_qemu_st_i64:
         return (TCG_TARGET_REG_BITS == 64 ? C_O0_I2(L, L)
-                : TARGET_LONG_BITS <= TCG_TARGET_REG_BITS ? C_O0_I3(L, L, L)
+                : s->target_long_bits <= TCG_TARGET_REG_BITS ? C_O0_I3(L, L, L)
                 : C_O0_I4(L, L, L, L));
 
     case INDEX_op_brcond2_i32:
