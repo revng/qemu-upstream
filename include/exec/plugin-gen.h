@@ -68,7 +68,7 @@ static inline void plugin_gen_tb_end(CPUState *cpu)
 static inline void plugin_gen_disable_mem_helpers(void)
 { }
 
-static inline void plugin_gen_empty_mem_callback(TCGv addr, uint32_t info)
+static inline void plugin_gen_empty_mem_callback(TCGv_dyn addr, uint32_t info)
 { }
 
 static inline void plugin_insn_append(abi_ptr pc, const void *from, size_t size)
