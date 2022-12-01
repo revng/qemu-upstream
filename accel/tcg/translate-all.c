@@ -206,7 +206,7 @@ static target_long decode_sleb128(const uint8_t **pp)
 /* Encode the data collected about the instructions while compiling TB.
    Place the data at BLOCK, and return the number of bytes consumed.
 
-   The logical table consists of TARGET_INSN_START_WORDS target_ulong's,
+   The logical table consists of TARGET_INSN_START_WORDS uint64_t's,
    which come from the target's insn_start data, followed by a uintptr_t
    which comes from the host pc of the end of the code implementing the insn.
 
@@ -744,7 +744,7 @@ void page_collection_unlock(struct page_collection *set)
 
 /* Called with mmap_lock held for user mode emulation.  */
 TranslationBlock *tb_gen_code(CPUState *cpu,
-                              target_ulong pc, target_ulong cs_base,
+                              uint64_t pc, uint64_t cs_base,
                               uint32_t flags, int cflags)
 {
     CPUArchState *env = cpu->env_ptr;
@@ -1037,7 +1037,7 @@ void tb_check_watchpoint(CPUState *cpu, uintptr_t retaddr)
         /* The exception probably happened in a helper.  The CPU state should
            have been saved before calling it. Fetch the PC from there.  */
         CPUArchState *env = cpu->env_ptr;
-        target_ulong pc, cs_base;
+        uint64_t pc, cs_base;
         tb_page_addr_t addr;
         uint32_t flags;
 

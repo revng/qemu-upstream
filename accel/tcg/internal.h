@@ -96,8 +96,8 @@ void assert_no_pages_locked(void);
 static inline void assert_no_pages_locked(void) { }
 #endif
 
-TranslationBlock *tb_gen_code(CPUState *cpu, target_ulong pc,
-                              target_ulong cs_base, uint32_t flags,
+TranslationBlock *tb_gen_code(CPUState *cpu, uint64_t pc,
+                              uint64_t cs_base, uint32_t flags,
                               int cflags);
 G_NORETURN void cpu_io_recompile(CPUState *cpu, uintptr_t retaddr);
 void page_init(void);

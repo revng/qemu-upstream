@@ -53,7 +53,7 @@ static inline unsigned int tb_jmp_cache_hash_func(target_ulong pc)
 #else
 
 /* In user-mode we can get better hashing because we do not have a TLB */
-static inline unsigned int tb_jmp_cache_hash_func(target_ulong pc)
+static inline unsigned int tb_jmp_cache_hash_func(uint64_t pc)
 {
     return (pc ^ (pc >> TB_JMP_CACHE_BITS)) & (TB_JMP_CACHE_SIZE - 1);
 }
@@ -61,7 +61,7 @@ static inline unsigned int tb_jmp_cache_hash_func(target_ulong pc)
 #endif /* CONFIG_SOFTMMU */
 
 static inline
-uint32_t tb_hash_func(tb_page_addr_t phys_pc, target_ulong pc, uint32_t flags,
+uint32_t tb_hash_func(tb_page_addr_t phys_pc, uint64_t pc, uint32_t flags,
                       uint32_t cf_mask, uint32_t trace_vcpu_dstate)
 {
     return qemu_xxhash7(phys_pc, pc, flags, cf_mask, trace_vcpu_dstate);

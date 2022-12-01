@@ -202,10 +202,10 @@ static void initialize_debug_host(CPUDebug *s)
 }
 
 /* Disassemble this for me please... (debugging).  */
-void target_disas(FILE *out, CPUState *cpu, target_ulong code,
-                  target_ulong size)
+void target_disas(FILE *out, CPUState *cpu, uint64_t code,
+                  uint64_t size)
 {
-    target_ulong pc;
+    uint64_t pc;
     int count;
     CPUDebug s;
 
@@ -321,7 +321,7 @@ void disas(FILE *out, const void *code, unsigned long size)
 }
 
 /* Look up symbol for debugging purpose.  Returns "" if unknown. */
-const char *lookup_symbol(target_ulong orig_addr)
+const char *lookup_symbol(uint64_t orig_addr)
 {
     const char *symbol = "";
     struct syminfo *s;

@@ -282,7 +282,7 @@ void list_cpus(const char *optarg)
 }
 
 #if defined(CONFIG_USER_ONLY)
-void tb_invalidate_phys_addr(target_ulong addr)
+void tb_invalidate_phys_addr(uint64_t addr)
 {
     mmap_lock();
     tb_invalidate_phys_page(addr);

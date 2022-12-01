@@ -148,10 +148,10 @@ void translator_loop(CPUState *cpu, TranslationBlock *tb, int max_insns,
 }
 
 static void *translator_access(CPUArchState *env, DisasContextBase *db,
-                               target_ulong pc, size_t len)
+                               uint64_t pc, size_t len)
 {
     void *host;
-    target_ulong base, end;
+    uint64_t base, end;
     TranslationBlock *tb;
 
     tb = db->tb;

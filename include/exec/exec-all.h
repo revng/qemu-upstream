@@ -308,18 +308,18 @@ void tlb_set_page_full(CPUState *cpu, int mmu_idx, target_ulong vaddr,
  * single TARGET_PAGE_SIZE region is mapped; the supplied @size is only
  * used by tlb_flush_page.
  */
-void tlb_set_page_with_attrs(CPUState *cpu, target_ulong vaddr,
+void tlb_set_page_with_attrs(CPUState *cpu, uint64_t vaddr,
                              hwaddr paddr, MemTxAttrs attrs,
-                             int prot, int mmu_idx, target_ulong size);
+                             int prot, int mmu_idx, uint64_t size);
 /* tlb_set_page:
  *
  * This function is equivalent to calling tlb_set_page_with_attrs()
  * with an @attrs argument of MEMTXATTRS_UNSPECIFIED. It's provided
  * as a convenience for CPUs which don't use memory transaction attributes.
  */
-void tlb_set_page(CPUState *cpu, target_ulong vaddr,
+void tlb_set_page(CPUState *cpu, uint64_t vaddr,
                   hwaddr paddr, int prot,
-                  int mmu_idx, target_ulong size);
+                  int mmu_idx, uint64_t size);
 #else
 static inline void tlb_init(CPUState *cpu)
 {
@@ -327,14 +327,14 @@ static inline void tlb_init(CPUState *cpu)
 static inline void tlb_destroy(CPUState *cpu)
 {
 }
-static inline void tlb_flush_page(CPUState *cpu, target_ulong addr)
+static inline void tlb_flush_page(CPUState *cpu, uint64_t addr)
 {
 }
-static inline void tlb_flush_page_all_cpus(CPUState *src, target_ulong addr)
+static inline void tlb_flush_page_all_cpus(CPUState *src, uint64_t addr)
 {
 }
 static inline void tlb_flush_page_all_cpus_synced(CPUState *src,
-                                                  target_ulong addr)
+                                                  uint64_t addr)
 {
 }
 static inline void tlb_flush(CPUState *cpu)
@@ -347,7 +347,7 @@ static inline void tlb_flush_all_cpus_synced(CPUState *src_cpu)
 {
 }
 static inline void tlb_flush_page_by_mmuidx(CPUState *cpu,
-                                            target_ulong addr, uint16_t idxmap)
+                                            uint64_t addr, uint16_t idxmap)
 {
 }
 
@@ -355,12 +355,12 @@ static inline void tlb_flush_by_mmuidx(CPUState *cpu, uint16_t idxmap)
 {
 }
 static inline void tlb_flush_page_by_mmuidx_all_cpus(CPUState *cpu,
-                                                     target_ulong addr,
+                                                     uint64_t addr,
                                                      uint16_t idxmap)
 {
 }
 static inline void tlb_flush_page_by_mmuidx_all_cpus_synced(CPUState *cpu,
-                                                            target_ulong addr,
+                                                            uint64_t addr,
                                                             uint16_t idxmap)
 {
 }
@@ -373,36 +373,36 @@ static inline void tlb_flush_by_mmuidx_all_cpus_synced(CPUState *cpu,
 {
 }
 static inline void tlb_flush_page_bits_by_mmuidx(CPUState *cpu,
-                                                 target_ulong addr,
+                                                 uint64_t addr,
                                                  uint16_t idxmap,
                                                  unsigned bits)
 {
 }
 static inline void tlb_flush_page_bits_by_mmuidx_all_cpus(CPUState *cpu,
-                                                          target_ulong addr,
+                                                          uint64_t addr,
                                                           uint16_t idxmap,
                                                           unsigned bits)
 {
 }
 static inline void
-tlb_flush_page_bits_by_mmuidx_all_cpus_synced(CPUState *cpu, target_ulong addr,
+tlb_flush_page_bits_by_mmuidx_all_cpus_synced(CPUState *cpu, uint64_t addr,
                                               uint16_t idxmap, unsigned bits)
 {
 }
-static inline void tlb_flush_range_by_mmuidx(CPUState *cpu, target_ulong addr,
-                                             target_ulong len, uint16_t idxmap,
+static inline void tlb_flush_range_by_mmuidx(CPUState *cpu, uint64_t addr,
+                                             uint64_t len, uint16_t idxmap,
                                              unsigned bits)
 {
 }
 static inline void tlb_flush_range_by_mmuidx_all_cpus(CPUState *cpu,
-                                                      target_ulong addr,
-                                                      target_ulong len,
+                                                      uint64_t addr,
+                                                      uint64_t len,
                                                       uint16_t idxmap,
                                                       unsigned bits)
 {
 }
 static inline void tlb_flush_range_by_mmuidx_all_cpus_synced(CPUState *cpu,
-                                                             target_ulong addr,
+                                                             uint64_t addr,
                                                              target_long len,
                                                              uint16_t idxmap,
                                                              unsigned bits)
@@ -426,16 +426,16 @@ static inline void tlb_flush_range_by_mmuidx_all_cpus_synced(CPUState *cpu,
  * Finally, return the host address for a page that is backed by RAM,
  * or NULL if the page requires I/O.
  */
-void *probe_access(CPUArchState *env, target_ulong addr, int size,
+void *probe_access(CPUArchState *env, uint64_t addr, int size,
                    MMUAccessType access_type, int mmu_idx, uintptr_t retaddr);
 
-static inline void *probe_write(CPUArchState *env, target_ulong addr, int size,
+static inline void *probe_write(CPUArchState *env, uint64_t addr, int size,
                                 int mmu_idx, uintptr_t retaddr)
 {
     return probe_access(env, addr, size, MMU_DATA_STORE, mmu_idx, retaddr);
 }
 
-static inline void *probe_read(CPUArchState *env, target_ulong addr, int size,
+static inline void *probe_read(CPUArchState *env, uint64_t addr, int size,
                                int mmu_idx, uintptr_t retaddr)
 {
     return probe_access(env, addr, size, MMU_DATA_LOAD, mmu_idx, retaddr);
@@ -459,7 +459,7 @@ static inline void *probe_read(CPUArchState *env, target_ulong addr, int size,
  * Do handle clean pages, so exclude TLB_NOTDIRY from the returned flags.
  * For simplicity, all "mmio-like" flags are folded to TLB_MMIO.
  */
-int probe_access_flags(CPUArchState *env, target_ulong addr,
+int probe_access_flags(CPUArchState *env, uint64_t addr,
                        MMUAccessType access_type, int mmu_idx,
                        bool nonfault, void **phost, uintptr_t retaddr);
 
@@ -472,7 +472,7 @@ int probe_access_flags(CPUArchState *env, target_ulong addr,
  * and must be consumed or copied immediately, before any further
  * access or changes to TLB @mmu_idx.
  */
-int probe_access_full(CPUArchState *env, target_ulong addr,
+int probe_access_full(CPUArchState *env, uint64_t addr,
                       MMUAccessType access_type, int mmu_idx,
                       bool nonfault, void **phost,
                       CPUTLBEntryFull **pfull, uintptr_t retaddr);
@@ -527,7 +527,7 @@ struct TranslationBlock {
      * s390x: instruction data for EXECUTE,
      * sparc: the next pc of the instruction queue (for delay slots).
      */
-    target_ulong cs_base;
+    uint64_t cs_base;
 
     uint32_t flags; /* flags defining in which context the code was generated */
     uint32_t cflags;    /* compile flags */
@@ -644,7 +644,7 @@ uint32_t curr_cflags(CPUState *cpu);
 
 /* TranslationBlock invalidate API */
 #if defined(CONFIG_USER_ONLY)
-void tb_invalidate_phys_addr(target_ulong addr);
+void tb_invalidate_phys_addr(uint64_t addr);
 #else
 void tb_invalidate_phys_addr(AddressSpace *as, hwaddr addr, MemTxAttrs attrs);
 #endif
@@ -700,7 +700,7 @@ struct MemoryRegionSection *iotlb_to_section(CPUState *cpu,
  *
  * Note: this function can trigger an exception.
  */
-tb_page_addr_t get_page_addr_code_hostp(CPUArchState *env, target_ulong addr,
+tb_page_addr_t get_page_addr_code_hostp(CPUArchState *env, uint64_t addr,
                                         void **hostp);
 
 /**
@@ -715,7 +715,7 @@ tb_page_addr_t get_page_addr_code_hostp(CPUArchState *env, target_ulong addr,
  * Note: this function can trigger an exception.
  */
 static inline tb_page_addr_t get_page_addr_code(CPUArchState *env,
-                                                target_ulong addr)
+                                                uint64_t addr)
 {
     return get_page_addr_code_hostp(env, addr, NULL);
 }
@@ -758,7 +758,7 @@ bool handle_sigsegv_accerr_write(CPUState *cpu, sigset_t *old_set,
  * Use the TCGCPUOps hook to record cpu state, do guest operating system
  * specific things to raise SIGSEGV, and jump to the main cpu loop.
  */
-G_NORETURN void cpu_loop_exit_sigsegv(CPUState *cpu, target_ulong addr,
+G_NORETURN void cpu_loop_exit_sigsegv(CPUState *cpu, uint64_t addr,
                                       MMUAccessType access_type,
                                       bool maperr, uintptr_t ra);
 
@@ -772,7 +772,7 @@ G_NORETURN void cpu_loop_exit_sigsegv(CPUState *cpu, target_ulong addr,
  * Use the TCGCPUOps hook to record cpu state, do guest operating system
  * specific things to raise SIGBUS, and jump to the main cpu loop.
  */
-G_NORETURN void cpu_loop_exit_sigbus(CPUState *cpu, target_ulong addr,
+G_NORETURN void cpu_loop_exit_sigbus(CPUState *cpu, uint64_t addr,
                                      MMUAccessType access_type,
                                      uintptr_t ra);
 
@@ -781,7 +781,7 @@ static inline void mmap_lock(void) {}
 static inline void mmap_unlock(void) {}
 
 void tlb_reset_dirty(CPUState *cpu, ram_addr_t start1, ram_addr_t length);
-void tlb_set_dirty(CPUState *cpu, target_ulong vaddr);
+void tlb_set_dirty(CPUState *cpu, uint64_t vaddr);
 
 MemoryRegionSection *
 address_space_translate_for_iotlb(CPUState *cpu, int asidx, hwaddr addr,

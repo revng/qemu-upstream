@@ -63,7 +63,7 @@
 static int phy_memory_mode;
 #endif
 
-static inline int target_memory_rw_debug(CPUState *cpu, target_ulong addr,
+static inline int target_memory_rw_debug(CPUState *cpu, uint64_t addr,
                                          uint8_t *buf, int len, bool is_write)
 {
     CPUClass *cc;
@@ -1025,7 +1025,7 @@ static void gdb_process_breakpoint_remove_all(GDBProcess *p)
 }
 
 
-static void gdb_set_cpu_pc(target_ulong pc)
+static void gdb_set_cpu_pc(uint64_t pc)
 {
     CPUState *cpu = gdbserver_state.c_cpu;
 
@@ -1712,7 +1712,7 @@ static void handle_read_mem(GArray *params, void *user_ctx)
 
 static void handle_write_all_regs(GArray *params, void *user_ctx)
 {
-    target_ulong addr, len;
+    uint64_t addr, len;
     uint8_t *registers;
     int reg_size;
 
@@ -1735,7 +1735,7 @@ static void handle_write_all_regs(GArray *params, void *user_ctx)
 
 static void handle_read_all_regs(GArray *params, void *user_ctx)
 {
-    target_ulong addr, len;
+    uint64_t addr, len;
 
     cpu_synchronize_state(gdbserver_state.g_cpu);
     g_byte_array_set_size(gdbserver_state.mem_buf, 0);
@@ -1809,7 +1809,7 @@ static void handle_file_io(GArray *params, void *user_ctx)
 static void handle_step(GArray *params, void *user_ctx)
 {
     if (params->len) {
-        gdb_set_cpu_pc((target_ulong)get_param(params, 0)->val_ull);
+        gdb_set_cpu_pc((uint64_t)get_param(params, 0)->val_ull);
     }
 
     cpu_single_step(gdbserver_state.c_cpu, gdbserver_state.sstep_flags);
@@ -2736,10 +2736,10 @@ static void gdb_vm_state_change(void *opaque, bool running, RunState state)
                 break;
             }
             trace_gdbstub_hit_watchpoint(type, cpu_gdb_index(cpu),
-                    (target_ulong)cpu->watchpoint_hit->vaddr);
+                    (uint64_t)cpu->watchpoint_hit->vaddr);
             g_string_printf(buf, "T%02xthread:%s;%swatch:" TARGET_FMT_lx ";",
                             GDB_SIGNAL_TRAP, tid->str, type,
-                            (target_ulong)cpu->watchpoint_hit->vaddr);
+                            (uint64_t)cpu->watchpoint_hit->vaddr);
             cpu->watchpoint_hit = NULL;
             goto send_packet;
         } else {
@@ -2792,14 +2792,14 @@ send_packet:
 
 /* Send a gdb syscall request.
    This accepts limited printf-style format specifiers, specifically:
-    %x  - target_ulong argument printed in hex.
+    %x  - uint64_t argument printed in hex.
     %lx - 64-bit argument printed in hex.
-    %s  - string pointer (target_ulong) and length (int) pair.  */
+    %s  - string pointer (uint64_t) and length (int) pair.  */
 void gdb_do_syscallv(gdb_syscall_complete_cb cb, const char *fmt, va_list va)
 {
     char *p;
     char *p_end;
-    target_ulong addr;
+    uint64_t addr;
     uint64_t i64;
 
     if (!gdb_attached()) {

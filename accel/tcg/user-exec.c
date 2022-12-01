@@ -135,7 +135,7 @@ bool handle_sigsegv_accerr_write(CPUState *cpu, sigset_t *old_set,
     }
 }
 
-static int probe_access_internal(CPUArchState *env, target_ulong addr,
+static int probe_access_internal(CPUArchState *env, uint64_t addr,
                                  int fault_size, MMUAccessType access_type,
                                  bool nonfault, uintptr_t ra)
 {
@@ -239,7 +239,7 @@ void page_reset_target_data(target_ulong start, target_ulong end)
 }
 
 #ifdef TARGET_PAGE_DATA_SIZE
-void *page_get_target_data(target_ulong address)
+void *page_get_target_data(uint64_t address)
 {
     PageDesc *p = page_find(address >> TARGET_PAGE_BITS);
     void *ret = p->target_data;
@@ -269,17 +269,17 @@ static void validate_memop(MemOpIdx oi, MemOp expected)
 #endif
 }
 
-void helper_unaligned_ld(CPUArchState *env, target_ulong addr)
+void helper_unaligned_ld(CPUArchState *env, uint64_t addr)
 {
     cpu_loop_exit_sigbus(env_cpu(env), addr, MMU_DATA_LOAD, GETPC());
 }
 
-void helper_unaligned_st(CPUArchState *env, target_ulong addr)
+void helper_unaligned_st(CPUArchState *env, uint64_t addr)
 {
     cpu_loop_exit_sigbus(env_cpu(env), addr, MMU_DATA_STORE, GETPC());
 }
 
-static void *cpu_mmu_lookup(CPUArchState *env, target_ulong addr,
+static void *cpu_mmu_lookup(CPUArchState *env, uint64_t addr,
                             MemOpIdx oi, uintptr_t ra, MMUAccessType type)
 {
     MemOp mop = get_memop(oi);

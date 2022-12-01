@@ -38,7 +38,7 @@
  * the target-specific DisasContext, and then invoke translator_loop.
  */
 void gen_intermediate_code(CPUState *cpu, TranslationBlock *tb, int max_insns,
-                           target_ulong pc, void *host_pc);
+                           uint64_t pc, void *host_pc);
 
 /**
  * DisasJumpType:
@@ -147,7 +147,7 @@ typedef struct TranslatorOps {
  * - When too many instructions have been translated.
  */
 void translator_loop(CPUState *cpu, TranslationBlock *tb, int max_insns,
-                     target_ulong pc, void *host_pc,
+                     uint64_t pc, void *host_pc,
                      const TranslatorOps *ops, DisasContextBase *db);
 
 void translator_loop_temp_check(DisasContextBase *db);
@@ -160,7 +160,7 @@ void translator_loop_temp_check(DisasContextBase *db);
  * Return true if goto_tb is allowed between the current TB
  * and the destination PC.
  */
-bool translator_use_goto_tb(DisasContextBase *db, target_ulong dest);
+bool translator_use_goto_tb(DisasContextBase *db, uint64_t dest);
 
 /*
  * Translator Load Functions
