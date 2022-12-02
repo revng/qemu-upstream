@@ -11,9 +11,11 @@ static TCGOp *icount_start_insn;
 static inline void gen_io_start(void)
 {
     TCGv_i32 tmp = tcg_const_i32(1);
+#if 0
     tcg_gen_st_i32(tmp, cpu_env,
                    offsetof(ArchCPU, parent_obj.can_do_io) -
                    offsetof(ArchCPU, env));
+#endif
     tcg_temp_free_i32(tmp);
 }
 
@@ -27,9 +29,11 @@ static inline void gen_tb_start(const TranslationBlock *tb)
         count = tcg_temp_new_i32();
     }
 
+#if 0
     tcg_gen_ld_i32(count, cpu_env,
                    offsetof(ArchCPU, neg.icount_decr.u32) -
                    offsetof(ArchCPU, env));
+#endif
 
     if (tb_cflags(tb) & CF_USE_ICOUNT) {
         /*
@@ -55,6 +59,7 @@ static inline void gen_tb_start(const TranslationBlock *tb)
         tcg_gen_brcondi_i32(TCG_COND_LT, count, 0, tcg_ctx->exitreq_label);
     }
 
+#if 0
     if (tb_cflags(tb) & CF_USE_ICOUNT) {
         tcg_gen_st16_i32(count, cpu_env,
                          offsetof(ArchCPU, neg.icount_decr.u16.low) -
@@ -70,6 +75,7 @@ static inline void gen_tb_start(const TranslationBlock *tb)
                        offsetof(ArchCPU, parent_obj.can_do_io) -
                        offsetof(ArchCPU, env));
     }
+#endif
 
     tcg_temp_free_i32(count);
 }

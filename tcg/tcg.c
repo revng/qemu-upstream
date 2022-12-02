@@ -46,6 +46,13 @@
 #include "exec/exec-all.h"
 #include "tcg/tcg-op.h"
 
+// WIP: from tcg/tcg-ldst.h
+void helper_unaligned_ld(CPUArchState *env, uint64_t addr);
+void helper_unaligned_st(CPUArchState *env, uint64_t addr);
+
+// WIP: from cpu-all.h
+extern uintptr_t guest_base;
+
 #if UINTPTR_MAX == UINT32_MAX
 # define ELF_CLASS  ELFCLASS32
 #else
@@ -59,7 +66,9 @@
 
 #include "elf.h"
 #include "exec/log.h"
+#ifdef TARGET_SPECIFIC
 #include "tcg/tcg-ldst.h"
+#endif // TARGET_SPECIFIC
 #include "tcg-internal.h"
 
 #ifdef CONFIG_TCG_INTERPRETER
@@ -651,6 +660,7 @@ static void tcg_context_init(unsigned max_cpus)
     tcg_target_init(s);
     process_op_defs(s);
 
+#ifdef WIP_STATIC_CPU_INIT
     /* Reverse the order of the saved registers, assuming they're all at
        the start of tcg_target_reg_alloc_order.  */
     for (n = 0; n < ARRAY_SIZE(tcg_target_reg_alloc_order); ++n) {
@@ -665,6 +675,7 @@ static void tcg_context_init(unsigned max_cpus)
     for (; i < ARRAY_SIZE(tcg_target_reg_alloc_order); ++i) {
         indirect_reg_alloc_order[i] = tcg_target_reg_alloc_order[i];
     }
+#endif // WIP_STATIC_CPU_INIT
 
     alloc_tcg_plugin_context(s);
 
@@ -1712,12 +1723,14 @@ static const char * const ldst_name[] =
 };
 
 static const char * const alignment_name[(MO_AMASK >> MO_ASHIFT) + 1] = {
+#if 0
 #ifdef TARGET_ALIGNED_ONLY
     [MO_UNALN >> MO_ASHIFT]    = "un+",
     [MO_ALIGN >> MO_ASHIFT]    = "",
 #else
     [MO_UNALN >> MO_ASHIFT]    = "",
     [MO_ALIGN >> MO_ASHIFT]    = "al+",
+#endif
 #endif
     [MO_ALIGN_2 >> MO_ASHIFT]  = "al2+",
     [MO_ALIGN_4 >> MO_ASHIFT]  = "al4+",
@@ -1771,6 +1784,7 @@ static void tcg_dump_ops(TCGContext *s, FILE *f, bool have_prefs)
             nb_oargs = 0;
             col += ne_fprintf(f, "\n ----");
 
+#ifdef WIP_MAKE_INSTRUCTION_DUMP_TARGET_INDEPENDENT
             for (i = 0; i < TARGET_INSN_START_WORDS; ++i) {
                 target_ulong a;
 #if TARGET_LONG_BITS > TCG_TARGET_REG_BITS
@@ -1780,6 +1794,7 @@ static void tcg_dump_ops(TCGContext *s, FILE *f, bool have_prefs)
 #endif
                 col += ne_fprintf(f, " " TARGET_FMT_lx, a);
             }
+#endif
         } else if (c == INDEX_op_call) {
             const TCGHelperInfo *info = tcg_call_info(op);
             void *func = tcg_call_func(op);
@@ -2082,6 +2097,7 @@ static void process_op_defs(TCGContext *s)
 
                 /* Include all of the target-specific constraints. */
 
+#if 0
 #undef CONST
 #define CONST(CASE, MASK) \
     case CASE: def->args_ct[i].ct |= MASK; ct_str++; break;
@@ -2092,6 +2108,7 @@ static void process_op_defs(TCGContext *s)
 
 #undef REGS
 #undef CONST
+#endif
                 default:
                     /* Typo in TCGTargetOpDef constraint. */
                     g_assert_not_reached();
@@ -4156,6 +4173,8 @@ int tcg_gen_code(TCGContext *s, TranslationBlock *tb, uint64_t pc_start)
             qemu_log_unlock(logfile);
         }
     }
+#else
+    (void) tcg_dump_ops;
 #endif
 
 #ifdef CONFIG_DEBUG_TCG
@@ -4270,6 +4289,7 @@ int tcg_gen_code(TCGContext *s, TranslationBlock *tb, uint64_t pc_start)
                 assert(s->gen_insn_end_off[num_insns] == off);
             }
             num_insns++;
+#ifdef WIP_MAKE_INSTRUCTION_START_INDEPENDENT
             for (i = 0; i < TARGET_INSN_START_WORDS; ++i) {
                 target_ulong a;
 #if TARGET_LONG_BITS > TCG_TARGET_REG_BITS
@@ -4279,6 +4299,7 @@ int tcg_gen_code(TCGContext *s, TranslationBlock *tb, uint64_t pc_start)
 #endif
                 s->gen_insn_data[num_insns][i] = a;
             }
+            #endif // WIP_MAKE_INSTRUCTION_START_INDEPENDENT
             break;
         case INDEX_op_discard:
             temp_dead(s, arg_temp(op->args[0]));

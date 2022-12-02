@@ -29,10 +29,22 @@
 
 #include "config-host.h"
 #ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #include CONFIG_TARGET
+
+#else
+#define CONFIG_I386_DIS 1
+#define CONFIG_LINUX_USER 1
+#define CONFIG_QEMU_INTERP_PREFIX "/usr/gnemul/qemu-x86_64"
+#define CONFIG_TCG 1
+#define CONFIG_TCG_BUILTIN 1
+#define CONFIG_USER_ONLY 1
+#endif // TARGET_SPECIFIC
+
 #else
 #include "exec/poison.h"
 #endif
+
 
 /*
  * HOST_WORDS_BIGENDIAN was replaced with HOST_BIG_ENDIAN. Prevent it from

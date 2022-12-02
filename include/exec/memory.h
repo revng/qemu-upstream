@@ -2934,6 +2934,7 @@ address_space_write_cached(MemoryRegionCache *cache, hwaddr addr,
 MemTxResult address_space_set(AddressSpace *as, hwaddr addr,
                               uint8_t c, hwaddr len, MemTxAttrs attrs);
 
+#ifdef TARGET_SPECIFIC
 #ifdef NEED_CPU_H
 /* enum device_endian to MemOp.  */
 static inline MemOp devend_memop(enum device_endian end)
@@ -2953,6 +2954,7 @@ static inline MemOp devend_memop(enum device_endian end)
 #endif
 }
 #endif
+#endif // TARGET_SPECIFIC
 
 /*
  * Inhibit technologies that require discarding of pages in RAM blocks, e.g.,

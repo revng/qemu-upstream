@@ -31,6 +31,7 @@
 #include "qemu/module.h"
 #include "trace.h"
 #include "exec/gdbstub.h"
+#if 0
 #ifdef CONFIG_USER_ONLY
 #include "qemu.h"
 #else
@@ -40,11 +41,20 @@
 #include "hw/cpu/cluster.h"
 #include "hw/boards.h"
 #endif
+#endif
 
 #define MAX_PACKET_LENGTH 4096
 
 #include "qemu/sockets.h"
+#if 0
 #include "sysemu/hw_accel.h"
+#else
+#include "qemu/accel.h"
+void cpu_synchronize_state(CPUState *cpu);
+void cpu_synchronize_post_reset(CPUState *cpu);
+void cpu_synchronize_post_init(CPUState *cpu);
+void cpu_synchronize_pre_loadvm(CPUState *cpu);
+#endif
 #include "sysemu/runstate.h"
 #include "semihosting/semihost.h"
 #include "exec/exec-all.h"
@@ -93,11 +103,15 @@ static inline int target_memory_rw_debug(CPUState *cpu, uint64_t addr,
  */
 static inline int cpu_gdb_index(CPUState *cpu)
 {
+#if 0
 #if defined(CONFIG_USER_ONLY)
     TaskState *ts = (TaskState *) cpu->opaque;
     return ts ? ts->ts_tid : -1;
 #else
     return cpu->cpu_index + 1;
+#endif
+#else
+    abort();
 #endif
 }
 
@@ -121,6 +135,7 @@ enum {
  */
 
 static int gdb_signal_table[] = {
+#if 0
     0,
     TARGET_SIGHUP,
     TARGET_SIGINT,
@@ -277,6 +292,7 @@ static int gdb_signal_table[] = {
     -1,
     -1,
     -1
+#endif
 #endif
 };
 #else
@@ -2062,6 +2078,7 @@ static void handle_query_thread_extra(GArray *params, void *user_ctx)
 #ifdef CONFIG_USER_ONLY
 static void handle_query_offsets(GArray *params, void *user_ctx)
 {
+#if 0
     TaskState *ts;
 
     ts = gdbserver_state.c_cpu->opaque;
@@ -2073,6 +2090,7 @@ static void handle_query_offsets(GArray *params, void *user_ctx)
                     ts->info->data_offset,
                     ts->info->data_offset);
     put_strbuf();
+#endif
 }
 #else
 static void handle_query_rcmd(GArray *params, void *user_ctx)
@@ -2186,6 +2204,7 @@ static void handle_query_xfer_features(GArray *params, void *user_ctx)
 #if defined(CONFIG_USER_ONLY) && defined(CONFIG_LINUX_USER)
 static void handle_query_xfer_auxv(GArray *params, void *user_ctx)
 {
+#if 0
     TaskState *ts;
     unsigned long offset, len, saved_auxv, auxv_len;
 
@@ -2227,6 +2246,7 @@ static void handle_query_xfer_auxv(GArray *params, void *user_ctx)
            (const char *)gdbserver_state.mem_buf->data, len);
     put_packet_binary(gdbserver_state.str_buf->str,
                       gdbserver_state.str_buf->len, true);
+#endif
 }
 #endif
 
@@ -2800,6 +2820,7 @@ void gdb_do_syscallv(gdb_syscall_complete_cb cb, const char *fmt, va_list va)
     char *p;
     char *p_end;
     uint64_t addr;
+    (void) addr;
     uint64_t i64;
 
     if (!gdb_attached()) {
@@ -2818,8 +2839,10 @@ void gdb_do_syscallv(gdb_syscall_complete_cb cb, const char *fmt, va_list va)
             fmt++;
             switch (*fmt++) {
             case 'x':
-                addr = va_arg(va, target_ulong);
+                addr = va_arg(va, uint64_t);
+#if 0
                 p += snprintf(p, p_end - p, TARGET_FMT_lx, addr);
+#endif
                 break;
             case 'l':
                 if (*(fmt++) != 'x')
@@ -2828,9 +2851,11 @@ void gdb_do_syscallv(gdb_syscall_complete_cb cb, const char *fmt, va_list va)
                 p += snprintf(p, p_end - p, "%" PRIx64, i64);
                 break;
             case 's':
-                addr = va_arg(va, target_ulong);
+                addr = va_arg(va, uint64_t);
+#if 0
                 p += snprintf(p, p_end - p, TARGET_FMT_lx "/%x",
                               addr, va_arg(va, int));
+#endif
                 break;
             default:
             bad_format:

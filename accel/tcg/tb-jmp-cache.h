@@ -20,15 +20,16 @@
 struct CPUJumpCache {
     struct {
         TranslationBlock *tb;
-#if TARGET_TB_PCREL
+// #if TARGET_TB_PCREL
         uint64_t pc;
-#endif
+// #endif
     } array[TB_JMP_CACHE_SIZE];
 };
 
 static inline TranslationBlock *
 tb_jmp_cache_get_tb(CPUJumpCache *jc, uint32_t hash)
 {
+#if 0
 #if TARGET_TB_PCREL
     /* Use acquire to ensure current load of pc from jc. */
     return qatomic_load_acquire(&jc->array[hash].tb);
@@ -36,30 +37,32 @@ tb_jmp_cache_get_tb(CPUJumpCache *jc, uint32_t hash)
     /* Use rcu_read to ensure current load of pc from *tb. */
     return qatomic_rcu_read(&jc->array[hash].tb);
 #endif
+#endif
+abort();
 }
 
 static inline uint64_t
 tb_jmp_cache_get_pc(CPUJumpCache *jc, uint32_t hash, TranslationBlock *tb)
 {
-#if TARGET_TB_PCREL
-    return jc->array[hash].pc;
-#else
+// #if TARGET_TB_PCREL
+//     return jc->array[hash].pc;
+// #else
     return tb_pc(tb);
-#endif
+// #endif
 }
 
 static inline void
 tb_jmp_cache_set(CPUJumpCache *jc, uint32_t hash,
                  TranslationBlock *tb, uint64_t pc)
 {
-#if TARGET_TB_PCREL
-    jc->array[hash].pc = pc;
-    /* Use store_release on tb to ensure pc is written first. */
-    qatomic_store_release(&jc->array[hash].tb, tb);
-#else
+// #if TARGET_TB_PCREL
+//     jc->array[hash].pc = pc;
+//     /* Use store_release on tb to ensure pc is written first. */
+//     qatomic_store_release(&jc->array[hash].tb, tb);
+// #else
     /* Use the pc value already stored in tb->pc. */
     qatomic_set(&jc->array[hash].tb, tb);
-#endif
+// #endif
 }
 
 #endif /* ACCEL_TCG_TB_JMP_CACHE_H */

@@ -26,21 +26,51 @@
 #include "qemu/error-report.h"
 #include "migration/vmstate.h"
 #ifdef CONFIG_USER_ONLY
+#ifdef TARGET_SPECIFIC
 #include "qemu.h"
+#endif // TARGET_SPECIFIC
 #else
 #include "hw/core/sysemu-cpu-ops.h"
 #include "exec/address-spaces.h"
 #endif
 #include "sysemu/tcg.h"
+#ifdef TARGET_SPECIFIC
 #include "sysemu/kvm.h"
+#endif // TARGET_SPECIFIC
 #include "sysemu/replay.h"
 #include "exec/cpu-common.h"
 #include "exec/exec-all.h"
 #include "exec/translate-all.h"
 #include "exec/log.h"
+#ifdef TARGET_SPECIFIC
 #include "hw/core/accel-cpu.h"
+#endif // TARGET_SPECIFIC
 #include "trace/trace-root.h"
 #include "qemu/accel.h"
+
+#include "hw/core/cpu.h"
+
+void tcg_exec_realizefn(CPUState *cpu, Error **errp);
+void tcg_exec_unrealizefn(CPUState *cpu);
+
+// target_ulong
+int page_get_flags(uint64_t address);
+
+// WIP: from cpu-all.h
+/* same as PROT_xxx */
+#define PAGE_READ      0x0001
+#define PAGE_WRITE     0x0002
+#define PAGE_EXEC      0x0004
+#define PAGE_BITS      (PAGE_READ | PAGE_WRITE | PAGE_EXEC)
+#define PAGE_VALID     0x0008
+
+// WIP: from linux-user/qemu.h
+#define VERIFY_READ  PAGE_READ
+#define VERIFY_WRITE (PAGE_READ | PAGE_WRITE)
+
+// WIP: these use abi_ulong
+void *lock_user(int type, uint64_t guest_addr, ssize_t len, bool copy);
+void unlock_user(void *host_ptr, uint64_t guest_addr, ssize_t len);
 
 uintptr_t qemu_host_page_size;
 intptr_t qemu_host_page_mask;
@@ -389,9 +419,11 @@ void cpu_single_step(CPUState *cpu, int enabled)
 {
     if (cpu->singlestep_enabled != enabled) {
         cpu->singlestep_enabled = enabled;
+        #if 0
         if (kvm_enabled()) {
             kvm_update_guest_debug(cpu, 0);
         }
+        #endif
         trace_breakpoint_singlestep(cpu->cpu_index, enabled);
     }
 }
@@ -443,8 +475,8 @@ int cpu_memory_rw_debug(CPUState *cpu, vaddr addr,
     uint8_t *buf = ptr;
 
     while (len > 0) {
-        page = addr & TARGET_PAGE_MASK;
-        l = (page + TARGET_PAGE_SIZE) - addr;
+        page = addr & cpu->target_page_mask;
+        l = (page + cpu->target_page_size) - addr;
         if (l > len)
             l = len;
         flags = page_get_flags(page);
@@ -477,10 +509,14 @@ int cpu_memory_rw_debug(CPUState *cpu, vaddr addr,
 
 bool target_words_bigendian(void)
 {
+#if 0
 #if TARGET_BIG_ENDIAN
     return true;
 #else
     return false;
+#endif
+#else
+  abort();
 #endif
 }
 

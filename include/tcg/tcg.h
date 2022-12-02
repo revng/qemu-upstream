@@ -80,6 +80,7 @@ typedef uint64_t tcg_target_ulong;
 #error unsupported
 #endif
 
+#ifdef TARGET_SPECIFIC
 /* Oversized TCG guests make things like MTTCG hard
  * as we can't use atomics for cputlb updates.
  */
@@ -87,6 +88,7 @@ typedef uint64_t tcg_target_ulong;
 #define TCG_OVERSIZED_GUEST 1
 #else
 #define TCG_OVERSIZED_GUEST 0
+#endif
 #endif
 
 #if TCG_TARGET_NB_REGS <= 32
@@ -311,10 +313,12 @@ typedef enum TCGType {
 #endif
 
     /* An alias for the size of the target "long", aka register.  */
+#ifdef TARGET_SPECIFIC
 #if TARGET_LONG_BITS == 64
     TCG_TYPE_TL = TCG_TYPE_I64,
 #else
     TCG_TYPE_TL = TCG_TYPE_I32,
+#endif
 #endif
 } TCGType;
 
@@ -328,6 +332,7 @@ static inline unsigned get_alignment_bits(MemOp memop)
 {
     unsigned a = memop & MO_AMASK;
 
+#if 0
     if (a == MO_UNALN) {
         /* No alignment required.  */
         a = 0;
@@ -341,6 +346,7 @@ static inline unsigned get_alignment_bits(MemOp memop)
 #if defined(CONFIG_SOFTMMU)
     /* The requested alignment cannot overlap the TLB flags.  */
     tcg_debug_assert((TLB_FLAGS_MASK & ((1 << a) - 1)) == 0);
+#endif
 #endif
     return a;
 }
@@ -391,12 +397,14 @@ typedef struct {
     unsigned size;
 } TCGv_dyn;
 
+#ifdef TARGET_SPECIFIC
 #if TARGET_LONG_BITS == 32
 #define TCGv TCGv_i32
 #elif TARGET_LONG_BITS == 64
 #define TCGv TCGv_i64
 #else
 #error Unhandled TARGET_LONG_BITS value
+#endif
 #endif
 
 /* call flags */
@@ -553,6 +561,8 @@ struct TCGContext {
     int nb_indirects;
     int nb_ops;
 
+    int target_long_bits;
+
     /* goto_tb support */
     tcg_insn_unit *code_buf;
     uint16_t *tb_jmp_reset_offset; /* tb->jmp_reset_offset */
@@ -629,7 +639,8 @@ struct TCGContext {
     TCGTemp *reg_to_temp[TCG_TARGET_NB_REGS];
 
     uint16_t gen_insn_end_off[TCG_MAX_INSNS];
-    target_ulong gen_insn_data[TCG_MAX_INSNS][TARGET_INSN_START_WORDS];
+    /* LIBTCG: could become uint32_t */
+    uint64_t gen_insn_data[TCG_MAX_INSNS][TARGET_INSN_START_WORDS];
 
     /* Exit to translator on overflow. */
     sigjmp_buf jmp_trans;
@@ -686,7 +697,9 @@ static inline TCGTemp *tcgv_i32_temp(TCGv_i32 v)
 {
     uintptr_t o = (uintptr_t)v;
     TCGTemp *t = (void *)tcg_ctx + o;
+#ifdef TARGET_SPECIFIC
     tcg_debug_assert(offsetof(TCGContext, temps[temp_idx(t)]) == o);
+#endif
     return t;
 }
 
@@ -768,6 +781,7 @@ static inline void tcg_set_insn_param(TCGOp *op, int arg, TCGArg v)
     op->args[arg] = v;
 }
 
+#ifdef TARGET_SPECIFIC
 static inline target_ulong tcg_get_insn_start_param(TCGOp *op, int arg)
 {
 #if TARGET_LONG_BITS <= TCG_TARGET_REG_BITS
@@ -787,6 +801,7 @@ static inline void tcg_set_insn_start_param(TCGOp *op, int arg, target_ulong v)
     tcg_set_insn_param(op, arg * 2 + 1, v >> 32);
 #endif
 }
+#endif
 
 /* The last op that was emitted.  */
 static inline TCGOp *tcg_last_op(void)
@@ -1253,6 +1268,7 @@ uint64_t dup_const(unsigned vece, uint64_t c);
         : (qemu_build_not_reached_always(), 0))                    \
      : dup_const(VECE, C))
 
+#ifdef TARGET_SPECIFIC
 #if TARGET_LONG_BITS == 64
 # define dup_const_tl  dup_const
 #else
@@ -1263,6 +1279,7 @@ uint64_t dup_const(unsigned vece, uint64_t c);
         : (VECE) == MO_32 ? 0x00000001ul * (uint32_t)(C)           \
         : (qemu_build_not_reached_always(), 0))                    \
      :  (target_long)dup_const(VECE, C))
+#endif
 #endif
 
 #ifdef CONFIG_DEBUG_TCG

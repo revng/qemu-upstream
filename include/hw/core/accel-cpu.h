@@ -11,6 +11,8 @@
 #ifndef ACCEL_CPU_H
 #define ACCEL_CPU_H
 
+#include "hw/core/cpu.h"
+
 /*
  * This header is used to define new accelerator-specific target-specific
  * accelerator cpu subclasses.
@@ -20,7 +22,7 @@
  * subclasses in target/, or the accel implementation itself in accel/
  */
 
-#define TYPE_ACCEL_CPU "accel-" CPU_RESOLVING_TYPE
+#define TYPE_ACCEL_CPU "accel-" "vroom"
 #define ACCEL_CPU_NAME(name) (name "-" TYPE_ACCEL_CPU)
 typedef struct AccelCPUClass AccelCPUClass;
 DECLARE_CLASS_CHECKERS(AccelCPUClass, ACCEL_CPU, TYPE_ACCEL_CPU)

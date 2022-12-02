@@ -26,12 +26,12 @@ void plugin_gen_insn_start(CPUState *cpu, const struct DisasContextBase *db);
 void plugin_gen_insn_end(void);
 
 void plugin_gen_disable_mem_helpers(void);
-void plugin_gen_empty_mem_callback(TCGv addr, uint32_t info);
+void plugin_gen_empty_mem_callback(TCGv_dyn addr, uint32_t info);
 
-static inline void plugin_insn_append(abi_ptr pc, const void *from, size_t size)
+static inline void plugin_insn_append(uint64_t pc, const void *from, size_t size)
 {
     struct qemu_plugin_insn *insn = tcg_ctx->plugin_insn;
-    abi_ptr off;
+    uint64_t off;
 
     if (insn == NULL) {
         return;

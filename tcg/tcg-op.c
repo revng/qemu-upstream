@@ -2807,6 +2807,7 @@ void tcg_gen_lookup_and_goto_ptr(void)
 
 static inline MemOp tcg_canonicalize_memop(MemOp op, bool is64, bool st)
 {
+#if 0
     /* Trigger the asserts within as early as possible.  */
     unsigned a_bits = get_alignment_bits(op);
 
@@ -2814,6 +2815,7 @@ static inline MemOp tcg_canonicalize_memop(MemOp op, bool is64, bool st)
     if (a_bits == (op & MO_SIZE)) {
         op = (op & ~MO_AMASK) | MO_ALIGN;
     }
+#endif
 
     switch (op & MO_SIZE) {
     case MO_8:
@@ -2889,6 +2891,8 @@ static void tcg_gen_req_mo(TCGBar type)
 
 static inline TCGv_dyn plugin_prep_mem_callbacks(TCGv_dyn vaddr)
 {
+    // WIP
+#if 0
 #ifdef CONFIG_PLUGIN
     if (tcg_ctx->plugin_insn != NULL) {
         /* Save a copy of the vaddr for use after a load.  */
@@ -2896,6 +2900,7 @@ static inline TCGv_dyn plugin_prep_mem_callbacks(TCGv_dyn vaddr)
         tcg_gen_mov_tl(temp, vaddr);
         return temp;
     }
+#endif
 #endif
     return vaddr;
 }

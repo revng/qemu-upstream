@@ -79,6 +79,8 @@ typedef uint64_t target_ulong;
 #error TARGET_LONG_SIZE undefined
 #endif
 
+#endif // TARGET_SPECIFIC
+
 #if !defined(CONFIG_USER_ONLY) && defined(CONFIG_TCG)
 
 /* use a fully associative victim tlb of 8 entries */
@@ -265,11 +267,10 @@ typedef struct CPUTLB { } CPUTLB;
  * This structure must be placed in ArchCPU immediately
  * before CPUArchState, as a field named "neg".
  */
+// TODO: we need to move this into CPUState
 typedef struct CPUNegativeOffsetState {
     CPUTLB tlb;
     IcountDecr icount_decr;
 } CPUNegativeOffsetState;
-
-#endif
 
 #endif

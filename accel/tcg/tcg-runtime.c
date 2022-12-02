@@ -25,8 +25,6 @@
 #include "qemu/host-utils.h"
 #include "cpu.h"
 #include "exec/helper-proto.h"
-#include "exec/cpu_ldst.h"
-#include "exec/exec-all.h"
 #include "disas/disas.h"
 #include "exec/log.h"
 #include "tcg/tcg.h"
@@ -146,5 +144,9 @@ uint64_t HELPER(ctpop_i64)(uint64_t arg)
 
 void HELPER(exit_atomic)(CPUArchState *env)
 {
+    #if 0
     cpu_loop_exit_atomic(env_cpu(env), GETPC());
+    #else
+    abort();
+    #endif
 }

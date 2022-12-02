@@ -21,9 +21,13 @@
 #define EXEC_ALL_H
 
 #include "cpu.h"
+#ifdef TARGET_SPECIFIC
 #ifdef CONFIG_TCG
 #include "exec/cpu_ldst.h"
 #endif
+#else
+#include "hw/core/cpu.h"
+#endif // TARGET_SPECIFIC
 
 /* allow to see translation results - the slowdown should be negligible, so we leave it */
 #define DEBUG_DISAS
@@ -507,7 +511,7 @@ struct tb_tc {
 };
 
 struct TranslationBlock {
-#if !TARGET_TB_PCREL
+// #if !TARGET_TB_PCREL
     /*
      * Guest PC corresponding to this block.  This must be the true
      * virtual address.  Therefore e.g. x86 stores EIP + CS_BASE, and
@@ -521,8 +525,11 @@ struct TranslationBlock {
      * Unwind information is taken as offsets from the page, to be
      * deposited into the "current" PC.
      */
-    target_ulong pc;
-#endif
+    uint64_t pc;
+    int target_tb_pcrel;
+    int target_page_bits;
+    int target_page_mask;
+// #endif
 
     /*
      * Target-specific data associated with the TranslationBlock, e.g.:
@@ -606,13 +613,13 @@ struct TranslationBlock {
 };
 
 /* Hide the read to avoid ifdefs for TARGET_TB_PCREL. */
-static inline target_ulong tb_pc(const TranslationBlock *tb)
+static inline uint64_t tb_pc(const TranslationBlock *tb)
 {
-#if TARGET_TB_PCREL
-    qemu_build_not_reached();
-#else
+// #if TARGET_TB_PCREL
+//     qemu_build_not_reached();
+// #else
     return tb->pc;
-#endif
+// #endif
 }
 
 /* Hide the qatomic_read to make code a little easier on the eyes */

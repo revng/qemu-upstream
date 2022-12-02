@@ -25,7 +25,9 @@
 #include "exec/exec-all.h"
 #include "tcg/tcg.h"
 #if defined(CONFIG_USER_ONLY)
+#if 0
 #include "qemu.h"
+#endif
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <sys/param.h>
 #if __FreeBSD_version >= 700104
@@ -62,6 +64,62 @@
 #include "tb-hash.h"
 #include "tb-context.h"
 #include "internal.h"
+
+// WIP: from target/cpu.h
+void cpu_get_tb_cpu_state(CPUArchState *env, uint64_t *pc,
+                          uint64_t *cs_base, uint32_t *flags);
+
+// WIP: from cpu-all.h
+void page_reset_target_data(uint64_t start, uint64_t end);
+int page_check_range(uint64_t start, uint64_t len, int flags);
+
+#define EXCP_INTERRUPT 	0x10000 /* async interruption */
+#define EXCP_HLT        0x10001 /* hlt instruction reached */
+#define EXCP_DEBUG      0x10002 /* cpu stopped after a breakpoint or singlestep */
+#define EXCP_HALTED     0x10003 /* cpu is halted (waiting for external event) */
+#define EXCP_YIELD      0x10004 /* cpu wants to yield timeslice to another */
+#define EXCP_ATOMIC     0x10005 /* stop-the-world and emulate atomic */
+
+/* same as PROT_xxx */
+#define PAGE_READ      0x0001
+#define PAGE_WRITE     0x0002
+#define PAGE_EXEC      0x0004
+#define PAGE_BITS      (PAGE_READ | PAGE_WRITE | PAGE_EXEC)
+#define PAGE_VALID     0x0008
+/*
+ * Original state of the write flag (used when tracking self-modifying code)
+ */
+#define PAGE_WRITE_ORG 0x0010
+/*
+ * Invalidate the TLB entry immediately, helpful for s390x
+ * Low-Address-Protection. Used with PAGE_WRITE in tlb_set_page_with_attrs()
+ */
+#define PAGE_WRITE_INV 0x0020
+/* For use with page_set_flags: page is being replaced; target_data cleared. */
+#define PAGE_RESET     0x0040
+/* For linux-user, indicates that the page is MAP_ANON. */
+#define PAGE_ANON      0x0080
+
+#if defined(CONFIG_BSD) && defined(CONFIG_USER_ONLY)
+/* FIXME: Code that sets/uses this is broken and needs to go away.  */
+#define PAGE_RESERVED  0x0100
+#endif
+/* Target-specific bits that will be used via page_get_flags().  */
+#define PAGE_TARGET_1  0x0200
+#define PAGE_TARGET_2  0x0400
+
+/*
+ * For linux-user, indicates that the page is mapped with the same semantics
+ * in both guest and host.
+ */
+#define PAGE_PASSTHROUGH 0x0800
+
+typedef int (*walk_memory_regions_fn)(void *, uint64_t,
+                                      uint64_t, unsigned long);
+int walk_memory_regions(void *, walk_memory_regions_fn);
+void page_dump(FILE *f);
+int page_get_flags(uint64_t address);
+void page_set_flags(uint64_t start, uint64_t end, int flags);
 
 /* make various TB consistency checks */
 
@@ -144,6 +202,7 @@ TBContext tb_ctx;
 
 static void page_table_config_init(void)
 {
+#if 0
     uint32_t v_l1_bits;
 
     assert(TARGET_PAGE_BITS);
@@ -160,11 +219,12 @@ static void page_table_config_init(void)
     assert(v_l1_bits <= V_L1_MAX_BITS);
     assert(v_l1_shift % V_L2_BITS == 0);
     assert(v_l2_levels >= 0);
+#endif
 }
 
 /* Encode VAL as a signed leb128 sequence at P.
    Return P incremented past the encoded value.  */
-static uint8_t *encode_sleb128(uint8_t *p, target_long val)
+static uint8_t *encode_sleb128(uint8_t *p, int64_t val)
 {
     int more, byte;
 
@@ -184,10 +244,10 @@ static uint8_t *encode_sleb128(uint8_t *p, target_long val)
 
 /* Decode a signed leb128 sequence at *PP; increment *PP past the
    decoded value.  Return the decoded value.  */
-static target_long decode_sleb128(const uint8_t **pp)
+static int64_t decode_sleb128(const uint8_t **pp)
 {
     const uint8_t *p = *pp;
-    target_long val = 0;
+    int64_t val = 0;
     int byte, shift = 0;
 
     do {
@@ -195,9 +255,11 @@ static target_long decode_sleb128(const uint8_t **pp)
         val |= (uint64_t)(byte & 0x7f) << shift;
         shift += 7;
     } while (byte & 0x80);
+#if 0
     if (shift < TARGET_LONG_BITS && (byte & 0x40)) {
         val |= -(uint64_t)1 << shift;
     }
+#endif
 
     *pp = p;
     return val;
@@ -226,7 +288,7 @@ static int encode_search(TranslationBlock *tb, uint8_t *block)
 
         for (j = 0; j < TARGET_INSN_START_WORDS; ++j) {
             if (i == 0) {
-                prev = (!TARGET_TB_PCREL && j == 0 ? tb_pc(tb) : 0);
+                prev = (!tb->target_tb_pcrel && j == 0 ? tb_pc(tb) : 0);
             } else {
                 prev = tcg_ctx->gen_insn_data[i - 1][j];
             }
@@ -305,7 +367,9 @@ void cpu_restore_state_from_tb(CPUState *cpu, TranslationBlock *tb,
          * Reset the cycle counter to the start of the block and
          * shift if to the number of actually executed instructions.
          */
+#if 0
         cpu_neg(cpu)->icount_decr.u16.low += insns_left;
+#endif
     }
 
     cpu->cc->tcg_ops->restore_state_to_opc(cpu, tb, data);
@@ -811,7 +875,9 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
 
     tcg_func_start(tcg_ctx);
 
+#if 0
     tcg_ctx->cpu = env_cpu(env);
+#endif
     gen_intermediate_code(cpu, tb, max_insns, pc, host_pc);
     assert(tb->size != 0);
     tcg_ctx->cpu = NULL;
@@ -1096,8 +1162,10 @@ void cpu_io_recompile(CPUState *cpu, uintptr_t retaddr)
     if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
         uint64_t pc = log_pc(cpu, tb);
         if (qemu_log_in_addr_range(pc)) {
+#if 0
             qemu_log("cpu_io_recompile: rewound execution of TB to "
                      TARGET_FMT_lx "\n", pc);
+#endif
         }
     }
 
@@ -1256,12 +1324,14 @@ struct walk_memory_regions_data {
 static int walk_memory_regions_end(struct walk_memory_regions_data *data,
                                    uint64_t end, int new_prot)
 {
+#if 0
     if (data->start != -1u) {
         int rc = data->fn(data->priv, data->start, end, data->prot);
         if (rc != 0) {
             return rc;
         }
     }
+#endif
 
     data->start = (new_prot ? end : -1u);
     data->prot = new_prot;
@@ -1298,12 +1368,14 @@ int walk_memory_regions_1(struct walk_memory_regions_data *data,
             }
         }
     } else {
-        void **pp = *lp;
+        // void **pp = *lp;
 
         for (i = 0; i < V_L2_SIZE; ++i) {
-            pa = base | ((target_ulong)i <<
+#if 0
+            pa = base | ((uint64_t)i <<
                 (TARGET_PAGE_BITS + V_L2_BITS * level));
             rc = walk_memory_regions_1(data, pa, level - 1, pp + i);
+#endif
             if (rc != 0) {
                 return rc;
             }
@@ -1324,11 +1396,13 @@ int walk_memory_regions(void *priv, walk_memory_regions_fn fn)
     data.prot = 0;
 
     for (i = 0; i < l1_sz; i++) {
+#if 0
         uint64_t base = i << (v_l1_shift + TARGET_PAGE_BITS);
         int rc = walk_memory_regions_1(&data, base, v_l2_levels, l1_map + i);
         if (rc != 0) {
             return rc;
         }
+#endif
     }
 
     return walk_memory_regions_end(&data, 0, 0);
@@ -1337,6 +1411,7 @@ int walk_memory_regions(void *priv, walk_memory_regions_fn fn)
 static int dump_region(void *priv, uint64_t start,
     uint64_t end, unsigned long prot)
 {
+#if 0
     FILE *f = (FILE *)priv;
 
     (void) fprintf(f, TARGET_FMT_lx"-"TARGET_FMT_lx
@@ -1345,6 +1420,7 @@ static int dump_region(void *priv, uint64_t start,
         ((prot & PAGE_READ) ? 'r' : '-'),
         ((prot & PAGE_WRITE) ? 'w' : '-'),
         ((prot & PAGE_EXEC) ? 'x' : '-'));
+#endif
 
     return 0;
 }
@@ -1360,6 +1436,7 @@ void page_dump(FILE *f)
 
 int page_get_flags(uint64_t address)
 {
+#if 0
     PageDesc *p;
 
     p = page_find(address >> TARGET_PAGE_BITS);
@@ -1367,6 +1444,9 @@ int page_get_flags(uint64_t address)
         return 0;
     }
     return p->flags;
+#else
+    abort();
+#endif
 }
 
 /*
@@ -1383,20 +1463,24 @@ int page_get_flags(uint64_t address)
    on PAGE_WRITE.  The mmap_lock should already be held.  */
 void page_set_flags(uint64_t start, uint64_t end, int flags)
 {
-    target_ulong addr, len;
+    // uint64_t addr, len;
     bool reset, inval_tb = false;
 
     /* This function should never be called with addresses outside the
        guest address space.  If this assert fires, it probably indicates
        a missing call to h2g_valid.  */
+#if 0
     assert(end - 1 <= GUEST_ADDR_MAX);
+#endif
     assert(start < end);
     /* Only set PAGE_ANON with new mappings. */
     assert(!(flags & PAGE_ANON) || (flags & PAGE_RESET));
     assert_memory_lock();
 
+#if 0
     start = start & TARGET_PAGE_MASK;
     end = TARGET_PAGE_ALIGN(end);
+#endif
 
     if (flags & PAGE_WRITE) {
         flags |= PAGE_WRITE_ORG;
@@ -1407,6 +1491,7 @@ void page_set_flags(uint64_t start, uint64_t end, int flags)
     }
     flags &= ~PAGE_RESET;
 
+#if 0
     for (addr = start, len = end - start;
          len != 0;
          len -= TARGET_PAGE_SIZE, addr += TARGET_PAGE_SIZE) {
@@ -1425,6 +1510,7 @@ void page_set_flags(uint64_t start, uint64_t end, int flags)
         /* Using mprotect on a page does not change sticky bits. */
         p->flags = (reset ? 0 : p->flags & PAGE_STICKY) | flags;
     }
+#endif
 
     if (inval_tb) {
         tb_invalidate_phys_range(start, end);
@@ -1433,16 +1519,18 @@ void page_set_flags(uint64_t start, uint64_t end, int flags)
 
 int page_check_range(uint64_t start, uint64_t len, int flags)
 {
-    PageDesc *p;
-    target_ulong end;
-    target_ulong addr;
+    // PageDesc *p;
+    // uint64_t end;
+    // uint64_t addr;
 
     /* This function should never be called with addresses outside the
        guest address space.  If this assert fires, it probably indicates
        a missing call to h2g_valid.  */
+#if 0
     if (TARGET_ABI_BITS > L1_MAP_ADDR_SPACE_BITS) {
         assert(start < ((uint64_t)1 << L1_MAP_ADDR_SPACE_BITS));
     }
+#endif
 
     if (len == 0) {
         return 0;
@@ -1453,6 +1541,7 @@ int page_check_range(uint64_t start, uint64_t len, int flags)
     }
 
     /* must do before we loose bits in the next step */
+#if 0
     end = TARGET_PAGE_ALIGN(start + len);
     start = start & TARGET_PAGE_MASK;
 
@@ -1483,11 +1572,13 @@ int page_check_range(uint64_t start, uint64_t len, int flags)
             }
         }
     }
+#endif
     return 0;
 }
 
 void page_protect(tb_page_addr_t page_addr)
 {
+#if 0
     uint64_t addr;
     PageDesc *p;
     int prot;
@@ -1513,6 +1604,7 @@ void page_protect(tb_page_addr_t page_addr)
         mprotect(g2h_untagged(page_addr), qemu_host_page_size,
                  (prot & PAGE_BITS) & ~PAGE_WRITE);
     }
+#endif
 }
 
 /* called from signal handler: invalidate the code and unprotect the
@@ -1523,16 +1615,17 @@ void page_protect(tb_page_addr_t page_addr)
  */
 int page_unprotect(uint64_t address, uintptr_t pc)
 {
-    unsigned int prot;
-    bool current_tb_invalidated;
-    PageDesc *p;
-    target_ulong host_start, host_end, addr;
+    // unsigned int prot;
+    // bool current_tb_invalidated;
+    // PageDesc *p;
+    // uint64_t host_start, host_end, addr;
 
     /* Technically this isn't safe inside a signal handler.  However we
        know this only ever happens in a synchronous SEGV handler, so in
        practice it seems to be ok.  */
     mmap_lock();
 
+#if 0
     p = page_find(address >> TARGET_PAGE_BITS);
     if (!p) {
         mmap_unlock();
@@ -1576,6 +1669,7 @@ int page_unprotect(uint64_t address, uintptr_t pc)
         /* If current TB was invalidated return to main loop */
         return current_tb_invalidated ? 2 : 1;
     }
+#endif
     mmap_unlock();
     return 0;
 }

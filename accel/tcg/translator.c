@@ -18,6 +18,12 @@
 #include "exec/plugin-gen.h"
 #include "sysemu/replay.h"
 
+// WIP: from cpu_ldst.h
+uint32_t cpu_ldub_code(CPUArchState *env, uint64_t addr);
+uint32_t cpu_lduw_code(CPUArchState *env, uint64_t addr);
+uint32_t cpu_ldl_code(CPUArchState *env, uint64_t addr);
+uint64_t cpu_ldq_code(CPUArchState *env, uint64_t addr);
+
 /* Pairs with tcg_clear_temp_count.
    To be called by #TranslatorOps.{translate_insn,tb_stop} if
    (1) the target is sufficiently clean to support reporting,
@@ -26,8 +32,10 @@
 void translator_loop_temp_check(DisasContextBase *db)
 {
     if (tcg_check_temp_count()) {
+#if 0
         qemu_log("warning: TCG temporary leaks before "
                  TARGET_FMT_lx "\n", db->pc_next);
+#endif
     }
 }
 
@@ -39,7 +47,7 @@ bool translator_use_goto_tb(DisasContextBase *db, uint64_t dest)
     }
 
     /* Check for the dest on the same page as the start of the TB.  */
-    return ((db->pc_first ^ dest) & TARGET_PAGE_MASK) == 0;
+    return ((db->pc_first ^ dest) & db->target_page_mask) == 0;
 }
 
 void translator_loop(CPUState *cpu, TranslationBlock *tb, int max_insns,
@@ -208,47 +216,59 @@ uint8_t translator_ldub(CPUArchState *env, DisasContextBase *db, uint64_t pc)
     return ret;
 }
 
-uint16_t translator_lduw(CPUArchState *env, DisasContextBase *db, abi_ptr pc)
+uint16_t translator_lduw(CPUArchState *env, DisasContextBase *db, uint64_t pc)
 {
     uint16_t ret, plug;
     void *p = translator_access(env, db, pc, sizeof(ret));
 
     if (p) {
         plugin_insn_append(pc, p, sizeof(ret));
+#if 0
         return lduw_p(p);
+#endif
     }
     ret = cpu_lduw_code(env, pc);
+#if 0
     plug = tswap16(ret);
+#endif
     plugin_insn_append(pc, &plug, sizeof(ret));
     return ret;
 }
 
-uint32_t translator_ldl(CPUArchState *env, DisasContextBase *db, abi_ptr pc)
+uint32_t translator_ldl(CPUArchState *env, DisasContextBase *db, uint64_t pc)
 {
     uint32_t ret, plug;
     void *p = translator_access(env, db, pc, sizeof(ret));
 
     if (p) {
         plugin_insn_append(pc, p, sizeof(ret));
+#if 0
         return ldl_p(p);
+#endif
     }
     ret = cpu_ldl_code(env, pc);
+#if 0
     plug = tswap32(ret);
+#endif
     plugin_insn_append(pc, &plug, sizeof(ret));
     return ret;
 }
 
-uint64_t translator_ldq(CPUArchState *env, DisasContextBase *db, abi_ptr pc)
+uint64_t translator_ldq(CPUArchState *env, DisasContextBase *db, uint64_t pc)
 {
     uint64_t ret, plug;
     void *p = translator_access(env, db, pc, sizeof(ret));
 
     if (p) {
         plugin_insn_append(pc, p, sizeof(ret));
+#if 0
         return ldq_p(p);
+#endif
     }
     ret = cpu_ldq_code(env, pc);
+#if 0
     plug = tswap64(ret);
+#endif
     plugin_insn_append(pc, &plug, sizeof(ret));
     return ret;
 }

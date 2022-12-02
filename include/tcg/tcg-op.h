@@ -742,10 +742,12 @@ static inline void tcg_gen_concat32_i64(TCGv_i64 ret, TCGv_i64 lo, TCGv_i64 hi)
 
 /* QEMU specific operations.  */
 
+#ifdef TARGET_SPECIFIC
 #ifndef TARGET_LONG_BITS
 #error must include QEMU headers
 #endif
 
+#ifdef TARGET_SPECIFIC
 #if TARGET_INSN_START_WORDS == 1
 # if TARGET_LONG_BITS <= TCG_TARGET_REG_BITS
 static inline void tcg_gen_insn_start(target_ulong pc)
@@ -792,6 +794,9 @@ static inline void tcg_gen_insn_start(target_ulong pc, target_ulong a1,
 #else
 # error "Unhandled number of operands to insn_start"
 #endif
+#endif
+
+#endif // TARGET_SPECIFIC
 
 /**
  * tcg_gen_exit_tb() - output exit_tb TCG operation
@@ -849,6 +854,7 @@ void tcg_gen_qemu_st_i32_dyn(TCGv_i32, TCGv_dyn, TCGArg, MemOp);
 void tcg_gen_qemu_ld_i64_dyn(TCGv_i64, TCGv_dyn, TCGArg, MemOp);
 void tcg_gen_qemu_st_i64_dyn(TCGv_i64, TCGv_dyn, TCGArg, MemOp);
 
+#ifdef TARGET_SPECIFIC
 #if TARGET_LONG_BITS == 32
 #define tcg_temp_new() tcg_temp_new_i32()
 #define tcg_global_mem_new tcg_global_mem_new_i32
@@ -967,6 +973,8 @@ void tcg_gen_atomic_smax_fetch_i64(TCGv_i64, TCGv, TCGv_i64, TCGArg, MemOp);
 void tcg_gen_atomic_umax_fetch_i32(TCGv_i32, TCGv, TCGv_i32, TCGArg, MemOp);
 void tcg_gen_atomic_umax_fetch_i64(TCGv_i64, TCGv, TCGv_i64, TCGArg, MemOp);
 
+#endif // TARGET_SPECIFIC
+
 void tcg_gen_mov_vec(TCGv_vec, TCGv_vec);
 void tcg_gen_dup_i32_vec(unsigned vece, TCGv_vec, TCGv_i32);
 void tcg_gen_dup_i64_vec(unsigned vece, TCGv_vec, TCGv_i64);
@@ -1024,6 +1032,7 @@ void tcg_gen_ld_vec(TCGv_vec r, TCGv_ptr base, TCGArg offset);
 void tcg_gen_st_vec(TCGv_vec r, TCGv_ptr base, TCGArg offset);
 void tcg_gen_stl_vec(TCGv_vec r, TCGv_ptr base, TCGArg offset, TCGType t);
 
+#ifdef TARGET_SPECIFIC
 #if TARGET_LONG_BITS == 64
 #define tcg_gen_movi_tl tcg_gen_movi_i64
 #define tcg_gen_mov_tl tcg_gen_mov_i64
@@ -1259,6 +1268,7 @@ void tcg_gen_stl_vec(TCGv_vec r, TCGv_ptr base, TCGArg offset, TCGType t);
 #define tcg_gen_dup_tl_vec  tcg_gen_dup_i32_vec
 #define tcg_gen_dup_tl tcg_gen_dup_i32
 #endif
+#endif // TARGET_SPECIFIC
 
 #if UINTPTR_MAX == UINT32_MAX
 # define PTR  i32

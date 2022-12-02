@@ -21,7 +21,9 @@
 
 #include "qemu/bswap.h"
 #include "exec/exec-all.h"
+#ifdef TARGET_SPECIFIC
 #include "exec/cpu_ldst.h"
+#endif // TARGET_SPECIFIC
 #include "exec/plugin-gen.h"
 #include "exec/translate-all.h"
 #include "tcg/tcg.h"
@@ -82,13 +84,14 @@ typedef enum DisasJumpType {
  */
 typedef struct DisasContextBase {
     TranslationBlock *tb;
-    target_ulong pc_first;
-    target_ulong pc_next;
+    uint64_t pc_first;
+    uint64_t pc_next;
     DisasJumpType is_jmp;
     int num_insns;
     int max_insns;
     bool singlestep_enabled;
     void *host_addr[2];
+    uint64_t target_page_mask;
 } DisasContextBase;
 
 /**
@@ -233,9 +236,10 @@ static inline void translator_fake_ldb(uint8_t insn8, uint64_t pc)
  * Translators can use this to enforce the rule that only single-insn
  * translation blocks are allowed to cross page boundaries.
  */
-static inline bool is_same_page(const DisasContextBase *db, target_ulong addr)
+static inline bool is_same_page(const DisasContextBase *db, uint64_t addr)
 {
-    return ((addr ^ db->pc_first) & TARGET_PAGE_MASK) == 0;
+    int target_page_mask = 0;
+    return ((addr ^ db->pc_first) & target_page_mask) == 0;
 }
 
 #endif /* EXEC__TRANSLATOR_H */

@@ -34,6 +34,14 @@
 #include "tcg-internal.h"
 
 
+// WIP: from cpu-all.h
+/* same as PROT_xxx */
+#define PAGE_READ      0x0001
+#define PAGE_WRITE     0x0002
+#define PAGE_EXEC      0x0004
+#define PAGE_BITS      (PAGE_READ | PAGE_WRITE | PAGE_EXEC)
+#define PAGE_VALID     0x0008
+
 struct tcg_region_tree {
     QemuMutex lock;
     GTree *tree;

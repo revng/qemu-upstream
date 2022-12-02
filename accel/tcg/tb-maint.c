@@ -28,13 +28,21 @@
 #include "tb-context.h"
 #include "internal.h"
 
+// WIP: from cpu-all.h
+/* same as PROT_xxx */
+#define PAGE_READ      0x0001
+#define PAGE_WRITE     0x0002
+#define PAGE_EXEC      0x0004
+#define PAGE_BITS      (PAGE_READ | PAGE_WRITE | PAGE_EXEC)
+#define PAGE_VALID     0x0008
 
 static bool tb_cmp(const void *ap, const void *bp)
 {
     const TranslationBlock *a = ap;
     const TranslationBlock *b = bp;
 
-    return ((TARGET_TB_PCREL || tb_pc(a) == tb_pc(b)) &&
+    int target_tb_pcrel = 0;
+    return ((target_tb_pcrel || tb_pc(a) == tb_pc(b)) &&
             a->cs_base == b->cs_base &&
             a->flags == b->flags &&
             (tb_cflags(a) & ~CF_INVALID) == (tb_cflags(b) & ~CF_INVALID) &&
@@ -574,13 +582,13 @@ void tb_invalidate_phys_page(tb_page_addr_t addr)
 
     assert_memory_lock();
 
-    p = page_find(addr >> TARGET_PAGE_BITS);
+    p = page_find(addr /* >> TARGET_PAGE_BITS */);
     if (p == NULL) {
         return;
     }
 
-    start = addr & TARGET_PAGE_MASK;
-    end = start + TARGET_PAGE_SIZE;
+    start = addr /* & TARGET_PAGE_MASK */;
+    end = start /* + TARGET_PAGE_SIZE */;
     pages = page_collection_lock(start, end);
     tb_invalidate_phys_page_range__locked(pages, p, start, end, 0);
     page_collection_unlock(pages);
@@ -598,11 +606,12 @@ void tb_invalidate_phys_page(tb_page_addr_t addr)
 void tb_invalidate_phys_range(tb_page_addr_t start, tb_page_addr_t end)
 {
     struct page_collection *pages;
-    tb_page_addr_t next;
+    // tb_page_addr_t next;
 
     assert_memory_lock();
 
     pages = page_collection_lock(start, end);
+    #if 0
     for (next = (start & TARGET_PAGE_MASK) + TARGET_PAGE_SIZE;
          start < end;
          start = next, next += TARGET_PAGE_SIZE) {
@@ -614,6 +623,7 @@ void tb_invalidate_phys_range(tb_page_addr_t start, tb_page_addr_t end)
         }
         tb_invalidate_phys_page_range__locked(pages, pd, start, bound, 0);
     }
+    #endif
     page_collection_unlock(pages);
 }
 
@@ -663,8 +673,8 @@ bool tb_invalidate_phys_page_unwind(tb_page_addr_t addr, uintptr_t pc)
 
     assert_memory_lock();
 
-    addr &= TARGET_PAGE_MASK;
-    p = page_find(addr >> TARGET_PAGE_BITS);
+    // addr &= TARGET_PAGE_MASK;
+    p = page_find(addr /* >> TARGET_PAGE_BITS */);
     if (!p) {
         return false;
     }

@@ -2,22 +2,26 @@
 #define QEMU_DISAS_H
 
 #include "exec/hwaddr.h"
+#include "exec/cpu-common.h"
+#include "hw/core/cpu.h"
+
+typedef uint64_t tb_page_addr_t;
 
 #ifdef NEED_CPU_H
 #include "cpu.h"
 
 /* Disassemble this for me please... (debugging). */
 void disas(FILE *out, const void *code, unsigned long size);
-void target_disas(FILE *out, CPUState *cpu, target_ulong code,
-                  target_ulong size);
+void target_disas(FILE *out, CPUState *cpu, tb_page_addr_t code,
+                  tb_page_addr_t size);
 
 void monitor_disas(Monitor *mon, CPUState *cpu,
-                   target_ulong pc, int nb_insn, int is_physical);
+                   tb_page_addr_t pc, int nb_insn, int is_physical);
 
 char *plugin_disas(CPUState *cpu, uint64_t addr, size_t size);
 
 /* Look up symbol for debugging purpose.  Returns "" if unknown. */
-const char *lookup_symbol(target_ulong orig_addr);
+const char *lookup_symbol(tb_page_addr_t orig_addr);
 #endif
 
 struct syminfo;

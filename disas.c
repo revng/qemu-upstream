@@ -7,6 +7,8 @@
 #include "disas/disas.h"
 #include "disas/capstone.h"
 
+#include "exec/memory.h"
+
 typedef struct CPUDebug {
     struct disassemble_info info;
     CPUState *cpu;
@@ -126,11 +128,13 @@ static void initialize_debug_target(CPUDebug *s, CPUState *cpu)
     s->cpu = cpu;
     s->info.read_memory_func = target_read_memory;
     s->info.print_address_func = print_address;
+#ifdef TARGET_SPECIFIC
 #if TARGET_BIG_ENDIAN
     s->info.endian = BFD_ENDIAN_BIG;
 #else
     s->info.endian = BFD_ENDIAN_LITTLE;
 #endif
+#endif // TARGET_SPECIFIC
 
     CPUClass *cc = CPU_GET_CLASS(cpu);
     if (cc->disas_set_info) {

@@ -19,16 +19,104 @@
 #include "qemu/osdep.h"
 #include "hw/core/tcg-cpu-ops.h"
 #include "disas/disas.h"
-#include "exec/exec-all.h"
 #include "tcg/tcg.h"
 #include "qemu/bitops.h"
-#include "exec/cpu_ldst.h"
 #include "exec/translate-all.h"
 #include "exec/helper-proto.h"
 #include "qemu/atomic128.h"
 #include "trace/trace-root.h"
-#include "tcg/tcg-ldst.h"
 #include "internal.h"
+
+CPUState *env_cpu(CPUArchState *env);
+
+// WIP: cpu-ldst.h
+bool guest_addr_valid_untagged(uint64_t x);
+void set_helper_retaddr(uintptr_t ra);
+uint8_t cpu_ldb_mmu(CPUArchState *env, uint64_t ptr, MemOpIdx oi, uintptr_t ra);
+void clear_helper_retaddr(void);
+uint16_t cpu_ldw_be_mmu(CPUArchState *env, uint64_t ptr,
+                        MemOpIdx oi, uintptr_t ra);
+uint32_t cpu_ldl_be_mmu(CPUArchState *env, uint64_t ptr,
+                        MemOpIdx oi, uintptr_t ra);
+uint64_t cpu_ldq_be_mmu(CPUArchState *env, uint64_t ptr,
+                        MemOpIdx oi, uintptr_t ra);
+uint16_t cpu_ldw_le_mmu(CPUArchState *env, uint64_t ptr,
+                        MemOpIdx oi, uintptr_t ra);
+uint32_t cpu_ldl_le_mmu(CPUArchState *env, uint64_t ptr,
+                        MemOpIdx oi, uintptr_t ra);
+uint64_t cpu_ldq_le_mmu(CPUArchState *env, uint64_t ptr,
+                        MemOpIdx oi, uintptr_t ra);
+void cpu_stb_mmu(CPUArchState *env, uint64_t ptr, uint8_t val,
+                 MemOpIdx oi, uintptr_t ra);
+void cpu_stw_be_mmu(CPUArchState *env, uint64_t ptr, uint16_t val,
+                    MemOpIdx oi, uintptr_t ra);
+void cpu_stl_be_mmu(CPUArchState *env, uint64_t ptr, uint32_t val,
+                    MemOpIdx oi, uintptr_t ra);
+void cpu_stq_be_mmu(CPUArchState *env, uint64_t ptr, uint64_t val,
+                    MemOpIdx oi, uintptr_t ra);
+void cpu_stw_le_mmu(CPUArchState *env, uint64_t ptr, uint16_t val,
+                    MemOpIdx oi, uintptr_t ra);
+void cpu_stl_le_mmu(CPUArchState *env, uint64_t ptr, uint32_t val,
+                    MemOpIdx oi, uintptr_t ra);
+void cpu_stq_le_mmu(CPUArchState *env, uint64_t ptr, uint64_t val,
+                    MemOpIdx oi, uintptr_t ra);
+uint32_t cpu_ldub_code(CPUArchState *env, uint64_t addr);
+uint32_t cpu_lduw_code(CPUArchState *env, uint64_t addr);
+uint32_t cpu_ldl_code(CPUArchState *env, uint64_t addr);
+uint64_t cpu_ldq_code(CPUArchState *env, uint64_t addr);
+
+// WIP: from cpu-all.h
+int page_get_flags(uint64_t address);
+void page_set_flags(uint64_t start, uint64_t end, int flags);
+void page_reset_target_data(uint64_t start, uint64_t end);
+int page_check_range(uint64_t start, uint64_t len, int flags);
+
+/* same as PROT_xxx */
+#define PAGE_READ      0x0001
+#define PAGE_WRITE     0x0002
+#define PAGE_EXEC      0x0004
+#define PAGE_BITS      (PAGE_READ | PAGE_WRITE | PAGE_EXEC)
+#define PAGE_VALID     0x0008
+/*
+ * Original state of the write flag (used when tracking self-modifying code)
+ */
+#define PAGE_WRITE_ORG 0x0010
+/*
+ * Invalidate the TLB entry immediately, helpful for s390x
+ * Low-Address-Protection. Used with PAGE_WRITE in tlb_set_page_with_attrs()
+ */
+#define PAGE_WRITE_INV 0x0020
+/* For use with page_set_flags: page is being replaced; target_data cleared. */
+#define PAGE_RESET     0x0040
+/* For linux-user, indicates that the page is MAP_ANON. */
+#define PAGE_ANON      0x0080
+
+#if defined(CONFIG_BSD) && defined(CONFIG_USER_ONLY)
+/* FIXME: Code that sets/uses this is broken and needs to go away.  */
+#define PAGE_RESERVED  0x0100
+#endif
+/* Target-specific bits that will be used via page_get_flags().  */
+#define PAGE_TARGET_1  0x0200
+#define PAGE_TARGET_2  0x0400
+
+/*
+ * For linux-user, indicates that the page is mapped with the same semantics
+ * in both guest and host.
+ */
+#define PAGE_PASSTHROUGH 0x0800
+
+#define TLB_INVALID_MASK    (1 << (/* TARGET_PAGE_BITS_MIN */10 - 1))
+#define TLB_MMIO            0
+#define TLB_WATCHPOINT      0
+
+typedef int (*walk_memory_regions_fn)(void *, uint64_t,
+                                      uint64_t, unsigned long);
+int walk_memory_regions(void *, walk_memory_regions_fn);
+void page_dump(FILE *f);
+
+// WIP: from tcg/tcg-ldst.h
+void helper_unaligned_ld(CPUArchState *env, uint64_t addr);
+void helper_unaligned_st(CPUArchState *env, uint64_t addr);
 
 __thread uintptr_t helper_retaddr;
 
@@ -180,13 +268,16 @@ int probe_access_flags(CPUArchState *env, uint64_t addr,
     int flags;
 
     flags = probe_access_internal(env, addr, 0, access_type, nonfault, ra);
+#if 0
     *phost = flags ? NULL : g2h(env_cpu(env), addr);
+#endif
     return flags;
 }
 
 void *probe_access(CPUArchState *env, uint64_t addr, int size,
                    MMUAccessType access_type, int mmu_idx, uintptr_t ra)
 {
+#if 0
     int flags;
 
     g_assert(-(addr | TARGET_PAGE_MASK) >= size);
@@ -194,6 +285,9 @@ void *probe_access(CPUArchState *env, uint64_t addr, int size,
     g_assert(flags == 0);
 
     return size ? g2h(env_cpu(env), addr) : NULL;
+#else
+    abort();
+#endif
 }
 
 tb_page_addr_t get_page_addr_code_hostp(CPUArchState *env, uint64_t addr,
@@ -293,243 +387,334 @@ static void *cpu_mmu_lookup(CPUArchState *env, uint64_t addr,
         cpu_loop_exit_sigbus(env_cpu(env), addr, type, ra);
     }
 
+#if 0
     ret = g2h(env_cpu(env), addr);
+#endif
     set_helper_retaddr(ra);
     return ret;
 }
 
-uint8_t cpu_ldb_mmu(CPUArchState *env, abi_ptr addr,
+uint8_t cpu_ldb_mmu(CPUArchState *env, uint64_t addr,
                     MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
     uint8_t ret;
 
     validate_memop(oi, MO_UB);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_LOAD);
+#if 0
     ret = ldub_p(haddr);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_R);
     return ret;
 }
 
-uint16_t cpu_ldw_be_mmu(CPUArchState *env, abi_ptr addr,
+uint16_t cpu_ldw_be_mmu(CPUArchState *env, uint64_t addr,
                         MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
     uint16_t ret;
 
     validate_memop(oi, MO_BEUW);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_LOAD);
+#if 0
     ret = lduw_be_p(haddr);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_R);
     return ret;
 }
 
-uint32_t cpu_ldl_be_mmu(CPUArchState *env, abi_ptr addr,
+uint32_t cpu_ldl_be_mmu(CPUArchState *env, uint64_t addr,
                         MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
     uint32_t ret;
 
     validate_memop(oi, MO_BEUL);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_LOAD);
+#if 0
     ret = ldl_be_p(haddr);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_R);
     return ret;
 }
 
-uint64_t cpu_ldq_be_mmu(CPUArchState *env, abi_ptr addr,
+uint64_t cpu_ldq_be_mmu(CPUArchState *env, uint64_t addr,
                         MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
     uint64_t ret;
 
     validate_memop(oi, MO_BEUQ);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_LOAD);
+#if 0
     ret = ldq_be_p(haddr);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_R);
     return ret;
 }
 
-uint16_t cpu_ldw_le_mmu(CPUArchState *env, abi_ptr addr,
+uint16_t cpu_ldw_le_mmu(CPUArchState *env, uint64_t addr,
                         MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
     uint16_t ret;
 
     validate_memop(oi, MO_LEUW);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_LOAD);
+#if 0
     ret = lduw_le_p(haddr);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_R);
     return ret;
 }
 
-uint32_t cpu_ldl_le_mmu(CPUArchState *env, abi_ptr addr,
+uint32_t cpu_ldl_le_mmu(CPUArchState *env, uint64_t addr,
                         MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
     uint32_t ret;
 
     validate_memop(oi, MO_LEUL);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_LOAD);
+#if 0
     ret = ldl_le_p(haddr);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_R);
     return ret;
 }
 
-uint64_t cpu_ldq_le_mmu(CPUArchState *env, abi_ptr addr,
+uint64_t cpu_ldq_le_mmu(CPUArchState *env, uint64_t addr,
                         MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
     uint64_t ret;
 
     validate_memop(oi, MO_LEUQ);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_LOAD);
+#if 0
     ret = ldq_le_p(haddr);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_R);
     return ret;
 }
 
-void cpu_stb_mmu(CPUArchState *env, abi_ptr addr, uint8_t val,
+void cpu_stb_mmu(CPUArchState *env, uint64_t addr, uint8_t val,
                  MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
 
     validate_memop(oi, MO_UB);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_STORE);
+#if 0
     stb_p(haddr, val);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_W);
 }
 
-void cpu_stw_be_mmu(CPUArchState *env, abi_ptr addr, uint16_t val,
+void cpu_stw_be_mmu(CPUArchState *env, uint64_t addr, uint16_t val,
                     MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
 
     validate_memop(oi, MO_BEUW);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_STORE);
+#if 0
     stw_be_p(haddr, val);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_W);
 }
 
-void cpu_stl_be_mmu(CPUArchState *env, abi_ptr addr, uint32_t val,
+void cpu_stl_be_mmu(CPUArchState *env, uint64_t addr, uint32_t val,
                     MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
 
     validate_memop(oi, MO_BEUL);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_STORE);
+#if 0
     stl_be_p(haddr, val);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_W);
 }
 
-void cpu_stq_be_mmu(CPUArchState *env, abi_ptr addr, uint64_t val,
+void cpu_stq_be_mmu(CPUArchState *env, uint64_t addr, uint64_t val,
                     MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
 
     validate_memop(oi, MO_BEUQ);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_STORE);
+#if 0
     stq_be_p(haddr, val);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_W);
 }
 
-void cpu_stw_le_mmu(CPUArchState *env, abi_ptr addr, uint16_t val,
+void cpu_stw_le_mmu(CPUArchState *env, uint64_t addr, uint16_t val,
                     MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
 
     validate_memop(oi, MO_LEUW);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_STORE);
+#if 0
     stw_le_p(haddr, val);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_W);
 }
 
-void cpu_stl_le_mmu(CPUArchState *env, abi_ptr addr, uint32_t val,
+void cpu_stl_le_mmu(CPUArchState *env, uint64_t addr, uint32_t val,
                     MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
 
     validate_memop(oi, MO_LEUL);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_STORE);
+#if 0
     stl_le_p(haddr, val);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_W);
 }
 
-void cpu_stq_le_mmu(CPUArchState *env, abi_ptr addr, uint64_t val,
+void cpu_stq_le_mmu(CPUArchState *env, uint64_t addr, uint64_t val,
                     MemOpIdx oi, uintptr_t ra)
 {
     void *haddr;
+    (void) haddr;
 
     validate_memop(oi, MO_LEUQ);
     haddr = cpu_mmu_lookup(env, addr, oi, ra, MMU_DATA_STORE);
+#if 0
     stq_le_p(haddr, val);
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     qemu_plugin_vcpu_mem_cb(env_cpu(env), addr, oi, QEMU_PLUGIN_MEM_W);
 }
 
-uint32_t cpu_ldub_code(CPUArchState *env, abi_ptr ptr)
+uint32_t cpu_ldub_code(CPUArchState *env, uint64_t ptr)
 {
     uint32_t ret;
 
     set_helper_retaddr(1);
+#if 0
     ret = ldub_p(g2h_untagged(ptr));
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     return ret;
 }
 
-uint32_t cpu_lduw_code(CPUArchState *env, abi_ptr ptr)
+uint32_t cpu_lduw_code(CPUArchState *env, uint64_t ptr)
 {
     uint32_t ret;
 
     set_helper_retaddr(1);
+#if 0
     ret = lduw_p(g2h_untagged(ptr));
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     return ret;
 }
 
-uint32_t cpu_ldl_code(CPUArchState *env, abi_ptr ptr)
+uint32_t cpu_ldl_code(CPUArchState *env, uint64_t ptr)
 {
     uint32_t ret;
 
     set_helper_retaddr(1);
+#if 0
     ret = ldl_p(g2h_untagged(ptr));
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     return ret;
 }
 
-uint64_t cpu_ldq_code(CPUArchState *env, abi_ptr ptr)
+uint64_t cpu_ldq_code(CPUArchState *env, uint64_t ptr)
 {
     uint64_t ret;
 
     set_helper_retaddr(1);
+#if 0
     ret = ldq_p(g2h_untagged(ptr));
+#else
+    abort();
+#endif
     clear_helper_retaddr();
     return ret;
 }
 
-#include "ldst_common.c.inc"
+// #include "ldst_common.c.inc"
 
 /*
  * Do not allow unaligned operations to proceed.  Return the host address.
  *
  * @prot may be PAGE_READ, PAGE_WRITE, or PAGE_READ|PAGE_WRITE.
  */
-static void *atomic_mmu_lookup(CPUArchState *env, target_ulong addr,
-                               MemOpIdx oi, int size, int prot,
-                               uintptr_t retaddr)
+void *atomic_mmu_lookup(CPUArchState *env, uint64_t addr,
+                        MemOpIdx oi, int size, int prot,
+                        uintptr_t retaddr);
+void *atomic_mmu_lookup(CPUArchState *env, uint64_t addr,
+                        MemOpIdx oi, int size, int prot,
+                        uintptr_t retaddr)
 {
     MemOp mop = get_memop(oi);
     int a_bits = get_alignment_bits(mop);
@@ -546,11 +731,16 @@ static void *atomic_mmu_lookup(CPUArchState *env, target_ulong addr,
         cpu_loop_exit_atomic(env_cpu(env), retaddr);
     }
 
+#if 0
     ret = g2h(env_cpu(env), addr);
+#else
+    abort();
+#endif
     set_helper_retaddr(retaddr);
     return ret;
 }
 
+#if 0
 #include "atomic_common.c.inc"
 
 /*
@@ -579,4 +769,5 @@ static void *atomic_mmu_lookup(CPUArchState *env, target_ulong addr,
 #if HAVE_ATOMIC128 || HAVE_CMPXCHG128
 #define DATA_SIZE 16
 #include "atomic_template.h"
+#endif
 #endif

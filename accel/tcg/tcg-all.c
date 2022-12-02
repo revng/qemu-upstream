@@ -83,6 +83,7 @@ static bool check_tcg_memory_orders_compatible(void)
 
 static bool default_mttcg_enabled(void)
 {
+#if 0
     if (icount_enabled() || TCG_OVERSIZED_GUEST) {
         return false;
     } else {
@@ -92,6 +93,9 @@ static bool default_mttcg_enabled(void)
         return false;
 #endif
     }
+#else
+    return false;
+#endif
 }
 
 static void tcg_accel_instance_init(Object *obj)

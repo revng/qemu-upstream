@@ -37,7 +37,9 @@
 #include "hw/i386/apic.h"
 #endif
 #include "sysemu/cpus.h"
+#ifdef TARGET_SPECIFIC
 #include "exec/cpu-all.h"
+#endif // TARGET_SPECIFIC
 #include "sysemu/cpu-timers.h"
 #include "sysemu/replay.h"
 #include "sysemu/tcg.h"
@@ -46,6 +48,28 @@
 #include "tb-hash.h"
 #include "tb-context.h"
 #include "internal.h"
+
+// WIP: from cpu-all.h
+#include "exec/cpu-defs.h"
+#define EXCP_INTERRUPT  0x10000 /* async interruption */
+#define EXCP_HLT        0x10001 /* hlt instruction reached */
+#define EXCP_DEBUG      0x10002 /* cpu stopped after a breakpoint or singlestep */
+#define EXCP_HALTED     0x10003 /* cpu is halted (waiting for external event) */
+#define EXCP_YIELD      0x10004 /* cpu wants to yield timeslice to another */
+#define EXCP_ATOMIC     0x10005 /* stop-the-world and emulate atomic */
+CPUState *env_cpu(CPUArchState *env);
+CPUNegativeOffsetState *cpu_neg(CPUState *cpu);
+int cpu_exec(CPUState *cpu);
+void tcg_exec_realizefn(CPUState *cpu, Error **errp);
+void tcg_exec_unrealizefn(CPUState *cpu);
+
+// WIP: from target/cpu.h
+void cpu_get_tb_cpu_state(CPUArchState *env, uint64_t *pc,
+                          uint64_t *cs_base, uint32_t *flags);
+
+// WIP: from exec/cpu_ldst.h
+void clear_helper_retaddr(void);
+
 
 /* -icount align implementation. */
 
@@ -186,7 +210,8 @@ static bool tb_lookup_cmp(const void *p, const void *d)
     const TranslationBlock *tb = p;
     const struct tb_desc *desc = d;
 
-    if ((TARGET_TB_PCREL || tb_pc(tb) == desc->pc) &&
+    bool target_tb_pcrel = true;
+    if ((target_tb_pcrel || tb_pc(tb) == desc->pc) &&
         tb_page_addr0(tb) == desc->page_addr0 &&
         tb->cs_base == desc->cs_base &&
         tb->flags == desc->flags &&
@@ -209,7 +234,9 @@ static bool tb_lookup_cmp(const void *p, const void *d)
              * is different for the new TB.  Therefore any exception raised
              * here by the faulting lookup is not premature.
              */
+            #if 0
             virt_page1 = TARGET_PAGE_ALIGN(desc->pc);
+            #endif
             phys_page1 = get_page_addr_code(desc->env, virt_page1);
             if (tb_phys_page1 == phys_page1) {
                 return true;
@@ -238,7 +265,8 @@ static TranslationBlock *tb_htable_lookup(CPUState *cpu, uint64_t pc,
         return NULL;
     }
     desc.page_addr0 = phys_pc;
-    h = tb_hash_func(phys_pc, (TARGET_TB_PCREL ? 0 : pc),
+    bool target_tb_pcrel = false;
+    h = tb_hash_func(phys_pc, (target_tb_pcrel ? 0 : pc),
                      flags, cflags, *cpu->trace_dstate);
     return qht_lookup_custom(&tb_ctx.htable, &desc, h, tb_lookup_cmp);
 }
@@ -279,11 +307,13 @@ static void log_cpu_exec(uint64_t pc, CPUState *cpu,
                          const TranslationBlock *tb)
 {
     if (qemu_log_in_addr_range(pc)) {
+        #if 0
         qemu_log_mask(CPU_LOG_EXEC,
                       "Trace %d: %p [" TARGET_FMT_lx
                       "/" TARGET_FMT_lx "/%08x/%08x] %s\n",
                       cpu->cpu_index, tb->tc.ptr, tb->cs_base, pc,
                       tb->flags, tb->cflags, lookup_symbol(pc));
+        #endif
 
 #if defined(DEBUG_DISAS)
         if (qemu_loglevel_mask(CPU_LOG_TB_CPU)) {
@@ -348,7 +378,7 @@ static bool check_for_breakpoints_slow(CPUState *cpu, uint64_t pc,
                 cpu->exception_index = EXCP_DEBUG;
                 return true;
             }
-        } else if (((pc ^ bp->pc) & TARGET_PAGE_MASK) == 0) {
+        } else if (((pc ^ bp->pc) & cpu->target_page_mask) == 0) {
             match_page = true;
         }
     }
@@ -460,16 +490,18 @@ cpu_tb_exec(CPUState *cpu, TranslationBlock *itb, int *tb_exit)
         if (cc->tcg_ops->synchronize_from_tb) {
             cc->tcg_ops->synchronize_from_tb(cpu, last_tb);
         } else {
-            assert(!TARGET_TB_PCREL);
+            assert(!cpu->target_tb_pcrel);
             assert(cc->set_pc);
             cc->set_pc(cpu, tb_pc(last_tb));
         }
         if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
             uint64_t pc = log_pc(cpu, last_tb);
             if (qemu_log_in_addr_range(pc)) {
+                #if 0
                 qemu_log("Stopped execution of TB chain before %p ["
                          TARGET_FMT_lx "] %s\n",
                          last_tb->tc.ptr, pc, lookup_symbol(pc));
+                #endif
             }
         }
     }
@@ -751,6 +783,7 @@ static inline bool cpu_handle_interrupt(CPUState *cpu,
         return false;
     }
 
+    #if 0
     /* Clear the interrupt flag now since we're processing
      * cpu->interrupt_request and cpu->exit_request.
      * Ensure zeroing happens before reading cpu->exit_request or
@@ -842,6 +875,7 @@ static inline bool cpu_handle_interrupt(CPUState *cpu,
         /* If we exit via cpu_loop_exit/longjmp it is reset in cpu_exec */
         qemu_mutex_unlock_iothread();
     }
+    #endif
 
     /* Finally, check if we need to exit to the main loop.  */
     if (unlikely(qatomic_read(&cpu->exit_request))

@@ -21,6 +21,13 @@
 #include "sysemu/cpus.h"
 #include "sysemu/tcg.h"
 #include "exec/exec-all.h"
+#ifndef TARGET_SPECIFIC
+#include "hw/core/cpu.h"
+
+// WIP: from cpu-all.h
+#define EXCP_ATOMIC     0x10005 /* stop-the-world and emulate atomic */
+
+#endif // TARGET_SPECIFIC
 
 bool tcg_allowed;
 

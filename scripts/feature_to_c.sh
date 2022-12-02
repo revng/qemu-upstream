@@ -28,6 +28,7 @@ for input; do
   arrayname=xml_feature_$(echo $input | sed 's,.*/,,; s/[-.]/_/g')
 
   ${AWK:-awk} 'BEGIN { n = 0
+      printf "#define TARGET_SPECIFIC\n"
       printf "#include \"qemu/osdep.h\"\n"
       print "static const char '$arrayname'[] = {"
       for (i = 0; i < 255; i++)

@@ -91,16 +91,18 @@ void HELPER(plugin_vcpu_mem_cb)(unsigned int vcpu_index,
                                 void *userdata)
 { }
 
-static void do_gen_mem_cb(TCGv vaddr, uint32_t info)
+static void do_gen_mem_cb(TCGv_dyn vaddr, uint32_t info)
 {
     TCGv_i32 cpu_index = tcg_temp_new_i32();
     TCGv_i32 meminfo = tcg_const_i32(info);
     TCGv_i64 vaddr64 = tcg_temp_new_i64();
     TCGv_ptr udata = tcg_const_ptr(NULL);
 
+    #if 0
     tcg_gen_ld_i32(cpu_index, cpu_env,
                    -offsetof(ArchCPU, env) + offsetof(CPUState, cpu_index));
     tcg_gen_extu_tl_i64(vaddr64, vaddr);
+    #endif
 
     gen_helper_plugin_vcpu_mem_cb(cpu_index, meminfo, vaddr64, udata);
 
@@ -115,9 +117,11 @@ static void gen_empty_udata_cb(void)
     TCGv_i32 cpu_index = tcg_temp_new_i32();
     TCGv_ptr udata = tcg_const_ptr(NULL); /* will be overwritten later */
 
+    #if 0
     tcg_gen_ld_i32(cpu_index, cpu_env,
                    -offsetof(ArchCPU, env) + offsetof(CPUState, cpu_index));
     gen_helper_plugin_vcpu_udata_cb(cpu_index, udata);
+    #endif
 
     tcg_temp_free_ptr(udata);
     tcg_temp_free_i32(cpu_index);
@@ -154,8 +158,10 @@ static void gen_empty_mem_helper(void)
     TCGv_ptr ptr;
 
     ptr = tcg_const_ptr(NULL);
+    #if 0
     tcg_gen_st_ptr(ptr, cpu_env, offsetof(CPUState, plugin_mem_cbs) -
                                  offsetof(ArchCPU, env));
+    #endif
     tcg_temp_free_ptr(ptr);
 }
 
@@ -273,6 +279,7 @@ static TCGOp *copy_op(TCGOp **begin_op, TCGOp *op, TCGOpcode opc)
     return op;
 }
 
+inline
 static TCGOp *copy_extu_i32_i64(TCGOp **begin_op, TCGOp *op)
 {
     if (TCG_TARGET_REG_BITS == 32) {
@@ -287,6 +294,7 @@ static TCGOp *copy_extu_i32_i64(TCGOp **begin_op, TCGOp *op)
     return op;
 }
 
+inline
 static TCGOp *copy_mov_i64(TCGOp **begin_op, TCGOp *op)
 {
     if (TCG_TARGET_REG_BITS == 32) {
@@ -316,6 +324,7 @@ static TCGOp *copy_const_ptr(TCGOp **begin_op, TCGOp *op, void *ptr)
 
 static TCGOp *copy_extu_tl_i64(TCGOp **begin_op, TCGOp *op)
 {
+    #if 0
     if (TARGET_LONG_BITS == 32) {
         /* extu_i32_i64 */
         op = copy_extu_i32_i64(begin_op, op);
@@ -323,6 +332,7 @@ static TCGOp *copy_extu_tl_i64(TCGOp **begin_op, TCGOp *op)
         /* mov_i64 */
         op = copy_mov_i64(begin_op, op);
     }
+    #endif
     return op;
 }
 
@@ -638,8 +648,10 @@ void plugin_gen_disable_mem_helpers(void)
         return;
     }
     ptr = tcg_const_ptr(NULL);
+    #if 0
     tcg_gen_st_ptr(ptr, cpu_env, offsetof(CPUState, plugin_mem_cbs) -
                                  offsetof(ArchCPU, env));
+    #endif
     tcg_temp_free_ptr(ptr);
     tcg_ctx->plugin_insn->mem_helper = false;
 }
@@ -906,7 +918,7 @@ void plugin_gen_insn_start(CPUState *cpu, const DisasContextBase *db)
         pinsn->haddr = ptb->haddr1 + pinsn->vaddr - ptb->vaddr;
     } else {
         if (ptb->vaddr2 == -1) {
-            ptb->vaddr2 = TARGET_PAGE_ALIGN(db->pc_first);
+            ptb->vaddr2 = /* TARGET_PAGE_ALIGN */(db->pc_first);
             get_page_addr_code_hostp(cpu->env_ptr, ptb->vaddr2, &ptb->haddr2);
         }
         pinsn->haddr = ptb->haddr2 + pinsn->vaddr - ptb->vaddr2;

@@ -66,6 +66,10 @@
 #include "qemu/int128.h"
 #include "cpu.h"
 
+#ifndef TARGET_SPECIFIC
+#error nope
+#endif
+
 #if defined(CONFIG_USER_ONLY)
 /* sparc32plus has 64bit long but 32bit space address
  * this can make bad result with g2h() and h2g()

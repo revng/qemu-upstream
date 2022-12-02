@@ -91,6 +91,7 @@ static void accel_init_cpu_interfaces(AccelClass *ac)
     ac_name = object_class_get_name(OBJECT_CLASS(ac));
     g_assert(ac_name != NULL);
 
+    #define CPU_RESOLVING_TYPE "vrooom"
     acc_name = g_strdup_printf("%s-%s", ac_name, CPU_RESOLVING_TYPE);
     acc = object_class_by_name(acc_name);
     g_free(acc_name);
@@ -99,6 +100,7 @@ static void accel_init_cpu_interfaces(AccelClass *ac)
         object_class_foreach(accel_init_cpu_int_aux,
                              CPU_RESOLVING_TYPE, false, acc);
     }
+    #undef CPU_RESOLVING_TYPE
 }
 
 void accel_init_interfaces(AccelClass *ac)

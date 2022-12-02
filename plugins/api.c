@@ -46,10 +46,12 @@
 #include "qemu/plugin-memory.h"
 #include "hw/boards.h"
 #else
+#ifdef TARGET_SPECIFIC
 #include "qemu.h"
 #ifdef CONFIG_LINUX
 #include "loader.h"
 #endif
+#endif // TARGET_SPECIFIC
 #endif
 
 /* Uninstall and Reset handlers */
