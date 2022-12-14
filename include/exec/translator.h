@@ -21,9 +21,9 @@
 
 #include "qemu/bswap.h"
 #include "exec/exec-all.h"
-#ifdef TARGET_SPECIFIC
+#ifdef NEED_CPU_H
 #include "exec/cpu_ldst.h"
-#endif // TARGET_SPECIFIC
+#endif // NEED_CPU_H
 #include "exec/plugin-gen.h"
 #include "exec/translate-all.h"
 #include "tcg/tcg.h"

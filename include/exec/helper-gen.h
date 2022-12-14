@@ -78,9 +78,9 @@ static inline void glue(gen_helper_, name)(dh_retvar_decl(ret)          \
   tcg_gen_callN(HELPER(name), dh_retvar(ret), 7, args);                 \
 }
 
-#ifdef TARGET_SPECIFIC
+#ifdef NEED_CPU_H
 #include "helper.h"
-#endif // TARGET_SPECIFIC
+#endif // NEED_CPU_H
 #include "accel/tcg/tcg-runtime.h"
 #include "accel/tcg/plugin-helpers.h"
 

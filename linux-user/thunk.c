@@ -1,4 +1,4 @@
-#define TARGET_SPECIFIC
+#define NEED_CPU_H
 /*
  *  Generic thunking code to convert data between host and target CPU
  *

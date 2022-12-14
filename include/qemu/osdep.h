@@ -29,7 +29,7 @@
 
 #include "config-host.h"
 #ifdef NEED_CPU_H
-#ifdef TARGET_SPECIFIC
+#ifdef NEED_CPU_H
 #include CONFIG_TARGET
 
 #else
@@ -39,7 +39,7 @@
 #define CONFIG_TCG 1
 #define CONFIG_TCG_BUILTIN 1
 #define CONFIG_USER_ONLY 1
-#endif // TARGET_SPECIFIC
+#endif // NEED_CPU_H
 
 #else
 

@@ -20,7 +20,7 @@
 #ifndef I386_CPU_H
 #define I386_CPU_H
 
-#ifdef TARGET_SPECIFIC
+#ifdef NEED_CPU_H
 
 #include "sysemu/tcg.h"
 #include "cpu-qom.h"

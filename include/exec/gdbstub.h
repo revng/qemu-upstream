@@ -132,7 +132,7 @@ void gdb_signalled(CPUArchState *, int);
 
 void gdbserver_fork(CPUState *);
 
-#ifdef TARGET_SPECIFIC
+#ifdef NEED_CPU_H
 #ifdef NEED_CPU_H
 #include "cpu.h"
 
@@ -218,7 +218,7 @@ static inline uint8_t * gdb_get_reg_ptr(GByteArray *buf, int len)
 #endif
 
 #endif /* NEED_CPU_H */
-#endif // TARGET_SPECIFIC
+#endif // NEED_CPU_H
 
 /**
  * gdbserver_start: start the gdb server

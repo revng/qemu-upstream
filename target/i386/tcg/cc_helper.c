@@ -1,4 +1,4 @@
-#define TARGET_SPECIFIC
+#define NEED_CPU_H
 /*
  *  x86 condition code helpers
  *

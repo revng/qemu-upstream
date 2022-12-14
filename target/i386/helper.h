@@ -1,6 +1,6 @@
-#ifndef TARGET_SPECIFIC
+#ifndef NEED_CPU_H
 #error Do not include me
-#endif // TARGET_SPECIFICq
+#endif // NEED_CPU_Hq
 
 DEF_HELPER_FLAGS_4(cc_compute_all, TCG_CALL_NO_RWG_SE, tl, tl, tl, tl, int)
 DEF_HELPER_FLAGS_4(cc_compute_c, TCG_CALL_NO_RWG_SE, tl, tl, tl, tl, int)
