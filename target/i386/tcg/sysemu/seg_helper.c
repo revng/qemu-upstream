@@ -1,4 +1,4 @@
-#define NEED_CPU_H
+#define TARGET_SPECIFIC
 /*
  *  x86 segmentation related helpers: (sysemu-only code)
  *  TSS, interrupts, system calls, jumps and call/task gates, descriptors

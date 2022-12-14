@@ -1,4 +1,4 @@
-#define NEED_CPU_H
+#define TARGET_SPECIFIC
 /* Code for loading Linux executables.  Mostly linux kernel code.  */
 
 #include "qemu/osdep.h"

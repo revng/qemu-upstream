@@ -33,7 +33,7 @@
 
 #include "cpu-param.h"
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #ifndef TARGET_LONG_BITS
 # error TARGET_LONG_BITS must be defined in cpu-param.h
 #endif
@@ -79,7 +79,7 @@ typedef uint64_t target_ulong;
 #error TARGET_LONG_SIZE undefined
 #endif
 
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 
 #if !defined(CONFIG_USER_ONLY) && defined(CONFIG_TCG)
 

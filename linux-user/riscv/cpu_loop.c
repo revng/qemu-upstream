@@ -1,4 +1,4 @@
-#define NEED_CPU_H
+#define TARGET_SPECIFIC
 /*
  *  qemu user cpu loop
  *

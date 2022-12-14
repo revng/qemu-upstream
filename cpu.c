@@ -26,25 +26,25 @@
 #include "qemu/error-report.h"
 #include "migration/vmstate.h"
 #ifdef CONFIG_USER_ONLY
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #include "qemu.h"
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 #else
 #include "hw/core/sysemu-cpu-ops.h"
 #include "exec/address-spaces.h"
 #endif
 #include "sysemu/tcg.h"
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #include "sysemu/kvm.h"
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 #include "sysemu/replay.h"
 #include "exec/cpu-common.h"
 #include "exec/exec-all.h"
 #include "exec/translate-all.h"
 #include "exec/log.h"
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #include "hw/core/accel-cpu.h"
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 #include "trace/trace-root.h"
 #include "qemu/accel.h"
 

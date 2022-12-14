@@ -344,13 +344,13 @@ void tcg_gen_gvec_dup_i32(unsigned vece, uint32_t dofs, uint32_t s,
 void tcg_gen_gvec_dup_i64(unsigned vece, uint32_t dofs, uint32_t s,
                           uint32_t m, TCGv_i64);
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #if TARGET_LONG_BITS == 64
 # define tcg_gen_gvec_dup_tl  tcg_gen_gvec_dup_i64
 #else
 # define tcg_gen_gvec_dup_tl  tcg_gen_gvec_dup_i32
 #endif
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 
 void tcg_gen_gvec_shli(unsigned vece, uint32_t dofs, uint32_t aofs,
                        int64_t shift, uint32_t oprsz, uint32_t maxsz);
@@ -439,7 +439,7 @@ void tcg_gen_vec_shr16i_i32(TCGv_i32 d, TCGv_i32 a, int32_t);
 void tcg_gen_vec_sar8i_i32(TCGv_i32 d, TCGv_i32 a, int32_t);
 void tcg_gen_vec_sar16i_i32(TCGv_i32 d, TCGv_i32 a, int32_t);
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #if TARGET_LONG_BITS == 64
 #define tcg_gen_vec_add8_tl  tcg_gen_vec_add8_i64
 #define tcg_gen_vec_sub8_tl  tcg_gen_vec_sub8_i64
@@ -468,6 +468,6 @@ void tcg_gen_vec_sar16i_i32(TCGv_i32 d, TCGv_i32 a, int32_t);
 #define tcg_gen_vec_shr16i_tl tcg_gen_vec_shr16i_i32
 #define tcg_gen_vec_sar16i_tl tcg_gen_vec_sar16i_i32
 #endif
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 
 #endif

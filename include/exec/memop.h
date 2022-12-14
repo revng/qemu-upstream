@@ -35,7 +35,7 @@ typedef enum MemOp {
     MO_LE    = 0,
     MO_BE    = MO_BSWAP,
 #endif
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #ifdef NEED_CPU_H
 #if TARGET_BIG_ENDIAN
     MO_TE    = MO_BE,
@@ -43,7 +43,7 @@ typedef enum MemOp {
     MO_TE    = MO_LE,
 #endif
 #endif
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 
     /*
      * MO_UNALN accesses are never checked for alignment.
@@ -67,7 +67,7 @@ typedef enum MemOp {
      */
     MO_ASHIFT = 5,
     MO_AMASK = 0x7 << MO_ASHIFT,
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #ifdef NEED_CPU_H
 #ifdef TARGET_ALIGNED_ONLY
     MO_ALIGN = 0,
@@ -77,7 +77,7 @@ typedef enum MemOp {
     MO_UNALN = 0,
 #endif
 #endif
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
     MO_ALIGN_2  = 1 << MO_ASHIFT,
     MO_ALIGN_4  = 2 << MO_ASHIFT,
     MO_ALIGN_8  = 3 << MO_ASHIFT,
@@ -111,7 +111,7 @@ typedef enum MemOp {
     MO_BESL  = MO_BE | MO_SL,
     MO_BESQ  = MO_BE | MO_SQ,
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #ifdef NEED_CPU_H
     MO_TEUW  = MO_TE | MO_UW,
     MO_TEUL  = MO_TE | MO_UL,
@@ -121,7 +121,7 @@ typedef enum MemOp {
     MO_TESL  = MO_TE | MO_SL,
     MO_TESQ  = MO_TE | MO_SQ,
 #endif
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 
     MO_SSIZE = MO_SIZE | MO_SIGN,
 } MemOp;

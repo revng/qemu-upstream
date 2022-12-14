@@ -50,7 +50,7 @@
 #define dh_ctype(t) dh_ctype_##t
 
 #ifdef NEED_CPU_H
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 # ifdef TARGET_LONG_BITS
 #  if TARGET_LONG_BITS == 32
 #   define dh_alias_tl i32
@@ -61,7 +61,7 @@
 #  endif
 # endif
 # define dh_ctype_tl target_ulong
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 #endif
 # define dh_alias_env ptr
 # define dh_ctype_env CPUArchState *

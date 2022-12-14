@@ -3467,7 +3467,7 @@ foreach target : target_dirs
   arch_deps += target_specific.dependencies()
 
   foreach x : target_arch_srcs + genh
-    message('NEED_CPU_H: @0@'.format(x))
+    message('TARGET_SPECIFIC: @0@'.format(x))
   endforeach
   foreach x : arch_srcs
     message('TARGET_INDEPENDENTxxx: @0@'.format(x))

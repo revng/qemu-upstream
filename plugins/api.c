@@ -46,12 +46,12 @@
 #include "qemu/plugin-memory.h"
 #include "hw/boards.h"
 #else
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #include "qemu.h"
 #ifdef CONFIG_LINUX
 #include "loader.h"
 #endif
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 #endif
 
 /* Uninstall and Reset handlers */

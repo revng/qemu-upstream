@@ -1,4 +1,4 @@
-#define NEED_CPU_H
+#define TARGET_SPECIFIC
 /*
  * Copyright (c) 2003-2008 Fabrice Bellard
  * Copyright (C) 2016 Veertu Inc,

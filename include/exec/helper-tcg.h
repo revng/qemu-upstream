@@ -58,9 +58,9 @@
     | dh_typemask(t2, 2) | dh_typemask(t3, 3) | dh_typemask(t4, 4) \
     | dh_typemask(t5, 5) | dh_typemask(t6, 6) | dh_typemask(t7, 7) },
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #include "helper.h"
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 #include "accel/tcg/tcg-runtime.h"
 #include "accel/tcg/plugin-helpers.h"
 

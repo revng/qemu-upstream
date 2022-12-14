@@ -1,4 +1,4 @@
-#define NEED_CPU_H
+#define TARGET_SPECIFIC
 /****************************************************************************/
 /*
  *  QEMU bFLT binary loader.  Based on linux/fs/binfmt_flat.c

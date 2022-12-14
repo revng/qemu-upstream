@@ -1,4 +1,4 @@
-#define NEED_CPU_H
+#define TARGET_SPECIFIC
 /*
  * ARM Compatible Semihosting Console Support.
  *

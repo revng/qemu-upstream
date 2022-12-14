@@ -80,7 +80,7 @@ typedef uint64_t tcg_target_ulong;
 #error unsupported
 #endif
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 /* Oversized TCG guests make things like MTTCG hard
  * as we can't use atomics for cputlb updates.
  */
@@ -313,7 +313,7 @@ typedef enum TCGType {
 #endif
 
     /* An alias for the size of the target "long", aka register.  */
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #if TARGET_LONG_BITS == 64
     TCG_TYPE_TL = TCG_TYPE_I64,
 #else
@@ -397,7 +397,7 @@ typedef struct {
     unsigned size;
 } TCGv_dyn;
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #if TARGET_LONG_BITS == 32
 #define TCGv TCGv_i32
 #elif TARGET_LONG_BITS == 64
@@ -697,7 +697,7 @@ static inline TCGTemp *tcgv_i32_temp(TCGv_i32 v)
 {
     uintptr_t o = (uintptr_t)v;
     TCGTemp *t = (void *)tcg_ctx + o;
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
     tcg_debug_assert(offsetof(TCGContext, temps[temp_idx(t)]) == o);
 #endif
     return t;
@@ -781,7 +781,7 @@ static inline void tcg_set_insn_param(TCGOp *op, int arg, TCGArg v)
     op->args[arg] = v;
 }
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 static inline target_ulong tcg_get_insn_start_param(TCGOp *op, int arg)
 {
 #if TARGET_LONG_BITS <= TCG_TARGET_REG_BITS
@@ -1268,7 +1268,7 @@ uint64_t dup_const(unsigned vece, uint64_t c);
         : (qemu_build_not_reached_always(), 0))                    \
      : dup_const(VECE, C))
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #if TARGET_LONG_BITS == 64
 # define dup_const_tl  dup_const
 #else

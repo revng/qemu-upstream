@@ -8,7 +8,7 @@
 #ifndef I386_CPU_PARAM_H
 #define I386_CPU_PARAM_H
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 
 #ifdef TARGET_X86_64
 # define TARGET_LONG_BITS             64

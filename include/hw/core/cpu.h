@@ -1046,7 +1046,7 @@ bool target_words_bigendian(void);
 
 void page_size_init(void);
 
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #ifdef NEED_CPU_H
 
 #ifdef CONFIG_SOFTMMU
@@ -1063,7 +1063,7 @@ extern const VMStateDescription vmstate_cpu_common;
 #endif /* CONFIG_SOFTMMU */
 
 #endif /* NEED_CPU_H */
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 
 #define UNASSIGNED_CPU_INDEX -1
 #define UNASSIGNED_CLUSTER_INDEX -1

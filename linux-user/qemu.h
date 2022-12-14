@@ -2,9 +2,9 @@
 #define QEMU_H
 
 #include "cpu.h"
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #include "exec/cpu_ldst.h"
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 
 #undef DEBUG_REMAP
 

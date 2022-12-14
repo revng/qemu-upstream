@@ -37,9 +37,9 @@
 #include "hw/i386/apic.h"
 #endif
 #include "sysemu/cpus.h"
-#ifdef NEED_CPU_H
+#ifdef TARGET_SPECIFIC
 #include "exec/cpu-all.h"
-#endif // NEED_CPU_H
+#endif // TARGET_SPECIFIC
 #include "sysemu/cpu-timers.h"
 #include "sysemu/replay.h"
 #include "sysemu/tcg.h"
