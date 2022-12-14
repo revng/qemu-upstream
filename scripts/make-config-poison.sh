@@ -9,6 +9,9 @@ fi
 exec sed -n \
   -e' /CONFIG_TCG/d' \
   -e '/CONFIG_USER_ONLY/d' \
+  -e '/CONFIG_I386_DIS/d' \
+  -e '/CONFIG_LINUX_USER/d' \
+  -e '/CONFIG_QEMU_INTERP_PREFIX/d' \
   -e '/^#define / {' \
   -e    's///' \
   -e    's/ .*//' \

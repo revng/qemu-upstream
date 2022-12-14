@@ -63,11 +63,11 @@ if have_system
     'tpm',
   ]
 endif
-if have_system or have_tools
+#if have_system or have_tools
   qapi_all_modules += [
     'ui',
   ]
-endif
+#endif
 
 qapi_nonmodule_outputs = [
   'qapi-introspect.c', 'qapi-introspect.h',

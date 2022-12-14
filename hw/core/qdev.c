@@ -25,6 +25,7 @@
    inherit from a particular bus (e.g. PCI or I2C) rather than
    this API directly.  */
 
+#define NO_MACROS
 #include "qemu/osdep.h"
 #include "qapi/error.h"
 #include "qapi/qapi-events-qdev.h"

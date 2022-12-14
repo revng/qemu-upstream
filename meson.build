@@ -2866,6 +2866,7 @@ qom_ss = ss.source_set()
 softmmu_ss = ss.source_set()
 specific_fuzz_ss = ss.source_set()
 specific_ss = ss.source_set()
+target_specific_ss = ss.source_set()
 stub_ss = ss.source_set()
 trace_ss = ss.source_set()
 user_ss = ss.source_set()
@@ -3377,11 +3378,16 @@ foreach target : target_dirs
   config_target = config_target_mak[target]
   target_name = config_target['TARGET_NAME']
   target_base_arch = config_target['TARGET_BASE_ARCH']
-  arch_srcs = [config_target_h[target]]
+  arch_srcs = []
   arch_deps = []
-  c_args = ['-DNEED_CPU_H',
+  c_args = ['-DCONFIG_DEVICES="@0@-config-devices.h"'.format(target)]
+
+  target_arch_srcs = [config_target_h[target]]
+  target_arch_deps = []
+  target_c_args = ['-DNEED_CPU_H',
             '-DCONFIG_TARGET="@0@-config-target.h"'.format(target),
             '-DCONFIG_DEVICES="@0@-config-devices.h"'.format(target)]
+
   link_args = emulator_link_args
 
   config_target += config_host
@@ -3408,8 +3414,8 @@ foreach target : target_dirs
     target_inc += common_user_inc
     if target_base_arch in target_user_arch
       t = target_user_arch[target_base_arch].apply(config_target, strict: false)
-      arch_srcs += t.sources()
-      arch_deps += t.dependencies()
+      target_arch_srcs += t.sources()
+      target_arch_deps += t.dependencies()
     endif
     if 'CONFIG_LINUX_USER' in config_target
       base_dir = 'linux-user'
@@ -3427,9 +3433,9 @@ foreach target : target_dirs
     )
     if 'CONFIG_LINUX_USER' in config_target
       dir = base_dir / abi
-      arch_srcs += files(dir / 'signal.c', dir / 'cpu_loop.c')
+      target_arch_srcs += files(dir / 'signal.c', dir / 'cpu_loop.c')
       if config_target.has_key('TARGET_SYSTBL_ABI')
-        arch_srcs += \
+        target_arch_srcs += \
           syscall_nr_generators[abi].process(base_dir / abi / config_target['TARGET_SYSTBL'],
                                              extra_args : config_target['TARGET_SYSTBL_ABI'])
       endif
@@ -3446,8 +3452,11 @@ foreach target : target_dirs
   endif
 
   t = target_arch[target_base_arch].apply(config_target, strict: false)
-  arch_srcs += t.sources()
-  arch_deps += t.dependencies()
+  target_arch_srcs += t.sources()
+  target_arch_deps += t.dependencies()
+  really_target_specific = target_specific_ss.apply(config_target, strict: false)
+  target_arch_srcs += really_target_specific.sources()
+  target_arch_deps += really_target_specific.dependencies()
 
   target_common = common_ss.apply(config_target, strict: false)
   objects = common_all.extract_objects(target_common.sources())
@@ -3457,14 +3466,30 @@ foreach target : target_dirs
   arch_srcs += target_specific.sources()
   arch_deps += target_specific.dependencies()
 
+  foreach x : target_arch_srcs + genh
+    message('TARGET_SPECIFIC: @0@'.format(x))
+  endforeach
+  foreach x : arch_srcs
+    message('TARGET_INDEPENDENTxxx: @0@'.format(x))
+  endforeach
+
+  target_lib = static_library('qemu-target-' + target,
+                 sources: target_arch_srcs + genh,
+                 dependencies: arch_deps + target_arch_deps,
+                 include_directories: target_inc,
+                 c_args: target_c_args,
+                 build_by_default: false,
+                 name_suffix: 'fa')
+
   lib = static_library('qemu-' + target,
-                 sources: arch_srcs + genh,
+                 sources: arch_srcs,
                  dependencies: arch_deps,
                  objects: objects,
                  include_directories: target_inc,
                  c_args: c_args,
                  build_by_default: false,
-                 name_suffix: 'fa')
+                 name_suffix: 'fa',
+                 link_with: [target_lib])
 
   if target.endswith('-softmmu')
     execs = [{

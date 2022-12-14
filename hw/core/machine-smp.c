@@ -17,6 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#define NO_MACROS
 #include "qemu/osdep.h"
 #include "hw/boards.h"
 #include "qapi/error.h"

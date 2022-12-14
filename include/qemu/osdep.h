@@ -42,7 +42,17 @@
 #endif // TARGET_SPECIFIC
 
 #else
+
+#ifndef NO_MACROS
+#define CONFIG_I386_DIS 1
+#define CONFIG_LINUX_USER 1
+#define CONFIG_QEMU_INTERP_PREFIX "/usr/gnemul/qemu-x86_64"
+#define CONFIG_TCG 1
+#define CONFIG_TCG_BUILTIN 1
+#define CONFIG_USER_ONLY 1
+#endif
 #include "exec/poison.h"
+
 #endif
 
 

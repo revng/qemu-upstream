@@ -18,6 +18,7 @@
  * <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+#define NO_MACROS
 #include "qemu/osdep.h"
 #include "qapi/error.h"
 #include "hw/core/cpu.h"

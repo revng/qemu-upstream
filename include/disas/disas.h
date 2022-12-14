@@ -7,9 +7,6 @@
 
 typedef uint64_t tb_page_addr_t;
 
-#ifdef NEED_CPU_H
-#include "cpu.h"
-
 /* Disassemble this for me please... (debugging). */
 void disas(FILE *out, const void *code, unsigned long size);
 void target_disas(FILE *out, CPUState *cpu, tb_page_addr_t code,
@@ -22,7 +19,6 @@ char *plugin_disas(CPUState *cpu, uint64_t addr, size_t size);
 
 /* Look up symbol for debugging purpose.  Returns "" if unknown. */
 const char *lookup_symbol(tb_page_addr_t orig_addr);
-#endif
 
 struct syminfo;
 struct elf32_sym;

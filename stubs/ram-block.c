@@ -1,3 +1,4 @@
+#define NO_MACROS
 #include "qemu/osdep.h"
 #include "exec/ramlist.h"
 #include "exec/cpu-common.h"

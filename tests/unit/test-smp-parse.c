@@ -10,6 +10,7 @@
  * See the COPYING.LIB file in the top-level directory.
  */
 
+#define NO_MACROS
 #include "qemu/osdep.h"
 #include "qom/object.h"
 #include "qemu/module.h"

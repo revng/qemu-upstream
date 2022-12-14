@@ -45,4 +45,4 @@ subdir('sparc')
 subdir('x86_64')
 subdir('xtensa')
 
-specific_ss.add_all(when: 'CONFIG_LINUX_USER', if_true: linux_user_ss)
+target_specific_ss.add_all(when: 'CONFIG_LINUX_USER', if_true: linux_user_ss)

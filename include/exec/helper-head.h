@@ -62,10 +62,10 @@
 # endif
 # define dh_ctype_tl target_ulong
 #endif // TARGET_SPECIFIC
+#endif
 # define dh_alias_env ptr
 # define dh_ctype_env CPUArchState *
 # define dh_typecode_env dh_typecode_ptr
-#endif
 
 /* We can't use glue() here because it falls foul of C preprocessor
    recursive expansion rules.  */

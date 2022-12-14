@@ -50,7 +50,7 @@
 #include "internal.h"
 
 // WIP: from cpu-all.h
-#include "exec/cpu-defs.h"
+// #include "exec/cpu-defs.h"
 #define EXCP_INTERRUPT  0x10000 /* async interruption */
 #define EXCP_HLT        0x10001 /* hlt instruction reached */
 #define EXCP_DEBUG      0x10002 /* cpu stopped after a breakpoint or singlestep */
@@ -58,6 +58,7 @@
 #define EXCP_YIELD      0x10004 /* cpu wants to yield timeslice to another */
 #define EXCP_ATOMIC     0x10005 /* stop-the-world and emulate atomic */
 CPUState *env_cpu(CPUArchState *env);
+typedef struct CPUNegativeOffsetState CPUNegativeOffsetState;
 CPUNegativeOffsetState *cpu_neg(CPUState *cpu);
 int cpu_exec(CPUState *cpu);
 void tcg_exec_realizefn(CPUState *cpu, Error **errp);
@@ -877,6 +878,7 @@ static inline bool cpu_handle_interrupt(CPUState *cpu,
     }
     #endif
 
+#if 0
     /* Finally, check if we need to exit to the main loop.  */
     if (unlikely(qatomic_read(&cpu->exit_request))
         || (icount_enabled()
@@ -888,6 +890,7 @@ static inline bool cpu_handle_interrupt(CPUState *cpu,
         }
         return true;
     }
+#endif
 
     return false;
 }
@@ -906,7 +909,9 @@ static inline void cpu_loop_exec_tb(CPUState *cpu, TranslationBlock *tb,
     }
 
     *last_tb = NULL;
+#if 0
     insns_left = qatomic_read(&cpu_neg(cpu)->icount_decr.u32);
+#endif
     if (insns_left < 0) {
         /* Something asked us to stop executing chained TBs; just
          * continue round the main loop. Whatever requested the exit
