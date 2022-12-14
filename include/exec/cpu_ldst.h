@@ -66,7 +66,7 @@
 #include "qemu/int128.h"
 #include "cpu.h"
 
-#ifndef TARGET_SPECIFIC
+#ifndef NEED_CPU_H
 #error nope
 #endif
 

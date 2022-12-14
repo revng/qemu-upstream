@@ -66,9 +66,9 @@ extern uintptr_t guest_base;
 
 #include "elf.h"
 #include "exec/log.h"
-#ifdef TARGET_SPECIFIC
+#ifdef NEED_CPU_H
 #include "tcg/tcg-ldst.h"
-#endif // TARGET_SPECIFIC
+#endif // NEED_CPU_H
 #include "tcg-internal.h"
 
 #ifdef CONFIG_TCG_INTERPRETER

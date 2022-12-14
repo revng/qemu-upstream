@@ -1,4 +1,4 @@
-#define TARGET_SPECIFIC
+#define NEED_CPU_H
 /*
  * Copyright (c) 2018-2019 Maxime Villard, All rights reserved.
  *

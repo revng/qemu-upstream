@@ -1,4 +1,4 @@
-#define TARGET_SPECIFIC
+#define NEED_CPU_H
 /*
     NetWinder Floating Point Emulator
     (c) Rebel.com, 1998-1999

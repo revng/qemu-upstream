@@ -1,4 +1,4 @@
-#define TARGET_SPECIFIC
+#define NEED_CPU_H
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * LoongArch emulation of Linux signals

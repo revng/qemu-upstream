@@ -37,9 +37,9 @@ dh_ctype(ret) HELPER(name) (dh_ctype(t1), dh_ctype(t2), dh_ctype(t3), \
 
 #define IN_HELPER_PROTO
 
-#ifdef TARGET_SPECIFIC
+#ifdef NEED_CPU_H
 #include "helper.h"
-#endif // TARGET_SPECIFIC
+#endif // NEED_CPU_H
 #include "accel/tcg/tcg-runtime.h"
 #include "accel/tcg/plugin-helpers.h"
 

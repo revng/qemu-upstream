@@ -21,13 +21,13 @@
 #define EXEC_ALL_H
 
 #include "cpu.h"
-#ifdef TARGET_SPECIFIC
+#ifdef NEED_CPU_H
 #ifdef CONFIG_TCG
 #include "exec/cpu_ldst.h"
 #endif
 #else
 #include "hw/core/cpu.h"
-#endif // TARGET_SPECIFIC
+#endif // NEED_CPU_H
 
 /* allow to see translation results - the slowdown should be negligible, so we leave it */
 #define DEBUG_DISAS

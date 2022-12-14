@@ -1,4 +1,4 @@
-#define TARGET_SPECIFIC
+#define NEED_CPU_H
 /*
  * Copyright (C) 2016 Veertu Inc,
  * Copyright (C) 2017 Google Inc,
