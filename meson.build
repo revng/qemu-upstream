@@ -3448,7 +3448,7 @@ foreach target : target_dirs
                                 input: files(config_target['TARGET_XML_FILES'].split()),
                                 command: [feature_to_c, '@INPUT@'],
                                 capture: true)
-    arch_srcs += gdbstub_xml
+    target_arch_srcs += gdbstub_xml
   endif
 
   t = target_arch[target_base_arch].apply(config_target, strict: false)
