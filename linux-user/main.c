@@ -1,4 +1,3 @@
-#define NEED_CPU_H
 /*
  *  qemu user main
  *

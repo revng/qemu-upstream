@@ -1,4 +1,3 @@
-#define NEED_CPU_H
 /*
  *  x86 exception helpers - user-mode specific code
  *

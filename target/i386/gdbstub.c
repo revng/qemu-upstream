@@ -1,4 +1,3 @@
-#define NEED_CPU_H
 /*
  * x86 gdb server stub
  *

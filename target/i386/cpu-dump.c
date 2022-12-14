@@ -1,4 +1,3 @@
-#define NEED_CPU_H
 /*
  *  i386 CPU dump to FILE
  *

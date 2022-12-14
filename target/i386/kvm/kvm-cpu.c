@@ -1,4 +1,3 @@
-#define NEED_CPU_H
 /*
  * x86 KVM CPU type initialization
  *

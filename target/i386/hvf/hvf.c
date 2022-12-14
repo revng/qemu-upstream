@@ -1,4 +1,3 @@
-#define NEED_CPU_H
 /* Copyright 2008 IBM Corporation
  *           2008 Red Hat, Inc.
  * Copyright 2011 Intel Corporation

@@ -1,4 +1,3 @@
-#define NEED_CPU_H
 /*
  *  i386 helpers (without register variable usage)
  *

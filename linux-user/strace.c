@@ -1,4 +1,3 @@
-#define NEED_CPU_H
 #include "qemu/osdep.h"
 
 #include <sys/ipc.h>

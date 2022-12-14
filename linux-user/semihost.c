@@ -1,4 +1,3 @@
-#define NEED_CPU_H
 /*
  * ARM Compatible Semihosting Console Support.
  *

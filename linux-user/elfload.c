@@ -1,4 +1,3 @@
-#define NEED_CPU_H
 /* This is the Linux kernel elf-loading code, ported into user space */
 #include "qemu/osdep.h"
 #include <sys/param.h>
