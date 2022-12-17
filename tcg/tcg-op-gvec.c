@@ -1835,6 +1835,36 @@ void tcg_gen_gvec_dup_imm(unsigned vece, uint32_t dofs, uint32_t oprsz,
     do_dup(vece, dofs, oprsz, maxsz, NULL, NULL, x);
 }
 
+
+void tcg_gen_gvec_constant(unsigned vece, TCGv_env env, uint32_t dofs,
+                           void *arr, uint32_t maxsz)
+{
+    uint32_t elsz = memop_size(vece);
+    for (uint32_t i = 0; i < maxsz/elsz; ++i)
+    {
+        uint32_t off = i*elsz;
+        uint8_t *elptr = (uint8_t *)arr + off;
+        switch (vece) {
+        case MO_8:
+            tcg_gen_st8_i32(tcg_constant_i32(*elptr),
+                            env, dofs + off);
+            break;
+        case MO_16:
+            tcg_gen_st16_i32(tcg_constant_i32(*(uint16_t *) elptr),
+                             env, dofs + off);
+            break;
+        case MO_32:
+            tcg_gen_st_i32(tcg_constant_i32(*(uint32_t *) elptr),
+                             env, dofs + off);
+            break;
+        case MO_64:
+            tcg_gen_st_i64(tcg_constant_i64(*(uint64_t *) elptr),
+                           env, dofs + off);
+            break;
+        }
+    }
+}
+
 void tcg_gen_gvec_not(unsigned vece, uint32_t dofs, uint32_t aofs,
                       uint32_t oprsz, uint32_t maxsz)
 {

@@ -331,6 +331,8 @@ void tcg_gen_gvec_dup_mem(unsigned vece, uint32_t dofs, uint32_t aofs,
                           uint32_t s, uint32_t m);
 void tcg_gen_gvec_dup_imm(unsigned vece, uint32_t dofs, uint32_t s,
                           uint32_t m, uint64_t imm);
+void tcg_gen_gvec_constant(unsigned vece, TCGv_env env, uint32_t dofs,
+                           void *arr, uint32_t maxsz);
 void tcg_gen_gvec_dup_i32(unsigned vece, uint32_t dofs, uint32_t s,
                           uint32_t m, TCGv_i32);
 void tcg_gen_gvec_dup_i64(unsigned vece, uint32_t dofs, uint32_t s,
