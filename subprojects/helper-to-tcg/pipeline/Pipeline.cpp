@@ -62,6 +62,12 @@ cl::opt<std::string> TcgGlobalMappingsName(
              "into a struct to TCG globals"),
     cl::init("mappings"), cl::cat(Cat));
 
+// Options for TcgTempAllocation
+cl::opt<uint32_t>
+    GuestPtrSize("guest-ptr-size",
+                 cl::desc("Pointer size of the guest architecture"),
+                 cl::init(32), cl::cat(Cat));
+
 // Define a TargetTransformInfo (TTI) subclass, this allows for overriding
 // common per-llvm-target information expected by other LLVM passes, such
 // as the width of the largest scalar/vector registers.  Needed for consistent

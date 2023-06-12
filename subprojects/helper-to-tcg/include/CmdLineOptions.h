@@ -25,3 +25,5 @@ extern llvm::cl::list<std::string> InputFiles;
 extern llvm::cl::opt<bool> TranslateAllHelpers;
 // Options for PrepareForTcgPass
 extern llvm::cl::opt<std::string> TcgGlobalMappingsName;
+// Options for TcgTempAllocation
+extern llvm::cl::opt<uint32_t> GuestPtrSize;
