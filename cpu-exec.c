@@ -31,6 +31,7 @@
 #include "hw/i386/apic.h"
 #endif
 #include "sysemu/replay.h"
+#include "hqemu.h"
 
 /* -icount align implementation. */
 
@@ -104,6 +105,7 @@ static void print_delay(const SyncClocks *sc)
 static void init_delay_params(SyncClocks *sc,
                               const CPUState *cpu)
 {
+    memset(sc, 0, sizeof(SyncClocks));
     if (!icount_align_option) {
         return;
     }
@@ -159,6 +161,10 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, uint8_t *tb_ptr)
     trace_exec_tb_exit((void *) (next_tb & ~TB_EXIT_MASK),
                        next_tb & TB_EXIT_MASK);
 
+#if defined(CONFIG_LLVM)
+    if ((next_tb & TB_EXIT_MASK) == TB_EXIT_LLVM)
+        return next_tb;
+#endif
     if ((next_tb & TB_EXIT_MASK) > TB_EXIT_IDX1) {
         /* We didn't start executing this TB (eg because the instruction
          * counter hit zero); we must restore the guest PC to the address
@@ -197,7 +203,7 @@ static void cpu_exec_nocache(CPUState *cpu, int max_cycles,
     tb = tb_gen_code(cpu, orig_tb->pc, orig_tb->cs_base, orig_tb->flags,
                      max_cycles | CF_NOCACHE
                          | (ignore_icount ? CF_IGNORE_ICOUNT : 0));
-    tb->orig_tb = tcg_ctx.tb_ctx.tb_invalidated_flag ? NULL : orig_tb;
+    tb->orig_tb = tcg_ctx.tb_ctx->tb_invalidated_flag ? NULL : orig_tb;
     cpu->current_tb = tb;
     /* execute the generated code */
     trace_exec_tb_nocache(tb, tb->pc);
@@ -218,13 +224,13 @@ static TranslationBlock *tb_find_physical(CPUState *cpu,
     tb_page_addr_t phys_pc, phys_page1;
     target_ulong virt_page2;
 
-    tcg_ctx.tb_ctx.tb_invalidated_flag = 0;
+    tcg_ctx.tb_ctx->tb_invalidated_flag = 0;
 
     /* find translated block using physical mappings */
     phys_pc = get_page_addr_code(env, pc);
     phys_page1 = phys_pc & TARGET_PAGE_MASK;
-    h = tb_phys_hash_func(phys_pc);
-    ptb1 = &tcg_ctx.tb_ctx.tb_phys_hash[h];
+    h = tb_phys_hash_func(pc);
+    ptb1 = &tcg_ctx.tb_ctx->tb_phys_hash[h];
     for(;;) {
         tb = *ptb1;
         if (!tb) {
@@ -253,8 +259,8 @@ static TranslationBlock *tb_find_physical(CPUState *cpu,
 
     /* Move the TB to the head of the list */
     *ptb1 = tb->phys_hash_next;
-    tb->phys_hash_next = tcg_ctx.tb_ctx.tb_phys_hash[h];
-    tcg_ctx.tb_ctx.tb_phys_hash[h] = tb;
+    tb->phys_hash_next = tcg_ctx.tb_ctx->tb_phys_hash[h];
+    tcg_ctx.tb_ctx->tb_phys_hash[h] = tb;
     return tb;
 }
 
@@ -315,6 +321,10 @@ static inline TranslationBlock *tb_find_fast(CPUState *cpu)
                  tb->flags != flags)) {
         tb = tb_find_slow(cpu, pc, cs_base, flags);
     }
+
+    itlb_update_entry(env, tb);
+    ibtc_update_entry(env, tb);
+
     return tb;
 }
 
@@ -492,29 +502,23 @@ int cpu_exec(CPUState *cpu)
                 tb = tb_find_fast(cpu);
                 /* Note: we do it here to avoid a gcc bug on Mac OS X when
                    doing it in tb_find_slow */
-                if (tcg_ctx.tb_ctx.tb_invalidated_flag) {
+                if (tcg_ctx.tb_ctx->tb_invalidated_flag) {
                     /* as some TB could have been invalidated because
                        of memory exceptions while generating the code, we
                        must recompute the hash index here */
                     next_tb = 0;
-                    tcg_ctx.tb_ctx.tb_invalidated_flag = 0;
+                    tcg_ctx.tb_ctx->tb_invalidated_flag = 0;
                 }
                 if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
                     qemu_log("Trace %p [" TARGET_FMT_lx "] %s\n",
                              tb->tc_ptr, tb->pc, lookup_symbol(tb->pc));
                 }
-                /* see if we can patch the calling TB. When the TB
-                   spans two pages, we cannot safely do a direct
-                   jump. */
-                if (next_tb != 0 && tb->page_addr[1] == -1
-                    && !qemu_loglevel_mask(CPU_LOG_TB_NOCHAIN)) {
-                    tb_add_jump((TranslationBlock *)(next_tb & ~TB_EXIT_MASK),
-                                next_tb & TB_EXIT_MASK, tb);
-                }
+
+                tracer_exec_tb(cpu->env_ptr, next_tb, tb);
                 tb_unlock();
                 if (likely(!cpu->exit_request)) {
                     trace_exec_tb(tb, tb->pc);
-                    tc_ptr = tb->tc_ptr;
+                    tc_ptr = tb->opt_ptr;
                     /* execute the generated code */
                     cpu->current_tb = tb;
                     next_tb = cpu_tb_exec(cpu, tc_ptr);
@@ -533,9 +537,14 @@ int cpu_exec(CPUState *cpu)
                          */
                         smp_rmb();
                         next_tb = 0;
+
+                        tracer_reset(cpu->env_ptr);
                         break;
                     case TB_EXIT_ICOUNT_EXPIRED:
                     {
+#if defined(CONFIG_LLVM)
+                        break;
+#endif
                         /* Instruction counter expired.  */
                         int insns_left = cpu->icount_decr.u32;
                         if (cpu->icount_extra && insns_left >= 0) {
@@ -590,6 +599,8 @@ int cpu_exec(CPUState *cpu)
 #endif /* buggy compiler */
             cpu->can_do_io = 1;
             tb_lock_reset();
+
+            tracer_reset(cpu->env_ptr);
         }
     } /* for(;;) */
 

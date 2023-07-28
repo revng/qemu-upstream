@@ -158,6 +158,8 @@ GENERATED_HEADERS += hmp-commands.h hmp-commands-info.h qmp-commands-old.h
 
 endif # CONFIG_SOFTMMU
 
+include $(SRC_PATH)/llvm/hqemu.mk
+
 # Workaround for http://gcc.gnu.org/PR55489, see configure.
 %/translate.o: QEMU_CFLAGS += $(TRANSLATE_OPT_CFLAGS)
 
@@ -189,8 +191,8 @@ all-obj-$(CONFIG_SOFTMMU) += $(crypto-obj-y)
 $(QEMU_PROG_BUILD): config-devices.mak
 
 # build either PROG or PROGW
-$(QEMU_PROG_BUILD): $(all-obj-y) ../libqemuutil.a ../libqemustub.a
-	$(call LINK, $(filter-out %.mak, $^))
+$(QEMU_PROG_BUILD): $(all-obj-y) ../libqemuutil.a ../libqemustub.a $(LLVM_BITCODE)
+	$(call LINK, $(filter-out %.mak %.bc, $^))
 ifdef CONFIG_DARWIN
 	$(call quiet-command,Rez -append $(SRC_PATH)/pc-bios/qemu.rsrc -o $@,"  REZ   $(TARGET_DIR)$@")
 	$(call quiet-command,SetFile -a C $@,"  SETFILE $(TARGET_DIR)$@")
@@ -224,6 +226,9 @@ ifdef CONFIG_TRACE_SYSTEMTAP
 	$(INSTALL_DIR) "$(DESTDIR)$(qemu_datadir)/../systemtap/tapset"
 	$(INSTALL_DATA) $(QEMU_PROG).stp-installed "$(DESTDIR)$(qemu_datadir)/../systemtap/tapset/$(QEMU_PROG).stp"
 	$(INSTALL_DATA) $(QEMU_PROG)-simpletrace.stp "$(DESTDIR)$(qemu_datadir)/../systemtap/tapset/$(QEMU_PROG)-simpletrace.stp"
+endif
+ifneq ($(LLVM_BITCODE),)
+	$(INSTALL) -m 644 $(LLVM_BITCODE) "$(DESTDIR)$(bindir)"
 endif
 
 GENERATED_HEADERS += config-target.h

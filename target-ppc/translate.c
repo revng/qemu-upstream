@@ -28,7 +28,13 @@
 #include "exec/helper-gen.h"
 
 #include "trace-tcg.h"
+#include "hqemu.h"
 
+#if defined(CONFIG_USER_ONLY)
+#define IS_USER(s) 1
+#else
+#define IS_USER(s) (s->mem_idx == MMU_USER_IDX)
+#endif
 
 #define CPU_SINGLE_STEP 0x1
 #define CPU_BRANCH_STEP 0x2
@@ -180,6 +186,8 @@ void ppc_translate_init(void)
                                              offsetof(CPUPPCState, access_type), "access_type");
 
     done_init = 1;
+
+    copy_tcg_context_global();
 }
 
 /* internal defines */
@@ -11479,7 +11487,12 @@ void gen_intermediate_code(CPUPPCState *env, struct TranslationBlock *tb)
         max_insns = TCG_MAX_INSNS;
     }
 
-    gen_tb_start(tb);
+    if (!build_llvm(env)) {
+        gen_tb_start(tb);
+        if (tracer_mode != TRANS_MODE_NONE)
+            tcg_gen_hotpatch(IS_USER(ctxp), tracer_mode == TRANS_MODE_HYBRIDS ||
+                                            tracer_mode == TRANS_MODE_HYBRIDM);
+    }
     tcg_clear_temp_count();
     /* Set env in case of segfault during code fetch */
     while (ctx.exception == POWERPC_EXCP_NONE && !tcg_op_buf_full()) {
@@ -11553,6 +11566,9 @@ void gen_intermediate_code(CPUPPCState *env, struct TranslationBlock *tb)
 #if defined(DO_PPC_STATISTICS)
         handler->count++;
 #endif
+        if (build_llvm(env) && num_insns == tb->icount)
+            break;
+
         /* Check trace mode exceptions */
         if (unlikely(ctx.singlestep_enabled & CPU_SINGLE_STEP &&
                      (ctx.nip <= 0x100 || ctx.nip > 0xF00) &&
@@ -11576,6 +11592,16 @@ void gen_intermediate_code(CPUPPCState *env, struct TranslationBlock *tb)
             exit(1);
         }
     }
+
+    if (build_llvm(env) && tb->size != ctx.nip - pc_start) {
+        /* consistency check with tb info. we must make sure
+         *  guest basic blocks are the same */
+        fprintf(stderr, "inconsistant block with pc 0x"TARGET_FMT_lx" size %d"
+                " icount=%d (error size="TARGET_FMT_ld")\n",
+                tb->pc, tb->size, tb->icount, ctx.nip - pc_start);
+        exit(0);
+    }
+
     if (tb->cflags & CF_LAST_IO)
         gen_io_end();
     if (ctx.exception == POWERPC_EXCP_NONE) {
@@ -11587,13 +11613,18 @@ void gen_intermediate_code(CPUPPCState *env, struct TranslationBlock *tb)
         /* Generate the return instruction */
         tcg_gen_exit_tb(0);
     }
-    gen_tb_end(tb, num_insns);
 
-    tb->size = ctx.nip - pc_start;
-    tb->icount = num_insns;
+    if (build_llvm(env)) {
+        /* Terminate the linked list.  */
+        tcg_ctx.gen_op_buf[tcg_ctx.gen_last_op_idx].next = -1;
+    } else {
+        gen_tb_end(tb, num_insns);
+        tb->size = ctx.nip - pc_start;
+        tb->icount = num_insns;
+    }
 
 #if defined(DEBUG_DISAS)
-    if (qemu_loglevel_mask(CPU_LOG_TB_IN_ASM)) {
+    if (qemu_loglevel_mask(CPU_LOG_TB_IN_ASM) && !build_llvm(env)) {
         int flags;
         flags = env->bfd_mach;
         flags |= ctx.le_mode << 16;

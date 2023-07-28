@@ -454,7 +454,7 @@ int mod_utf8_codepoint(const char *s, size_t n, char **end);
 void qemu_hexdump(const char *buf, FILE *fp, const char *prefix, size_t size);
 
 /* vector definitions */
-#ifdef __ALTIVEC__
+#if defined(__ALTIVEC__) && !defined(__clang__)
 #include <altivec.h>
 /* The altivec.h header says we're allowed to undef these for
  * C++ compatibility.  Here we don't care about C++, but we

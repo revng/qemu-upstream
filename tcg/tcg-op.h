@@ -28,6 +28,7 @@
 
 /* Basic output routines.  Not for general consumption.  */
 
+void tcg_emit_op(TCGContext *ctx, TCGOpcode opc, int args);
 void tcg_gen_op1(TCGContext *, TCGOpcode, TCGArg);
 void tcg_gen_op2(TCGContext *, TCGOpcode, TCGArg, TCGArg);
 void tcg_gen_op3(TCGContext *, TCGOpcode, TCGArg, TCGArg, TCGArg);
@@ -310,6 +311,16 @@ void tcg_gen_ext8u_i32(TCGv_i32 ret, TCGv_i32 arg);
 void tcg_gen_ext16u_i32(TCGv_i32 ret, TCGv_i32 arg);
 void tcg_gen_bswap16_i32(TCGv_i32 ret, TCGv_i32 arg);
 void tcg_gen_bswap32_i32(TCGv_i32 ret, TCGv_i32 arg);
+
+static inline void tcg_gen_hotpatch(uint32_t arg1, uint32_t arg2)
+{
+    tcg_gen_op2(&tcg_ctx, INDEX_op_hotpatch, arg1, arg2);
+}
+
+static inline void tcg_gen_annotate(uint32_t arg)
+{
+    tcg_gen_op1(&tcg_ctx, INDEX_op_annotate, arg);
+}
 
 static inline void tcg_gen_discard_i32(TCGv_i32 arg)
 {

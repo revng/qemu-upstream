@@ -198,7 +198,7 @@ struct {                                                                \
 } while (/*CONSTCOND*/0)
 
 #define QSLIST_INSERT_HEAD_ATOMIC(head, elm, field) do {                     \
-        typeof(elm) save_sle_next;                                           \
+        __typeof__(elm) save_sle_next;                                       \
         do {                                                                 \
             save_sle_next = (elm)->field.sle_next = (head)->slh_first;       \
         } while (atomic_cmpxchg(&(head)->slh_first, save_sle_next, (elm)) != \

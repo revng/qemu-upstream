@@ -345,6 +345,9 @@ vhdx=""
 numa=""
 tcmalloc="no"
 jemalloc="no"
+llvm="no"
+bcflags=""
+libopencsd=""
 
 # parse CC options first
 for opt do
@@ -1169,6 +1172,12 @@ for opt do
   ;;
   --enable-jemalloc) jemalloc="yes"
   ;;
+  --enable-llvm) llvm="yes"
+  ;;
+  --clang-flags=*) bcflags="$optarg"
+  ;;
+  --with-libopencsd=*) libopencsd="$optarg"
+  ;;
   *)
       echo "ERROR: unknown option $opt"
       echo "Try '$0 --help' for more information"
@@ -1391,10 +1400,24 @@ disabled with --disable-FEATURE, default is enabled if available:
   numa            libnuma support
   tcmalloc        tcmalloc support
   jemalloc        jemalloc support
+  llvm            enable LLVM optimization
+  --clang-flags   flags for clang compiler
+  --with-libopencsd path to libopencsd library
 
 NOTE: The object files are built at the place where configure is launched
 EOF
 exit 0
+fi
+
+if test "$llvm" != "no" ; then
+    llvm-config --version > /dev/null 2>&1 || { echo >&2 "llvm-config is not in the PATH"; exit 1; }
+    llvm_major=`llvm-config --version | cut -d'.' -f1`
+    llvm_minor=`llvm-config --version | cut -d'.' -f2`
+    if test "$llvm_major" -lt "3" ; then
+        error_exit "LLVM version too old. Version 3.5 or later is required."
+    elif test "$llvm_major" -eq "3" && test "$llvm_minor" -lt "5" ; then
+        error_exit "LLVM version too old. Version 3.5 or later is required."
+    fi
 fi
 
 # Now we have handled --enable-tcg-interpreter and know we're not just
@@ -1469,6 +1492,7 @@ gcc_flags="-Wmissing-include-dirs -Wempty-body -Wnested-externs $gcc_flags"
 gcc_flags="-Wendif-labels $gcc_flags"
 gcc_flags="-Wno-initializer-overrides $gcc_flags"
 gcc_flags="-Wno-string-plus-int $gcc_flags"
+gcc_flags="-Wno-format-truncation $gcc_flags"
 # Note that we do not add -Werror to gcc_flags here, because that would
 # enable it for all configure tests. If a configure test failed due
 # to -Werror this would just silently disable some features,
@@ -4847,6 +4871,11 @@ echo "bzip2 support     $bzip2"
 echo "NUMA host support $numa"
 echo "tcmalloc support  $tcmalloc"
 echo "jemalloc support  $jemalloc"
+echo "LLVM enabled      $llvm (version `llvm-config --version`)"
+
+if test "$libopencsd" != ""; then
+  echo "libopencsd        $libopencsd"
+fi
 
 if test "$sdl_too_old" = "yes"; then
 echo "-> Your SDL version is too old - please upgrade to have SDL support"
@@ -5250,6 +5279,21 @@ fi
 
 if test "$seccomp" = "yes"; then
   echo "CONFIG_SECCOMP=y" >> $config_host_mak
+fi
+
+if test "$llvm" != "no" ; then
+  echo "CONFIG_LLVM=y" >> $config_host_mak
+  echo "BCFLAGS=$bcflags" >> $config_host_mak
+  echo "LLVM_VERSION=LLVM_V`llvm-config --version | sed -e "s/\.//g" | cut -c 1-2`" >> $config_host_mak
+  echo "LLVM_CFLAGS=`llvm-config --cflags`" >> $config_host_mak
+  echo "LLVM_CXXFLAGS=`llvm-config --cxxflags`" >> $config_host_mak
+  echo "LLVM_LDFLAGS=`llvm-config --ldflags`" >> $config_host_mak
+  echo "LLVM_LIBS=`llvm-config --libs`" >> $config_host_mak
+fi
+
+if test "$libopencsd" != "" ; then
+  echo "CONFIG_LIBOPENCSD=y" >> $config_host_mak
+  echo "LIBOPENCSD=$libopencsd" >> $config_host_mak
 fi
 
 # XXX: suppress that
@@ -5851,6 +5895,23 @@ fi
 
 echo "LDFLAGS+=$ldflags" >> $config_target_mak
 echo "QEMU_CFLAGS+=$cflags" >> $config_target_mak
+
+if test "$cpu" = "i386" -o "$cpu" = "x86_64" -o "$cpu" = "arm" ; then
+  case "$target_name" in
+  i386|x86_64)
+    echo "CONFIG_COREMU=y" >> $config_target_mak
+    ;;
+  esac
+fi
+
+if test "$llvm" != "no" ; then
+  bitcode="llvm_helper_$target_name"
+  if test "$target_softmmu" = "yes" ; then
+    bitcode=$bitcode"_softmmu"
+  fi
+  echo "LLVM_EXTRA_FLAGS+=-I. -I\$(SRC_PATH) $cflags $LLVM_EXTRA_FLAGS" >> $config_target_mak
+  echo "CONFIG_LLVM_BITCODE=\"$prefix/bin/$bitcode.bc\"" >> $config_target_mak
+fi
 
 done # for target in $targets
 

@@ -1,0 +1,652 @@
+diff --git a/include/llvm/ExecutionEngine/ExecutionEngine.h b/include/llvm/ExecutionEngine/ExecutionEngine.h
+index 77c23b4..85fa6d4 100644
+--- a/include/llvm/ExecutionEngine/ExecutionEngine.h
++++ b/include/llvm/ExecutionEngine/ExecutionEngine.h
+@@ -567,6 +567,7 @@ public:
+   /// is called and is successful, the created engine takes ownership of the
+   /// memory manager. This option defaults to NULL.
+   EngineBuilder &setMCJITMemoryManager(std::unique_ptr<RTDyldMemoryManager> mcjmm);
++  EngineBuilder &setMCJITMemoryManager(std::shared_ptr<RTDyldMemoryManager> mcjmm);
+ 
+   EngineBuilder&
+   setMemoryManager(std::unique_ptr<MCJITMemoryManager> MM);
+diff --git a/include/llvm/MC/MCInst.h b/include/llvm/MC/MCInst.h
+index db28fd0..574b66e 100644
+--- a/include/llvm/MC/MCInst.h
++++ b/include/llvm/MC/MCInst.h
+@@ -29,6 +29,7 @@ class MCExpr;
+ class MCInst;
+ class MCInstPrinter;
+ class raw_ostream;
++class DebugLoc;
+ 
+ /// \brief Instances of this class represent operands of the MCInst class.
+ /// This is a simple discriminated union.
+@@ -160,6 +161,7 @@ class MCInst {
+   unsigned Opcode = 0;
+   SMLoc Loc;
+   SmallVector<MCOperand, 8> Operands;
++  const DebugLoc *DbgLoc = nullptr;
+   // These flags could be used to pass some info from one target subcomponent
+   // to another, for example, from disassembler to asm printer. The values of
+   // the flags have any sense on target level only (e.g. prefixes on x86).
+@@ -177,6 +179,9 @@ public:
+   void setLoc(SMLoc loc) { Loc = loc; }
+   SMLoc getLoc() const { return Loc; }
+ 
++  void setDebugLoc(const DebugLoc *Loc) { DbgLoc = Loc; }
++  const DebugLoc *getDebugLoc() const { return DbgLoc; }
++
+   const MCOperand &getOperand(unsigned i) const { return Operands[i]; }
+   MCOperand &getOperand(unsigned i) { return Operands[i]; }
+   unsigned getNumOperands() const { return Operands.size(); }
+diff --git a/include/llvm/MC/MCInstrInfo.h b/include/llvm/MC/MCInstrInfo.h
+index 80f1f32..e5056cb 100644
+--- a/include/llvm/MC/MCInstrInfo.h
++++ b/include/llvm/MC/MCInstrInfo.h
+@@ -26,6 +26,7 @@ class MCInstrInfo {
+   const unsigned *InstrNameIndices; // Array for name indices in InstrNameData
+   const char *InstrNameData;        // Instruction name string pool
+   unsigned NumOpcodes;              // Number of entries in the desc array
++  unsigned long HQEMUExitAddr;
+ 
+ public:
+   /// \brief Initialize MCInstrInfo, called by TableGen auto-generated routines.
+@@ -52,6 +53,9 @@ public:
+     assert(Opcode < NumOpcodes && "Invalid opcode!");
+     return StringRef(&InstrNameData[InstrNameIndices[Opcode]]);
+   }
++
++  void setHQEMUExitAddr(unsigned long Addr) { HQEMUExitAddr = Addr; }
++  unsigned long getHQEMUExitAddr() const { return HQEMUExitAddr; }
+ };
+ 
+ } // End llvm namespace
+diff --git a/lib/CodeGen/BranchFolding.cpp b/lib/CodeGen/BranchFolding.cpp
+index 7f358a6..5ef804f 100644
+--- a/lib/CodeGen/BranchFolding.cpp
++++ b/lib/CodeGen/BranchFolding.cpp
+@@ -175,6 +175,12 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
+                                     MachineModuleInfo *mmi,
+                                     MachineLoopInfo *mli, bool AfterPlacement) {
+   if (!tii) return false;
++  if (MF.getFunction().hasFnAttribute("hqemu")) {
++    switch (MF.getTarget().getTargetTriple().getArch()) {
++      case Triple::x86: case Triple::x86_64: break;
++      default: return false;
++    }
++  }
+ 
+   TriedMerging.clear();
+ 
+diff --git a/lib/ExecutionEngine/ExecutionEngine.cpp b/lib/ExecutionEngine/ExecutionEngine.cpp
+index c598857..c7ecd12 100644
+--- a/lib/ExecutionEngine/ExecutionEngine.cpp
++++ b/lib/ExecutionEngine/ExecutionEngine.cpp
+@@ -496,6 +496,13 @@ EngineBuilder &EngineBuilder::setMCJITMemoryManager(
+   return *this;
+ }
+ 
++EngineBuilder &EngineBuilder::setMCJITMemoryManager(
++                                   std::shared_ptr<RTDyldMemoryManager> mcjmm) {
++  MemMgr = mcjmm;
++  Resolver = mcjmm;
++  return *this;
++}
++
+ EngineBuilder&
+ EngineBuilder::setMemoryManager(std::unique_ptr<MCJITMemoryManager> MM) {
+   MemMgr = std::shared_ptr<MCJITMemoryManager>(std::move(MM));
+diff --git a/lib/Target/AArch64/AArch64MCInstLower.cpp b/lib/Target/AArch64/AArch64MCInstLower.cpp
+index 65dae03..09e5858 100644
+--- a/lib/Target/AArch64/AArch64MCInstLower.cpp
++++ b/lib/Target/AArch64/AArch64MCInstLower.cpp
+@@ -239,6 +239,9 @@ bool AArch64MCInstLower::lowerOperand(const MachineOperand &MO,
+ void AArch64MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
+   OutMI.setOpcode(MI->getOpcode());
+ 
++  if (MI->getDebugLoc())
++    OutMI.setDebugLoc(&MI->getDebugLoc());
++
+   for (const MachineOperand &MO : MI->operands()) {
+     MCOperand MCOp;
+     if (lowerOperand(MO, MCOp))
+diff --git a/lib/Target/AArch64/AArch64RegisterInfo.cpp b/lib/Target/AArch64/AArch64RegisterInfo.cpp
+index 88dd297..4b2ccd8 100644
+--- a/lib/Target/AArch64/AArch64RegisterInfo.cpp
++++ b/lib/Target/AArch64/AArch64RegisterInfo.cpp
+@@ -132,6 +132,12 @@ AArch64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+   if (hasBasePointer(MF))
+     markSuperRegs(Reserved, AArch64::W19);
+ 
++  // Reserve registers for HQEMU.
++  if (MF.getFunction().hasFnAttribute("hqemu")) {
++    markSuperRegs(Reserved, AArch64::W19);
++    markSuperRegs(Reserved, AArch64::W28);
++  }
++
+   assert(checkAllSuperRegsMarked(Reserved));
+   return Reserved;
+ }
+diff --git a/lib/Target/AArch64/MCTargetDesc/AArch64MCCodeEmitter.cpp b/lib/Target/AArch64/MCTargetDesc/AArch64MCCodeEmitter.cpp
+index 33698d2..9735e88 100644
+--- a/lib/Target/AArch64/MCTargetDesc/AArch64MCCodeEmitter.cpp
++++ b/lib/Target/AArch64/MCTargetDesc/AArch64MCCodeEmitter.cpp
+@@ -29,6 +29,7 @@
+ #include "llvm/Support/EndianStream.h"
+ #include "llvm/Support/ErrorHandling.h"
+ #include "llvm/Support/raw_ostream.h"
++#include "llvm/IR/DebugLoc.h"
+ #include <cassert>
+ #include <cstdint>
+ 
+@@ -180,6 +181,10 @@ public:
+   unsigned fixOneOperandFPComparison(const MCInst &MI, unsigned EncodedValue,
+                                      const MCSubtargetInfo &STI) const;
+ 
++  bool EmitHQEMUInstruction(const MCInst &MI, raw_ostream &OS,
++                            SmallVectorImpl<MCFixup> &Fixups,
++                            const MCSubtargetInfo &STI) const;
++
+ private:
+   uint64_t computeAvailableFeatures(const FeatureBitset &FB) const;
+   void verifyInstructionPredicates(const MCInst &MI,
+@@ -552,9 +557,85 @@ unsigned AArch64MCCodeEmitter::fixMOVZ(const MCInst &MI, unsigned EncodedValue,
+   return EncodedValue & ~(1u << 30);
+ }
+ 
++bool AArch64MCCodeEmitter::
++EmitHQEMUInstruction(const MCInst &MI, raw_ostream &OS,
++                     SmallVectorImpl<MCFixup> &Fixups,
++                     const MCSubtargetInfo &STI) const {
++  /* NOTE: the following flags must be synchronized with those in file
++   *       llvm-opc.h of the HQEMU source tree. */
++  enum {
++    PATCH_HQEMU = 0x4182U,
++    PATCH_DUMMY,
++    PATCH_EXIT_TB,
++    PATCH_DIRECT_JUMP,
++    PATCH_TRACE_BLOCK_CHAINING,
++    PATCH_QMMU
++  };
++
++  unsigned Opcode = MI.getOpcode();
++  switch (Opcode) {
++  case AArch64::BRK:
++  case AArch64::RET:
++    break;
++  default: return false;
++  }
++
++  const DebugLoc *Loc = MI.getDebugLoc();
++  if (!Loc)
++    return false;
++
++  unsigned PatchType = Loc->getLine();
++  if (PatchType < PATCH_HQEMU || PatchType > PATCH_QMMU)
++    return false;
++
++  if (Opcode == AArch64::BRK) {
++    uint64_t Binary = 0;
++    MCOperand Operand = MCOperand::createImm(1);
++    MCInst Jump;
++
++    Jump.setOpcode(AArch64::B);
++    Jump.addOperand(Operand);
++    Binary = getBinaryCodeForInstr(Jump, Fixups, STI);
++    support::endian::Writer<support::little>(OS).write<uint32_t>(Binary);
++    ++MCNumEmitted;
++    return true;
++  }
++  if (Opcode == AArch64::RET) {
++    uint64_t ExitAddr = MCII.getHQEMUExitAddr();
++    uint32_t Binary[4];
++    MCOperand Reg = MCOperand::createReg(AArch64::X1);
++    MCInst Jump, Mov;
++
++    // mov w0, ExitAddr[15:0]
++    Binary[0] = (0x2 << 29) | 0x1;
++    Binary[0] |= (0x25 << 23);
++    Binary[0] |= ((ExitAddr & 0xFFFF) << 5);
++
++    // movk w0, ExitAddr[31:16]
++    Binary[1] =  (0x3 << 29) | 0x1;
++    Binary[1] |= (0x25 << 23);
++    Binary[1] |= (0x1 << 21);
++    Binary[1] |= ((ExitAddr & 0xFFFF0000) >> 11);
++
++    Jump.setOpcode(AArch64::BR);
++    Jump.addOperand(Reg);
++    Binary[2] = getBinaryCodeForInstr(Jump, Fixups, STI);
++
++    for (int i = 0; i < 3; ++i) {
++      support::endian::Writer<support::little>(OS).write<uint32_t>(Binary[i]);
++      ++MCNumEmitted;
++    }
++    return true;
++  }
++  return false;
++}
++
+ void AArch64MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
+                                              SmallVectorImpl<MCFixup> &Fixups,
+                                              const MCSubtargetInfo &STI) const {
++  if (EmitHQEMUInstruction(MI, OS, Fixups, STI))
++    return;
++
+   verifyInstructionPredicates(MI,
+                               computeAvailableFeatures(STI.getFeatureBits()));
+ 
+diff --git a/lib/Target/PowerPC/MCTargetDesc/PPCMCCodeEmitter.cpp b/lib/Target/PowerPC/MCTargetDesc/PPCMCCodeEmitter.cpp
+index 92c8c22..befec89 100644
+--- a/lib/Target/PowerPC/MCTargetDesc/PPCMCCodeEmitter.cpp
++++ b/lib/Target/PowerPC/MCTargetDesc/PPCMCCodeEmitter.cpp
+@@ -30,6 +30,7 @@
+ #include "llvm/Support/ErrorHandling.h"
+ #include "llvm/Support/MathExtras.h"
+ #include "llvm/Support/raw_ostream.h"
++#include "llvm/IR/DebugLoc.h"
+ #include <cassert>
+ #include <cstdint>
+ 
+@@ -109,9 +110,16 @@ public:
+                                  SmallVectorImpl<MCFixup> &Fixups,
+                                  const MCSubtargetInfo &STI) const;
+ 
++  bool EmitHQEMUInstruction(const MCInst &MI, raw_ostream &OS,
++                            SmallVectorImpl<MCFixup> &Fixups,
++                            const MCSubtargetInfo &STI) const;
++
+   void encodeInstruction(const MCInst &MI, raw_ostream &OS,
+                          SmallVectorImpl<MCFixup> &Fixups,
+                          const MCSubtargetInfo &STI) const override {
++    if (EmitHQEMUInstruction(MI, OS, Fixups, STI))
++      return;
++
+     verifyInstructionPredicates(MI,
+                                 computeAvailableFeatures(STI.getFeatureBits()));
+ 
+@@ -386,5 +394,75 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
+   return MO.getImm();
+ }
+ 
++bool PPCMCCodeEmitter::
++EmitHQEMUInstruction(const MCInst &MI, raw_ostream &OS,
++                     SmallVectorImpl<MCFixup> &Fixups,
++                     const MCSubtargetInfo &STI) const {
++  /* NOTE: the following flags must be synchronized with those in file
++   *       llvm-opc.h of the HQEMU source tree. */
++  enum {
++    PATCH_HQEMU = 0x4182U,
++    PATCH_DUMMY,
++    PATCH_EXIT_TB,
++    PATCH_DIRECT_JUMP,
++    PATCH_TRACE_BLOCK_CHAINING,
++    PATCH_QMMU
++  };
++
++  unsigned Opcode = MI.getOpcode();
++  switch (Opcode) {
++  case PPC::TRAP:
++  case PPC::BLR:
++  case PPC::BLR8:
++    break;
++  default: return false;
++  }
++
++  const DebugLoc *Loc = MI.getDebugLoc();
++  if (!Loc)
++    return false;
++
++  unsigned PatchType = Loc->getLine();
++  if (PatchType < PATCH_HQEMU || PatchType > PATCH_QMMU)
++    return false;
++
++  if (Opcode == PPC::TRAP) {
++    uint64_t Bits = 0;
++    MCInst NopInst;
++    NopInst.setOpcode(PPC::NOP);
++    Bits = getBinaryCodeForInstr(NopInst, Fixups, STI);
++    for (unsigned i = 0; i != 5; ++i) {
++      if (IsLittleEndian) {
++        support::endian::Writer<support::little>(OS).write<uint32_t>(Bits);
++      } else {
++        support::endian::Writer<support::big>(OS).write<uint32_t>(Bits);
++      }
++    }
++    MCNumEmitted += 5;
++    return true;
++  }
++  if (Opcode == PPC::BLR || Opcode == PPC::BLR8) {
++    uint64_t Bits[2];
++    MCInst Inst[2];
++    Inst[0].setOpcode(PPC::MTCTR);
++    Inst[0].addOperand(MCOperand::createReg(PPC::R31));
++    Inst[1].setOpcode(PPC::BCTR);
++    Bits[0] = getBinaryCodeForInstr(Inst[0], Fixups, STI);
++    Bits[1] = getBinaryCodeForInstr(Inst[1], Fixups, STI);
++
++    if (IsLittleEndian) {
++      support::endian::Writer<support::little>(OS).write<uint32_t>(Bits[0]);
++      support::endian::Writer<support::little>(OS).write<uint32_t>(Bits[1]);
++    } else {
++      support::endian::Writer<support::big>(OS).write<uint32_t>(Bits[0]);
++      support::endian::Writer<support::big>(OS).write<uint32_t>(Bits[1]);
++    }
++
++    MCNumEmitted += 2;
++    return true;
++  }
++  return false;
++}
++
+ #define ENABLE_INSTR_PREDICATE_VERIFIER
+ #include "PPCGenMCCodeEmitter.inc"
+diff --git a/lib/Target/PowerPC/PPCISelLowering.cpp b/lib/Target/PowerPC/PPCISelLowering.cpp
+index f0e8b11..a96a36d 100644
+--- a/lib/Target/PowerPC/PPCISelLowering.cpp
++++ b/lib/Target/PowerPC/PPCISelLowering.cpp
+@@ -2442,10 +2442,11 @@ SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
+   EVT PtrVT = Op.getValueType();
+   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
+   const Constant *C = CP->getConstVal();
++  bool isHQEMU = DAG.getMachineFunction().getFunction().hasFnAttribute("hqemu");
+ 
+   // 64-bit SVR4 ABI code is always position-independent.
+   // The actual address of the GlobalValue is stored in the TOC.
+-  if (Subtarget.isSVR4ABI() && Subtarget.isPPC64()) {
++  if (Subtarget.isSVR4ABI() && Subtarget.isPPC64() && !isHQEMU) {
+     setUsesTOCBasePtr(DAG);
+     SDValue GA = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment(), 0);
+     return getTOCEntry(DAG, SDLoc(CP), true, GA);
+@@ -2455,7 +2456,7 @@ SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
+   bool IsPIC = isPositionIndependent();
+   getLabelAccessInfo(IsPIC, Subtarget, MOHiFlag, MOLoFlag);
+ 
+-  if (IsPIC && Subtarget.isSVR4ABI()) {
++  if (IsPIC && Subtarget.isSVR4ABI() && !isHQEMU) {
+     SDValue GA = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment(),
+                                            PPCII::MO_PIC_FLAG);
+     return getTOCEntry(DAG, SDLoc(CP), false, GA);
+@@ -2518,10 +2519,11 @@ PPCTargetLowering::getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
+ SDValue PPCTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
+   EVT PtrVT = Op.getValueType();
+   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
++  bool isHQEMU = DAG.getMachineFunction().getFunction().hasFnAttribute("hqemu");
+ 
+   // 64-bit SVR4 ABI code is always position-independent.
+   // The actual address of the GlobalValue is stored in the TOC.
+-  if (Subtarget.isSVR4ABI() && Subtarget.isPPC64()) {
++  if (Subtarget.isSVR4ABI() && Subtarget.isPPC64() && !isHQEMU) {
+     setUsesTOCBasePtr(DAG);
+     SDValue GA = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
+     return getTOCEntry(DAG, SDLoc(JT), true, GA);
+@@ -2531,7 +2533,7 @@ SDValue PPCTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
+   bool IsPIC = isPositionIndependent();
+   getLabelAccessInfo(IsPIC, Subtarget, MOHiFlag, MOLoFlag);
+ 
+-  if (IsPIC && Subtarget.isSVR4ABI()) {
++  if (IsPIC && Subtarget.isSVR4ABI() && !isHQEMU) {
+     SDValue GA = DAG.getTargetJumpTable(JT->getIndex(), PtrVT,
+                                         PPCII::MO_PIC_FLAG);
+     return getTOCEntry(DAG, SDLoc(GA), false, GA);
+@@ -2547,10 +2549,11 @@ SDValue PPCTargetLowering::LowerBlockAddress(SDValue Op,
+   EVT PtrVT = Op.getValueType();
+   BlockAddressSDNode *BASDN = cast<BlockAddressSDNode>(Op);
+   const BlockAddress *BA = BASDN->getBlockAddress();
++  bool isHQEMU = DAG.getMachineFunction().getFunction().hasFnAttribute("hqemu");
+ 
+   // 64-bit SVR4 ABI code is always position-independent.
+   // The actual BlockAddress is stored in the TOC.
+-  if (Subtarget.isSVR4ABI() && Subtarget.isPPC64()) {
++  if (Subtarget.isSVR4ABI() && Subtarget.isPPC64() && !isHQEMU) {
+     setUsesTOCBasePtr(DAG);
+     SDValue GA = DAG.getTargetBlockAddress(BA, PtrVT, BASDN->getOffset());
+     return getTOCEntry(DAG, SDLoc(BASDN), true, GA);
+@@ -2660,10 +2663,11 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
+   GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
+   SDLoc DL(GSDN);
+   const GlobalValue *GV = GSDN->getGlobal();
++  bool isHQEMU = DAG.getMachineFunction().getFunction().hasFnAttribute("hqemu");
+ 
+   // 64-bit SVR4 ABI code is always position-independent.
+   // The actual address of the GlobalValue is stored in the TOC.
+-  if (Subtarget.isSVR4ABI() && Subtarget.isPPC64()) {
++  if (Subtarget.isSVR4ABI() && Subtarget.isPPC64() && !isHQEMU) {
+     setUsesTOCBasePtr(DAG);
+     SDValue GA = DAG.getTargetGlobalAddress(GV, DL, PtrVT, GSDN->getOffset());
+     return getTOCEntry(DAG, DL, true, GA);
+@@ -2673,7 +2677,7 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
+   bool IsPIC = isPositionIndependent();
+   getLabelAccessInfo(IsPIC, Subtarget, MOHiFlag, MOLoFlag, GV);
+ 
+-  if (IsPIC && Subtarget.isSVR4ABI()) {
++  if (IsPIC && Subtarget.isSVR4ABI() && !isHQEMU) {
+     SDValue GA = DAG.getTargetGlobalAddress(GV, DL, PtrVT,
+                                             GSDN->getOffset(),
+                                             PPCII::MO_PIC_FLAG);
+diff --git a/lib/Target/PowerPC/PPCMCInstLower.cpp b/lib/Target/PowerPC/PPCMCInstLower.cpp
+index 1e40711..496238a 100644
+--- a/lib/Target/PowerPC/PPCMCInstLower.cpp
++++ b/lib/Target/PowerPC/PPCMCInstLower.cpp
+@@ -141,7 +141,10 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
+ void llvm::LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
+                                         AsmPrinter &AP, bool isDarwin) {
+   OutMI.setOpcode(MI->getOpcode());
+-  
++
++  if (MI->getDebugLoc())
++    OutMI.setDebugLoc(&MI->getDebugLoc());
++
+   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+     MCOperand MCOp;
+     if (LowerPPCMachineOperandToMCOperand(MI->getOperand(i), MCOp, AP,
+diff --git a/lib/Target/PowerPC/PPCRegisterInfo.cpp b/lib/Target/PowerPC/PPCRegisterInfo.cpp
+index 6b62a82..cc5a73b 100644
+--- a/lib/Target/PowerPC/PPCRegisterInfo.cpp
++++ b/lib/Target/PowerPC/PPCRegisterInfo.cpp
+@@ -279,6 +279,13 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+          IE = PPC::VRRCRegClass.end(); I != IE; ++I)
+       markSuperRegs(Reserved, *I);
+ 
++  // Reserve registers for HQEMU.
++  if (MF.getFunction().hasFnAttribute("hqemu")) {
++    markSuperRegs(Reserved, PPC::R27);
++    if (TM.isPPC64())
++      markSuperRegs(Reserved, PPC::R31);
++  }
++
+   assert(checkAllSuperRegsMarked(Reserved));
+   return Reserved;
+ }
+@@ -904,6 +911,11 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+   if (!MF.getFunction().hasFnAttribute(Attribute::Naked)) {
+     if (!(hasBasePointer(MF) && FrameIndex < 0))
+       Offset += MFI.getStackSize();
++  } else {
++    if (MF.getFunction().hasFnAttribute("hqemu") && FrameIndex >= 0) {
++      const PPCFrameLowering *TFI = getFrameLowering(MF);
++      Offset += TFI->determineFrameLayout(MF, false, false);
++    }
+   }
+ 
+   // If we can, encode the offset directly into the instruction.  If this is a
+diff --git a/lib/Target/X86/MCTargetDesc/X86MCCodeEmitter.cpp b/lib/Target/X86/MCTargetDesc/X86MCCodeEmitter.cpp
+index 4ddc1f0..c564e71 100644
+--- a/lib/Target/X86/MCTargetDesc/X86MCCodeEmitter.cpp
++++ b/lib/Target/X86/MCTargetDesc/X86MCCodeEmitter.cpp
+@@ -27,6 +27,7 @@
+ #include "llvm/MC/MCSymbol.h"
+ #include "llvm/Support/ErrorHandling.h"
+ #include "llvm/Support/raw_ostream.h"
++#include "llvm/IR/DebugLoc.h"
+ #include <cassert>
+ #include <cstdint>
+ #include <cstdlib>
+@@ -150,6 +151,9 @@ public:
+                         const MCInst &MI, const MCInstrDesc &Desc,
+                         const MCSubtargetInfo &STI, raw_ostream &OS) const;
+ 
++  bool EmitHQEMUInstruction(const MCInst &MI, raw_ostream &OS,
++                            SmallVectorImpl<MCFixup> &Fixups) const;
++
+   uint8_t DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
+                              int MemOperand, const MCInstrDesc &Desc) const;
+ };
+@@ -1158,6 +1162,52 @@ bool X86MCCodeEmitter::emitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
+   return Ret;
+ }
+ 
++bool X86MCCodeEmitter::
++EmitHQEMUInstruction(const MCInst &MI, raw_ostream &OS,
++                     SmallVectorImpl<MCFixup> &Fixups) const {
++  /* NOTE: the following flags must be synchronized with those in file
++   *       llvm-opc.h of the HQEMU source tree. */
++  enum {
++    PATCH_HQEMU = 0x4182U,
++    PATCH_DUMMY,
++    PATCH_EXIT_TB,
++    PATCH_DIRECT_JUMP,
++    PATCH_TRACE_BLOCK_CHAINING,
++    PATCH_QMMU
++  };
++
++  unsigned Opcode = MI.getOpcode();
++  switch (Opcode) {
++  case X86::TRAP:
++  case X86::RETQ:
++    break;
++  default: return false;
++  }
++
++  unsigned CurByte = 0;
++  const DebugLoc *Loc = MI.getDebugLoc();
++  if (!Loc)
++    return false;
++
++  unsigned PatchType = Loc->getLine();
++  if (PatchType < PATCH_HQEMU || PatchType > PATCH_QMMU)
++    return false;
++
++  if (Opcode == X86::TRAP) {
++    for (unsigned i = 0; i != 8; ++i)
++      EmitByte(0x90, CurByte, OS);
++    return true;
++  }
++  if (Opcode == X86::RETQ) {
++    uintptr_t ExitAddr = MCII.getHQEMUExitAddr();
++    EmitByte(0xE9, CurByte, OS);
++    EmitImmediate(MCOperand::createImm(ExitAddr), MI.getLoc(), 4, FK_PCRel_4,
++                  CurByte, OS, Fixups);
++    return true;
++  }
++  return false;
++}
++
+ void X86MCCodeEmitter::
+ encodeInstruction(const MCInst &MI, raw_ostream &OS,
+                   SmallVectorImpl<MCFixup> &Fixups,
+@@ -1167,6 +1217,9 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
+   uint64_t TSFlags = Desc.TSFlags;
+   unsigned Flags = MI.getFlags();
+ 
++  if (EmitHQEMUInstruction(MI, OS, Fixups))
++    return;
++
+   // Pseudo instructions don't get encoded.
+   if ((TSFlags & X86II::FormMask) == X86II::Pseudo)
+     return;
+diff --git a/lib/Target/X86/X86FrameLowering.cpp b/lib/Target/X86/X86FrameLowering.cpp
+index 11808f8..bd10b86 100644
+--- a/lib/Target/X86/X86FrameLowering.cpp
++++ b/lib/Target/X86/X86FrameLowering.cpp
+@@ -83,6 +83,10 @@ X86FrameLowering::needsFrameIndexResolution(const MachineFunction &MF) const {
+ /// or if frame pointer elimination is disabled.
+ bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
+   const MachineFrameInfo &MFI = MF.getFrameInfo();
++  // HQEMU does not use FramePtr for stack accesses, so return false when
++  // running in HQEMU mode.
++  if (MF.getFunction().hasFnAttribute("hqemu"))
++    return false;
+   return (MF.getTarget().Options.DisableFramePointerElim(MF) ||
+           TRI->needsStackRealignment(MF) ||
+           MFI.hasVarSizedObjects() ||
+diff --git a/lib/Target/X86/X86MCInstLower.cpp b/lib/Target/X86/X86MCInstLower.cpp
+index 730ba74..c1b3ef6 100644
+--- a/lib/Target/X86/X86MCInstLower.cpp
++++ b/lib/Target/X86/X86MCInstLower.cpp
+@@ -389,6 +389,9 @@ X86MCInstLower::LowerMachineOperand(const MachineInstr *MI,
+ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
+   OutMI.setOpcode(MI->getOpcode());
+ 
++  if (MI->getDebugLoc())
++    OutMI.setDebugLoc(&MI->getDebugLoc());
++
+   for (const MachineOperand &MO : MI->operands())
+     if (auto MaybeMCOp = LowerMachineOperand(MI, MO))
+       OutMI.addOperand(MaybeMCOp.getValue());
+diff --git a/lib/Target/X86/X86RegisterInfo.cpp b/lib/Target/X86/X86RegisterInfo.cpp
+index bc31e95..893ff41 100644
+--- a/lib/Target/X86/X86RegisterInfo.cpp
++++ b/lib/Target/X86/X86RegisterInfo.cpp
+@@ -570,6 +570,20 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+     }
+   }
+ 
++  // Reserve registers for HQEMU.
++  if (MF.getFunction().hasFnAttribute("hqemu")) {
++    if (!Is64Bit) {
++      Reserved.set(X86::EBP);
++      Reserved.set(X86::BP);
++      Reserved.set(X86::BPL);
++    } else {
++      Reserved.set(X86::R14);
++      Reserved.set(X86::R14B);
++      Reserved.set(X86::R14D);
++      Reserved.set(X86::R14W);
++    }
++  }
++
+   assert(checkAllSuperRegsMarked(Reserved,
+                                  {X86::SIL, X86::DIL, X86::BPL, X86::SPL}));
+   return Reserved;
+diff --git a/lib/Transforms/Utils/Local.cpp b/lib/Transforms/Utils/Local.cpp
+index acccf7a..f2ab12d 100644
+--- a/lib/Transforms/Utils/Local.cpp
++++ b/lib/Transforms/Utils/Local.cpp
+@@ -1587,7 +1587,8 @@ static bool markAliveBlocks(Function &F,
+           Changed = true;
+           break;
+         }
+-        if (CI->doesNotReturn()) {
++        // Do not delete instructions after llvm.trap in HQEMU mode.
++        if (!F.hasFnAttribute("hqemu") && CI->doesNotReturn()) {
+           // If we found a call to a no-return function, insert an unreachable
+           // instruction after it.  Make sure there isn't *already* one there
+           // though.
+diff --git a/lib/Transforms/Utils/SimplifyCFG.cpp b/lib/Transforms/Utils/SimplifyCFG.cpp
+index 7c19578..30f3481 100644
+--- a/lib/Transforms/Utils/SimplifyCFG.cpp
++++ b/lib/Transforms/Utils/SimplifyCFG.cpp
+@@ -1271,6 +1271,10 @@ static bool HoistThenElseCodeToIf(BranchInst *BI,
+ 
+   bool Changed = false;
+   do {
++    // Do not hoist llvm::trap and debug instructions in HQEMU mode.
++    if (BI->getParent()->getParent()->hasFnAttribute("hqemu"))
++      if (isa<IntrinsicInst>(I1) || I1->hasMetadata())
++        return Changed;
+     // If we are hoisting the terminator instruction, don't move one (making a
+     // broken BB), instead clone it, and remove BI.
+     if (isa<TerminatorInst>(I1))
+@@ -5600,6 +5604,10 @@ bool SimplifyCFGOpt::SimplifyIndirectBr(IndirectBrInst *IBI) {
+   BasicBlock *BB = IBI->getParent();
+   bool Changed = false;
+ 
++  // Do not delete indirectbrs of no successors in HQEMU mode.
++  if (BB->getParent()->hasFnAttribute("hqemu"))
++    return false;
++
+   // Eliminate redundant destinations.
+   SmallPtrSet<Value *, 8> Succs;
+   for (unsigned i = 0, e = IBI->getNumDestinations(); i != e; ++i) {

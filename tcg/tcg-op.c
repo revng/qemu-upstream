@@ -39,7 +39,7 @@ extern TCGv_i32 TCGV_HIGH_link_error(TCGv_i64);
    Up to and including filling in the forward link immediately.  We'll do
    proper termination of the end of the list after we finish translation.  */
 
-static void tcg_emit_op(TCGContext *ctx, TCGOpcode opc, int args)
+void tcg_emit_op(TCGContext *ctx, TCGOpcode opc, int args)
 {
     int oi = ctx->gen_next_op_idx;
     int ni = oi + 1;

@@ -11,6 +11,7 @@
 #include "arm_ldst.h"
 #include <zlib.h> /* For crc32 */
 #include "exec/semihost.h"
+#include "hqemu.h"
 
 #define ARM_CPU_FREQ 1000000000 /* FIXME: 1 GHz, should be configurable */
 
@@ -2225,6 +2226,8 @@ static void vmsa_ttbr_write(CPUARMState *env, const ARMCPRegInfo *ri,
         tlb_flush(CPU(cpu), 1);
     }
     raw_write(env, ri, value);
+
+    pcid = (target_ulong)value >> 12;
 }
 
 static void vttbr_write(CPUARMState *env, const ARMCPRegInfo *ri,
@@ -8091,29 +8094,23 @@ float64 VFP_HELPER(sqrt, d)(float64 a, CPUARMState *env)
 
 /* XXX: check quiet/signaling case */
 #define DO_VFP_cmp(p, type) \
-void VFP_HELPER(cmp, p)(type a, type b, CPUARMState *env)  \
+uint32_t VFP_HELPER(cmp, p)(type a, type b, CPUARMState *env)  \
 { \
-    uint32_t flags; \
-    switch(type ## _compare_quiet(a, b, &env->vfp.fp_status)) { \
-    case 0: flags = 0x6; break; \
-    case -1: flags = 0x8; break; \
-    case 1: flags = 0x2; break; \
-    default: case 2: flags = 0x3; break; \
-    } \
-    env->vfp.xregs[ARM_VFP_FPSCR] = (flags << 28) \
-        | (env->vfp.xregs[ARM_VFP_FPSCR] & 0x0fffffff); \
+    uint32_t flags = 0x3; \
+    int ret = type ## _compare_quiet(a, b, &env->vfp.fp_status); \
+    if (ret == 0) flags = 0x6; \
+    else if (ret == -1) flags = 0x8; \
+    else if (ret == 1) flags = 0x2; \
+    return flags << 28; \
 } \
-void VFP_HELPER(cmpe, p)(type a, type b, CPUARMState *env) \
+uint32_t VFP_HELPER(cmpe, p)(type a, type b, CPUARMState *env) \
 { \
-    uint32_t flags; \
-    switch(type ## _compare(a, b, &env->vfp.fp_status)) { \
-    case 0: flags = 0x6; break; \
-    case -1: flags = 0x8; break; \
-    case 1: flags = 0x2; break; \
-    default: case 2: flags = 0x3; break; \
-    } \
-    env->vfp.xregs[ARM_VFP_FPSCR] = (flags << 28) \
-        | (env->vfp.xregs[ARM_VFP_FPSCR] & 0x0fffffff); \
+    uint32_t flags = 0x3; \
+    int ret = type ## _compare(a, b, &env->vfp.fp_status); \
+    if (ret == 0) flags = 0x6; \
+    else if (ret == -1) flags = 0x8; \
+    else if (ret == 1) flags = 0x2; \
+    return flags << 28; \
 }
 DO_VFP_cmp(s, float32)
 DO_VFP_cmp(d, float64)
@@ -8890,4 +8887,13 @@ uint32_t HELPER(crc32c)(uint32_t acc, uint32_t val, uint32_t bytes)
 
     /* Linux crc32c converts the output to one's complement.  */
     return crc32c(acc, buf, bytes) ^ 0xffffffff;
+}
+
+CPUState *cpu_create(void)
+{
+    ARMCPU *cpu = g_malloc0(sizeof(ARMCPU));
+    CPUState *cs = CPU(cpu);
+    memcpy(cpu, ARM_CPU(first_cpu), sizeof(ARMCPU));
+    cs->env_ptr = &cpu->env;
+    return cs;
 }

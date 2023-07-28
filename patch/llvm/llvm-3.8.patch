@@ -1,0 +1,247 @@
+diff --git a/include/llvm/ExecutionEngine/ExecutionEngine.h b/include/llvm/ExecutionEngine/ExecutionEngine.h
+index a730260..5102344 100644
+--- a/include/llvm/ExecutionEngine/ExecutionEngine.h
++++ b/include/llvm/ExecutionEngine/ExecutionEngine.h
+@@ -550,6 +550,7 @@ public:
+   /// is called and is successful, the created engine takes ownership of the
+   /// memory manager. This option defaults to NULL.
+   EngineBuilder &setMCJITMemoryManager(std::unique_ptr<RTDyldMemoryManager> mcjmm);
++  EngineBuilder &setMCJITMemoryManager(std::shared_ptr<RTDyldMemoryManager> mcjmm);
+ 
+   EngineBuilder&
+   setMemoryManager(std::unique_ptr<MCJITMemoryManager> MM);
+diff --git a/include/llvm/MC/MCInst.h b/include/llvm/MC/MCInst.h
+index 4688b5f..e3124bf 100644
+--- a/include/llvm/MC/MCInst.h
++++ b/include/llvm/MC/MCInst.h
+@@ -27,6 +27,7 @@ class MCAsmInfo;
+ class MCInstPrinter;
+ class MCExpr;
+ class MCInst;
++class DebugLoc;
+ 
+ /// \brief Instances of this class represent operands of the MCInst class.
+ /// This is a simple discriminated union.
+@@ -151,9 +152,10 @@ class MCInst {
+   unsigned Opcode;
+   SMLoc Loc;
+   SmallVector<MCOperand, 8> Operands;
++  const DebugLoc *DbgLoc;
+ 
+ public:
+-  MCInst() : Opcode(0) {}
++  MCInst() : Opcode(0), DbgLoc(nullptr) {}
+ 
+   void setOpcode(unsigned Op) { Opcode = Op; }
+   unsigned getOpcode() const { return Opcode; }
+@@ -161,6 +163,9 @@ public:
+   void setLoc(SMLoc loc) { Loc = loc; }
+   SMLoc getLoc() const { return Loc; }
+ 
++  void setDebugLoc(const DebugLoc *Loc) { DbgLoc = Loc; }
++  const DebugLoc *getDebugLoc() const { return DbgLoc; }
++
+   const MCOperand &getOperand(unsigned i) const { return Operands[i]; }
+   MCOperand &getOperand(unsigned i) { return Operands[i]; }
+   unsigned getNumOperands() const { return Operands.size(); }
+diff --git a/include/llvm/MC/MCInstrInfo.h b/include/llvm/MC/MCInstrInfo.h
+index 70c8658..69a6427 100644
+--- a/include/llvm/MC/MCInstrInfo.h
++++ b/include/llvm/MC/MCInstrInfo.h
+@@ -26,6 +26,7 @@ class MCInstrInfo {
+   const unsigned *InstrNameIndices; // Array for name indices in InstrNameData
+   const char *InstrNameData;        // Instruction name string pool
+   unsigned NumOpcodes;              // Number of entries in the desc array
++  unsigned long HQEMUExitAddr;
+ 
+ public:
+   /// \brief Initialize MCInstrInfo, called by TableGen auto-generated routines.
+@@ -52,6 +53,9 @@ public:
+     assert(Opcode < NumOpcodes && "Invalid opcode!");
+     return &InstrNameData[InstrNameIndices[Opcode]];
+   }
++
++  void setHQEMUExitAddr(unsigned long Addr) { HQEMUExitAddr = Addr; }
++  unsigned long getHQEMUExitAddr() const { return HQEMUExitAddr; }
+ };
+ 
+ } // End llvm namespace
+diff --git a/lib/ExecutionEngine/ExecutionEngine.cpp b/lib/ExecutionEngine/ExecutionEngine.cpp
+index 41c8da4..ffca9ea 100644
+--- a/lib/ExecutionEngine/ExecutionEngine.cpp
++++ b/lib/ExecutionEngine/ExecutionEngine.cpp
+@@ -497,6 +497,13 @@ EngineBuilder &EngineBuilder::setMCJITMemoryManager(
+   return *this;
+ }
+ 
++EngineBuilder &EngineBuilder::setMCJITMemoryManager(
++                                   std::shared_ptr<RTDyldMemoryManager> mcjmm) {
++  MemMgr = mcjmm;
++  Resolver = mcjmm;
++  return *this;
++}
++
+ EngineBuilder&
+ EngineBuilder::setMemoryManager(std::unique_ptr<MCJITMemoryManager> MM) {
+   MemMgr = std::shared_ptr<MCJITMemoryManager>(std::move(MM));
+diff --git a/lib/Target/X86/MCTargetDesc/X86MCCodeEmitter.cpp b/lib/Target/X86/MCTargetDesc/X86MCCodeEmitter.cpp
+index dfab6ec..8a9752f 100644
+--- a/lib/Target/X86/MCTargetDesc/X86MCCodeEmitter.cpp
++++ b/lib/Target/X86/MCTargetDesc/X86MCCodeEmitter.cpp
+@@ -23,6 +23,7 @@
+ #include "llvm/MC/MCSubtargetInfo.h"
+ #include "llvm/MC/MCSymbol.h"
+ #include "llvm/Support/raw_ostream.h"
++#include "llvm/IR/DebugLoc.h"
+ 
+ using namespace llvm;
+ 
+@@ -164,6 +165,9 @@ public:
+                         const MCInst &MI, const MCInstrDesc &Desc,
+                         const MCSubtargetInfo &STI,
+                         raw_ostream &OS) const;
++
++  bool EmitHQEMUInstruction(const MCInst &MI, raw_ostream &OS,
++                            SmallVectorImpl<MCFixup> &Fixups) const;
+ };
+ 
+ } // end anonymous namespace
+@@ -1158,6 +1162,52 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
+   }
+ }
+ 
++bool X86MCCodeEmitter::
++EmitHQEMUInstruction(const MCInst &MI, raw_ostream &OS,
++                     SmallVectorImpl<MCFixup> &Fixups) const {
++  /* NOTE: the following flags must be synchronized with those in file
++   *       llvm-opc.h of the HQEMU source tree. */
++  enum {
++    PATCH_HQEMU = 0x4182U,
++    PATCH_DUMMY,
++    PATCH_EXIT_TB,
++    PATCH_DIRECT_JUMP,
++    PATCH_TRACE_BLOCK_CHAINING,
++    PATCH_QMMU
++  };
++
++  unsigned Opcode = MI.getOpcode();
++  switch (Opcode) {
++  case X86::TRAP:
++  case X86::RETQ:
++    break;
++  default: return false;
++  }
++
++  unsigned CurByte = 0;
++  const DebugLoc *Loc = MI.getDebugLoc();
++  if (!Loc)
++    return false;
++
++  unsigned PatchType = Loc->getLine();
++  if (PatchType < PATCH_HQEMU || PatchType > PATCH_QMMU)
++    return false;
++
++  if (Opcode == X86::TRAP) {
++    for (unsigned i = 0; i != 8; ++i)
++      EmitByte(0x90, CurByte, OS);
++    return true;
++  }
++  if (Opcode == X86::RETQ) {
++    uintptr_t ExitAddr = MCII.getHQEMUExitAddr();
++    EmitByte(0xE9, CurByte, OS);
++    EmitImmediate(MCOperand::createImm(ExitAddr), MI.getLoc(), 4, FK_PCRel_4,
++                  CurByte, OS, Fixups);
++    return true;
++  }
++  return false;
++}
++
+ void X86MCCodeEmitter::
+ encodeInstruction(const MCInst &MI, raw_ostream &OS,
+                   SmallVectorImpl<MCFixup> &Fixups,
+@@ -1166,6 +1216,9 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
+   const MCInstrDesc &Desc = MCII.get(Opcode);
+   uint64_t TSFlags = Desc.TSFlags;
+ 
++  if (EmitHQEMUInstruction(MI, OS, Fixups))
++    return;
++
+   // Pseudo instructions don't get encoded.
+   if ((TSFlags & X86II::FormMask) == X86II::Pseudo)
+     return;
+diff --git a/lib/Target/X86/X86MCInstLower.cpp b/lib/Target/X86/X86MCInstLower.cpp
+index e1ca558..c3acaec 100644
+--- a/lib/Target/X86/X86MCInstLower.cpp
++++ b/lib/Target/X86/X86MCInstLower.cpp
+@@ -437,6 +437,9 @@ X86MCInstLower::LowerMachineOperand(const MachineInstr *MI,
+ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
+   OutMI.setOpcode(MI->getOpcode());
+ 
++  if (MI->getDebugLoc())
++    OutMI.setDebugLoc(&MI->getDebugLoc());
++
+   for (const MachineOperand &MO : MI->operands())
+     if (auto MaybeMCOp = LowerMachineOperand(MI, MO))
+       OutMI.addOperand(MaybeMCOp.getValue());
+diff --git a/lib/Target/X86/X86RegisterInfo.cpp b/lib/Target/X86/X86RegisterInfo.cpp
+index 274b566..dbb4fec 100644
+--- a/lib/Target/X86/X86RegisterInfo.cpp
++++ b/lib/Target/X86/X86RegisterInfo.cpp
+@@ -473,6 +473,19 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+     }
+   }
+ 
++  // Reserve registers for HQEMU.
++  if (MF.getFunction()->hasFnAttribute("hqemu")) {
++    if (!Is64Bit) {
++      Reserved.set(X86::EBP);
++      Reserved.set(X86::BP);
++      Reserved.set(X86::BPL);
++    } else {
++      Reserved.set(X86::R14);
++      Reserved.set(X86::R14B);
++      Reserved.set(X86::R14D);
++      Reserved.set(X86::R14W);
++    }
++  }
+   return Reserved;
+ }
+ 
+diff --git a/lib/Transforms/Utils/Local.cpp b/lib/Transforms/Utils/Local.cpp
+index abc9b65..39241c2 100644
+--- a/lib/Transforms/Utils/Local.cpp
++++ b/lib/Transforms/Utils/Local.cpp
+@@ -1302,7 +1302,8 @@ static bool markAliveBlocks(Function &F,
+         }
+ 
+       if (CallInst *CI = dyn_cast<CallInst>(BBI)) {
+-        if (CI->doesNotReturn()) {
++        // HQEMU: do not delete instructions after llvm.trap.
++        if (!F.hasFnAttribute("hqemu") && CI->doesNotReturn()) {
+           // If we found a call to a no-return function, insert an unreachable
+           // instruction after it.  Make sure there isn't *already* one there
+           // though.
+diff --git a/lib/Transforms/Utils/SimplifyCFG.cpp b/lib/Transforms/Utils/SimplifyCFG.cpp
+index e484b69..6ac6033 100644
+--- a/lib/Transforms/Utils/SimplifyCFG.cpp
++++ b/lib/Transforms/Utils/SimplifyCFG.cpp
+@@ -1120,6 +1120,9 @@ static bool HoistThenElseCodeToIf(BranchInst *BI,
+ 
+   bool Changed = false;
+   do {
++    if (BIParent->getParent()->hasFnAttribute("hqemu"))
++      if (isa<IntrinsicInst>(I1) || I1->hasMetadata())
++        return Changed;
+     // If we are hoisting the terminator instruction, don't move one (making a
+     // broken BB), instead clone it, and remove BI.
+     if (isa<TerminatorInst>(I1))
+@@ -4898,6 +4901,9 @@ bool SimplifyCFGOpt::SimplifyIndirectBr(IndirectBrInst *IBI) {
+   BasicBlock *BB = IBI->getParent();
+   bool Changed = false;
+ 
++  if (BB->getParent()->hasFnAttribute("hqemu"))
++    return false;
++
+   // Eliminate redundant destinations.
+   SmallPtrSet<Value *, 8> Succs;
+   for (unsigned i = 0, e = IBI->getNumDestinations(); i != e; ++i) {

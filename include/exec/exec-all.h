@@ -21,6 +21,7 @@
 #define _EXEC_ALL_H_
 
 #include "qemu-common.h"
+#include "hqemu-config.h"
 
 /* allow to see translation results - the slowdown should be negligible, so we leave it */
 #define DEBUG_DISAS
@@ -59,7 +60,7 @@ typedef struct TranslationBlock TranslationBlock;
  * and up to 4 + N parameters on 64-bit archs
  * (N = number of input arguments + output arguments).  */
 #define MAX_OPC_PARAM (4 + (MAX_OPC_PARAM_PER_ARG * MAX_OPC_PARAM_ARGS))
-#define OPC_BUF_SIZE 640
+#define OPC_BUF_SIZE 2048
 #define OPC_MAX_SIZE (OPC_BUF_SIZE - MAX_OP_PER_INSTR)
 
 #define OPPARAM_BUF_SIZE (OPC_BUF_SIZE * MAX_OPC_PARAM)
@@ -216,6 +217,8 @@ struct TranslationBlock {
        jmp_first */
     struct TranslationBlock *jmp_next[2];
     struct TranslationBlock *jmp_first;
+
+    TB_OPTIMIZATION_COMMON
 };
 
 #include "qemu/thread.h"
@@ -305,7 +308,7 @@ static inline void tb_set_jmp_target(TranslationBlock *tb,
                                      int n, uintptr_t addr)
 {
     uint16_t offset = tb->tb_jmp_offset[n];
-    tb_set_jmp_target1((uintptr_t)(tb->tc_ptr + offset), addr);
+    tb_set_jmp_target1((uintptr_t)((uint8_t *)tb->tc_ptr + offset), addr);
 }
 
 #else
@@ -404,5 +407,7 @@ extern int singlestep;
 /* cpu-exec.c, accessed with atomic_mb_read/atomic_mb_set */
 extern CPUState *tcg_current_cpu;
 extern bool exit_request;
+
+size_t get_cpu_size(void);
 
 #endif

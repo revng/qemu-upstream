@@ -2001,9 +2001,13 @@ static void load_elf_image(const char *image_name, int image_fd,
         info->brk = info->end_code;
     }
 
+#if defined(CONFIG_LLVM)
+    load_symbols(ehdr, image_fd, load_bias);
+#else
     if (qemu_log_enabled()) {
         load_symbols(ehdr, image_fd, load_bias);
     }
+#endif
 
     close(image_fd);
     return;

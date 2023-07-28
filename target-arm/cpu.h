@@ -437,7 +437,7 @@ typedef struct CPUARMState {
          * the two execution states, and means we do not need to explicitly
          * map these registers when changing states.
          */
-        float64 regs[64];
+        float64 regs[64] __attribute__((aligned(16)));
 
         uint32_t xregs[16];
         /* We store these fpcsr fields separately for convenience.  */
@@ -495,6 +495,8 @@ typedef struct CPUARMState {
 
     /* Internal CPU feature flags.  */
     uint64_t features;
+
+    CPU_OPTIMIZATION_COMMON
 
     /* PMSAv7 MPU */
     struct {
@@ -1509,7 +1511,7 @@ bool write_cpustate_to_list(ARMCPU *cpu);
 /* The ARM MMU allows 1k pages.  */
 /* ??? Linux doesn't actually use these, and they're deprecated in recent
    architecture revisions.  Maybe a configure option to disable them.  */
-#define TARGET_PAGE_BITS 10
+#define TARGET_PAGE_BITS 12
 #endif
 
 #if defined(TARGET_AARCH64)
@@ -1523,7 +1525,7 @@ bool write_cpustate_to_list(ARMCPU *cpu);
 static inline bool arm_excp_unmasked(CPUState *cs, unsigned int excp_idx,
                                      unsigned int target_el)
 {
-    CPUARMState *env = cs->env_ptr;
+    CPUARMState *env = (CPUARMState *)cs->env_ptr;
     unsigned int cur_el = arm_current_el(env);
     bool secure = arm_is_secure(env);
     bool pstate_unmasked;
@@ -1981,6 +1983,62 @@ static inline void cpu_get_tb_cpu_state(CPUARMState *env, target_ulong *pc,
     *flags |= fp_exception_el(env) << ARM_TBFLAG_FPEXC_EL_SHIFT;
 
     *cs_base = 0;
+}
+
+static inline target_ulong cpu_get_pc(CPUARMState *env)
+{
+#if defined(TARGET_AARCH64)
+    return env->pc;
+#else
+    return env->regs[15];
+#endif
+}
+
+static inline int cpu_check_state(CPUARMState *env,
+                                  target_ulong cs_base, int flags)
+{
+    int f;
+    if (is_a64(env)) {
+        f = ARM_TBFLAG_AARCH64_STATE_MASK;
+    } else {
+        f = (env->thumb << ARM_TBFLAG_THUMB_SHIFT)
+            | (env->vfp.vec_len << ARM_TBFLAG_VECLEN_SHIFT)
+            | (env->vfp.vec_stride << ARM_TBFLAG_VECSTRIDE_SHIFT)
+            | (env->condexec_bits << ARM_TBFLAG_CONDEXEC_SHIFT)
+            | (env->bswap_code << ARM_TBFLAG_BSWAP_CODE_SHIFT);
+        if (!(access_secure_reg(env))) {
+            f |= ARM_TBFLAG_NS_MASK;
+        }
+        if (env->vfp.xregs[ARM_VFP_FPEXC] & (1 << 30)
+            || arm_el_is_aa64(env, 1)) {
+            f |= ARM_TBFLAG_VFPEN_MASK;
+        }
+        f |= (extract32(env->cp15.c15_cpar, 0, 2)
+                   << ARM_TBFLAG_XSCALE_CPAR_SHIFT);
+    }
+
+    f |= (cpu_mmu_index(env, false) << ARM_TBFLAG_MMUIDX_SHIFT);
+    /* The SS_ACTIVE and PSTATE_SS bits correspond to the state machine
+     * states defined in the ARM ARM for software singlestep:
+     *  SS_ACTIVE   PSTATE.SS   State
+     *     0            x       Inactive (the TB flag for SS is always 0)
+     *     1            0       Active-pending
+     *     1            1       Active-not-pending
+     */
+    if (arm_singlestep_active(env)) {
+        f |= ARM_TBFLAG_SS_ACTIVE_MASK;
+        if (is_a64(env)) {
+            if (env->pstate & PSTATE_SS) {
+                f |= ARM_TBFLAG_PSTATE_SS_MASK;
+            }
+        } else {
+            if (env->uncached_cpsr & PSTATE_SS) {
+                f |= ARM_TBFLAG_PSTATE_SS_MASK;
+            }
+        }
+    }
+    f |= fp_exception_el(env) << ARM_TBFLAG_FPEXC_EL_SHIFT;
+    return f == flags;
 }
 
 #include "exec/exec-all.h"

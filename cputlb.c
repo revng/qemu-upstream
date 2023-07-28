@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "cpu.h"
+#include "exec/tb-hash.h"
 #include "exec/exec-all.h"
 #include "exec/memory.h"
 #include "exec/address-spaces.h"
@@ -30,11 +31,37 @@
 #include "exec/ram_addr.h"
 #include "tcg/tcg.h"
 
+#include "hqemu.h"
+
+#if defined(ENABLE_TLBVERSION)
+#define TLB_NONIO_MASK       (TARGET_PAGE_MASK | TLB_INVALID_MASK | TLB_VERSION_MASK)
+#define page_val(addr, env)  (((tlbaddr_t)addr & TARGET_PAGE_MASK) | tlb_version(env))
+#else
+#define TLB_NONIO_MASK       (TARGET_PAGE_MASK | TLB_INVALID_MASK)
+#define page_val(addr, env)  (addr & TARGET_PAGE_MASK)
+#endif
+
 //#define DEBUG_TLB
 //#define DEBUG_TLB_CHECK
 
 /* statistics */
 int tlb_flush_count;
+
+static inline void tlb_reset(CPUArchState *env)
+{
+#if defined(ENABLE_TLBVERSION)
+    tlbaddr_t version = env->tlb_version >> TLB_VERSION_SHIFT;
+    if (++version == TLB_VERSION_SIZE) {
+        version = 0;
+        memset(env->tlb_table, -1, sizeof(env->tlb_table));
+        memset(env->tlb_v_table, -1, sizeof(env->tlb_v_table));
+    }
+    env->tlb_version = version << TLB_VERSION_SHIFT;
+#else
+    memset(env->tlb_table, -1, sizeof(env->tlb_table));
+    memset(env->tlb_v_table, -1, sizeof(env->tlb_v_table));
+#endif
+}
 
 /* NOTE:
  * If flush_global is true (the usual case), flush all tlb entries.
@@ -59,9 +86,11 @@ void tlb_flush(CPUState *cpu, int flush_global)
        links while we are modifying them */
     cpu->current_tb = NULL;
 
-    memset(env->tlb_table, -1, sizeof(env->tlb_table));
-    memset(env->tlb_v_table, -1, sizeof(env->tlb_v_table));
+    tlb_reset(env);
     memset(cpu->tb_jmp_cache, 0, sizeof(cpu->tb_jmp_cache));
+
+    optimization_reset(env, 0);
+    lpt_reset(env);
 
     env->vtlb_index = 0;
     env->tlb_flush_addr = -1;
@@ -110,17 +139,66 @@ void tlb_flush_by_mmuidx(CPUState *cpu, ...)
     va_end(argp);
 }
 
-static inline void tlb_flush_entry(CPUTLBEntry *tlb_entry, target_ulong addr)
+static inline void tlb_flush_entry(CPUArchState *env, CPUTLBEntry *tlb_entry,
+                                   target_ulong addr)
 {
-    if (addr == (tlb_entry->addr_read &
-                 (TARGET_PAGE_MASK | TLB_INVALID_MASK)) ||
-        addr == (tlb_entry->addr_write &
-                 (TARGET_PAGE_MASK | TLB_INVALID_MASK)) ||
-        addr == (tlb_entry->addr_code &
-                 (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {
+    if (page_val(addr, env) == (tlb_entry->addr_read & TLB_NONIO_MASK) ||
+        page_val(addr, env) == (tlb_entry->addr_write & TLB_NONIO_MASK) ||
+        page_val(addr, env) == (tlb_entry->addr_code & TLB_NONIO_MASK)) {
         memset(tlb_entry, -1, sizeof(*tlb_entry));
     }
 }
+
+#ifdef ENABLE_LPAGE
+static int tlb_flush_large_page(CPUState *cpu, target_ulong addr)
+{
+    int i, j, k, ret, mmu_idx, num_base_pages, max_flush_pages;
+    target_ulong page_addr, page_size, flush_addr;
+    CPUArchState *env = cpu->env_ptr;
+
+#if defined(DEBUG_TLB)
+    printf("tlb_flush:\n");
+#endif
+    /* must reset current TB so that interrupts cannot modify the
+       links while we are modifying them */
+    cpu->current_tb = NULL;
+
+    ret = lpt_flush_page(env, addr, &page_addr, &page_size);
+    if (ret == 0)
+        return 0;
+
+    /* If the large page occupies a small set of the tlb, do a partial flush
+     * optimzation, otherwise, do a full flush. */
+    num_base_pages = page_size / TARGET_PAGE_SIZE;
+    max_flush_pages = (CPU_TLB_SIZE / 4 < 1024) ? CPU_TLB_SIZE / 4 : 1024;
+    if (num_base_pages > max_flush_pages) {
+        tlb_flush(cpu, 1);
+        return 1;
+    }
+
+    for (i = 0; i < num_base_pages; i++) {
+        flush_addr = addr + i * TARGET_PAGE_SIZE;
+        j = (flush_addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
+        for (mmu_idx = 0; mmu_idx < NB_MMU_MODES; mmu_idx++)
+            tlb_flush_entry(env, &env->tlb_table[mmu_idx][j], flush_addr);
+
+        /* check whether there are entries that need to be flushed in the vtlb */
+        for (mmu_idx = 0; mmu_idx < NB_MMU_MODES; mmu_idx++) {
+            for (k = 0; k < CPU_VTLB_SIZE; k++)
+                tlb_flush_entry(env, &env->tlb_v_table[mmu_idx][k], flush_addr);
+        }
+    }
+
+    for (i = -1; i < num_base_pages; i++) {
+        j = tb_jmp_cache_hash_page(addr + i * TARGET_PAGE_SIZE);
+        memset(&cpu->tb_jmp_cache[j], 0,
+               TB_JMP_PAGE_SIZE * sizeof(TranslationBlock *));
+    }
+    optimization_reset(env, 0);
+
+    return 1;
+}
+#endif
 
 void tlb_flush_page(CPUState *cpu, target_ulong addr)
 {
@@ -138,8 +216,14 @@ void tlb_flush_page(CPUState *cpu, target_ulong addr)
                TARGET_FMT_lx "/" TARGET_FMT_lx ")\n",
                env->tlb_flush_addr, env->tlb_flush_mask);
 #endif
+
+#ifdef ENABLE_LPAGE
+        if (tlb_flush_large_page(cpu, addr))
+            return;
+#else
         tlb_flush(cpu, 1);
         return;
+#endif
     }
     /* must reset current TB so that interrupts cannot modify the
        links while we are modifying them */
@@ -148,18 +232,19 @@ void tlb_flush_page(CPUState *cpu, target_ulong addr)
     addr &= TARGET_PAGE_MASK;
     i = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     for (mmu_idx = 0; mmu_idx < NB_MMU_MODES; mmu_idx++) {
-        tlb_flush_entry(&env->tlb_table[mmu_idx][i], addr);
+        tlb_flush_entry(env, &env->tlb_table[mmu_idx][i], addr);
     }
 
     /* check whether there are entries that need to be flushed in the vtlb */
     for (mmu_idx = 0; mmu_idx < NB_MMU_MODES; mmu_idx++) {
         int k;
         for (k = 0; k < CPU_VTLB_SIZE; k++) {
-            tlb_flush_entry(&env->tlb_v_table[mmu_idx][k], addr);
+            tlb_flush_entry(env, &env->tlb_v_table[mmu_idx][k], addr);
         }
     }
 
     tb_flush_jmp_cache(cpu, addr);
+    optimization_flush_page(env, addr);
 }
 
 void tlb_flush_page_by_mmuidx(CPUState *cpu, target_ulong addr, ...)
@@ -202,11 +287,11 @@ void tlb_flush_page_by_mmuidx(CPUState *cpu, target_ulong addr, ...)
         printf(" %d", mmu_idx);
 #endif
 
-        tlb_flush_entry(&env->tlb_table[mmu_idx][i], addr);
+        tlb_flush_entry(env, &env->tlb_table[mmu_idx][i], addr);
 
         /* check whether there are vltb entries that need to be flushed */
         for (k = 0; k < CPU_VTLB_SIZE; k++) {
-            tlb_flush_entry(&env->tlb_v_table[mmu_idx][k], addr);
+            tlb_flush_entry(env, &env->tlb_v_table[mmu_idx][k], addr);
         }
     }
     va_end(argp);
@@ -284,10 +369,11 @@ void tlb_reset_dirty(CPUState *cpu, ram_addr_t start1, ram_addr_t length)
     }
 }
 
-static inline void tlb_set_dirty1(CPUTLBEntry *tlb_entry, target_ulong vaddr)
+static inline void tlb_set_dirty1(CPUTLBEntry *tlb_entry, target_ulong vaddr,
+                                  tlbaddr_t version)
 {
-    if (tlb_entry->addr_write == (vaddr | TLB_NOTDIRTY)) {
-        tlb_entry->addr_write = vaddr;
+    if (tlb_entry->addr_write == (vaddr | TLB_NOTDIRTY | version)) {
+        tlb_entry->addr_write = vaddr | version;
     }
 }
 
@@ -302,13 +388,13 @@ void tlb_set_dirty(CPUState *cpu, target_ulong vaddr)
     vaddr &= TARGET_PAGE_MASK;
     i = (vaddr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     for (mmu_idx = 0; mmu_idx < NB_MMU_MODES; mmu_idx++) {
-        tlb_set_dirty1(&env->tlb_table[mmu_idx][i], vaddr);
+        tlb_set_dirty1(&env->tlb_table[mmu_idx][i], vaddr, tlb_version(env));
     }
 
     for (mmu_idx = 0; mmu_idx < NB_MMU_MODES; mmu_idx++) {
         int k;
         for (k = 0; k < CPU_VTLB_SIZE; k++) {
-            tlb_set_dirty1(&env->tlb_v_table[mmu_idx][k], vaddr);
+            tlb_set_dirty1(&env->tlb_v_table[mmu_idx][k], vaddr, tlb_version(env));
         }
     }
 }
@@ -360,6 +446,7 @@ void tlb_set_page_with_attrs(CPUState *cpu, target_ulong vaddr,
     assert(size >= TARGET_PAGE_SIZE);
     if (size != TARGET_PAGE_SIZE) {
         tlb_add_large_page(env, vaddr, size);
+        lpt_add_page(env, vaddr, size);
     }
 
     sz = size;
@@ -424,6 +511,13 @@ void tlb_set_page_with_attrs(CPUState *cpu, target_ulong vaddr,
     } else {
         te->addr_write = -1;
     }
+
+#ifdef ENABLE_TLBVERSION
+    tlbaddr_t version = tlb_version(env);
+    te->addr_read |= version;
+    te->addr_write |= version;
+    te->addr_code |= version;
+#endif
 }
 
 /* Add a new TLB entry, but without specifying the memory
@@ -452,7 +546,7 @@ tb_page_addr_t get_page_addr_code(CPUArchState *env1, target_ulong addr)
     page_index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     mmu_idx = cpu_mmu_index(env1, true);
     if (unlikely(env1->tlb_table[mmu_idx][page_index].addr_code !=
-                 (addr & TARGET_PAGE_MASK))) {
+                 page_val(addr, env1))) {
         cpu_ldub_code(env1, addr);
     }
     pd = env1->iotlb[mmu_idx][page_index].addr & ~TARGET_PAGE_MASK;
@@ -470,6 +564,9 @@ tb_page_addr_t get_page_addr_code(CPUArchState *env1, target_ulong addr)
     p = (void *)((uintptr_t)addr + env1->tlb_table[mmu_idx][page_index].addend);
     return qemu_ram_addr_from_host_nofail(p);
 }
+
+#undef TLB_NONIO_MASK
+#undef page_val
 
 #define MMUSUFFIX _mmu
 

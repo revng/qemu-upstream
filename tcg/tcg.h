@@ -193,6 +193,7 @@ typedef struct TCGPool {
 
 #define TCG_POOL_CHUNK_SIZE 32768
 
+#define TCG_MAX_LABELS 512
 #define TCG_MAX_TEMPS 512
 #define TCG_MAX_INSNS 512
 
@@ -564,7 +565,7 @@ struct TCGContext {
     /* Threshold to flush the translated code buffer.  */
     void *code_gen_highwater;
 
-    TBContext tb_ctx;
+    TBContext *tb_ctx;
 
     /* The TCGBackendData structure is private to tcg-target.c.  */
     struct TCGBackendData *be;
@@ -578,12 +579,33 @@ struct TCGContext {
 
     TCGOp gen_op_buf[OPC_BUF_SIZE];
     TCGArg gen_opparam_buf[OPPARAM_BUF_SIZE];
+    TCGArg vec_opparam_buf[OPPARAM_BUF_SIZE];
+    TCGArg *vec_opparam_ptr;
 
     uint16_t gen_insn_end_off[TCG_MAX_INSNS];
     target_ulong gen_insn_data[TCG_MAX_INSNS][TARGET_INSN_START_WORDS];
+
+    TranslationBlock *tb;
 };
 
-extern TCGContext tcg_ctx;
+extern TCGContext tcg_ctx_global;
+extern __thread TCGContext tcg_ctx;
+
+typedef struct TCGHelperInfo {
+    void *func;
+    const char *name;
+    unsigned flags;
+    unsigned sizemask;
+} TCGHelperInfo;
+
+void copy_tcg_context_global(void);
+void copy_tcg_context(void);
+int tcg_num_helpers(void);
+const TCGHelperInfo *get_tcg_helpers(void);
+void tcg_liveness_analysis(TCGContext *s);
+void tcg_dump_ops_fn(TCGContext *s, void (*fn)(const char *));
+target_long decode_sleb128(uint8_t **pp);
+
 
 /* The number of opcodes emitted so far.  */
 static inline int tcg_op_buf_count(void)
@@ -624,7 +646,7 @@ static inline void *tcg_malloc(int size)
 
 void tcg_context_init(TCGContext *s);
 void tcg_prologue_init(TCGContext *s);
-void tcg_func_start(TCGContext *s);
+void tcg_func_start(TCGContext *s, TranslationBlock *tb);
 
 int tcg_gen_code(TCGContext *s, tcg_insn_unit *gen_code_buf);
 
@@ -822,7 +844,7 @@ static inline TCGLabel *arg_label(TCGArg i)
 
 static inline ptrdiff_t tcg_ptr_byte_diff(void *a, void *b)
 {
-    return a - b;
+    return (ptrdiff_t)a - (ptrdiff_t)b;
 }
 
 /**
@@ -876,7 +898,7 @@ static inline TCGMemOpIdx make_memop_idx(TCGMemOp op, unsigned idx)
  */
 static inline TCGMemOp get_memop(TCGMemOpIdx oi)
 {
-    return oi >> 4;
+    return (TCGMemOp)(oi >> 4);
 }
 
 /**
@@ -939,6 +961,7 @@ static inline unsigned get_mmuidx(TCGMemOpIdx oi)
 #define TB_EXIT_IDX1 1
 #define TB_EXIT_ICOUNT_EXPIRED 2
 #define TB_EXIT_REQUESTED 3
+#define TB_EXIT_LLVM TB_EXIT_ICOUNT_EXPIRED
 
 #ifdef HAVE_TCG_QEMU_TB_EXEC
 uintptr_t tcg_qemu_tb_exec(CPUArchState *env, uint8_t *tb_ptr);
@@ -1010,6 +1033,31 @@ uint32_t helper_be_ldl_cmmu(CPUArchState *env, target_ulong addr,
                             TCGMemOpIdx oi, uintptr_t retaddr);
 uint64_t helper_be_ldq_cmmu(CPUArchState *env, target_ulong addr,
                             TCGMemOpIdx oi, uintptr_t retaddr);
+
+
+/* Value zero-extended to tcg register size.  */
+tcg_target_ulong llvm_ret_ldub_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+tcg_target_ulong llvm_le_lduw_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+tcg_target_ulong llvm_le_ldul_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+uint64_t llvm_le_ldq_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+tcg_target_ulong llvm_be_lduw_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+tcg_target_ulong llvm_be_ldul_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+uint64_t llvm_be_ldq_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+
+/* Value sign-extended to tcg register size.  */
+tcg_target_ulong llvm_ret_ldsb_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+tcg_target_ulong llvm_le_ldsw_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+tcg_target_ulong llvm_le_ldsl_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+tcg_target_ulong llvm_be_ldsw_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+tcg_target_ulong llvm_be_ldsl_mmu(CPUArchState *env, target_ulong addr, TCGMemOpIdx oi);
+
+void llvm_ret_stb_mmu(CPUArchState *env, target_ulong addr, uint8_t val, TCGMemOpIdx oi);
+void llvm_le_stw_mmu(CPUArchState *env, target_ulong addr, uint16_t val, TCGMemOpIdx oi);
+void llvm_le_stl_mmu(CPUArchState *env, target_ulong addr, uint32_t val, TCGMemOpIdx oi);
+void llvm_le_stq_mmu(CPUArchState *env, target_ulong addr, uint64_t val, TCGMemOpIdx oi);
+void llvm_be_stw_mmu(CPUArchState *env, target_ulong addr, uint16_t val, TCGMemOpIdx oi);
+void llvm_be_stl_mmu(CPUArchState *env, target_ulong addr, uint32_t val, TCGMemOpIdx oi);
+void llvm_be_stq_mmu(CPUArchState *env, target_ulong addr, uint64_t val, TCGMemOpIdx oi);
 
 /* Temporary aliases until backends are converted.  */
 #ifdef TARGET_WORDS_BIGENDIAN

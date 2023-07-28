@@ -26,12 +26,16 @@
  * DEF(name, oargs, iargs, cargs, flags)
  */
 
+DEF(hotpatch, 0, 0, 2, 0)
+DEF(annotate, 0, 0, 1, TCG_OPF_NOT_PRESENT)
+
 /* predefined ops */
 DEF(discard, 1, 0, 0, TCG_OPF_NOT_PRESENT)
 DEF(set_label, 0, 0, 1, TCG_OPF_BB_END | TCG_OPF_NOT_PRESENT)
 
 /* variable number of parameters */
 DEF(call, 0, 0, 3, TCG_OPF_CALL_CLOBBER | TCG_OPF_NOT_PRESENT)
+DEF(jmp, 0, 1, 0, TCG_OPF_BB_END)
 
 DEF(br, 0, 0, 1, TCG_OPF_BB_END)
 
@@ -190,6 +194,8 @@ DEF(qemu_ld_i64, DATA64_ARGS, TLADDR_ARGS, 1,
     TCG_OPF_CALL_CLOBBER | TCG_OPF_SIDE_EFFECTS | TCG_OPF_64BIT)
 DEF(qemu_st_i64, 0, TLADDR_ARGS + DATA64_ARGS, 1,
     TCG_OPF_CALL_CLOBBER | TCG_OPF_SIDE_EFFECTS | TCG_OPF_64BIT)
+
+#include "tcg-opc-vector.h"
 
 #undef TLADDR_ARGS
 #undef DATA64_ARGS

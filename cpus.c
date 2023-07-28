@@ -66,6 +66,9 @@
 
 #endif /* CONFIG_LINUX */
 
+#include "tcg.h"
+#include "hqemu.h"
+
 static CPUState *next_cpu;
 int64_t max_delay;
 int64_t max_advance;
@@ -892,6 +895,18 @@ void qemu_init_cpu_loop(void)
     qemu_thread_get_self(&io_thread);
 }
 
+void qemu_end_cpu_loop(void)
+{
+    CPUState *cpu;
+
+    CPU_FOREACH(cpu)
+        optimization_finalize(cpu->env_ptr);
+
+#if defined(CONFIG_LLVM)
+    llvm_finalize();
+#endif
+}
+
 void run_on_cpu(CPUState *cpu, void (*func)(void *data), void *data)
 {
     struct qemu_work_item wi;
@@ -1133,6 +1148,16 @@ static void *qemu_tcg_cpu_thread_fn(void *arg)
 
     /* process any pending work */
     atomic_mb_set(&exit_request, 1);
+
+#if defined(CONFIG_LLVM)
+    llvm_init();
+#endif
+    /* we can safely initialize optimization resources after
+     * the setup of CPUArchState is completed. */
+    CPU_FOREACH(cpu) {
+        copy_tcg_context();
+        optimization_init(cpu->env_ptr);
+    }
 
     while (1) {
         tcg_exec_all();

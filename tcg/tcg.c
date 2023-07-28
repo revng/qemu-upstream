@@ -304,18 +304,21 @@ void tcg_pool_reset(TCGContext *s)
     s->pool_current = NULL;
 }
 
-typedef struct TCGHelperInfo {
-    void *func;
-    const char *name;
-    unsigned flags;
-    unsigned sizemask;
-} TCGHelperInfo;
-
 #include "exec/helper-proto.h"
 
-static const TCGHelperInfo all_helpers[] = {
+const TCGHelperInfo all_helpers[] = {
 #include "exec/helper-tcg.h"
 };
+
+int tcg_num_helpers(void)
+{
+    return ARRAY_SIZE(all_helpers);
+}
+
+const TCGHelperInfo *get_tcg_helpers(void)
+{
+    return all_helpers;
+}
 
 void tcg_context_init(TCGContext *s)
 {
@@ -413,7 +416,7 @@ void tcg_set_frame(TCGContext *s, int reg, intptr_t start, intptr_t size)
     s->frame_reg = reg;
 }
 
-void tcg_func_start(TCGContext *s)
+void tcg_func_start(TCGContext *s, TranslationBlock *tb)
 {
     tcg_pool_reset(s);
     s->nb_temps = s->nb_globals;
@@ -432,8 +435,10 @@ void tcg_func_start(TCGContext *s)
     s->gen_last_op_idx = -1;
     s->gen_next_op_idx = 0;
     s->gen_next_parm_idx = 0;
+    s->vec_opparam_ptr = s->vec_opparam_buf;
 
     s->be = tcg_malloc(sizeof(TCGBackendData));
+    s->tb = tb;
 }
 
 static inline void tcg_temp_alloc(TCGContext *s, int n)
@@ -1004,6 +1009,7 @@ void tcg_dump_ops(TCGContext *s)
     char buf[128];
     TCGOp *op;
     int oi;
+    const TCGArg *vec_args = s->vec_opparam_buf;
 
     for (oi = s->gen_first_op_idx; oi >= 0; oi = op->next) {
         int i, k, nb_oargs, nb_iargs, nb_cargs;
@@ -1051,7 +1057,28 @@ void tcg_dump_ops(TCGContext *s)
                 qemu_log(",%s", t);
             }
         } else {
+            int is_vec = 0;
             qemu_log(" %s ", def->name);
+
+            /* print vector opc */
+            switch (c) {
+            case INDEX_op_vector_start ... INDEX_op_vector_end:
+                is_vec = 1;
+                break;
+            default:
+                break;
+            }
+            if (is_vec) {
+                qemu_log("$0x%" TCG_PRIlx, vec_args[0]);
+                if (c == INDEX_op_vload_128 || c == INDEX_op_vstore_128)
+                    qemu_log(",%s", tcg_get_arg_str_idx(s, buf, sizeof(buf), vec_args[1]));
+                else
+                    qemu_log(",$0x%" TCG_PRIlx, vec_args[1]);
+                qemu_log(",$0x%" TCG_PRIlx, vec_args[2]);
+                qemu_log("\n");
+                vec_args += 3;
+                continue;
+            }
 
             nb_oargs = def->nb_oargs;
             nb_iargs = def->nb_iargs;
@@ -1136,6 +1163,172 @@ void tcg_dump_ops(TCGContext *s)
         }
         qemu_log("\n");
     }
+}
+
+void tcg_dump_ops_fn(TCGContext *s, void (*fn)(const char *))
+{
+    char buf[128];
+    char outbuf[128];
+    TCGOp *op;
+    int oi;
+    const TCGArg *vec_args = s->vec_opparam_buf;
+
+#define printops(args...) \
+    do { snprintf(outbuf, 128, ##args); (*fn)(outbuf); } while(0)
+
+    for (oi = s->gen_first_op_idx; oi >= 0; oi = op->next) {
+        int i, k, nb_oargs, nb_iargs, nb_cargs;
+        const TCGOpDef *def;
+        const TCGArg *args;
+        TCGOpcode c;
+
+        op = &s->gen_op_buf[oi];
+        c = op->opc;
+        def = &tcg_op_defs[c];
+        args = &s->gen_opparam_buf[op->args];
+
+        if (c == INDEX_op_insn_start) {
+            printops("%s ----", oi != s->gen_first_op_idx ? "\n" : "");
+
+            for (i = 0; i < TARGET_INSN_START_WORDS; ++i) {
+                target_ulong a;
+#if TARGET_LONG_BITS > TCG_TARGET_REG_BITS
+                a = ((target_ulong)args[i * 2 + 1] << 32) | args[i * 2];
+#else
+                a = args[i];
+#endif
+                printops(" " TARGET_FMT_lx, a);
+            }
+        } else if (c == INDEX_op_call) {
+            /* variable number of arguments */
+            nb_oargs = op->callo;
+            nb_iargs = op->calli;
+            nb_cargs = def->nb_cargs;
+
+            /* function name, flags, out args */
+            printops(" %s %s,$0x%" TCG_PRIlx ",$%d", def->name,
+                     tcg_find_helper(s, args[nb_oargs + nb_iargs]),
+                     args[nb_oargs + nb_iargs + 1], nb_oargs);
+            for (i = 0; i < nb_oargs; i++) {
+                printops(",%s", tcg_get_arg_str_idx(s, buf, sizeof(buf),
+                                                    args[i]));
+            }
+            for (i = 0; i < nb_iargs; i++) {
+                TCGArg arg = args[nb_oargs + i];
+                const char *t = "<dummy>";
+                if (arg != TCG_CALL_DUMMY_ARG) {
+                    t = tcg_get_arg_str_idx(s, buf, sizeof(buf), arg);
+                }
+                printops(",%s", t);
+            }
+        } else {
+            int is_vec = 0;
+            printops(" %s ", def->name);
+
+            /* print vector opc */
+            switch (c) {
+            case INDEX_op_vector_start ... INDEX_op_vector_end:
+                is_vec = 1;
+                break;
+            default:
+                break;
+            }
+            if (is_vec) {
+                printops("$0x%" TCG_PRIlx, vec_args[0]);
+                if (c == INDEX_op_vload_128 || c == INDEX_op_vstore_128)
+                    printops(",%s", tcg_get_arg_str_idx(s, buf, sizeof(buf), vec_args[1]));
+                else
+                    printops(",$0x%" TCG_PRIlx, vec_args[1]);
+                printops(",$0x%" TCG_PRIlx, vec_args[2]);
+                printops("\n");
+                vec_args += 3;
+                continue;
+            }
+
+            nb_oargs = def->nb_oargs;
+            nb_iargs = def->nb_iargs;
+            nb_cargs = def->nb_cargs;
+
+            k = 0;
+            for (i = 0; i < nb_oargs; i++) {
+                if (k != 0) {
+                    printops(",");
+                }
+                printops("%s", tcg_get_arg_str_idx(s, buf, sizeof(buf),
+                                                   args[k++]));
+            }
+            for (i = 0; i < nb_iargs; i++) {
+                if (k != 0) {
+                    printops(",");
+                }
+                printops("%s", tcg_get_arg_str_idx(s, buf, sizeof(buf),
+                                                   args[k++]));
+            }
+            switch (c) {
+            case INDEX_op_brcond_i32:
+            case INDEX_op_setcond_i32:
+            case INDEX_op_movcond_i32:
+            case INDEX_op_brcond2_i32:
+            case INDEX_op_setcond2_i32:
+            case INDEX_op_brcond_i64:
+            case INDEX_op_setcond_i64:
+            case INDEX_op_movcond_i64:
+                if (args[k] < ARRAY_SIZE(cond_name) && cond_name[args[k]]) {
+                    printops(",%s", cond_name[args[k++]]);
+                } else {
+                    printops(",$0x%" TCG_PRIlx, args[k++]);
+                }
+                i = 1;
+                break;
+            case INDEX_op_qemu_ld_i32:
+            case INDEX_op_qemu_st_i32:
+            case INDEX_op_qemu_ld_i64:
+            case INDEX_op_qemu_st_i64:
+                {
+                    TCGMemOpIdx oi = args[k++];
+                    TCGMemOp op = get_memop(oi);
+                    unsigned ix = get_mmuidx(oi);
+
+                    if (op & ~(MO_AMASK | MO_BSWAP | MO_SSIZE)) {
+                        printops(",$0x%x,%u", op, ix);
+                    } else {
+                        const char *s_al = "", *s_op;
+                        if (op & MO_AMASK) {
+                            if ((op & MO_AMASK) == MO_ALIGN) {
+                                s_al = "al+";
+                            } else {
+                                s_al = "un+";
+                            }
+                        }
+                        s_op = ldst_name[op & (MO_BSWAP | MO_SSIZE)];
+                        printops(",%s%s,%u", s_al, s_op, ix);
+                    }
+                    i = 1;
+                }
+                break;
+            default:
+                i = 0;
+                break;
+            }
+            switch (c) {
+            case INDEX_op_set_label:
+            case INDEX_op_br:
+            case INDEX_op_brcond_i32:
+            case INDEX_op_brcond_i64:
+            case INDEX_op_brcond2_i32:
+                printops("%s$L%d", k ? "," : "", arg_label(args[k])->id);
+                i++, k++;
+                break;
+            default:
+                break;
+            }
+            for (; i < nb_cargs; i++, k++) {
+                printops("%s$0x%" TCG_PRIlx, k ? "," : "", args[k]);
+            }
+        }
+        printops("\n");
+    }
+#undef printops
 }
 
 /* we give more priority to constraints with less registers */
@@ -1334,10 +1527,11 @@ static inline void tcg_la_bb_end(TCGContext *s, uint8_t *dead_temps,
 /* Liveness analysis : update the opc_dead_args array to tell if a
    given input arguments is dead. Instructions updating dead
    temporaries are removed. */
-static void tcg_liveness_analysis(TCGContext *s)
+void tcg_liveness_analysis(TCGContext *s)
 {
     uint8_t *dead_temps, *mem_temps;
     int oi, oi_prev, nb_ops;
+    TCGArg *vec_args = s->vec_opparam_ptr;
 
     nb_ops = s->gen_next_op_idx;
     s->op_dead_args = tcg_malloc(nb_ops * sizeof(uint16_t));
@@ -1427,6 +1621,7 @@ static void tcg_liveness_analysis(TCGContext *s)
                 }
             }
             break;
+        case INDEX_op_annotate:
         case INDEX_op_insn_start:
             break;
         case INDEX_op_discard:
@@ -1434,7 +1629,11 @@ static void tcg_liveness_analysis(TCGContext *s)
             dead_temps[args[0]] = 1;
             mem_temps[args[0]] = 0;
             break;
-
+        case INDEX_op_vector_start ... INDEX_op_vector_end:
+            vec_args -= 3;
+            if (opc == INDEX_op_vload_128 || opc == INDEX_op_vstore_128)
+                dead_temps[vec_args[1]] = 0;
+            break;
         case INDEX_op_add2_i32:
             opc_new = INDEX_op_add_i32;
             goto do_addsub2;
@@ -1577,7 +1776,7 @@ static void tcg_liveness_analysis(TCGContext *s)
 }
 #else
 /* dummy liveness analysis */
-static void tcg_liveness_analysis(TCGContext *s)
+void tcg_liveness_analysis(TCGContext *s)
 {
     int nb_ops;
     nb_ops = s->gen_opc_ptr - s->gen_opc_buf;
@@ -2418,6 +2617,8 @@ int tcg_gen_code(TCGContext *s, tcg_insn_unit *gen_code_buf)
                 s->gen_insn_data[num_insns][i] = a;
             }
             break;
+        case INDEX_op_annotate:
+            break;
         case INDEX_op_discard:
             temp_dead(s, args[0]);
             break;
@@ -2554,15 +2755,15 @@ struct jit_descriptor {
     struct jit_code_entry *first_entry;
 };
 
-void __jit_debug_register_code(void) __attribute__((noinline));
-void __jit_debug_register_code(void)
+void qemu_jit_debug_register_code(void) __attribute__((noinline));
+void qemu_jit_debug_register_code(void)
 {
     asm("");
 }
 
 /* Must statically initialize the version, because GDB may check
    the version before we can set it.  */
-struct jit_descriptor __jit_debug_descriptor = { 1, 0, 0, 0 };
+struct jit_descriptor qemu_jit_debug_descriptor = { 1, 0, 0, 0 };
 
 /* End GDB interface.  */
 
@@ -2771,10 +2972,10 @@ static void tcg_register_jit_int(void *buf_ptr, size_t buf_size,
     one_entry.symfile_addr = img;
     one_entry.symfile_size = img_size;
 
-    __jit_debug_descriptor.action_flag = JIT_REGISTER_FN;
-    __jit_debug_descriptor.relevant_entry = &one_entry;
-    __jit_debug_descriptor.first_entry = &one_entry;
-    __jit_debug_register_code();
+    qemu_jit_debug_descriptor.action_flag = JIT_REGISTER_FN;
+    qemu_jit_debug_descriptor.relevant_entry = &one_entry;
+    qemu_jit_debug_descriptor.first_entry = &one_entry;
+    qemu_jit_debug_register_code();
 }
 #else
 /* No support for the feature.  Provide the entry point expected by exec.c,
@@ -2790,3 +2991,34 @@ void tcg_register_jit(void *buf, size_t buf_size)
 {
 }
 #endif /* ELF_HOST_MACHINE */
+
+
+/*
+ * copy_tcg_context_global()
+ *  Copy thread's local TCG context to the global TCG context.
+ *
+ * We first initialize main thread's tcg_ctx and copy it to tcg_ctx_global
+ * at this point. The tcg_ctx_global is copied to each thread's local
+ * tcg_ctx later using copy_tcg_context(). 
+ *
+ * Note: This copy must be done after tcg_ctx is completely initialized
+ *       and should be setup by the main thread. 
+ */
+void copy_tcg_context_global(void)
+{
+    static int init_once = 0;
+    if (init_once == 1)
+        return;
+
+    memcpy(&tcg_ctx_global, &tcg_ctx, sizeof(TCGContext));
+    init_once = 1;
+}
+
+/*
+ * copy_tcg_context()
+ *  Copy the global TCG context to the thread's local TCG context.
+ */
+void copy_tcg_context(void)
+{
+    memcpy(&tcg_ctx, &tcg_ctx_global, sizeof(TCGContext));
+}

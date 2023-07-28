@@ -405,7 +405,7 @@ static inline void *tlb_vaddr_to_host(CPUArchState *env, target_ulong addr,
 #else
     int index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     CPUTLBEntry *tlbentry = &env->tlb_table[mmu_idx][index];
-    target_ulong tlb_addr;
+    tlbaddr_t tlb_addr;
     uintptr_t haddr;
 
     switch (access_type) {
@@ -422,13 +422,22 @@ static inline void *tlb_vaddr_to_host(CPUArchState *env, target_ulong addr,
         g_assert_not_reached();
     }
 
+#if defined(ENABLE_TLBVERSION)
+    if (tlb_version(env) != (tlb_addr & TLB_VERSION_MASK))
+        return NULL;
+#endif
+
     if ((addr & TARGET_PAGE_MASK)
         != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {
         /* TLB entry is for a different page */
         return NULL;
     }
 
+#if defined(ENABLE_TLBVERSION)
+    if (tlb_addr & (TLB_NOTDIRTY | TLB_MMIO)) {
+#else
     if (tlb_addr & ~TARGET_PAGE_MASK) {
+#endif
         /* IO access */
         return NULL;
     }

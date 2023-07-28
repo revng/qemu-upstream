@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/mman.h>
+#include <sys/sysmacros.h>
 #include <unistd.h>
 #include <sched.h>
 #include "qemu.h"

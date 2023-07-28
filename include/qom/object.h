@@ -20,6 +20,10 @@
 #include "qemu/queue.h"
 #include "qapi/error.h"
 
+#define Type     QEMUType
+#define class    QEMUclass
+#define typename QEMUtypename
+
 struct Visitor;
 
 struct TypeImpl;
@@ -1570,5 +1574,8 @@ int object_child_foreach_recursive(Object *obj,
  */
 Object *container_get(Object *root, const char *path);
 
+#undef Type
+#undef class
+#undef typename
 
 #endif

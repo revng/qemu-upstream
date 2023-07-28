@@ -56,6 +56,7 @@ DEF_HELPER_2(pre_smc, void, env, i32)
 
 DEF_HELPER_1(check_breakpoints, void, env)
 
+DEF_HELPER_3(cpsr_write_nzcv, void, env, i32, i32)
 DEF_HELPER_3(cpsr_write, void, env, i32, i32)
 DEF_HELPER_1(cpsr_read, i32, env)
 
@@ -103,10 +104,10 @@ DEF_HELPER_1(vfp_abss, f32, f32)
 DEF_HELPER_1(vfp_absd, f64, f64)
 DEF_HELPER_2(vfp_sqrts, f32, f32, env)
 DEF_HELPER_2(vfp_sqrtd, f64, f64, env)
-DEF_HELPER_3(vfp_cmps, void, f32, f32, env)
-DEF_HELPER_3(vfp_cmpd, void, f64, f64, env)
-DEF_HELPER_3(vfp_cmpes, void, f32, f32, env)
-DEF_HELPER_3(vfp_cmped, void, f64, f64, env)
+DEF_HELPER_3(vfp_cmps, i32, f32, f32, env)
+DEF_HELPER_3(vfp_cmpd, i32, f64, f64, env)
+DEF_HELPER_3(vfp_cmpes, i32, f32, f32, env)
+DEF_HELPER_3(vfp_cmped, i32, f64, f64, env)
 
 DEF_HELPER_2(vfp_fcvtds, f64, f32, env)
 DEF_HELPER_2(vfp_fcvtsd, f32, f64, env)
@@ -535,3 +536,5 @@ DEF_HELPER_FLAGS_2(neon_pmull_64_hi, TCG_CALL_NO_RWG_SE, i64, i64, i64)
 #ifdef TARGET_AARCH64
 #include "helper-a64.h"
 #endif
+
+#include "hqemu-helper.h"

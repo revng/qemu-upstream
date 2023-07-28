@@ -845,7 +845,7 @@ typedef struct CPUX86State {
     uint64_t efer;
 
     /* Beginning of state preserved by INIT (dummy marker).  */
-    struct {} start_init_save;
+    struct { int dummy; } start_init_save;
 
     /* FPU state */
     unsigned int fpstt; /* top of stack index */
@@ -865,8 +865,8 @@ typedef struct CPUX86State {
     float_status mmx_status; /* for 3DNow! float ops */
     float_status sse_status;
     uint32_t mxcsr;
-    XMMReg xmm_regs[CPU_NB_REGS == 8 ? 8 : 32];
-    XMMReg xmm_t0;
+    XMMReg xmm_regs[CPU_NB_REGS == 8 ? 8 : 32] __attribute__((aligned(64)));
+    XMMReg xmm_t0 __attribute__((aligned(64)));
     MMXReg mmx_t0;
 
     uint64_t opmask_regs[NB_OPMASK_REGS];
@@ -906,7 +906,7 @@ typedef struct CPUX86State {
     uint32_t smbase;
 
     /* End of state preserved by INIT (dummy marker).  */
-    struct {} end_init_save;
+    struct { int dummy; } end_init_save;
 
     uint64_t system_time_msr;
     uint64_t wall_clock_msr;
@@ -965,6 +965,8 @@ typedef struct CPUX86State {
     uint64_t mtrr_fixed[11];
     uint64_t mtrr_deftype;
     MTRRVar mtrr_var[MSR_MTRRcap_VCNT];
+
+    CPU_OPTIMIZATION_COMMON
 
     /* For KVM */
     uint32_t mp_state;
@@ -1237,6 +1239,19 @@ static inline void cpu_get_tb_cpu_state(CPUX86State *env, target_ulong *pc,
         (env->eflags & (IOPL_MASK | TF_MASK | RF_MASK | VM_MASK | AC_MASK));
 }
 
+static inline target_ulong cpu_get_pc(CPUX86State *env)
+{
+    return env->eip + env->segs[R_CS].base;
+}
+
+static inline int cpu_check_state(CPUX86State *env,
+                                  target_ulong cs_base, int flags)
+{
+    int mask = IOPL_MASK | TF_MASK | RF_MASK | VM_MASK | AC_MASK;
+    return (cs_base == env->segs[R_CS].base) &&
+           ((uint32_t)flags == (env->hflags | (env->eflags & mask)));
+}
+
 void do_cpu_init(X86CPU *cpu);
 void do_cpu_sipi(X86CPU *cpu);
 
@@ -1297,7 +1312,9 @@ static inline void cpu_load_efer(CPUX86State *env, uint64_t val)
 
 static inline MemTxAttrs cpu_get_mem_attrs(CPUX86State *env)
 {
-    return ((MemTxAttrs) { .secure = (env->hflags & HF_SMM_MASK) != 0 });
+    MemTxAttrs attrs = { 0 };
+    attrs.secure = (env->hflags & HF_SMM_MASK) != 0;
+    return attrs;
 }
 
 /* fpu_helper.c */

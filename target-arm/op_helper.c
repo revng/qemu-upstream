@@ -386,6 +386,16 @@ void HELPER(cpsr_write)(CPUARMState *env, uint32_t val, uint32_t mask)
     cpsr_write(env, val, mask);
 }
 
+void HELPER(cpsr_write_nzcv)(CPUARMState *env, uint32_t val, uint32_t mask)
+{
+    if (mask & CPSR_NZCV) {
+        env->ZF = (~val) & CPSR_Z;
+        env->NF = val;
+        env->CF = (val >> 29) & 1;
+        env->VF = (val << 3) & 0x80000000;
+    }
+}
+
 /* Access to user mode registers from privileged modes.  */
 uint32_t HELPER(get_user_reg)(CPUARMState *env, uint32_t regno)
 {

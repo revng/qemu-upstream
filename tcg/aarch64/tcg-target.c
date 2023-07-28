@@ -1264,7 +1264,56 @@ static void tcg_out_qemu_st(TCGContext *s, TCGReg data_reg, TCGReg addr_reg,
 #endif /* CONFIG_SOFTMMU */
 }
 
-static tcg_insn_unit *tb_ret_addr;
+tcg_insn_unit *tb_ret_addr;
+tcg_insn_unit *ibtc_ret_addr;
+
+/*
+ * Emit trace profiling/prediction stubs. The code sequence is as following:
+ *   S1: direct jump (the reloc part requires 4-byte alignment)
+ *   S2: trace profiling stub
+ *   S3: trace prediction stub
+ *   S4: beginning of QEMU emulation code
+ *
+ * The jump inst of S1 is initially set to jump to S3 (i.e. skipping S2).
+ * Remember the offset of S3 (patch_next) which is used to turn the
+ * trace profiling off. Also remember the offset of S4 (patch_skip)
+ * so that the trace stubs can be skipped quickly while searching pc.
+ */
+static void tcg_out_hotpatch(TCGContext *s, int is_user, int emit_helper)
+{
+    tcg_insn_unit *label_ptr[2];
+    TranslationBlock *tb = s->tb;
+
+    tb->patch_jmp = (uint16_t)((intptr_t)s->code_ptr - (intptr_t)s->code_buf);
+
+    /* S1: Direct Jump  */
+    if (is_user == 0 || emit_helper == 0) {
+        tcg_out_goto(s, s->code_ptr + 1);
+        tb->patch_next = (uint16_t)((intptr_t)s->code_ptr - (intptr_t)s->code_buf);
+        return;
+    }
+
+    label_ptr[0] = s->code_ptr;
+    tcg_out_goto_noaddr(s);
+    /* S2: Trace Profiling Stub  */
+    tcg_out_mov(s, TCG_TYPE_PTR, tcg_target_call_iarg_regs[0], TCG_AREG0);
+    tcg_out_movi(s, TCG_TYPE_I32, tcg_target_call_iarg_regs[1], tb->id);
+    tcg_out_call(s, (tcg_insn_unit *)helper_NET_profile);
+    reloc_pc26(label_ptr[0], s->code_ptr);
+
+    /* S3: Trace Prediction stub */
+    tb->patch_next = (uint16_t)((intptr_t)s->code_ptr - (intptr_t)s->code_buf);
+
+    tcg_out_ld(s, TCG_TYPE_I32, tcg_target_reg_alloc_order[0],
+               TCG_AREG0, offsetof(CPUArchState, start_trace_prediction));
+    tcg_out_cmp(s, 0, tcg_target_reg_alloc_order[0], 0, 1);
+    label_ptr[1] = s->code_ptr;
+    tcg_out_goto_cond_noaddr(s, TCG_COND_EQ);
+    tcg_out_mov(s, TCG_TYPE_PTR, tcg_target_call_iarg_regs[0], TCG_AREG0);
+    tcg_out_movi(s, TCG_TYPE_I32, tcg_target_call_iarg_regs[1], tb->id);
+    tcg_out_call(s, (tcg_insn_unit *)helper_NET_predict);
+    reloc_pc19(label_ptr[1], s->code_ptr);
+}
 
 static void tcg_out_op(TCGContext *s, TCGOpcode opc,
                        const TCGArg args[TCG_MAX_OP_ARGS],
@@ -1302,6 +1351,16 @@ static void tcg_out_op(TCGContext *s, TCGOpcode opc,
         s->tb_next_offset[a0] = tcg_current_code_size(s);
         break;
 
+    case INDEX_op_hotpatch:
+        tcg_out_hotpatch(s, args[0], args[1]);
+        break;
+    case INDEX_op_jmp:
+        if (const_args[0]) {
+            tcg_out_goto(s, (tcg_insn_unit *)args[0]);
+        } else {
+            tcg_out_insn(s, 3207, BR, args[0]);
+        }
+        break;
     case INDEX_op_br:
         tcg_out_goto_label(s, arg_label(a0));
         break;
@@ -1637,6 +1696,8 @@ static void tcg_out_op(TCGContext *s, TCGOpcode opc,
 }
 
 static const TCGTargetOpDef aarch64_op_defs[] = {
+    { INDEX_op_hotpatch, { "i", "i" } },
+    { INDEX_op_jmp, { "ri" } },
     { INDEX_op_exit_tb, { } },
     { INDEX_op_goto_tb, { } },
     { INDEX_op_br, { } },
@@ -1748,6 +1809,10 @@ static const TCGTargetOpDef aarch64_op_defs[] = {
     { INDEX_op_muluh_i64, { "r", "r", "r" } },
     { INDEX_op_mulsh_i64, { "r", "r", "r" } },
 
+#define DEF(name,a1,a2,a3,a4) { INDEX_op_##name, {} },
+#include "tcg-opc-vector.h"
+#undef DEF
+
     { -1 },
 };
 
@@ -1777,12 +1842,24 @@ static void tcg_target_init(TCGContext *s)
     tcg_add_target_add_op_defs(aarch64_op_defs);
 }
 
+static void tcg_out_epilogue(TCGContext *s)
+{
+    /* IBTC exit entry */
+    ibtc_ret_addr = s->code_ptr;
+    tcg_out_movi(s, TCG_TYPE_PTR, TCG_REG_X0, 0);
+}
+
+#if defined(CONFIG_LLVM)
+#define STACK_SIZE 0x800
+#else
+#define STACK_SIZE TCG_STATIC_CALL_ARGS_SIZE
+#endif
 /* Saving pairs: (X19, X20) .. (X27, X28), (X29(fp), X30(lr)).  */
 #define PUSH_SIZE  ((30 - 19 + 1) * 8)
 
 #define FRAME_SIZE \
     ((PUSH_SIZE \
-      + TCG_STATIC_CALL_ARGS_SIZE \
+      + STACK_SIZE \
       + CPU_TEMP_BUF_NLONGS * sizeof(long) \
       + TCG_TARGET_STACK_ALIGN - 1) \
      & ~(TCG_TARGET_STACK_ALIGN - 1))
@@ -1828,6 +1905,7 @@ static void tcg_target_qemu_prologue(TCGContext *s)
     tcg_out_mov(s, TCG_TYPE_PTR, TCG_AREG0, tcg_target_call_iarg_regs[0]);
     tcg_out_insn(s, 3207, BR, tcg_target_call_iarg_regs[1]);
 
+    tcg_out_epilogue(s);
     tb_ret_addr = s->code_ptr;
 
     /* Remove TCG locals stack space.  */

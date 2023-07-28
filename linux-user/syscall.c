@@ -114,6 +114,7 @@ int __clone2(int (*fn)(void *), void *child_stack_base,
 #include "uname.h"
 
 #include "qemu.h"
+#include "hqemu.h"
 
 #define CLONE_NPTL_FLAGS2 (CLONE_SETTLS | \
     CLONE_PARENT_SETTID | CLONE_CHILD_SETTID | CLONE_CHILD_CLEARTID)
@@ -4495,7 +4496,7 @@ abi_long do_arch_prctl(CPUX86State *env, int code, abi_ulong addr)
 
 #endif /* defined(TARGET_I386) */
 
-#define NEW_STACK_SIZE 0x40000
+#define NEW_STACK_SIZE 0x80000
 
 
 static pthread_mutex_t clone_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -5710,6 +5711,12 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
             rcu_unregister_thread();
             pthread_exit(NULL);
         }
+
+        optimization_finalize((CPUArchState *)cpu_env);
+#if defined(CONFIG_LLVM)
+        llvm_finalize();
+#endif
+
 #ifdef TARGET_GPROF
         _mcleanup();
 #endif
@@ -7615,6 +7622,10 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
 #ifdef __NR_exit_group
         /* new thread calls */
     case TARGET_NR_exit_group:
+        optimization_finalize((CPUArchState *)cpu_env);
+#if defined(CONFIG_LLVM)
+        llvm_finalize();
+#endif
 #ifdef TARGET_GPROF
         _mcleanup();
 #endif

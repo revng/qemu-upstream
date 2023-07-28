@@ -67,6 +67,14 @@
 #define SRETSUFFIX glue(s, SUFFIX)
 #endif
 
+#include "hqemu.h"
+
+#if defined(ENABLE_TLBVERSION)
+#define page_val(addr, env)  ((((tlbaddr_t)addr + DATA_SIZE - 1) & TARGET_PAGE_MASK) | tlb_version(env))
+#else
+#define page_val(addr, env)  (addr & (TARGET_PAGE_MASK | (DATA_SIZE - 1)))
+#endif
+
 /* generic load/store macros */
 
 static inline RES_TYPE
@@ -80,12 +88,17 @@ glue(glue(glue(cpu_ld, USUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
     int mmu_idx;
     TCGMemOpIdx oi;
 
+#ifdef SOFTMMU_CODE_ACCESS
+    if (build_llvm_only(env))
+        return glue(glue(ld, USUFFIX), _p)((uint8_t *)env->image_base + ptr);
+#endif
+
     addr = ptr;
     page_index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     mmu_idx = CPU_MMU_INDEX;
     if (unlikely(env->tlb_table[mmu_idx][page_index].ADDR_READ !=
-                 (addr & (TARGET_PAGE_MASK | (DATA_SIZE - 1))))) {
-        oi = make_memop_idx(SHIFT, mmu_idx);
+                 page_val(addr, env))) {
+        oi = make_memop_idx((TCGMemOp)SHIFT, mmu_idx);
         res = glue(glue(helper_ret_ld, URETSUFFIX), MMUSUFFIX)(env, addr,
                                                             oi, retaddr);
     } else {
@@ -112,12 +125,17 @@ glue(glue(glue(cpu_lds, SUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
     int mmu_idx;
     TCGMemOpIdx oi;
 
+#ifdef SOFTMMU_CODE_ACCESS
+    if (build_llvm_only(env))
+        return glue(glue(lds, SUFFIX), _p)((uint8_t *)env->image_base + ptr);
+#endif
+
     addr = ptr;
     page_index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     mmu_idx = CPU_MMU_INDEX;
     if (unlikely(env->tlb_table[mmu_idx][page_index].ADDR_READ !=
-                 (addr & (TARGET_PAGE_MASK | (DATA_SIZE - 1))))) {
-        oi = make_memop_idx(SHIFT, mmu_idx);
+                 page_val(addr, env))) {
+        oi = make_memop_idx((TCGMemOp)SHIFT, mmu_idx);
         res = (DATA_STYPE)glue(glue(helper_ret_ld, SRETSUFFIX),
                                MMUSUFFIX)(env, addr, oi, retaddr);
     } else {
@@ -152,8 +170,8 @@ glue(glue(glue(cpu_st, SUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
     page_index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     mmu_idx = CPU_MMU_INDEX;
     if (unlikely(env->tlb_table[mmu_idx][page_index].addr_write !=
-                 (addr & (TARGET_PAGE_MASK | (DATA_SIZE - 1))))) {
-        oi = make_memop_idx(SHIFT, mmu_idx);
+                 page_val(addr, env))) {
+        oi = make_memop_idx((TCGMemOp)SHIFT, mmu_idx);
         glue(glue(helper_ret_st, SUFFIX), MMUSUFFIX)(env, addr, v, oi,
                                                      retaddr);
     } else {
@@ -171,6 +189,7 @@ glue(glue(cpu_st, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr,
 
 #endif /* !SOFTMMU_CODE_ACCESS */
 
+#undef page_val
 #undef RES_TYPE
 #undef DATA_TYPE
 #undef DATA_STYPE

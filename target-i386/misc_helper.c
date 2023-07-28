@@ -599,3 +599,7 @@ void helper_debug(CPUX86State *env)
     cs->exception_index = EXCP_DEBUG;
     cpu_loop_exit(cs);
 }
+
+#ifdef CONFIG_COREMU
+#include "atomic-x86.c"
+#endif

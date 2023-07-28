@@ -61,6 +61,8 @@ typedef struct DisasContext {
 #define TMP_A64_MAX 16
     int tmp_a64_count;
     TCGv_i64 tmp_a64[TMP_A64_MAX];
+    int gen_ibtc;
+    CPUArchState *env;
 } DisasContext;
 
 typedef struct DisasCompare {

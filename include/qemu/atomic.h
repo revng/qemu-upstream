@@ -158,13 +158,13 @@
 #ifndef atomic_rcu_read
 #ifdef __ATOMIC_CONSUME
 #define atomic_rcu_read(ptr)    ({                \
-    typeof(*ptr) _val;                            \
+    __typeof__(*ptr) _val;                        \
      __atomic_load(ptr, &_val, __ATOMIC_CONSUME); \
     _val;                                         \
 })
 #else
 #define atomic_rcu_read(ptr)    ({                \
-    typeof(*ptr) _val = atomic_read(ptr);         \
+    __typeof__(*ptr) _val = atomic_read(ptr);     \
     smp_read_barrier_depends();                   \
     _val;                                         \
 })
@@ -185,7 +185,7 @@
 #ifndef atomic_rcu_set
 #ifdef __ATOMIC_RELEASE
 #define atomic_rcu_set(ptr, i)  do {              \
-    typeof(*ptr) _val = (i);                      \
+    __typeof__(*ptr) _val = (i);                  \
     __atomic_store(ptr, &_val, __ATOMIC_RELEASE); \
 } while(0)
 #else
@@ -220,7 +220,7 @@
  */
 #ifndef atomic_mb_read
 #define atomic_mb_read(ptr)    ({           \
-    typeof(*ptr) _val = atomic_read(ptr);   \
+    __typeof__(*ptr) _val = atomic_read(ptr);   \
     smp_rmb();                              \
     _val;                                   \
 })
@@ -239,7 +239,7 @@
 #define atomic_xchg(ptr, i)    __sync_swap(ptr, i)
 #elif defined(__ATOMIC_SEQ_CST)
 #define atomic_xchg(ptr, i)    ({                           \
-    typeof(*ptr) _new = (i), _old;                          \
+    __typeof__(*ptr) _new = (i), _old;                      \
     __atomic_exchange(ptr, &_new, &_old, __ATOMIC_SEQ_CST); \
     _old;                                                   \
 })

@@ -60,7 +60,7 @@
 
 #ifndef container_of
 #define container_of(ptr, type, member) ({                      \
-        const typeof(((type *) 0)->member) *__mptr = (ptr);     \
+        const __typeof__(((type *) 0)->member) *__mptr = (ptr); \
         (type *) ((char *) __mptr - offsetof(type, member));})
 #endif
 
@@ -74,7 +74,7 @@
 #define DO_UPCAST(type, field, dev) container_of(dev, type, field)
 #endif
 
-#define typeof_field(type, field) typeof(((type *)0)->field)
+#define typeof_field(type, field) __typeof__(((type *)0)->field)
 #define type_check(t1,t2) ((t1*)0 - (t2*)0)
 
 #ifndef always_inline

@@ -25,6 +25,7 @@
 #include "monitor/monitor.h"
 #include "hw/i386/apic_internal.h"
 #endif
+#include "hqemu.h"
 
 static void cpu_x86_version(CPUX86State *env, int *family, int *model)
 {
@@ -641,6 +642,8 @@ void cpu_x86_update_cr3(CPUX86State *env, target_ulong new_cr3)
                         "CR3 update: CR3=" TARGET_FMT_lx "\n", new_cr3);
         tlb_flush(CPU(cpu), 0);
     }
+
+    pcid = new_cr3 >> 12;
 }
 
 void cpu_x86_update_cr4(CPUX86State *env, uint32_t new_cr4)
@@ -1432,3 +1435,12 @@ void x86_stq_phys(CPUState *cs, hwaddr addr, uint64_t val)
                       NULL);
 }
 #endif
+
+CPUState *cpu_create(void)
+{
+    X86CPU *cpu = g_malloc0(sizeof(X86CPU));
+    CPUState *cs = CPU(cpu);
+    memcpy(cpu, X86_CPU(first_cpu), sizeof(X86CPU));
+    cs->env_ptr = &cpu->env;
+    return cs;
+}

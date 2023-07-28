@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <sys/sysmacros.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>

@@ -385,7 +385,7 @@ void helper_fxchg_ST0_STN(CPUX86State *env, int st_index)
 
 /* FPU operations */
 
-static const int fcom_ccval[4] = {0x0100, 0x4000, 0x0000, 0x4500};
+const int fcom_ccval[4] = {0x0100, 0x4000, 0x0000, 0x4500};
 
 void helper_fcom_ST0_FT0(CPUX86State *env)
 {

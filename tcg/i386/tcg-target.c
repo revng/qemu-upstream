@@ -139,7 +139,8 @@ static bool have_bmi2;
 # define have_bmi2 0
 #endif
 
-static tcg_insn_unit *tb_ret_addr;
+tcg_insn_unit *tb_ret_addr;
+tcg_insn_unit *ibtc_ret_addr;
 
 static void patch_reloc(tcg_insn_unit *code_ptr, int type,
                         intptr_t value, intptr_t addend)
@@ -323,6 +324,7 @@ static inline int tcg_target_const_match(tcg_target_long val, TCGType type,
 #define OPC_MOVB_EvGv	(0x88)		/* stores, more or less */
 #define OPC_MOVL_EvGv	(0x89)		/* stores, more or less */
 #define OPC_MOVL_GvEv	(0x8b)		/* loads, more or less */
+#define OPC_NOP         (0x90)
 #define OPC_MOVB_EvIz   (0xc6)
 #define OPC_MOVL_EvIz	(0xc7)
 #define OPC_MOVL_Iv     (0xb8)
@@ -1150,6 +1152,62 @@ static void * const qemu_st_helpers[16] = {
     [MO_BEQ]  = helper_be_stq_mmu,
 };
 
+/* helpers for LLVM */
+void * const llvm_ld_helpers[16] = {
+    [MO_UB]   = llvm_ret_ldub_mmu,
+    [MO_LEUW] = llvm_le_lduw_mmu,
+    [MO_LEUL] = llvm_le_ldul_mmu,
+    [MO_LEQ]  = llvm_le_ldq_mmu,
+    [MO_BEUW] = llvm_be_lduw_mmu,
+    [MO_BEUL] = llvm_be_ldul_mmu,
+    [MO_BEQ]  = llvm_be_ldq_mmu,
+};
+
+void * const llvm_st_helpers[16] = {
+    [MO_UB]   = llvm_ret_stb_mmu,
+    [MO_LEUW] = llvm_le_stw_mmu,
+    [MO_LEUL] = llvm_le_stl_mmu,
+    [MO_LEQ]  = llvm_le_stq_mmu,
+    [MO_BEUW] = llvm_be_stw_mmu,
+    [MO_BEUL] = llvm_be_stl_mmu,
+    [MO_BEQ]  = llvm_be_stq_mmu,
+};
+
+static inline void tcg_out_compute_gva(TCGContext *s, TCGReg addrlo,
+                                       TCGMemOp opc, int trexw, int tv_hrexw)
+{
+    const TCGReg r1 = TCG_REG_L1;
+    int s_mask = (1 << (opc & MO_SIZE)) - 1;
+
+#if defined(ALIGNED_ONLY)
+    TCGType ttype = TCG_TYPE_I32;
+    bool aligned = (opc & MO_AMASK) == MO_ALIGN || s_mask == 0;
+    if (TCG_TARGET_REG_BITS == 64 && TARGET_LONG_BITS == 64)
+        ttype = TCG_TYPE_I64;
+    if (aligned) {
+        tcg_out_mov(s, ttype, r1, addrlo);
+    } else {
+        /* For unaligned access check that we don't cross pages using
+           the page address of the last byte.  */
+        tcg_out_modrm_offset(s, OPC_LEA + trexw, r1, addrlo, s_mask);
+    }
+    tgen_arithi(s, ARITH_AND + trexw, r1,
+                TARGET_PAGE_MASK | (aligned ? s_mask : 0), 0);
+#elif defined(ENABLE_TLBVERSION)
+    /* the following code is as equivalent to
+     * (((addr + (size - 1)) & TARGET_PAGE_MASK) | env->tlb_version) */
+    tcg_out_modrm_sib_offset(s, OPC_LEA + trexw, r1, addrlo, -1, 0, s_mask);
+    tgen_arithi(s, ARITH_AND + trexw, r1, TARGET_PAGE_MASK, 0);
+    tcg_out_modrm_offset(s, (OPC_ARITH_GvEv | (ARITH_OR << 3)) + trexw + tv_hrexw,
+                         r1, TCG_AREG0, offsetof(CPUArchState, tlb_version));
+#else
+    /* the following code is as equivalent to
+     * ((addr + (size - 1)) & TARGET_PAGE_MASK) */
+    tcg_out_modrm_sib_offset(s, OPC_LEA + trexw, r1, addrlo, -1, 0, s_mask);
+    tgen_arithi(s, ARITH_AND + trexw, r1, TARGET_PAGE_MASK, 0);
+#endif
+}
+
 /* Perform the TLB load and compare.
 
    Inputs:
@@ -1179,9 +1237,7 @@ static inline void tcg_out_tlb_load(TCGContext *s, TCGReg addrlo, TCGReg addrhi,
     const TCGReg r1 = TCG_REG_L1;
     TCGType ttype = TCG_TYPE_I32;
     TCGType tlbtype = TCG_TYPE_I32;
-    int trexw = 0, hrexw = 0, tlbrexw = 0;
-    int s_mask = (1 << (opc & MO_SIZE)) - 1;
-    bool aligned = (opc & MO_AMASK) == MO_ALIGN || s_mask == 0;
+    int trexw = 0, hrexw = 0, tlbrexw = 0, tv_hrexw = 0;
 
     if (TCG_TARGET_REG_BITS == 64) {
         if (TARGET_LONG_BITS == 64) {
@@ -1197,20 +1253,18 @@ static inline void tcg_out_tlb_load(TCGContext *s, TCGReg addrlo, TCGReg addrhi,
         }
     }
 
+#if defined(ENABLE_TLBVERSION_EXT)
+    trexw = 0;
+    tv_hrexw = P_REXW;
+#endif
+
     tcg_out_mov(s, tlbtype, r0, addrlo);
-    if (aligned) {
-        tcg_out_mov(s, ttype, r1, addrlo);
-    } else {
-        /* For unaligned access check that we don't cross pages using
-           the page address of the last byte.  */
-        tcg_out_modrm_offset(s, OPC_LEA + trexw, r1, addrlo, s_mask);
-    }
 
     tcg_out_shifti(s, SHIFT_SHR + tlbrexw, r0,
                    TARGET_PAGE_BITS - CPU_TLB_ENTRY_BITS);
 
-    tgen_arithi(s, ARITH_AND + trexw, r1,
-                TARGET_PAGE_MASK | (aligned ? s_mask : 0), 0);
+    tcg_out_compute_gva(s, addrlo, opc, trexw, tv_hrexw);
+
     tgen_arithi(s, ARITH_AND + tlbrexw, r0,
                 (CPU_TLB_SIZE - 1) << CPU_TLB_ENTRY_BITS, 0);
 
@@ -1219,7 +1273,7 @@ static inline void tcg_out_tlb_load(TCGContext *s, TCGReg addrlo, TCGReg addrhi,
                              + which);
 
     /* cmp 0(r0), r1 */
-    tcg_out_modrm_offset(s, OPC_CMP_GvEv + trexw, r1, r0, 0);
+    tcg_out_modrm_offset(s, OPC_CMP_GvEv + trexw + tv_hrexw, r1, r0, 0);
 
     /* Prepare for both the fast path add of the tlb addend, and the slow
        path function argument setup.  There are two cases worth note:
@@ -1754,6 +1808,73 @@ static void tcg_out_qemu_st(TCGContext *s, const TCGArg *args, bool is64)
 #endif
 }
 
+/*
+ * Emit trace profiling/prediction stubs. The code sequence is as following:
+ *   S1: direct jump (the reloc part requires 4-byte alignment)
+ *   S2: trace profiling stub
+ *   S3: trace prediction stub
+ *   S4: beginning of QEMU emulation code
+ *
+ * The jump inst of S1 is initially set to jump to S3 (i.e. skipping S2).
+ * Remember the offset of S3 (patch_next) which is used to turn the
+ * trace profiling off. Also remember the offset of S4 (patch_skip)
+ * so that the trace stubs can be skipped quickly while searching pc.
+ */
+static void tcg_out_hotpatch(TCGContext *s, uint32_t is_user, uint32_t emit_helper)
+{
+    uint8_t *label_ptr[2];
+    TranslationBlock *tb = s->tb;
+
+    /* S1: direct jump */
+    while (((uintptr_t)s->code_ptr + 1) % 4)
+        tcg_out8(s, OPC_NOP);
+
+    tb->patch_jmp = (uint16_t)(s->code_ptr - s->code_buf);
+
+    tcg_out8(s, OPC_JMP_long);
+    label_ptr[0] = s->code_ptr;
+    s->code_ptr += 4;
+
+    if (is_user == 0 || emit_helper == 0) {
+        *(uint32_t *)label_ptr[0] = s->code_ptr - label_ptr[0] - 4;
+        tb->patch_next = (uint16_t)(s->code_ptr - s->code_buf);
+        return;
+    }
+
+    /* S2: trace profiling stub */
+    if (TCG_TARGET_REG_BITS == 32) {
+        tcg_out_st(s, TCG_TYPE_PTR, TCG_AREG0, TCG_REG_ESP, 0);
+        tcg_out_sti(s, TCG_TYPE_I32, TCG_REG_ESP, 4, tb->id);
+    } else {
+        tcg_out_mov(s, TCG_TYPE_PTR, tcg_target_call_iarg_regs[0], TCG_AREG0);
+        tcg_out_movi(s, TCG_TYPE_I32, tcg_target_call_iarg_regs[1], tb->id);
+    }
+    tcg_out_call(s, (tcg_insn_unit *)helper_NET_profile);
+    *(uint32_t *)label_ptr[0] = s->code_ptr - label_ptr[0] - 4;
+
+    /* S3: trace prediction stub */
+    tb->patch_next = (uint16_t)(s->code_ptr - s->code_buf);
+
+    tcg_out_ld(s, TCG_TYPE_I32, tcg_target_reg_alloc_order[0], 
+               TCG_AREG0, offsetof(CPUArchState, start_trace_prediction));
+    tcg_out_cmp(s, tcg_target_reg_alloc_order[0], 0, 1, 0);
+    tcg_out_opc(s, OPC_JCC_long + JCC_JE, 0, 0, 0);
+    label_ptr[1] = s->code_ptr;
+    s->code_ptr += 4;
+
+    if (TCG_TARGET_REG_BITS == 32) {
+        tcg_out_st(s, TCG_TYPE_PTR, TCG_AREG0, TCG_REG_ESP, 0);
+        tcg_out_sti(s, TCG_TYPE_I32, TCG_REG_ESP, 4, tb->id);
+    } else {
+        tcg_out_mov(s, TCG_TYPE_PTR, tcg_target_call_iarg_regs[0], TCG_AREG0);
+        tcg_out_movi(s, TCG_TYPE_I32, tcg_target_call_iarg_regs[1], tb->id);
+    }
+    tcg_out_call(s, (tcg_insn_unit *)helper_NET_predict);
+    *(uint32_t *)label_ptr[1] = s->code_ptr - label_ptr[1] - 4;
+
+    /* S4: QEMU emulation code */
+}
+
 static inline void tcg_out_op(TCGContext *s, TCGOpcode opc,
                               const TCGArg *args, const int *const_args)
 {
@@ -1777,6 +1898,10 @@ static inline void tcg_out_op(TCGContext *s, TCGOpcode opc,
     case INDEX_op_goto_tb:
         if (s->tb_jmp_offset) {
             /* direct jump method */
+#if defined(CONFIG_USER_ONLY)
+            while (((uintptr_t)s->code_ptr + 1) % 4) /* need 4-byte aligned */
+                tcg_out8(s, OPC_NOP);
+#endif
             tcg_out8(s, OPC_JMP_long); /* jmp im */
             s->tb_jmp_offset[args[0]] = tcg_current_code_size(s);
             tcg_out32(s, 0);
@@ -1786,6 +1911,17 @@ static inline void tcg_out_op(TCGContext *s, TCGOpcode opc,
                                  (intptr_t)(s->tb_next + args[0]));
         }
         s->tb_next_offset[args[0]] = tcg_current_code_size(s);
+        break;
+    case INDEX_op_hotpatch:
+        tcg_out_hotpatch(s, args[0], args[1]);
+        break;
+    case INDEX_op_jmp:
+        if (const_args[0]) {
+            tcg_out_jmp(s, (tcg_insn_unit *)args[0]);
+        } else {
+            /* jmp *reg */
+            tcg_out_modrm(s, OPC_GRP5, EXT5_JMPN_Ev, args[0]);
+        }
         break;
     case INDEX_op_br:
         tcg_out_jxx(s, JCC_JMP, arg_label(args[0]), 0);
@@ -2110,6 +2246,8 @@ static inline void tcg_out_op(TCGContext *s, TCGOpcode opc,
 }
 
 static const TCGTargetOpDef x86_op_defs[] = {
+    { INDEX_op_hotpatch, { "i", "i" } },
+    { INDEX_op_jmp, { "ri" } },
     { INDEX_op_exit_tb, { } },
     { INDEX_op_goto_tb, { } },
     { INDEX_op_br, { } },
@@ -2238,6 +2376,11 @@ static const TCGTargetOpDef x86_op_defs[] = {
     { INDEX_op_qemu_ld_i64, { "r", "r", "L", "L" } },
     { INDEX_op_qemu_st_i64, { "L", "L", "L", "L" } },
 #endif
+
+#define DEF(name,a1,a2,a3,a4) { INDEX_op_##name, {} },
+#include "tcg-opc-vector.h"
+#undef DEF
+
     { -1 },
 };
 
@@ -2261,8 +2404,21 @@ static int tcg_target_callee_save_regs[] = {
 #endif
 };
 
+static void tcg_out_epilogue(TCGContext *s)
+{
+    /* IBTC exit entry */
+    ibtc_ret_addr = s->code_ptr;
+    tcg_out_movi(s, TCG_TYPE_PTR, TCG_REG_EAX, 0);
+}
+
 /* Compute frame size via macros, to share between tcg_target_qemu_prologue
    and tcg_register_jit.  */
+
+#if defined(CONFIG_LLVM)
+#define STACK_SIZE 0x2000
+#else
+#define STACK_SIZE TCG_STATIC_CALL_ARGS_SIZE
+#endif
 
 #define PUSH_SIZE \
     ((1 + ARRAY_SIZE(tcg_target_callee_save_regs)) \
@@ -2270,7 +2426,7 @@ static int tcg_target_callee_save_regs[] = {
 
 #define FRAME_SIZE \
     ((PUSH_SIZE \
-      + TCG_STATIC_CALL_ARGS_SIZE \
+      + STACK_SIZE \
       + CPU_TEMP_BUF_NLONGS * sizeof(long) \
       + TCG_TARGET_STACK_ALIGN - 1) \
      & ~(TCG_TARGET_STACK_ALIGN - 1))
@@ -2279,10 +2435,12 @@ static int tcg_target_callee_save_regs[] = {
 static void tcg_target_qemu_prologue(TCGContext *s)
 {
     int i, stack_addend;
+    tcg_target_long stack_align_mask;
 
     /* TB prologue */
 
     /* Reserve some stack space, also for TCG temps.  */
+    stack_align_mask = ~(TCG_TARGET_STACK_ALIGN - 1);
     stack_addend = FRAME_SIZE - PUSH_SIZE;
     tcg_set_frame(s, TCG_REG_CALL_STACK, TCG_STATIC_CALL_ARGS_SIZE,
                   CPU_TEMP_BUF_NLONGS * sizeof(long));
@@ -2296,6 +2454,9 @@ static void tcg_target_qemu_prologue(TCGContext *s)
     tcg_out_ld(s, TCG_TYPE_PTR, TCG_AREG0, TCG_REG_ESP,
                (ARRAY_SIZE(tcg_target_callee_save_regs) + 1) * 4);
     tcg_out_addi(s, TCG_REG_ESP, -stack_addend);
+    tcg_out_st(s, TCG_TYPE_PTR, TCG_REG_ESP, TCG_AREG0,
+               offsetof(CPUArchState, sp));
+    tgen_arithi(s, ARITH_AND, TCG_REG_ESP, stack_align_mask, 0);
     /* jmp *tb.  */
     tcg_out_modrm_offset(s, OPC_GRP5, EXT5_JMPN_Ev, TCG_REG_ESP,
 		         (ARRAY_SIZE(tcg_target_callee_save_regs) + 2) * 4
@@ -2303,13 +2464,19 @@ static void tcg_target_qemu_prologue(TCGContext *s)
 #else
     tcg_out_mov(s, TCG_TYPE_PTR, TCG_AREG0, tcg_target_call_iarg_regs[0]);
     tcg_out_addi(s, TCG_REG_ESP, -stack_addend);
+    tcg_out_st(s, TCG_TYPE_PTR, TCG_REG_ESP, TCG_AREG0,
+               offsetof(CPUArchState, sp));
+    tgen_arithi(s, ARITH_AND + P_REXW, TCG_REG_ESP, stack_align_mask, 0);
     /* jmp *tb.  */
     tcg_out_modrm(s, OPC_GRP5, EXT5_JMPN_Ev, tcg_target_call_iarg_regs[1]);
 #endif
 
     /* TB epilogue */
+    tcg_out_epilogue(s);
     tb_ret_addr = s->code_ptr;
 
+    tcg_out_ld(s, TCG_TYPE_PTR, TCG_REG_ESP, TCG_AREG0,
+               offsetof(CPUArchState, sp));
     tcg_out_addi(s, TCG_REG_CALL_STACK, stack_addend);
 
     for (i = ARRAY_SIZE(tcg_target_callee_save_regs) - 1; i >= 0; i--) {

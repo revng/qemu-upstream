@@ -30,6 +30,8 @@
 #include "qemu/thread.h"
 #include "qemu/typedefs.h"
 
+#define typename QEMUtypename
+
 typedef int (*WriteCoreDumpFunction)(const void *buf, size_t size,
                                      void *opaque);
 
@@ -196,7 +198,7 @@ typedef struct CPUBreakpoint {
 } CPUBreakpoint;
 
 typedef struct CPUWatchpoint {
-    vaddr vaddr;
+    vaddr addr;
     vaddr len;
     vaddr hitaddr;
     MemTxAttrs hitattrs;
@@ -774,5 +776,8 @@ extern const struct VMStateDescription vmstate_cpu_common;
     .flags = VMS_STRUCT,                                                    \
     .offset = 0,                                                            \
 }
+
+CPUState *cpu_create(void);
+#undef typename
 
 #endif

@@ -24,6 +24,7 @@
 #include "qemu/timer.h"
 #include "exec/address-spaces.h"
 #include "exec/memory.h"
+#include "hqemu-config.h"
 
 #define DATA_SIZE (1 << SHIFT)
 
@@ -116,6 +117,16 @@
 # define helper_te_st_name  helper_le_st_name
 #endif
 
+#if defined(ENABLE_TLBVERSION)
+#define TLB_IO_MASK          (TLB_NOTDIRTY | TLB_MMIO)
+#define TLB_NONIO_MASK       (TARGET_PAGE_MASK | TLB_INVALID_MASK | TLB_VERSION_MASK)
+#define page_val(addr, env)  (((tlbaddr_t)addr & TARGET_PAGE_MASK) | tlb_version(env))
+#else
+#define TLB_IO_MASK          (~TARGET_PAGE_MASK)
+#define TLB_NONIO_MASK       (TARGET_PAGE_MASK | TLB_INVALID_MASK)
+#define page_val(addr, env)  ((addr & TARGET_PAGE_MASK))
+#endif
+
 /* macro to check the victim tlb */
 #define VICTIM_TLB_HIT(ty)                                                    \
 ({                                                                            \
@@ -126,7 +137,7 @@
     CPUIOTLBEntry tmpiotlb;                                                   \
     CPUTLBEntry tmptlb;                                                       \
     for (vidx = CPU_VTLB_SIZE-1; vidx >= 0; --vidx) {                         \
-        if (env->tlb_v_table[mmu_idx][vidx].ty == (addr & TARGET_PAGE_MASK)) {\
+        if (env->tlb_v_table[mmu_idx][vidx].ty == page_val(addr, env)) {      \
             /* found entry in victim tlb, swap tlb and iotlb */               \
             tmptlb = env->tlb_table[mmu_idx][index];                          \
             env->tlb_table[mmu_idx][index] = env->tlb_v_table[mmu_idx][vidx]; \
@@ -170,7 +181,7 @@ WORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr,
 {
     unsigned mmu_idx = get_mmuidx(oi);
     int index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
-    target_ulong tlb_addr = env->tlb_table[mmu_idx][index].ADDR_READ;
+    tlbaddr_t tlb_addr = env->tlb_table[mmu_idx][index].ADDR_READ;
     uintptr_t haddr;
     DATA_TYPE res;
 
@@ -178,8 +189,7 @@ WORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr,
     retaddr -= GETPC_ADJ;
 
     /* If the TLB entry is for a different page, reload and try again.  */
-    if ((addr & TARGET_PAGE_MASK)
-         != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {
+    if (page_val(addr, env) != (tlb_addr & TLB_NONIO_MASK)) {
         if ((addr & (DATA_SIZE - 1)) != 0
             && (get_memop(oi) & MO_AMASK) == MO_ALIGN) {
             cpu_unaligned_access(ENV_GET_CPU(env), addr, READ_ACCESS_TYPE,
@@ -193,7 +203,7 @@ WORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr,
     }
 
     /* Handle an IO access.  */
-    if (unlikely(tlb_addr & ~TARGET_PAGE_MASK)) {
+    if (unlikely(tlb_addr & TLB_IO_MASK)) {
         CPUIOTLBEntry *iotlbentry;
         if ((addr & (DATA_SIZE - 1)) != 0) {
             goto do_unaligned_access;
@@ -254,7 +264,7 @@ WORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr,
 {
     unsigned mmu_idx = get_mmuidx(oi);
     int index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
-    target_ulong tlb_addr = env->tlb_table[mmu_idx][index].ADDR_READ;
+    tlbaddr_t tlb_addr = env->tlb_table[mmu_idx][index].ADDR_READ;
     uintptr_t haddr;
     DATA_TYPE res;
 
@@ -262,8 +272,7 @@ WORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr,
     retaddr -= GETPC_ADJ;
 
     /* If the TLB entry is for a different page, reload and try again.  */
-    if ((addr & TARGET_PAGE_MASK)
-         != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {
+    if (page_val(addr, env) != (tlb_addr & TLB_NONIO_MASK)) {
         if ((addr & (DATA_SIZE - 1)) != 0
             && (get_memop(oi) & MO_AMASK) == MO_ALIGN) {
             cpu_unaligned_access(ENV_GET_CPU(env), addr, READ_ACCESS_TYPE,
@@ -277,7 +286,7 @@ WORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr,
     }
 
     /* Handle an IO access.  */
-    if (unlikely(tlb_addr & ~TARGET_PAGE_MASK)) {
+    if (unlikely(tlb_addr & TLB_IO_MASK)) {
         CPUIOTLBEntry *iotlbentry;
         if ((addr & (DATA_SIZE - 1)) != 0) {
             goto do_unaligned_access;
@@ -375,15 +384,14 @@ void helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
 {
     unsigned mmu_idx = get_mmuidx(oi);
     int index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
-    target_ulong tlb_addr = env->tlb_table[mmu_idx][index].addr_write;
+    tlbaddr_t tlb_addr = env->tlb_table[mmu_idx][index].addr_write;
     uintptr_t haddr;
 
     /* Adjust the given return address.  */
     retaddr -= GETPC_ADJ;
 
     /* If the TLB entry is for a different page, reload and try again.  */
-    if ((addr & TARGET_PAGE_MASK)
-        != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {
+    if (page_val(addr, env) != (tlb_addr & TLB_NONIO_MASK)) {
         if ((addr & (DATA_SIZE - 1)) != 0
             && (get_memop(oi) & MO_AMASK) == MO_ALIGN) {
             cpu_unaligned_access(ENV_GET_CPU(env), addr, MMU_DATA_STORE,
@@ -396,7 +404,7 @@ void helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
     }
 
     /* Handle an IO access.  */
-    if (unlikely(tlb_addr & ~TARGET_PAGE_MASK)) {
+    if (unlikely(tlb_addr & TLB_IO_MASK)) {
         CPUIOTLBEntry *iotlbentry;
         if ((addr & (DATA_SIZE - 1)) != 0) {
             goto do_unaligned_access;
@@ -455,15 +463,14 @@ void helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
 {
     unsigned mmu_idx = get_mmuidx(oi);
     int index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
-    target_ulong tlb_addr = env->tlb_table[mmu_idx][index].addr_write;
+    tlbaddr_t tlb_addr = env->tlb_table[mmu_idx][index].addr_write;
     uintptr_t haddr;
 
     /* Adjust the given return address.  */
     retaddr -= GETPC_ADJ;
 
     /* If the TLB entry is for a different page, reload and try again.  */
-    if ((addr & TARGET_PAGE_MASK)
-        != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {
+    if (page_val(addr, env) != (tlb_addr & TLB_NONIO_MASK)) {
         if ((addr & (DATA_SIZE - 1)) != 0
             && (get_memop(oi) & MO_AMASK) == MO_ALIGN) {
             cpu_unaligned_access(ENV_GET_CPU(env), addr, MMU_DATA_STORE,
@@ -476,7 +483,7 @@ void helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
     }
 
     /* Handle an IO access.  */
-    if (unlikely(tlb_addr & ~TARGET_PAGE_MASK)) {
+    if (unlikely(tlb_addr & TLB_IO_MASK)) {
         CPUIOTLBEntry *iotlbentry;
         if ((addr & (DATA_SIZE - 1)) != 0) {
             goto do_unaligned_access;
@@ -537,10 +544,9 @@ void probe_write(CPUArchState *env, target_ulong addr, int mmu_idx,
                  uintptr_t retaddr)
 {
     int index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
-    target_ulong tlb_addr = env->tlb_table[mmu_idx][index].addr_write;
+    tlbaddr_t tlb_addr = env->tlb_table[mmu_idx][index].addr_write;
 
-    if ((addr & TARGET_PAGE_MASK)
-        != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {
+    if (page_val(addr, env) != (tlb_addr & TLB_NONIO_MASK)) {
         /* TLB entry is for a different page */
         if (!VICTIM_TLB_HIT(addr_write)) {
             tlb_fill(ENV_GET_CPU(env), addr, MMU_DATA_STORE, mmu_idx, retaddr);
@@ -550,6 +556,11 @@ void probe_write(CPUArchState *env, target_ulong addr, int mmu_idx,
 #endif
 #endif /* !defined(SOFTMMU_CODE_ACCESS) */
 
+#include "softmmu_template_llvm.h"
+
+#undef TLB_IO_MASK
+#undef TLB_NONIO_MASK
+#undef page_val
 #undef READ_ACCESS_TYPE
 #undef SHIFT
 #undef DATA_TYPE

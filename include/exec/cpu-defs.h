@@ -56,6 +56,8 @@ typedef uint64_t target_ulong;
 #error TARGET_LONG_SIZE undefined
 #endif
 
+#include "hqemu-config.h"
+
 #if !defined(CONFIG_USER_ONLY)
 /* use a fully associative victim tlb of 8 entries */
 #define CPU_VTLB_SIZE 8
@@ -89,7 +91,7 @@ typedef uint64_t target_ulong;
  * of tlb_table inside env (which is non-trivial but not huge).
  */
 #define CPU_TLB_BITS                                             \
-    MIN(8,                                                       \
+    MIN(12,                                                      \
         TCG_TARGET_TLB_DISPLACEMENT_BITS - CPU_TLB_ENTRY_BITS -  \
         (NB_MMU_MODES <= 1 ? 0 :                                 \
          NB_MMU_MODES <= 2 ? 1 :                                 \
@@ -107,9 +109,9 @@ typedef struct CPUTLBEntry {
     */
     union {
         struct {
-            target_ulong addr_read;
-            target_ulong addr_write;
-            target_ulong addr_code;
+            tlbaddr_t addr_read;
+            tlbaddr_t addr_write;
+            tlbaddr_t addr_code;
             /* Addend to virtual address to get host address.  IO accesses
                use the corresponding iotlb value.  */
             uintptr_t addend;
@@ -140,6 +142,7 @@ typedef struct CPUIOTLBEntry {
     target_ulong tlb_flush_addr;                                        \
     target_ulong tlb_flush_mask;                                        \
     target_ulong vtlb_index;                                            \
+    tlbaddr_t tlb_version;                                              \
 
 #else
 
