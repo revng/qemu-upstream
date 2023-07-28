@@ -2569,7 +2569,7 @@ static void gen_goto_ptr(void)
 static void gen_goto_tb(DisasContext *s, int n, target_ulong dest)
 {
     if (translator_use_goto_tb(&s->base, dest)) {
-        tcg_gen_goto_tb(n);
+        tcg_gen_goto_tb(n, dest);
         gen_set_pc_im(s, dest);
         tcg_gen_exit_tb(s->base.tb, n);
     } else {

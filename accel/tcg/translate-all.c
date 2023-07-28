@@ -25,6 +25,7 @@
 #include "disas/disas.h"
 #include "exec/exec-all.h"
 #include "tcg/tcg.h"
+#include "tcg/tcg-llvm.h"
 #if defined(CONFIG_USER_ONLY)
 #include "qemu.h"
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
@@ -1419,6 +1420,10 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
         cpu->exception_index = EXCP_INTERRUPT;
         cpu_loop_exit(cpu);
     }
+
+#ifdef CONFIG_TCG_LLVM
+    tcg_llvm_init_tb(tcg_ctx, tb);
+#endif
 
     gen_code_buf = tcg_ctx->code_gen_ptr;
     tb->tc.ptr = tcg_splitwx_to_rx(gen_code_buf);

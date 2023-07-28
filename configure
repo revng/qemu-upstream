@@ -924,6 +924,10 @@ for opt do
   ;;
   --enable-tcg) tcg="enabled"
   ;;
+  --disable-tcg-llvm) tcg_llvm="no"
+  ;;
+  --enable-tcg-llvm) tcg_llvm="yes"
+  ;;
   --enable-profiler) profiler="yes"
   ;;
   --disable-system) softmmu="no"
@@ -3636,6 +3640,9 @@ if test "$vhost_user_fs" = "yes" ; then
 fi
 if test "$membarrier" = "yes" ; then
   echo "CONFIG_MEMBARRIER=y" >> $config_host_mak
+fi
+if test "$tcg_llvm" = "yes" ; then
+  echo "CONFIG_TCG_LLVM=y" >> $config_host_mak
 fi
 if test "$tcg" = "enabled" -a "$tcg_interpreter" = "true" ; then
   echo "CONFIG_TCG_INTERPRETER=y" >> $config_host_mak

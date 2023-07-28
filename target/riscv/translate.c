@@ -171,7 +171,7 @@ static void gen_exception_inst_addr_mis(DisasContext *ctx)
 static void gen_goto_tb(DisasContext *ctx, int n, target_ulong dest)
 {
     if (translator_use_goto_tb(&ctx->base, dest)) {
-        tcg_gen_goto_tb(n);
+        tcg_gen_goto_tb(n, dest);
         tcg_gen_movi_tl(cpu_pc, dest);
         tcg_gen_exit_tb(ctx->base.tb, n);
     } else {

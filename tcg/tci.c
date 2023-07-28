@@ -1054,6 +1054,7 @@ uintptr_t QEMU_DISABLE_CFI tcg_qemu_tb_exec(CPUArchState *env,
             } else {
                 regs[r0] = tmp64;
             }
+            fprintf(stderr, "INDEX_op_qemu_ld_i64=%016lX\n", tmp64);
             break;
 
         case INDEX_op_qemu_st_i32:

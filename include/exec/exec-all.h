@@ -519,6 +519,16 @@ struct TranslationBlock {
 
     struct tb_tc tc;
 
+#ifdef CONFIG_TCG_LLVM
+    void *llvm_tc;
+    uint64_t exec_count;
+    struct {
+        GByteArray *temp_buf;
+        GByteArray *op_buf;
+        char *digest;
+    } packed_tcg;
+#endif
+
     /* first and second physical page containing code. The lower bit
        of the pointer tells the index in page_next[].
        The list is protected by the TB's page('s) lock(s) */

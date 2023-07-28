@@ -396,7 +396,7 @@ static inline bool use_goto_tb(DisasContext *s, uint64_t dest)
 static inline void gen_goto_tb(DisasContext *s, int n, uint64_t dest)
 {
     if (use_goto_tb(s, dest)) {
-        tcg_gen_goto_tb(n);
+        tcg_gen_goto_tb(n, dest);
         gen_a64_set_pc_im(dest);
         tcg_gen_exit_tb(s->base.tb, n);
         s->base.is_jmp = DISAS_NORETURN;

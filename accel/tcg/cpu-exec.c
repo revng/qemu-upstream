@@ -25,6 +25,7 @@
 #include "disas/disas.h"
 #include "exec/exec-all.h"
 #include "tcg/tcg.h"
+#include "tcg/tcg-llvm.h"
 #include "qemu/atomic.h"
 #include "qemu/compiler.h"
 #include "qemu/timer.h"
@@ -349,8 +350,18 @@ cpu_tb_exec(CPUState *cpu, TranslationBlock *itb, int *tb_exit)
 
     log_cpu_exec(itb->pc, cpu, itb);
 
+    
+#ifdef CONFIG_TCG_LLVM
+    if (!tcg_llvm_try_exec_tb(tcg_ctx, itb, env, &ret)) {
+        //printf("tcg exec begin! tb.pc=%p\n", (void*)itb->pc);
+        ret = tcg_qemu_tb_exec(env, tb_ptr) & TB_EXIT_MASK;
+        //printf("tcg exec done!\n");
+    }
+#else
     qemu_thread_jit_execute();
     ret = tcg_qemu_tb_exec(env, tb_ptr);
+#endif
+
     cpu->can_do_io = 1;
     /*
      * TODO: Delay swapping back to the read-write region of the TB

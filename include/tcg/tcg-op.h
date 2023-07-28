@@ -807,6 +807,7 @@ void tcg_gen_exit_tb(const TranslationBlock *tb, unsigned idx);
 /**
  * tcg_gen_goto_tb() - output goto_tb TCG operation
  * @idx: Direct jump slot index (0 or 1)
+ * @pc: Guest address of the target TB of that jump solt
  *
  * See tcg/README for more info about this TCG operation.
  *
@@ -817,7 +818,7 @@ void tcg_gen_exit_tb(const TranslationBlock *tb, unsigned idx);
  * are always invalidated properly, and direct jumps are reset when mapping
  * changes.
  */
-void tcg_gen_goto_tb(unsigned idx);
+void tcg_gen_goto_tb(unsigned idx, target_ulong pc);
 
 /**
  * tcg_gen_lookup_and_goto_ptr() - look up the current TB, jump to it if valid

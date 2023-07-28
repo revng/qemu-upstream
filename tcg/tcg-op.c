@@ -2731,7 +2731,7 @@ void tcg_gen_exit_tb(const TranslationBlock *tb, unsigned idx)
     tcg_gen_op1i(INDEX_op_exit_tb, val);
 }
 
-void tcg_gen_goto_tb(unsigned idx)
+void tcg_gen_goto_tb(unsigned idx, target_ulong pc)
 {
     /* We tested CF_NO_GOTO_TB in translator_use_goto_tb. */
     tcg_debug_assert(!(tcg_ctx->tb_cflags & CF_NO_GOTO_TB));
@@ -2743,7 +2743,12 @@ void tcg_gen_goto_tb(unsigned idx)
     tcg_ctx->goto_tb_issue_mask |= 1 << idx;
 #endif
     plugin_gen_disable_mem_helpers();
-    tcg_gen_op1i(INDEX_op_goto_tb, idx);
+    
+#if TARGET_LONG_BITS <= TCG_TARGET_REG_BITS
+    tcg_gen_op2ii(INDEX_op_goto_tb, idx, pc);
+#else
+    tcg_gen_op3(INDEX_op_goto_tb, idx, (uint32_t)pc, (uint32_t)(pc >> 32));
+#endif
 }
 
 void tcg_gen_lookup_and_goto_ptr(void)

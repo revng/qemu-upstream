@@ -17,4 +17,6 @@ if get_option('tcg_interpreter')
   specific_ss.add(files('tci.c'))
 endif
 
+tcg_ss.add(when: 'CONFIG_TCG_LLVM', if_true: files('tcg-llvm.c', 'tcg-llvm-helper.cpp'))
+
 specific_ss.add_all(when: 'CONFIG_TCG', if_true: tcg_ss)

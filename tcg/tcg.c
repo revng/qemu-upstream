@@ -45,6 +45,8 @@
 #include "exec/exec-all.h"
 #include "tcg/tcg-op.h"
 
+#include "tcg/tcg-llvm.h"
+
 #if UINTPTR_MAX == UINT32_MAX
 # define ELF_CLASS  ELFCLASS32
 #else
@@ -544,10 +546,11 @@ void tcg_pool_reset(TCGContext *s)
 
 #include "exec/helper-proto.h"
 
-static const TCGHelperInfo all_helpers[] = {
+const TCGHelperInfo all_helpers[] = {
 #include "exec/helper-tcg.h"
+    { NULL } /* end marker */
 };
-static GHashTable *helper_table;
+GHashTable *helper_table;
 
 #ifdef CONFIG_TCG_INTERPRETER
 static GHashTable *ffi_table;
@@ -578,6 +581,10 @@ static void tcg_context_init(unsigned max_cpus)
     memset(s, 0, sizeof(*s));
     s->nb_globals = 0;
 
+#ifdef CONFIG_TCG_LLVM
+    tcg_llvm_context_init(s);
+#endif
+
     /* Count total number of arguments and allocate the corresponding
        space */
     total_args = 0;
@@ -600,7 +607,7 @@ static void tcg_context_init(unsigned max_cpus)
     /* Use g_direct_hash/equal for direct pointer comparisons on func.  */
     helper_table = g_hash_table_new(NULL, NULL);
 
-    for (i = 0; i < ARRAY_SIZE(all_helpers); ++i) {
+    for (i = 0; all_helpers[i].func; ++i) {
         g_hash_table_insert(helper_table, (gpointer)all_helpers[i].func,
                             (gpointer)&all_helpers[i]);
     }
@@ -1848,7 +1855,7 @@ static void tcg_dump_ops(TCGContext *s, bool have_prefs)
 
             col += qemu_log(",$0x%x,$%d", info->flags, nb_oargs);
             for (i = 0; i < nb_oargs; i++) {
-                col += qemu_log(",%s", tcg_get_arg_str(s, buf, sizeof(buf),
+                col += qemu_log(",O%s", tcg_get_arg_str(s, buf, sizeof(buf),
                                                        op->args[i]));
             }
             for (i = 0; i < nb_iargs; i++) {
@@ -1857,7 +1864,7 @@ static void tcg_dump_ops(TCGContext *s, bool have_prefs)
                 if (arg != TCG_CALL_DUMMY_ARG) {
                     t = tcg_get_arg_str(s, buf, sizeof(buf), arg);
                 }
-                col += qemu_log(",%s", t);
+                col += qemu_log(",I%s", t);
             }
         } else {
             col += qemu_log(" %s ", def->name);
@@ -1876,14 +1883,14 @@ static void tcg_dump_ops(TCGContext *s, bool have_prefs)
                 if (k != 0) {
                     col += qemu_log(",");
                 }
-                col += qemu_log("%s", tcg_get_arg_str(s, buf, sizeof(buf),
+                col += qemu_log("O%s", tcg_get_arg_str(s, buf, sizeof(buf),
                                                       op->args[k++]));
             }
             for (i = 0; i < nb_iargs; i++) {
                 if (k != 0) {
                     col += qemu_log(",");
                 }
-                col += qemu_log("%s", tcg_get_arg_str(s, buf, sizeof(buf),
+                col += qemu_log("I%s", tcg_get_arg_str(s, buf, sizeof(buf),
                                                       op->args[k++]));
             }
             switch (c) {
@@ -1964,7 +1971,7 @@ static void tcg_dump_ops(TCGContext *s, bool have_prefs)
                 break;
             }
             for (; i < nb_cargs; i++, k++) {
-                col += qemu_log("%s$0x%" TCG_PRIlx, k ? "," : "", op->args[k]);
+                col += qemu_log("%sC$0x%" TCG_PRIlx, k ? "," : "", op->args[k]);
             }
         }
 
@@ -4259,6 +4266,10 @@ int tcg_gen_code(TCGContext *s, TranslationBlock *tb)
         qemu_log("\n");
         qemu_log_unlock(logfile);
     }
+#endif
+
+#ifdef CONFIG_TCG_LLVM
+    tcg_llvm_serialize_tb(s, tb);
 #endif
 
     tcg_reg_alloc_start(s);

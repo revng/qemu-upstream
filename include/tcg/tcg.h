@@ -589,6 +589,10 @@ struct TCGContext {
 
     TCGLabel *exitreq_label;
 
+#ifdef CONFIG_TCG_LLVM
+    struct TCGLLVMContext *llvm_ctx;
+#endif
+
 #ifdef CONFIG_PLUGIN
     /*
      * We keep one plugin_tb struct per TCGContext. Note that on every TB

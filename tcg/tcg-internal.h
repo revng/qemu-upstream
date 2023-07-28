@@ -33,6 +33,8 @@ typedef struct TCGHelperInfo {
     unsigned flags;
     unsigned typemask;
 } TCGHelperInfo;
+extern const TCGHelperInfo all_helpers[];
+extern GHashTable *helper_table;
 
 extern TCGContext tcg_init_ctx;
 extern TCGContext **tcg_ctxs;

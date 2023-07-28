@@ -28,6 +28,7 @@
 #include "sysemu/tcg.h"
 #include "sysemu/cpu-timers.h"
 #include "tcg/tcg.h"
+#include "tcg/tcg-llvm.h"
 #include "qapi/error.h"
 #include "qemu/error-report.h"
 #include "qemu/accel.h"
@@ -122,6 +123,9 @@ static int tcg_init_machine(MachineState *ms)
     tcg_allowed = true;
     mttcg_enabled = s->mttcg_enabled;
 
+#ifdef CONFIG_TCG_LLVM
+    tcg_llvm_init();
+#endif
     page_init();
     tb_htable_init();
     tcg_init(s->tb_size * MiB, s->splitwx_enabled, max_cpus);

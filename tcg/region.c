@@ -27,6 +27,7 @@
 #include "qapi/error.h"
 #include "exec/exec-all.h"
 #include "tcg/tcg.h"
+#include "tcg/tcg-llvm.h"
 #include "tcg-internal.h"
 
 
@@ -146,6 +147,9 @@ static gint tb_tc_cmp(gconstpointer ap, gconstpointer bp, gpointer userdata)
 static void tb_destroy(gpointer value)
 {
     TranslationBlock *tb = value;
+#ifdef CONFIG_TCG_LLVM
+    tcg_llvm_remove_tb(tcg_ctx, tb);
+#endif
     qemu_spin_destroy(&tb->jmp_lock);
 }
 
