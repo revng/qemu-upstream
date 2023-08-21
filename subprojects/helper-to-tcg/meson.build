@@ -41,6 +41,7 @@ if version_major < 10 or version_major > 14
 endif
 
 sources = [
+    'passes/llvm-compat.cpp',
 ]
 
 clang = bindir / 'clang'
