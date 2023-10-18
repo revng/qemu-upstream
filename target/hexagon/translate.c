@@ -31,6 +31,9 @@
 #include "translate.h"
 #include "genptr.h"
 #include "printinsn.h"
+#define TCGG_MAP_DEFS
+#include "helper2tcg/tcg_global_mappings.h"
+#undef TCGG_MAP_DEFS
 
 #define HELPER_H "helper.h"
 #include "exec/helper-info.c.inc"
@@ -61,7 +64,13 @@ TCGv hex_vstore_addr[VSTORES_MAX];
 TCGv hex_vstore_size[VSTORES_MAX];
 TCGv hex_vstore_pending[VSTORES_MAX];
 
-static const char * const hexagon_prednames[] = {
+// TODO(anjo): move
+intptr_t get_new_temp_vector_offset(unsigned index) {
+  assert(index < STRUCT_ARRAY_SIZE(CPUHexagonState, VTempRegs));
+  return offsetof(CPUHexagonState, VTempRegs) + index * structsizeof(CPUHexagonState, VTempRegs[0]);
+}
+
+const char * const hexagon_prednames[] = {
   "p0", "p1", "p2", "p3"
 };
 
@@ -1203,60 +1212,8 @@ static void init_cpu_reg_names(void) {
 
 void hexagon_translate_init(void)
 {
-    int i;
-
     opcode_init();
 
-    for (i = 0; i < TOTAL_PER_THREAD_REGS; i++) {
-        hex_gpr[i] = tcg_global_mem_new(tcg_env,
-            offsetof(CPUHexagonState, gpr[i]),
-            hexagon_regnames[i]);
-
-        if (HEX_DEBUG) {
-            snprintf(reg_written_names[i], NAME_LEN, "reg_written_%s",
-                     hexagon_regnames[i]);
-            hex_reg_written[i] = tcg_global_mem_new(tcg_env,
-                offsetof(CPUHexagonState, reg_written[i]),
-                reg_written_names[i]);
-        }
-    }
-    hex_new_value_usr = tcg_global_mem_new(tcg_env,
-        offsetof(CPUHexagonState, new_value_usr), "new_value_usr");
-
-    for (i = 0; i < NUM_PREGS; i++) {
-        hex_pred[i] = tcg_global_mem_new(tcg_env,
-            offsetof(CPUHexagonState, pred[i]),
-            hexagon_prednames[i]);
-    }
-    hex_slot_cancelled = tcg_global_mem_new(tcg_env,
-        offsetof(CPUHexagonState, slot_cancelled), "slot_cancelled");
-    hex_llsc_addr = tcg_global_mem_new(tcg_env,
-        offsetof(CPUHexagonState, llsc_addr), "llsc_addr");
-    hex_llsc_val = tcg_global_mem_new(tcg_env,
-        offsetof(CPUHexagonState, llsc_val), "llsc_val");
-    hex_llsc_val_i64 = tcg_global_mem_new_i64(tcg_env,
-        offsetof(CPUHexagonState, llsc_val_i64), "llsc_val_i64");
-    for (i = 0; i < STORES_MAX; i++) {
-        snprintf(store_addr_names[i], NAME_LEN, "store_addr_%d", i);
-        hex_store_addr[i] = tcg_global_mem_new(tcg_env,
-            offsetof(CPUHexagonState, mem_log_stores[i].va),
-            store_addr_names[i]);
-
-        snprintf(store_width_names[i], NAME_LEN, "store_width_%d", i);
-        hex_store_width[i] = tcg_global_mem_new(tcg_env,
-            offsetof(CPUHexagonState, mem_log_stores[i].width),
-            store_width_names[i]);
-
-        snprintf(store_val32_names[i], NAME_LEN, "store_val32_%d", i);
-        hex_store_val32[i] = tcg_global_mem_new(tcg_env,
-            offsetof(CPUHexagonState, mem_log_stores[i].data32),
-            store_val32_names[i]);
-
-        snprintf(store_val64_names[i], NAME_LEN, "store_val64_%d", i);
-        hex_store_val64[i] = tcg_global_mem_new_i64(tcg_env,
-            offsetof(CPUHexagonState, mem_log_stores[i].data64),
-            store_val64_names[i]);
-    }
     for (int i = 0; i < VSTORES_MAX; i++) {
         snprintf(vstore_addr_names[i], NAME_LEN, "vstore_addr_%d", i);
         hex_vstore_addr[i] = tcg_global_mem_new(tcg_env,
@@ -1273,4 +1230,7 @@ void hexagon_translate_init(void)
             offsetof(CPUHexagonState, vstore_pending[i]),
             vstore_pending_names[i]);
     }
+
+    init_cpu_reg_names();
+    init_cpu_tcg_mappings(tcg_global_mappings, tcg_global_mapping_count);
 }
