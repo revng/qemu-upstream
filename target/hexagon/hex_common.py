@@ -28,7 +28,7 @@ macros = {}  # macro -> macro information...
 attribinfo = {}  # Register information and misc
 tags = []  # list of all tags
 overrides = {}  # tags with helper overrides
-idef_parser_enabled = {}  # tags enabled for idef-parser
+helper2tcg_enabled_tags = {} # tags enabled for llvm-to-tcg
 
 def bad_register(regtype, regid):
     raise Exception(f"Bad register parse: regtype '{regtype}' regid '{regid}'")
@@ -293,6 +293,14 @@ def need_condexec_reg(tag, regs):
 
 def skip_qemu_helper(tag):
     return tag in overrides.keys()
+    #return ((tag.startswith("V6") and ("hist" in tag or "S" in tag or "L" in tag)) or tag.startswith("F") or tag == "A5_ACS" or tag == "A4_addp_c" or tag == "A4_subp_c" or tag == "A6_vminub_RdP" or "locked" in tag or tag.startswith("J2") or tag.startswith("SL2") or tag.startswith("L4") or tag.startswith("J4") or
+    #    tag.endswith("_ap") or
+    #    tag.endswith("_pr") or
+    #    tag.endswith("_pbr") or
+    #    tag.endswith("_pi") or
+    #    tag.endswith("_pci") or
+    #    tag.endswith("_pcr")
+    #    ) and tag in overrides.keys()
 
 
 def is_tmp_result(tag):
@@ -303,8 +311,8 @@ def is_new_result(tag):
     return "A_CVI_NEW" in attribdict[tag]
 
 
-def is_idef_parser_enabled(tag):
-    return tag in idef_parser_enabled
+def is_helper2tcg_enabled_for_tag(tag):
+    return tag in helper2tcg_enabled_tags
 
 
 def imm_name(immlett):
@@ -345,8 +353,8 @@ def read_overrides_file(name):
         overrides[tag] = True
 
 
-def read_idef_parser_enabled_file(name):
-    global idef_parser_enabled
-    with open(name, "r") as idef_parser_enabled_file:
-        lines = idef_parser_enabled_file.read().strip().split("\n")
-        idef_parser_enabled = set(lines)
+def read_helper2tcg_enabled_file(name):
+    global helper2tcg_enabled_tags
+    with open(name, "r") as helper2tcg_enabled_file:
+        lines = helper2tcg_enabled_file.read().strip().split("\n")
+        helper2tcg_enabled_tags = set(lines)
