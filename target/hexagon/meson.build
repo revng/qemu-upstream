@@ -148,6 +148,7 @@ hexagon_ss.add(files(
     'fma_emu.c',
     'mmvec/decode_ext_mmvec.c',
     'mmvec/system_ext_mmvec.c',
+    'tcg_global_mappings.c'
 ))
 
 #
@@ -159,7 +160,7 @@ hexagon_ss.add(files(
 #     idef-generated-enabled-instructions
 #
 idef_parser_enabled = get_option('hexagon_idef_parser')
-if idef_parser_enabled and 'hexagon-linux-user' in target_dirs
+if not llvm_to_tcg_enabled and idef_parser_enabled and 'hexagon-linux-user' in target_dirs
     idef_parser_input_generated = custom_target(
         'idef_parser_input.h.inc',
         output: 'idef_parser_input.h.inc',
@@ -266,6 +267,69 @@ helper_funcs_generated = custom_target(
     command: [python, files('gen_helper_funcs.py'), helper_in, '@OUTPUT@'],
 )
 hexagon_ss.add(helper_funcs_generated)
+
+if llvm_to_tcg_enabled
+    h2tcg = subproject('helper2tcg', required: true)
+    h2tcg_get_llvm_ir = h2tcg.get_variable('get_llvm_ir')
+    h2tcg_pipeline = h2tcg.get_variable('pipeline')
+endif
+
+if llvm_to_tcg_enabled
+    h2tcg_input_files = [
+        meson.current_source_dir() / 'op_helper.c',
+        meson.current_source_dir() / 'tcg_global_mappings.c',
+        meson.current_source_dir() / 'reg_fields.c',
+        meson.current_source_dir() / 'arch.c',
+        #helper_funcs_generated,
+    ]
+    #aa = custom_target('abc',
+    #  input: [
+    #    meson.current_source_dir() / 'op_helper.c',
+    #    meson.current_source_dir() / 'tcg_global_mappings.c',
+    #    meson.current_source_dir() / 'reg_fields.c',
+    #  ],
+    #  output: [
+    #    'op_helper.ll',
+    #    'tcg_global_mappings.ll',
+    #    'reg_fields.ll',
+    #  ],
+    #  command: [h2tcg_get_llvm_ir, h2tcg_input_files, 'target/hexagon'],
+    #  )
+
+    ll = h2tcg_get_llvm_ir.process(h2tcg_input_files, extra_args: 'target/hexagon')
+
+    helper2tcg = custom_target('helper2tcg',
+        output: ['helper2tcg-emitted.c',
+                 'helper2tcg-emitted.h',
+                 'helper2tcg-enabled',
+                 'helper2tcg-log'],
+        input: [ll],
+        depends: [h2tcg_pipeline, helper_funcs_generated, helper_protos_generated],
+        command: [h2tcg_pipeline,
+                  '--output-source=@OUTPUT0@',
+                  '--output-header=@OUTPUT1@',
+                  '--output-enabled=@OUTPUT2@',
+                  '--output-log=@OUTPUT3@',
+                  '@INPUT@']
+      )
+
+    hexagon_ss.add(helper2tcg)
+
+    # List of instructions for which TCG generation was successful
+    generated_tcg_list = helper2tcg[2].full_path()
+
+    # Final step, generating wrappers that call either helper functions or
+    # our generated functions depending on whether or not the translation
+    # was succesful for a given instruction.
+    helper_dep = [semantics_generated, helper2tcg]
+    helper_in = [semantics_generated, attribs_def, gen_tcg_h, gen_tcg_hvx_h, generated_tcg_list]
+else
+    # Final step, generating wrappers that call either helper functions or
+    # our generated functions depending on whether or not the translation
+    # was succesful for a given instruction.
+    helper_dep = [semantics_generated]
+    helper_in = [semantics_generated, attribs_def, gen_tcg_h, gen_tcg_hvx_h]
+endif
 
 tcg_funcs_generated = custom_target(
     'tcg_funcs_generated.c.inc',

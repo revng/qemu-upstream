@@ -2,10 +2,6 @@ project('helper2tcg', ['c', 'cpp'], meson_version: '>=0.63.0', version: '0.5')
 
 python = import('python').find_installation()
 
-# TODO(anjo): We still have a bug where the first bug after a new ../configure will
-# fail due to broken input module. This is probably due to incorrect dependencies in
-# meson for some of the tools we expose.
-
 cpp_args = ['-std=c++17', '-fno-rtti', '-fno-exceptions', '-O0','-g', '-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING=1']
 sources = [
     'pipeline/Pipeline.cpp',
@@ -22,6 +18,7 @@ sources = [
     'passes/backend/TcgGenPass.cpp',
     'passes/backend/TcgEmit.cpp',
     'passes/llvm-compat.cpp',
+    'passes/PseudoInst.cpp',
   ]
 
 # Here's the LLVM dep that should autodetect LLVM versions, note this does not always appear to
