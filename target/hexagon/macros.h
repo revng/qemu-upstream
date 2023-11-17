@@ -267,13 +267,10 @@ static inline void gen_cancel(uint32_t slot)
         (((int64_t)(VAL)) < 0) ? 0 : ((1LL << (N)) - 1); \
     })
 #define fSATUVALN(N, VAL) \
-    ({ \
-        fSET_OVERFLOW(); \
-        ((VAL) < 0) ? 0 : ((1LL << (N)) - 1); \
-    })
+    (((VAL) < 0) ? 0 : ((1LL << (N)) - 1))
+
 #define fSATVALN(N, VAL) \
     ({ \
-        fSET_OVERFLOW(); \
         ((VAL) < 0) ? (-(1LL << ((N) - 1))) : ((1LL << ((N) - 1)) - 1); \
     })
 #define fVSATVALN(N, VAL) \
@@ -282,8 +279,12 @@ static inline void gen_cancel(uint32_t slot)
     })
 #define fZXTN(N, M, VAL) (((N) != 0) ? extract64((VAL), 0, (N)) : 0LL)
 #define fSXTN(N, M, VAL) (((N) != 0) ? sextract64((VAL), 0, (N)) : 0LL)
-#define fSATN(N, VAL) \
-    ((fSXTN(N, 64, VAL) == (VAL)) ? (VAL) : fSATVALN(N, VAL))
+#define fSATN(N, VAL)                           \
+    ({                                          \
+        int sat = (fSXTN(N, 64, VAL) == (VAL)); \
+        env->new_value_usr |= (!sat);  \
+        (sat)*(VAL) + (!sat)*fSATVALN(N, VAL);  \
+    })
 #define fVSATN(N, VAL) \
     ((fSXTN(N, 64, VAL) == (VAL)) ? (VAL) : fVSATVALN(N, VAL))
 #define fADDSAT64(DST, A, B) \
@@ -310,8 +311,14 @@ static inline void gen_cancel(uint32_t slot)
     } while (0)
 #define fVSATUN(N, VAL) \
     ((fZXTN(N, 64, VAL) == (VAL)) ? (VAL) : fVSATUVALN(N, VAL))
-#define fSATUN(N, VAL) \
-    ((fZXTN(N, 64, VAL) == (VAL)) ? (VAL) : fSATUVALN(N, VAL))
+
+#define fSATUN(N, VAL)                          \
+    ({                                          \
+        int sat = (fZXTN(N, 64, VAL) == (VAL)); \
+        env->new_value_usr |= (!sat);  \
+        (sat)*(VAL) + (!sat)*fSATUVALN(N, VAL); \
+    })
+
 #define fSATH(VAL) (fSATN(16, VAL))
 #define fSATUH(VAL) (fSATUN(16, VAL))
 #define fVSATH(VAL) (fVSATN(16, VAL))
@@ -424,7 +431,11 @@ static inline TCGv gen_read_ireg(TCGv result, TCGv val, int shift)
         DST = fMIN(maxv, fMAX(SRC, minv)); \
     } while (0)
 #define fCRND(A) ((((A) & 0x3) == 0x3) ? ((A) + 1) : ((A)))
-#define fRNDN(A, N) ((((N) == 0) ? (A) : (((fSE32_64(A)) + (1 << ((N) - 1))))))
+#define fRNDN(A, N)                                                     \
+    ({                                                                  \
+        int cond = ((N) == 0);                                          \
+        cond * A + (!cond) * (((fSE32_64(A)) + (1 << ((N) - 1))));      \
+    })
 #define fCRNDN(A, N) (conv_round(A, N))
 #define fADD128(A, B) (int128_add(A, B))
 #define fSUB128(A, B) (int128_sub(A, B))
@@ -475,6 +486,7 @@ static inline TCGv gen_read_ireg(TCGv result, TCGv val, int shift)
                             hex_gpr[HEX_REG_CS0 + MuN]); \
     } while (0)
 #else
+#define fEA_BREVR(REG)      do { EA = deposit32(REG, 0, 16, revbit16(REG)); } while (0)
 #define fEA_IMM(IMM)        do { EA = (IMM); } while (0)
 #define fEA_REG(REG)        do { EA = (REG); } while (0)
 #define fEA_GPI(IMM)        do { EA = (fREAD_GP() + (IMM)); } while (0)

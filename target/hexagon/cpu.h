@@ -82,6 +82,10 @@ typedef struct {
 /* Maximum number of vector temps in a packet */
 #define VECTOR_TEMPS_MAX            4
 
+// TODO(anjo): move
+#define LLVM_TO_TCG_MAX_VECTOR_TEMPS 64
+intptr_t get_new_temp_vector_offset(unsigned index);
+
 typedef struct CPUArchState {
     target_ulong gpr[TOTAL_PER_THREAD_REGS];
     target_ulong pred[NUM_PREGS];
@@ -115,6 +119,7 @@ typedef struct CPUArchState {
     MMQReg future_QRegs[NUM_QREGS] QEMU_ALIGNED(16);
 
     /* Temporaries used within instructions */
+    MMVector VTempRegs[LLVM_TO_TCG_MAX_VECTOR_TEMPS] QEMU_ALIGNED(16);
     MMVectorPair VuuV QEMU_ALIGNED(16);
     MMVectorPair VvvV QEMU_ALIGNED(16);
     MMVectorPair VxxV QEMU_ALIGNED(16);

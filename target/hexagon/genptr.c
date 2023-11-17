@@ -399,13 +399,16 @@ static inline void gen_store_conditional8(DisasContext *ctx,
     tcg_gen_movi_tl(hex_llsc_addr, ~0);
 }
 
-#ifndef CONFIG_HEXAGON_IDEF_PARSER
+static int gen_slotval_imm(DisasContext *ctx)
+{
+    return (ctx->pkt->pkt_has_store_s1 & 1) | (ctx->insn->slot << 1);
+}
+
+// TODO(anjo): Remove? (replace with *_imm?)
 static TCGv gen_slotval(DisasContext *ctx)
 {
-    int slotval = (ctx->pkt->pkt_has_store_s1 & 1) | (ctx->insn->slot << 1);
-    return tcg_constant_tl(slotval);
+    return tcg_constant_tl(gen_slotval_imm(ctx));
 }
-#endif
 
 void gen_store32(TCGv vaddr, TCGv src, int width, uint32_t slot)
 {
@@ -542,7 +545,6 @@ static void gen_compare(TCGCond cond, TCGv res, TCGv arg1, TCGv arg2)
     tcg_gen_movcond_tl(cond, res, arg1, arg2, one, zero);
 }
 
-#ifndef CONFIG_HEXAGON_IDEF_PARSER
 static inline void gen_loop0r(DisasContext *ctx, TCGv RsV, int riV)
 {
     fIMMEXT(riV);
@@ -589,7 +591,6 @@ static inline void gen_comparei(TCGCond cond, TCGv res, TCGv arg1, int arg2)
 {
     gen_compare(cond, res, arg1, tcg_constant_tl(arg2));
 }
-#endif
 
 static void gen_cond_jumpr(DisasContext *ctx, TCGv dst_pc,
                            TCGCond cond, TCGv pred)
@@ -738,7 +739,6 @@ static void gen_cond_callr(DisasContext *ctx,
     gen_set_label(skip);
 }
 
-#ifndef CONFIG_HEXAGON_IDEF_PARSER
 /* frame = ((LR << 32) | FP) ^ (FRAMEKEY << 32)) */
 static TCGv_i64 gen_frame_scramble(void)
 {
@@ -748,7 +748,6 @@ static TCGv_i64 gen_frame_scramble(void)
     tcg_gen_concat_i32_i64(frame, hex_gpr[HEX_REG_FP], tmp);
     return frame;
 }
-#endif
 
 /* frame ^= (int64_t)FRAMEKEY << 32 */
 static void gen_frame_unscramble(TCGv_i64 frame)
@@ -766,7 +765,6 @@ static void gen_load_frame(DisasContext *ctx, TCGv_i64 frame, TCGv EA)
     tcg_gen_qemu_ld_i64(frame, EA, ctx->mem_idx, MO_TEUQ);
 }
 
-#ifndef CONFIG_HEXAGON_IDEF_PARSER
 /* Stack overflow check */
 static void gen_framecheck(TCGv EA, int framesize)
 {
@@ -799,7 +797,6 @@ static void gen_deallocframe(DisasContext *ctx, TCGv_i64 r31_30, TCGv r30)
     tcg_gen_addi_tl(r29, r30, 8);
     gen_log_reg_write(ctx, HEX_REG_SP, r29);
 }
-#endif
 
 static void gen_return(DisasContext *ctx, TCGv_i64 dst, TCGv src)
 {
