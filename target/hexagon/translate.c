@@ -1163,7 +1163,6 @@ void gen_intermediate_code(CPUState *cs, TranslationBlock *tb, int *max_insns,
 }
 
 #define NAME_LEN               64
-static char reg_written_names[TOTAL_PER_THREAD_REGS][NAME_LEN];
 static char store_addr_names[STORES_MAX][NAME_LEN];
 static char store_width_names[STORES_MAX][NAME_LEN];
 static char store_val32_names[STORES_MAX][NAME_LEN];
@@ -1171,6 +1170,36 @@ static char store_val64_names[STORES_MAX][NAME_LEN];
 static char vstore_addr_names[VSTORES_MAX][NAME_LEN];
 static char vstore_size_names[VSTORES_MAX][NAME_LEN];
 static char vstore_pending_names[VSTORES_MAX][NAME_LEN];
+
+const char * reg_written_names_ptr[TOTAL_PER_THREAD_REGS];
+const char * store_addr_names_ptr[STORES_MAX];
+const char * store_width_names_ptr[STORES_MAX];
+const char * store_val32_names_ptr[STORES_MAX];
+const char * store_val64_names_ptr[STORES_MAX];
+
+static void init_cpu_reg_names(void) {
+    /*
+     * Create register names and store them in `*_names`,
+     * then copy to and array of pointers in `*_names_ptr`
+     * which is easier to pass around.
+     */
+#if HEX_DEBUG
+    for (int i = 0; i < TOTAL_PER_THREAD_REGS; ++i) {
+        snprintf(reg_written_names[i], NAME_LEN, "reg_written_%s", hexagon_regnames[i]);
+        reg_written_names_ptr[i] = reg_written_names[i];
+    }
+#endif
+    for (int i = 0; i < STORES_MAX; ++i) {
+        snprintf(store_addr_names[i],  NAME_LEN, "store_addr_%d",  i);
+        snprintf(store_width_names[i], NAME_LEN, "store_width_%d", i);
+        snprintf(store_val32_names[i], NAME_LEN, "store_val32_%d", i);
+        snprintf(store_val64_names[i], NAME_LEN, "store_val64_%d", i);
+        store_addr_names_ptr[i]  = store_addr_names[i];
+        store_width_names_ptr[i] = store_width_names[i];
+        store_val32_names_ptr[i] = store_val32_names[i];
+        store_val64_names_ptr[i] = store_val64_names[i];
+    }
+}
 
 void hexagon_translate_init(void)
 {
