@@ -117,7 +117,8 @@ def genptr_decl(f, tag, regtype, regid, regno):
             else:
                 f.write(f"        ctx_future_vreg_off(ctx, {regtype}{regid}N,")
                 f.write(" 2, true);\n")
-            if not hex_common.skip_qemu_helper(tag):
+            if (not hex_common.skip_qemu_helper(tag) and \
+                not hex_common.is_helper2tcg_enabled_for_tag(tag)):
                 f.write(f"    TCGv_ptr {regtype}{regid}V = " "tcg_temp_new_ptr();\n")
                 f.write(
                     f"    tcg_gen_addi_ptr({regtype}{regid}V, tcg_env, "
@@ -127,7 +128,8 @@ def genptr_decl(f, tag, regtype, regid, regno):
             f.write(f"    const int {regtype}{regid}N = " f"insn->regno[{regno}];\n")
             f.write(f"    const intptr_t {regtype}{regid}V_off =\n")
             f.write(f"        offsetof(CPUHexagonState, {regtype}{regid}V);\n")
-            if not hex_common.skip_qemu_helper(tag):
+            if (not hex_common.skip_qemu_helper(tag) and \
+                not hex_common.is_helper2tcg_enabled_for_tag(tag)):
                 f.write(f"    TCGv_ptr {regtype}{regid}V = " "tcg_temp_new_ptr();\n")
                 f.write(
                     f"    tcg_gen_addi_ptr({regtype}{regid}V, tcg_env, "
@@ -137,7 +139,8 @@ def genptr_decl(f, tag, regtype, regid, regno):
             f.write(f"    const int {regtype}{regid}N = " f"insn->regno[{regno}];\n")
             f.write(f"    const intptr_t {regtype}{regid}V_off =\n")
             f.write(f"        vreg_src_off(ctx, {regtype}{regid}N);\n")
-            if not hex_common.skip_qemu_helper(tag):
+            if (not hex_common.skip_qemu_helper(tag) and \
+                not hex_common.is_helper2tcg_enabled_for_tag(tag)):
                 f.write(f"    TCGv_ptr {regtype}{regid}V = " "tcg_temp_new_ptr();\n")
         elif regid in {"d", "x", "y"}:
             f.write(f"    const int {regtype}{regid}N = " f"insn->regno[{regno}];\n")
@@ -152,7 +155,8 @@ def genptr_decl(f, tag, regtype, regid, regno):
                 f.write(f"        ctx_future_vreg_off(ctx, {regtype}{regid}N,")
                 f.write(" 1, true);\n")
 
-            if not hex_common.skip_qemu_helper(tag):
+            if (not hex_common.skip_qemu_helper(tag) and \
+                not hex_common.is_helper2tcg_enabled_for_tag(tag)):
                 f.write(f"    TCGv_ptr {regtype}{regid}V = " "tcg_temp_new_ptr();\n")
                 f.write(
                     f"    tcg_gen_addi_ptr({regtype}{regid}V, tcg_env, "
@@ -301,7 +305,8 @@ def genptr_src_read(f, tag, regtype, regid):
             f.write(f"        vreg_src_off(ctx, {regtype}{regid}N ^ 1),\n")
             f.write("        sizeof(MMVector), sizeof(MMVector));\n")
         elif regid in {"s", "u", "v", "w"}:
-            if not hex_common.skip_qemu_helper(tag):
+            if (not hex_common.skip_qemu_helper(tag) and \
+                not hex_common.is_helper2tcg_enabled_for_tag(tag)):
                 f.write(
                     f"    tcg_gen_addi_ptr({regtype}{regid}V, tcg_env, "
                     f"{regtype}{regid}V_off);\n"
@@ -518,28 +523,62 @@ def gen_tcg_func(f, tag, regs, imms):
         if hex_common.is_read(regid):
             genptr_src_read_opn(f, regtype, regid, tag)
 
-    if hex_common.is_idef_parser_enabled(tag):
-        declared = []
-        ## Handle registers
+    if hex_common.is_helper2tcg_enabled_for_tag(tag):
+        f.write(f"    emit_{tag}(")
+        i=0
+        ## If there is a scalar result, it is the return type
+        for regtype,regid in regs:
+            if (hex_common.is_written(regid)):
+                if (hex_common.is_hvx_reg(regtype)):
+                    continue
+                gen_helper_call_opn(f, tag, regtype, regid, i)
+                i += 1
+        if (i > 0): f.write(", ")
+        f.write("tcg_env")
+        i=1
+        ## For conditional instructions, we pass in the destination register
+        if 'A_CONDEXEC' in hex_common.attribdict[tag]:
+            for regtype, regid in regs:
+                if (hex_common.is_writeonly(regid) and
+                    not hex_common.is_hvx_reg(regtype)):
+                    gen_helper_call_opn(f, tag, regtype, regid, i)
+                    i += 1
         for regtype, regid in regs:
-            if hex_common.is_pair(regid) or (
-                hex_common.is_single(regid)
-                and hex_common.is_old_val(regtype, regid, tag)
-            ):
-                declared.append(f"{regtype}{regid}V")
-                if regtype == "M":
-                    declared.append(f"{regtype}{regid}N")
-            elif hex_common.is_new_val(regtype, regid, tag):
-                declared.append(f"{regtype}{regid}N")
-            else:
-                hex_common.bad_register(regtype, regid)
+            if (hex_common.is_written(regid)):
+                if (not hex_common.is_hvx_reg(regtype)):
+                    continue
+                gen_helper_call_opn(f, tag, regtype, regid, i)
+                f.write("_off")
+                i += 1
+        for regtype, regid in regs:
+            if (hex_common.is_read(regid)):
+                if (hex_common.is_hvx_reg(regtype) and
+                    hex_common.is_readwrite(regid)):
+                    continue
+                gen_helper_call_opn(f, tag, regtype, regid, i)
+                if (hex_common.is_hvx_reg(regtype)):
+                    f.write("_off")
+                i += 1
+        for immlett,bits,immshift in imms:
+            if i > 0:
+                f.write(", ")
+            f.write(hex_common.imm_name(immlett))
 
-        ## Handle immediates
-        for immlett, bits, immshift in imms:
-            declared.append(hex_common.imm_name(immlett))
 
-        arguments = ", ".join(["ctx", "ctx->insn", "ctx->pkt"] + declared)
-        f.write(f"    emit_{tag}({arguments});\n")
+        if hex_common.need_pkt_has_multi_cof(tag):
+            f.write(", ctx->pkt->pkt_has_multi_cof")
+        if hex_common.need_pkt_need_commit(tag):
+            f.write(", ctx->need_commit")
+        if hex_common.need_part1(tag):
+            f.write(", insn->part1")
+        if hex_common.need_slot(tag):
+            f.write(", gen_slotval_imm(ctx)")
+        if hex_common.need_PC(tag):
+            f.write(", ctx->pkt->pc")
+        if hex_common.helper_needs_next_PC(tag):
+            f.write(", ctx->next_PC")
+
+        f.write(");\n")
 
     elif hex_common.skip_qemu_helper(tag):
         f.write(f"    fGEN_TCG_{tag}({hex_common.semdict[tag]});\n")
@@ -632,18 +671,18 @@ def main():
     hex_common.read_overrides_file(sys.argv[3])
     hex_common.read_overrides_file(sys.argv[4])
     hex_common.calculate_attribs()
-    ## Whether or not idef-parser is enabled is
+    ## Whether or not helper2tcg is enabled is
     ## determined by the number of arguments to
     ## this script:
     ##
     ##   5 args. -> not enabled,
-    ##   6 args. -> idef-parser enabled.
+    ##   6 args. -> helper2tcg enabled.
     ##
     ## The 6:th arg. then holds a list of the successfully
     ## parsed instructions.
-    is_idef_parser_enabled = len(sys.argv) > 6
-    if is_idef_parser_enabled:
-        hex_common.read_idef_parser_enabled_file(sys.argv[5])
+    is_helper2tcg_enabled = len(sys.argv) > 6
+    if is_helper2tcg_enabled:
+        hex_common.read_helper2tcg_enabled_file(sys.argv[5])
     tagregs = hex_common.get_tagregs()
     tagimms = hex_common.get_tagimms()
 
@@ -651,8 +690,9 @@ def main():
     with open(output_file, "w") as f:
         f.write("#ifndef HEXAGON_TCG_FUNCS_H\n")
         f.write("#define HEXAGON_TCG_FUNCS_H\n\n")
-        if is_idef_parser_enabled:
-            f.write('#include "idef-generated-emitter.h.inc"\n\n')
+        if is_helper2tcg_enabled:
+            f.write("#include \"helper2tcg-emitted.h\"\n\n")
+            f.write("#include \"mmvec/macros.h\"\n\n")
 
         for tag in hex_common.tags:
             ## Skip the priv instructions
