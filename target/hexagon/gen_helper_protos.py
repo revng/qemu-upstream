@@ -61,7 +61,7 @@ def gen_def_helper_opn(f, tag, regtype, regid, i):
 ##     We produce:
 ##         DEF_HELPER_3(A2_add, s32, env, s32, s32)
 ##
-def gen_helper_prototype(f, tag, tagregs, tagimms):
+def gen_helper_prototype(f, name, tag, tagregs, tagimms):
     regs = tagregs[tag]
     imms = tagimms[tag]
 
@@ -182,18 +182,18 @@ def main():
     hex_common.read_attribs_file(sys.argv[2])
     hex_common.read_overrides_file(sys.argv[3])
     hex_common.read_overrides_file(sys.argv[4])
-    ## Whether or not idef-parser is enabled is
+    ## Whether or not helper2tcg is enabled is
     ## determined by the number of arguments to
     ## this script:
     ##
     ##   5 args. -> not enabled,
-    ##   6 args. -> idef-parser enabled.
+    ##   6 args. -> helper2tcg enabled.
     ##
     ## The 6:th arg. then holds a list of the successfully
     ## parsed instructions.
-    is_idef_parser_enabled = len(sys.argv) > 6
-    if is_idef_parser_enabled:
-        hex_common.read_idef_parser_enabled_file(sys.argv[5])
+    is_helper2tcg_enabled = len(sys.argv) > 6
+    if is_helper2tcg_enabled:
+        hex_common.read_helper2tcg_enabled_file(sys.argv[5])
     hex_common.calculate_attribs()
     tagregs = hex_common.get_tagregs()
     tagimms = hex_common.get_tagimms()
@@ -214,13 +214,42 @@ def main():
                 continue
             if tag == "Y6_diag1":
                 continue
-
             if hex_common.skip_qemu_helper(tag):
                 continue
-            if hex_common.is_idef_parser_enabled(tag):
+
+            # Disable all overrides
+            if ( tag.startswith("F") and not tag in {
+                'F2_sfimm_p',
+                'F2_sfimm_n',
+                'F2_dfimm_p',
+                'F2_dfimm_n',
+                'F2_dfmpyll',
+                'F2_dfmpylh',
+                }):
+                continue
+            if tag.startswith("V6") and "hist" in tag:
+                continue
+            # helper of V6_vcombine does not handle overlapping src/dst
+            if tag.startswith("J2"):
+                continue
+            if tag.endswith("_pcr") or tag.endswith("_pci"):
+                continue
+            if tag in {"S2_allocframe", "L2_deallocframe", "S2_cabacdecbin", "SL2_deallocframe", "SS2_allocframe"}:
+                continue
+            if tag in {"SA1_clrtnew", "SA1_clrfnew", "SA1_cmpeqi"}:
+                continue
+            if tag.startswith("Y2") or tag.startswith("Y4") or tag.startswith("Y5"):
+                continue
+            if tag.startswith("R6"):
+                continue
+            # End disable all overrides
+
+            if "V6_vS" in tag or "V6_vL" in tag:
+                continue
+            if "A_COF" in hex_common.attribdict[tag]:
                 continue
 
-            gen_helper_prototype(f, tag, tagregs, tagimms)
+            gen_helper_prototype(f, tag, tag, tagregs, tagimms)
 
 
 if __name__ == "__main__":

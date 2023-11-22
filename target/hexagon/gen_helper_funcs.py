@@ -47,12 +47,10 @@ def gen_helper_arg(f, regtype, regid, regno):
         f.write(", ")
     f.write(f"int32_t {regtype}{regid}V")
 
-
 def gen_helper_arg_new(f, regtype, regid, regno):
     if regno >= 0:
         f.write(", ")
     f.write(f"int32_t {regtype}{regid}N")
-
 
 def gen_helper_arg_pair(f, regtype, regid, regno):
     if regno >= 0:
@@ -63,13 +61,13 @@ def gen_helper_arg_pair(f, regtype, regid, regno):
 def gen_helper_arg_ext(f, regtype, regid, regno):
     if regno > 0:
         f.write(", ")
-    f.write(f"void *{regtype}{regid}V_void")
+    f.write(f"void * restrict {regtype}{regid}V_void")
 
 
 def gen_helper_arg_ext_pair(f, regtype, regid, regno):
     if regno > 0:
         f.write(", ")
-    f.write(f"void *{regtype}{regid}V_void")
+    f.write(f"void * restrict {regtype}{regid}V_void")
 
 
 def gen_helper_arg_opn(f, regtype, regid, i, tag):
@@ -201,7 +199,7 @@ def gen_helper_return_opn(f, regtype, regid, i):
 ##           return RdV;
 ##       }
 ##
-def gen_helper_function(f, tag, tagregs, tagimms):
+def gen_helper_function(f, name, tag, tagregs, tagimms):
     regs = tagregs[tag]
     imms = tagimms[tag]
 
@@ -248,16 +246,19 @@ def gen_helper_function(f, tag, tagregs, tagimms):
 
         ## Arguments include the vector destination operands
         i = 1
+        vecargs = []
         for regtype, regid in regs:
             if hex_common.is_written(regid):
                 if hex_common.is_pair(regid):
                     if hex_common.is_hvx_reg(regtype):
                         gen_helper_arg_ext_pair(f, regtype, regid, i)
+                        vecargs.append(str(i))
                     else:
                         continue
                 elif hex_common.is_single(regid):
                     if hex_common.is_hvx_reg(regtype):
                         gen_helper_arg_ext(f, regtype, regid, i)
+                        vecargs.append(str(i))
                     else:
                         # This is the return value of the function
                         continue
@@ -280,38 +281,79 @@ def gen_helper_function(f, tag, tagregs, tagimms):
                 if hex_common.is_hvx_reg(regtype) and hex_common.is_readwrite(regid):
                     continue
                 gen_helper_arg_opn(f, regtype, regid, i, tag)
+                if (hex_common.is_hvx_reg(regtype)):
+                    vecargs.append(str(i))
                 i += 1
+
+        immediateargs = []
         for immlett, bits, immshift in imms:
             gen_helper_arg_imm(f, immlett)
+            immediateargs.append(i)
             i += 1
 
         if hex_common.need_pkt_has_multi_cof(tag):
             f.write(", uint32_t pkt_has_multi_cof")
-        if (hex_common.need_pkt_need_commit(tag)):
+            immediateargs.append(i)
+            i += 1
+        if hex_common.need_pkt_need_commit(tag):
             f.write(", uint32_t pkt_need_commit")
-
+            immediateargs.append(i)
+            i += 1
         if hex_common.need_PC(tag):
             if i > 0:
                 f.write(", ")
             f.write("target_ulong PC")
+            immediateargs.append(i)
             i += 1
         if hex_common.helper_needs_next_PC(tag):
             if i > 0:
                 f.write(", ")
             f.write("target_ulong next_PC")
+            immediateargs.append(i)
             i += 1
         if hex_common.need_slot(tag):
             if i > 0:
                 f.write(", ")
             f.write("uint32_t slotval")
+            immediateargs.append(i)
             i += 1
         if hex_common.need_part1(tag):
             if i > 0:
                 f.write(", ")
             f.write("uint32_t part1")
-        f.write(")\n{\n")
+            immediateargs.append(i)
+        f.write(")\n")
+
+        if ( ( not tag.startswith("F") or tag in {
+            'F2_sfimm_p',
+            'F2_sfimm_n',
+            'F2_dfimm_p',
+            'F2_dfimm_n',
+            'F2_dfmpyll',
+            'F2_dfmpylh',
+            }) and not "A_COF" in hex_common.attribdict[tag] and not tag == "S2_asr_r_r_sat" and not tag == "S2_asl_r_r_sat" \
+                ) :
+            f.write("LLVM_ANNOTATE(\"llvm-to-tcg\")\n")
+
+        ## Emit an annotate attribute to specify which arguments should
+        ## be treated as immediates.
+        if immediateargs:
+            f.write("LLVM_ANNOTATE(\"immediate: ")
+            for idx, iarg in enumerate(immediateargs):
+                if idx > 0: f.write(", ")
+                f.write(str(iarg))
+            f.write("\")\n")
+
+        if vecargs:
+            f.write("LLVM_ANNOTATE(\"ptr-to-offset: %s\")\n" % (', '.join(vecargs)))
+
+        f.write("{\n")
+
+        if (not hex_common.need_slot(tag)):
+            f.write("    uint32_t slot __attribute__((unused)) = 4;\n" )
         if hex_common.need_ea(tag):
             gen_decl_ea(f)
+
         ## Declare the return variable
         i = 0
         if "A_CONDEXEC" not in hex_common.attribdict[tag]:
@@ -357,24 +399,26 @@ def main():
     hex_common.read_attribs_file(sys.argv[2])
     hex_common.read_overrides_file(sys.argv[3])
     hex_common.read_overrides_file(sys.argv[4])
-    ## Whether or not idef-parser is enabled is
+    ## Whether or not helper2tcg is enabled is
     ## determined by the number of arguments to
     ## this script:
     ##
     ##   5 args. -> not enabled,
-    ##   6 args. -> idef-parser enabled.
+    ##   6 args. -> helper2tcg enabled.
     ##
     ## The 6:th arg. then holds a list of the successfully
     ## parsed instructions.
-    is_idef_parser_enabled = len(sys.argv) > 6
-    if is_idef_parser_enabled:
-        hex_common.read_idef_parser_enabled_file(sys.argv[5])
+    is_helper2tcg_enabled = len(sys.argv) > 6
+    if is_helper2tcg_enabled:
+        hex_common.read_helper2tcg_enabled_file(sys.argv[5])
     hex_common.calculate_attribs()
     tagregs = hex_common.get_tagregs()
     tagimms = hex_common.get_tagimms()
 
     output_file = sys.argv[-1]
-    with open(output_file, "w") as f:
+    with open(output_file, 'w') as f:
+        # TODO(anjo): If phase2 is enabled
+        f.write('#include "helper2tcg/annotate.h"\n')
         for tag in hex_common.tags:
             ## Skip the priv instructions
             if "A_PRIV" in hex_common.attribdict[tag]:
@@ -391,10 +435,40 @@ def main():
                 continue
             if hex_common.skip_qemu_helper(tag):
                 continue
-            if hex_common.is_idef_parser_enabled(tag):
+
+            # Disable all overrides
+            if ( tag.startswith("F") and not tag in {
+                'F2_sfimm_p',
+                'F2_sfimm_n',
+                'F2_dfimm_p',
+                'F2_dfimm_n',
+                'F2_dfmpyll',
+                'F2_dfmpylh',
+                }):
+                continue
+            if tag.startswith("V6") and "hist" in tag:
+                continue
+            # helper of V6_vcombine does not handle overlapping src/dst
+            if tag.startswith("J2"):
+                continue
+            if tag.endswith("_pcr") or tag.endswith("_pci"):
+                continue
+            if tag in {"S2_allocframe", "L2_deallocframe", "S2_cabacdecbin", "SL2_deallocframe", "SS2_allocframe"}:
+                continue
+            if tag in {"SA1_clrtnew", "SA1_clrfnew", "SA1_cmpeqi"}:
+                continue
+            if tag.startswith("Y2") or tag.startswith("Y4") or tag.startswith("Y5"):
+                continue
+            if tag.startswith("R6"):
+                continue
+            # End disable all overrides
+
+            if "V6_vS" in tag or "V6_vL" in tag:
+                continue
+            if "A_COF" in hex_common.attribdict[tag]:
                 continue
 
-            gen_helper_function(f, tag, tagregs, tagimms)
+            gen_helper_function(f, tag, tag, tagregs, tagimms)
 
 
 if __name__ == "__main__":
