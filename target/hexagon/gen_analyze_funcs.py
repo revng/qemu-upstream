@@ -206,12 +206,7 @@ def gen_analyze_func(f, tag, regs, imms):
         analyze_opn(f, tag, regtype, regid, i)
         i += 1
 
-    has_generated_helper = not hex_common.skip_qemu_helper(
-        tag
-    ) and not hex_common.is_idef_parser_enabled(tag)
-
-    ## Mark HVX instructions with generated helpers
-    if (has_generated_helper and
+    if (not hex_common.skip_qemu_helper(tag) and
         "A_CVI" in hex_common.attribdict[tag]):
         f.write("    ctx->has_hvx_helper = true;\n")
 
@@ -223,18 +218,6 @@ def main():
     hex_common.read_attribs_file(sys.argv[2])
     hex_common.read_overrides_file(sys.argv[3])
     hex_common.read_overrides_file(sys.argv[4])
-    ## Whether or not idef-parser is enabled is
-    ## determined by the number of arguments to
-    ## this script:
-    ##
-    ##   5 args. -> not enabled,
-    ##   6 args. -> idef-parser enabled.
-    ##
-    ## The 6:th arg. then holds a list of the successfully
-    ## parsed instructions.
-    is_idef_parser_enabled = len(sys.argv) > 6
-    if is_idef_parser_enabled:
-        hex_common.read_idef_parser_enabled_file(sys.argv[5])
     hex_common.calculate_attribs()
     tagregs = hex_common.get_tagregs()
     tagimms = hex_common.get_tagimms()
