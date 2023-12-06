@@ -433,7 +433,9 @@ def main():
                 continue
             if tag == "Y6_diag1":
                 continue
-            if hex_common.skip_qemu_helper(tag):
+            #if hex_common.skip_qemu_helper(tag):
+            #    continue
+            if tag.endswith("_locked"):
                 continue
 
             # Disable all overrides
@@ -449,6 +451,8 @@ def main():
             if tag.startswith("V6") and "hist" in tag:
                 continue
             # helper of V6_vcombine does not handle overlapping src/dst
+            if tag == "V6_vcombine":
+                continue;
             if tag.startswith("J2"):
                 continue
             if tag.endswith("_pcr") or tag.endswith("_pci"):
