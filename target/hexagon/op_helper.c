@@ -31,6 +31,7 @@
 #include "mmvec/macros.h"
 #include "op_helper.h"
 #include "translate.h"
+#include "helper2tcg/annotate.h"
 
 #define SF_BIAS        127
 #define SF_MANTBITS    23
@@ -566,13 +567,20 @@ void HELPER(probe_pkt_scalar_hvx_stores)(CPUHexagonState *env, int mask)
  * If the load is in slot 0 and there is a store in slot1 (that
  * wasn't cancelled), we have to do the store first.
  */
+void HELPER(probe_and_commit)(CPUHexagonState *env,
+                              target_ulong vaddr, int size)
+{
+    if ((env->slot_cancelled & (1 << 1)) == 0) {
+        HELPER(probe_noshuf_load)(env, vaddr, size, MMU_USER_IDX);
+        HELPER(commit_store)(env, 1);
+    }
+}
+
 static void check_noshuf(CPUHexagonState *env, bool pkt_has_store_s1,
                          uint32_t slot, target_ulong vaddr, int size)
 {
-    if (slot == 0 && pkt_has_store_s1 &&
-        ((env->slot_cancelled & (1 << 1)) == 0)) {
-        HELPER(probe_noshuf_load)(env, vaddr, size, MMU_USER_IDX);
-        HELPER(commit_store)(env, 1);
+    if (slot == 0 && pkt_has_store_s1) {
+        HELPER(probe_and_commit)(env, vaddr, size);
     }
 }
 
