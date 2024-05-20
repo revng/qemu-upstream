@@ -45,6 +45,7 @@ sources = [
     'passes/llvm-compat.cpp',
     'pipeline/Pipeline.cpp',
     'passes/PrepareForOptPass/PrepareForOptPass.cpp',
+    'passes/PseudoInst.cpp',
 ]
 
 clang = bindir / 'clang'
