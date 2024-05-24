@@ -404,11 +404,12 @@ static int gen_slotval_imm(DisasContext *ctx)
     return (ctx->pkt->pkt_has_store_s1 & 1) | (ctx->insn->slot << 1);
 }
 
-// TODO(anjo): Remove? (replace with *_imm?)
+#ifndef CONFIG_LLVM_TO_TCG
 static TCGv gen_slotval(DisasContext *ctx)
 {
     return tcg_constant_tl(gen_slotval_imm(ctx));
 }
+#endif
 
 void gen_store32(TCGv vaddr, TCGv src, int width, uint32_t slot)
 {
@@ -1081,6 +1082,7 @@ static void gen_asl_r_r_sat(DisasContext *ctx, TCGv RdV, TCGv RsV, TCGv RtV)
     gen_set_label(done);
 }
 
+#ifndef CONFIG_LLVM_TO_TCG
 static void gen_insert_rp(DisasContext *ctx, TCGv RxV, TCGv RsV, TCGv_i64 RttV)
 {
     /*
@@ -1130,7 +1132,9 @@ static void gen_insert_rp(DisasContext *ctx, TCGv RxV, TCGv RsV, TCGv_i64 RttV)
     tcg_gen_extrl_i64_i32(RxV, result);
     gen_set_label(done);
 }
+#endif
 
+#ifndef CONFIG_LLVM_TO_TCG
 static void gen_asr_r_svw_trun(DisasContext *ctx, TCGv RdV,
                                TCGv_i64 RssV, TCGv RtV)
 {
@@ -1179,6 +1183,7 @@ static void gen_asr_r_svw_trun(DisasContext *ctx, TCGv RdV,
     tcg_gen_movi_tl(RdV, 0);
     gen_set_label(done);
 }
+#endif
 
 static intptr_t vreg_src_off(DisasContext *ctx, int num)
 {
