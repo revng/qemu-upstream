@@ -366,6 +366,65 @@ TcgInstCombinePass::run(llvm::Module &M, llvm::ModuleAnalysisManager &MAM) {
 
       // Independent of above
       //
+      // Convert
+      //   %2 = icmp [sgt|ugt|slt|ult] %0, %1
+      //   %5 = select %2, %3, %4
+      // to
+      //   %5 = [s|u][max|min] %0, %1;                          if %0 == %3 && %1 == %4
+      //   %5 = call @Movcond.[cond].*(%1, %0, %3, %4);         otherwise
+      if (auto *Call = dyn_cast<CallInst>(&I)) {
+        Function *F = Call->getCalledFunction();
+        StringRef Name = F->getName();
+        if (Name.consume_front("cpu_")) {
+          bool IsLoad = Name.consume_front("ld");
+          bool IsStore = !IsLoad and Name.consume_front("st");
+          if (IsLoad or IsStore) {
+            bool Signed = Name.consume_front("u");
+            uint8_t Size = 0;
+            switch (Name[0]) {
+              case 'b': Size = 1; break;
+              case 'w': Size = 2; break;
+              case 'l': Size = 4; break;
+              case 'q': Size = 8; break;
+              default: abort();
+            }
+
+            uint8_t Endianness = 0; // unknown
+            if (Size > 1) {
+              Name = Name.drop_front(2);
+              switch (Name[0]) {
+                case 'l': Endianness = 1; break;
+                case 'b': Endianness = 2; break;
+                default: abort();
+              }
+            }
+
+            IRBuilder<> Builder(Call);
+            Value *AddrOp = Call->getArgOperand(1);
+            IntegerType *AddrTy = cast<IntegerType>(AddrOp->getType());
+            IntegerType *FlagTy = Builder.getInt8Ty();
+            Value *SizeOp = ConstantInt::get(FlagTy, Size);
+            Value *EndianOp = ConstantInt::get(FlagTy, Endianness);
+            CallInst *NewCall;
+            if (IsLoad) {
+              Value *SignOp = ConstantInt::get(FlagTy, Signed);
+              IntegerType *RetTy = cast<IntegerType>(Call->getType());
+              FunctionCallee Fn = pseudoInstFunction(M, HostLoad, RetTy, {AddrTy, FlagTy, FlagTy, FlagTy});
+              NewCall = Builder.CreateCall(Fn, {AddrOp, SignOp, SizeOp, EndianOp});
+            } else {
+              Value *ValueOp = Call->getArgOperand(2);
+              IntegerType *ValueTy = cast<IntegerType>(ValueOp->getType());
+              FunctionCallee Fn = pseudoInstFunction(M, HostLoad, Builder.getVoidTy(), {AddrTy, ValueTy, FlagTy, FlagTy});
+              NewCall = Builder.CreateCall(Fn, {AddrOp, ValueOp, SizeOp, EndianOp});
+            }
+            Call->replaceAllUsesWith(NewCall);
+            InstToErase.push_back(Call);
+          }
+        }
+      }
+
+      // Independent of above
+      //
       // Depends on binary op one
       //
       // Convert

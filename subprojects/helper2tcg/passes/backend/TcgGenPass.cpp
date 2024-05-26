@@ -1189,6 +1189,58 @@ translateFunction(const Function *F,
           case VecAShrScalarStore: {
             tcg::genVecBinOp(Out, "sar", Args[0], Args[1], Args[2]);
           } break;
+          case HostLoad: {
+            Expected<TcgV> MaybeRes = MapReturnValue();
+            if (!MaybeRes) {
+              return MaybeRes.takeError();
+            }
+            uint8_t Sign = cast<ConstantInt>(Call->getOperand(1))->getZExtValue();
+            uint8_t Size = cast<ConstantInt>(Call->getOperand(2))->getZExtValue();
+            uint8_t Endianness = cast<ConstantInt>(Call->getOperand(3))->getZExtValue();
+            std::string MemOpStr = "MO_";
+            raw_string_ostream MemOpStream(MemOpStr);
+            switch (Endianness) {
+            case 0: break; // do nothing
+            case 1: MemOpStream << "LE"; break;
+            case 2: MemOpStream << "BE"; break;
+            default: abort();
+            }
+            switch (Sign) {
+            case 0: MemOpStream << "U"; break;
+            case 1: MemOpStream << "S"; break;
+            default: abort();
+            }
+            switch (Size) {
+            case 1: MemOpStream << "B"; break;
+            case 2: MemOpStream << "W"; break;
+            case 4: MemOpStream << "L"; break;
+            case 8: MemOpStream << "Q"; break;
+            default: abort();
+            }
+            tcg::genQemuLoad(Out, *MaybeRes, Args[0], MemOpStream.str().c_str());
+          } break;
+          case HostStore: {
+            uint8_t Size = cast<ConstantInt>(Call->getOperand(2))->getZExtValue();
+            uint8_t Endianness = cast<ConstantInt>(Call->getOperand(3))->getZExtValue();
+            std::string MemOpStr = "MO_";
+            raw_string_ostream MemOpStream(MemOpStr);
+            switch (Endianness) {
+            case 0: break; // do nothing
+            case 1: MemOpStream << "LE"; break;
+            case 2: MemOpStream << "BE"; break;
+            default: abort();
+            }
+            // Always unsigned for stores
+            MemOpStream << "U";
+            switch (Size) {
+            case 1: MemOpStream << "B"; break;
+            case 2: MemOpStream << "W"; break;
+            case 4: MemOpStream << "L"; break;
+            case 8: MemOpStream << "Q"; break;
+            default: abort();
+            }
+            tcg::genQemuStore(Out, Args[0], Args[1], MemOpStream.str().c_str());
+          } break;
           default: abort();
           }
         }
