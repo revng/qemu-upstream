@@ -55,13 +55,23 @@ inline std::string constantIntToStr(Constant *C) {
   auto *Int = cast<ConstantInt>(C);
   const APInt Value = Int->getUniqueInteger();
   const char *SuffixStr = "";
+  const bool Negative = Int->isNegative();
   if (Value.ugt(UINT32_MAX)) {
-      SuffixStr = Int->isNegative() ? "ll" : "ull";
+    SuffixStr = Int->isNegative() ? "ll" : "ull";
   }
   if (Int->getBitWidth() == 1) {
-      ResultStr = (Value.getBoolValue()) ? "true" : "false";
+    ResultStr = (Value.getBoolValue()) ? "true" : "false";
   } else {
+    bool IsMax = (Negative) ? Value.isMaxSignedValue() : Value.isMaxValue();
+    bool IsMin = Negative and Value.isMinSignedValue();
+    unsigned Bitwidth = Value.getBitWidth();
+    if (IsMax) {
+      return Twine("INT").concat(Twine(Bitwidth)).concat("_MAX").str();
+    } else if (IsMin) {
+      return Twine("INT").concat(Twine(Bitwidth)).concat("_MIN").str();
+    } else {
       Value.toString(ResultStr, 10, Value.isNegative(), true);
+    }
   }
   return Twine(ResultStr).concat(SuffixStr).str();
 }
