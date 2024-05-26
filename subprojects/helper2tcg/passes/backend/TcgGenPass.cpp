@@ -413,10 +413,9 @@ static void ensureSignBitIsSet(raw_ostream &Out, const TcgV &V) {
   if (V.LlvmSize == V.TcgSize or V.Kind != IrValue) {
     return;
   }
-  tcg::emitBinOp(Out, {Twine("tcg_gen_shli_i").concat(Twine(V.TcgSize)).str()},
-                 { V, V, TcgV::makeImmediate(Twine(V.TcgSize - V.LlvmSize).str(), V.TcgSize, V.LlvmSize) });
-  tcg::emitBinOp(Out, {Twine("tcg_gen_sari_i").concat(Twine(V.TcgSize)).str()},
-                 { V, V, TcgV::makeImmediate(Twine(V.TcgSize - V.LlvmSize).str(), V.TcgSize, V.LlvmSize) });
+  tcg::genExtract(Out, true, V, V,
+                  TcgV::makeImmediate("0", V.TcgSize, V.LlvmSize),
+                  TcgV::makeImmediate(Twine(V.TcgSize).str(), V.TcgSize, V.LlvmSize));
 }
 
 static Expected<TranslatedFunction>
