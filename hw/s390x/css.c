@@ -1895,7 +1895,7 @@ void css_undo_stcrw(CRW *crw)
 }
 
 int css_collect_chp_desc(int m, uint8_t cssid, uint8_t f_chpid, uint8_t l_chpid,
-                         int rfmt, void *buf)
+                         int rfmt, void *buf, uint16_t buf_size)
 {
     int i, desc_size;
     uint32_t words[8];
@@ -1917,6 +1917,7 @@ int css_collect_chp_desc(int m, uint8_t cssid, uint8_t f_chpid, uint8_t l_chpid,
             if (rfmt == 0) {
                 words[0] = cpu_to_be32(chpid_type_word);
                 words[1] = 0;
+                g_assert(desc_size + 8 < buf_size);
                 memcpy(buf + desc_size, words, 8);
                 desc_size += 8;
             } else if (rfmt == 1) {
@@ -1928,6 +1929,7 @@ int css_collect_chp_desc(int m, uint8_t cssid, uint8_t f_chpid, uint8_t l_chpid,
                 words[5] = 0;
                 words[6] = 0;
                 words[7] = 0;
+                g_assert(desc_size + 32 < buf_size);
                 memcpy(buf + desc_size, words, 32);
                 desc_size += 32;
             }

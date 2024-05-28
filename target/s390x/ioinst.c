@@ -9,6 +9,7 @@
  * directory.
  */
 
+#include "cpu-param.h"
 #include "qemu/osdep.h"
 
 #include "cpu.h"
@@ -411,7 +412,8 @@ typedef struct ChscResp {
 #define CHSC_SCPD_0_RES 0xc000f000
 #define CHSC_SCPD_1_RES 0xffffff00
 #define CHSC_SCPD_01_CHPID 0x000000ff
-static void ioinst_handle_chsc_scpd(ChscReq *req, ChscResp *res)
+static void ioinst_handle_chsc_scpd(ChscReq *req, ChscResp *res,
+                                    uint16_t max_res_data_len)
 {
     uint16_t len = be16_to_cpu(req->len);
     uint32_t param0 = be32_to_cpu(req->param0);
@@ -452,7 +454,7 @@ static void ioinst_handle_chsc_scpd(ChscReq *req, ChscResp *res)
     }
     /* css_collect_chp_desc() is endian-aware */
     desc_size = css_collect_chp_desc(m, cssid, f_chpid, l_chpid, rfmt,
-                                     &res->data);
+                                     &res->data, max_res_data_len);
     res->code = cpu_to_be16(0x0001);
     res->len = cpu_to_be16(8 + desc_size);
     res->param = cpu_to_be32(rfmt);
@@ -468,7 +470,8 @@ static void ioinst_handle_chsc_scpd(ChscReq *req, ChscResp *res)
 #define CHSC_SCSC_0_FMT 0x000f0000
 #define CHSC_SCSC_0_CSSID 0x0000ff00
 #define CHSC_SCSC_0_RES 0xdff000ff
-static void ioinst_handle_chsc_scsc(ChscReq *req, ChscResp *res)
+static void ioinst_handle_chsc_scsc(ChscReq *req, ChscResp *res,
+                                    uint16_t max_res_data_len)
 {
     uint16_t len = be16_to_cpu(req->len);
     uint32_t param0 = be32_to_cpu(req->param0);
@@ -511,6 +514,7 @@ static void ioinst_handle_chsc_scsc(ChscReq *req, ChscResp *res)
     chsc_chars[0] = cpu_to_be32(0x40000000);
     chsc_chars[3] = cpu_to_be32(0x00040000);
 
+    g_assert(sizeof(general_chars) + sizeof(chsc_chars) <= max_res_data_len);
     memcpy(res->data, general_chars, sizeof(general_chars));
     memcpy(res->data + sizeof(general_chars), chsc_chars, sizeof(chsc_chars));
     return;
@@ -601,12 +605,16 @@ static int chsc_sei_nt2_have_event(void)
 
 #define CHSC_SEI_NT0    (1ULL << 63)
 #define CHSC_SEI_NT2    (1ULL << 61)
-static void ioinst_handle_chsc_sei(ChscReq *req, ChscResp *res)
+static void ioinst_handle_chsc_sei(ChscReq *req, ChscResp *res,
+                                   uint16_t max_res_data_len)
 {
     uint64_t selection_mask = ldq_p(&req->param1);
     uint8_t *res_flags = (uint8_t *)res->data;
     int have_event = 0;
     int have_more = 0;
+
+    /* space for res_flags */
+    g_assert(max_res_data_len > 0);
 
     /* regarding architecture nt0 can not be masked */
     have_event = !chsc_sei_nt0_get_event(res);
@@ -614,6 +622,8 @@ static void ioinst_handle_chsc_sei(ChscReq *req, ChscResp *res)
 
     if (selection_mask & CHSC_SEI_NT2) {
         if (!have_event) {
+            g_assert(sizeof(ChscSeiNt2Res)
+                     <= sizeof(ChscResp) + max_res_data_len);
             have_event = !chsc_sei_nt2_get_event(res);
         }
 
@@ -652,7 +662,8 @@ void ioinst_handle_chsc(S390CPU *cpu, uint32_t ipb, uintptr_t ra)
     uint16_t len;
     uint16_t command;
     CPUS390XState *env = &cpu->env;
-    uint8_t buf[TARGET_PAGE_SIZE];
+    uint8_t buf[1 << TARGET_PAGE_BITS_MIN_SPECIFIC];
+    uint16_t max_res_data_len;
 
     trace_ioinst("chsc");
     reg = (ipb >> 20) & 0x00f;
@@ -682,22 +693,24 @@ void ioinst_handle_chsc(S390CPU *cpu, uint32_t ipb, uintptr_t ra)
         s390_program_interrupt(env, PGM_OPERAND, ra);
         return;
     }
-    memset((char *)req + len, 0, TARGET_PAGE_SIZE - len);
+    g_assert(sizeof(buf) > len + sizeof(ChscResp));
+    max_res_data_len = sizeof(buf) - len - sizeof(ChscResp);
+    memset((char *)req + len, 0, sizeof(buf) - len);
     res = (void *)((char *)req + len);
     command = be16_to_cpu(req->command);
     trace_ioinst_chsc_cmd(command, len);
     switch (command) {
     case CHSC_SCSC:
-        ioinst_handle_chsc_scsc(req, res);
+        ioinst_handle_chsc_scsc(req, res, max_res_data_len);
         break;
     case CHSC_SCPD:
-        ioinst_handle_chsc_scpd(req, res);
+        ioinst_handle_chsc_scpd(req, res, max_res_data_len);
         break;
     case CHSC_SDA:
         ioinst_handle_chsc_sda(req, res);
         break;
     case CHSC_SEI:
-        ioinst_handle_chsc_sei(req, res);
+        ioinst_handle_chsc_sei(req, res, max_res_data_len);
         break;
     default:
         ioinst_handle_chsc_unimplemented(res);

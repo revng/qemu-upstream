@@ -255,7 +255,7 @@ void css_do_tsch_update_subch(SubchDev *sch);
 int css_do_stcrw(CRW *crw);
 void css_undo_stcrw(CRW *crw);
 int css_collect_chp_desc(int m, uint8_t cssid, uint8_t f_chpid, uint8_t l_chpid,
-                         int rfmt, void *buf);
+                         int rfmt, void *buf, uint16_t buf_size);
 void css_do_schm(uint8_t mbk, int update, int dct, uint64_t mbo);
 int css_enable_mcsse(void);
 int css_enable_mss(void);
