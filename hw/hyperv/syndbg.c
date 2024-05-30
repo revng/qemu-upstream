@@ -188,10 +188,10 @@ static uint16_t handle_recv_msg(HvSynDbg *syndbg, uint64_t outgpa,
                                 uint64_t timeout, uint32_t *retrieved_count)
 {
     uint16_t ret;
-    uint8_t data_buf[TARGET_PAGE_SIZE - UDP_PKT_HEADER_SIZE];
     hwaddr out_len;
     void *out_data;
     ssize_t recv_byte_count;
+    uint8_t *data_buf = g_malloc(TARGET_PAGE_SIZE - UDP_PKT_HEADER_SIZE);
 
     /* TODO: Handle options and timeout */
     (void)options;
@@ -203,13 +203,15 @@ static uint16_t handle_recv_msg(HvSynDbg *syndbg, uint64_t outgpa,
         recv_byte_count = recv(syndbg->socket, data_buf,
                                MIN(sizeof(data_buf), count), MSG_WAITALL);
         if (recv_byte_count == -1) {
-            return HV_STATUS_INVALID_PARAMETER;
+            ret = HV_STATUS_INVALID_PARAMETER;
+            goto cleanup_data_buf;
         }
     }
 
     if (!recv_byte_count) {
         *retrieved_count = 0;
-        return HV_STATUS_NO_DATA;
+        ret = HV_STATUS_NO_DATA;
+        goto cleanup_data_buf;
     }
 
     set_pending_state(syndbg, false);
@@ -220,7 +222,8 @@ static uint16_t handle_recv_msg(HvSynDbg *syndbg, uint64_t outgpa,
     }
     out_data = cpu_physical_memory_map(outgpa, &out_len, 1);
     if (!out_data) {
-        return HV_STATUS_INSUFFICIENT_MEMORY;
+        ret = HV_STATUS_INSUFFICIENT_MEMORY;
+        goto cleanup_data_buf;
     }
 
     if (is_raw &&
@@ -241,6 +244,8 @@ static uint16_t handle_recv_msg(HvSynDbg *syndbg, uint64_t outgpa,
 
 cleanup_out_data:
     cpu_physical_memory_unmap(out_data, out_len, 1, out_len);
+cleanup_data_buf:
+    g_free(data_buf);
     return ret;
 }
 
