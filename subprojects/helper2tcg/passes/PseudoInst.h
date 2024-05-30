@@ -23,14 +23,17 @@ enum PseudoInstArg {
     ArgVoid,
 };
 
-#define PSEUDO_INST_ARGVEC(...) \
-    {__VA_ARGS__}
-
 #define PSEUDO_INST_DEF(name, ret, args) name
 enum PseudoInst : uint8_t {
 #include "PseudoInst.inc"
 };
 #undef PSEUDO_INST_DEF
+
+
+// Retrieve string representation and argument counts for a given
+// pseudo instruction.
+const char *pseudoInstName(PseudoInst Inst);
+uint8_t pseudoInstArgCount(PseudoInst Inst);
 
 // Maps PseudoInst + return/argument types to a FunctionCallee that can be
 // called.

@@ -8,13 +8,22 @@
 
 #include <utils/Common.h>
 
+using namespace llvm;
+
 #define PSEUDO_INST_DEF(name, ret, args) #name
 static const char *PseudoInstName[] = {
 #include "PseudoInst.inc"
 };
 #undef PSEUDO_INST_DEF
 
-using namespace llvm;
+#define PSEUDO_INST_ARGVEC(...) \
+    (sizeof((PseudoInstArg[]){__VA_ARGS__}) / sizeof(PseudoInstArg))
+
+#define PSEUDO_INST_DEF(name, ret, args) args
+static uint8_t PseudoInstArgCount[] = {
+#include "PseudoInst.inc"
+};
+#undef PSEUDO_INST_DEF
 
 // In order to map from a Function * to a PseudoInst, we keep a map
 // of all Functions created, this simplifies mapping of callee's to
@@ -55,6 +64,14 @@ inline std::string getMangledTypeStr(llvm::Type *Ty) {
   }
 
   return TypeStream.str();
+}
+
+const char *pseudoInstName(PseudoInst Inst) {
+  return PseudoInstName[Inst];
+}
+
+uint8_t pseudoInstArgCount(PseudoInst Inst) {
+  return PseudoInstArgCount[Inst];
 }
 
 llvm::FunctionCallee pseudoInstFunction(llvm::Module &M,
