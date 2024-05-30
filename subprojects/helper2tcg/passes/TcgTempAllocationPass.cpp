@@ -414,7 +414,6 @@ TTAP::Result TTAP::run(Function &F, FunctionAnalysisManager &FAM) {
       dbgs() << "Failed mapping arg: " << Arg.takeError() << "\n";
     }
     auto Info = Data.Args.ArgInfoMap[V];
-    dbgs() << "mapped [" << Info << "]" << *V << " to " << Arg.get().Id << "\n";
   }
 
   // FilterFunctionsPass removes all functions with non-int/void return types,
