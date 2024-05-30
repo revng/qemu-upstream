@@ -25,7 +25,7 @@
 
 bool set_preferred_target_page_bits(int bits)
 {
-#ifdef TARGET_PAGE_BITS_VARY
+#if defined(TARGET_PAGE_BITS_VARY) && defined(TARGET_PAGE_BITS_VARY_NEW_TEMP)
     assert(bits >= TARGET_PAGE_BITS_MIN);
     return set_preferred_target_page_bits_common(bits);
 #else
