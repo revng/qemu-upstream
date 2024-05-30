@@ -415,7 +415,7 @@ static void ensureSignBitIsSet(raw_ostream &Out, const TcgV &V) {
   }
   tcg::genExtract(Out, true, V, V,
                   TcgV::makeImmediate("0", V.TcgSize, V.LlvmSize),
-                  TcgV::makeImmediate(Twine(V.TcgSize).str(), V.TcgSize, V.LlvmSize));
+                  TcgV::makeImmediate(Twine(V.LlvmSize).str(), V.TcgSize, V.LlvmSize));
 }
 
 static Expected<TranslatedFunction>
@@ -886,14 +886,14 @@ translateFunction(const Function *F,
             if (!MaybeRes) {
               return MaybeRes.takeError();
             }
-            tcg::genSignedMax(Out, *MaybeRes, Args[0], Args[1]);
+            tcg::genUnsignedMax(Out, *MaybeRes, Args[0], Args[1]);
           } break;
           case Intrinsic::umin: {
             Expected<TcgV> MaybeRes = MapReturnValue();
             if (!MaybeRes) {
               return MaybeRes.takeError();
             }
-            tcg::genSignedMin(Out, *MaybeRes, Args[0], Args[1]);
+            tcg::genUnsignedMin(Out, *MaybeRes, Args[0], Args[1]);
           } break;
           case Intrinsic::ctlz: {
             Expected<TcgV> MaybeRes = MapReturnValue();
@@ -1188,6 +1188,45 @@ translateFunction(const Function *F,
           case VecAShrScalarStore: {
             tcg::genVecBinOp(Out, "sar", Args[0], Args[1], Args[2]);
           } break;
+          case VecSignedSatAddStore: {
+            tcg::genSignedSatAdd(Out, Args[0], Args[1], Args[2]);
+          } break;
+          case VecSignedSatSubStore: {
+            tcg::genSignedSatSub(Out, Args[0], Args[1], Args[2]);
+          } break;
+          case VecSelectStore: {
+            Out << "tcg_gen_gvec_bitsel("
+              << "MO_" << "8" << ", "
+              << tcg::getName(Args[0]) << ", "
+              << tcg::getName(Args[1]) << ", "
+              << tcg::getName(Args[2]) << ", "
+              << tcg::getName(Args[3]) << ", "
+              << "128" << ", "
+              << "128" << ");\n";
+          } break;
+          //case VecFunnelShrStore: {
+          //} break;
+          case VecAbsStore: {
+            tcg::genAbs(Out, Args[0], Args[1]);
+          } break;
+          case VecSignedMaxStore: {
+            tcg::genSignedMax(Out, Args[0], Args[1], Args[2]);
+          } break;
+          case VecUnsignedMaxStore: {
+            tcg::genUnsignedMax(Out, Args[0], Args[1], Args[2]);
+          } break;
+          case VecSignedMinStore: {
+            tcg::genSignedMin(Out, Args[0], Args[1], Args[2]);
+          } break;
+          case VecUnsignedMinStore: {
+            tcg::genUnsignedMin(Out, Args[0], Args[1], Args[2]);
+          } break;
+          //case VecCtlzStore: {
+          //} break;
+          //case VecCttzStore: {
+          //} break;
+          //case VecCtpopStore: {
+          //} break;
           case HostLoad: {
             Expected<TcgV> MaybeRes = MapReturnValue();
             if (!MaybeRes) {
@@ -1240,7 +1279,8 @@ translateFunction(const Function *F,
             }
             tcg::genQemuStore(Out, Args[0], Args[1], MemOpStream.str().c_str());
           } break;
-          default: abort();
+          default:
+              return mkError(Twine("Unmapped pseudo instruction ").concat(pseudoInstName(Inst.get())).str());
           }
         }
 
