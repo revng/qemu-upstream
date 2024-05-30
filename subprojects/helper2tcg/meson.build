@@ -25,49 +25,11 @@ sources = [
 # work when multiple versions of LLVM are installed on the same system. It appears to just list
 # them in _some_ order and pick the first one. So even if you have LLVM 14 installed, it might
 # not find it... Great.
-#llvm_dep  = dependency('llvm', version: ['>= 10', '<= 14'])
-#opt       = find_program(llvm_dep.get_variable(configtool: 'bindir') / 'opt')
-#clang     = find_program(llvm_dep.get_variable(configtool: 'bindir') / 'clang')
-#llvm_link = find_program(llvm_dep.get_variable(configtool: 'bindir') / 'llvm-link')
-
-#
-# Hardcode LLVM paths for testing specific versions, obviously not good
-#
-
-# llvm 14
-#llvm_dep  = meson.get_compiler('c').find_library('LLVM-14')
-#opt       = find_program('/usr/lib/llvm14/bin/opt')
-#clang     = find_program('/usr/lib/llvm14/bin/clang')
-#llvm_link = find_program('/usr/lib/llvm14/bin/llvm-link')
-#include_path = '/usr/lib/llvm14/include'
-
-# llvm 13
-llvm_dep  = meson.get_compiler('c').find_library('LLVM-13', dirs: '/home/aj/git/system/llvm/versions/13/lib')
-opt       = find_program('/home/aj/git/system/llvm/versions/13/bin/opt')
-clang     = find_program('/home/aj/git/system/llvm/versions/13/bin/clang')
-lvm_link = find_program('/home/aj/git/system/llvm/versions/13/bin/llvm-link')
-include_path = '/home/aj/git/system/llvm/versions/13/include'
-
-# llvm 12
-#llvm_dep  = meson.get_compiler('c').find_library('LLVM-12', dirs: '/home/aj/git/system/llvm/versions/12/lib')
-#opt       = find_program('/home/aj/git/system/llvm/versions/12/bin/opt')
-#clang     = find_program('/home/aj/git/system/llvm/versions/12/bin/clang')
-#llvm_link = find_program('/home/aj/git/system/llvm/versions/12/bin/llvm-link')
-#include_path = '/home/aj/git/system/llvm/versions/12/include'
-
-# llvm 11
-#llvm_dep  = meson.get_compiler('c').find_library('LLVM-11', dirs: '/home/aj/git/system/llvm/versions/11/lib')
-#opt       = find_program('/home/aj/git/system/llvm/versions/11/bin/opt')
-#clang     = find_program('/home/aj/git/system/llvm/versions/11/bin/clang')
-#llvm_link = find_program('/home/aj/git/system/llvm/versions/11/bin/llvm-link')
-#include_path = '/home/aj/git/system/llvm/versions/11/include'
-
-# llvn 10
-#llvm_dep  = meson.get_compiler('c').find_library('LLVM-10', dirs: '/home/aj/git/system/llvm/versions/10/lib')
-#opt       = find_program('/home/aj/git/system/llvm/versions/10/bin/opt')
-#clang     = find_program('/home/aj/git/system/llvm/versions/10/bin/clang')
-#llvm_link = find_program('/home/aj/git/system/llvm/versions/10/bin/llvm-link')
-#include_path = '/home/aj/git/system/llvm/versions/10/include'
+llvm_dep  = dependency('llvm', version: ['>= 10', '< 15'])
+opt       = find_program(llvm_dep.get_variable(configtool: 'bindir') / 'opt')
+clang     = find_program(llvm_dep.get_variable(configtool: 'bindir') / 'clang')
+llvm_link = find_program(llvm_dep.get_variable(configtool: 'bindir') / 'llvm-link')
+link_args = llvm_dep.get_variable(configtool: 'ldflags')
 
 get_llvm_ir = generator(python,
                         output: '@BASENAME@.ll',
@@ -76,6 +38,7 @@ get_llvm_ir = generator(python,
                                     '@EXTRA_ARGS@'])
 
 pipeline = executable('pipeline', sources,
-                      include_directories: ['passes', './', include_path],
+                      include_directories: ['passes', './'],
                       dependencies: llvm_dep,
+                      link_args: link_args,
                       cpp_args: cpp_args)
