@@ -8,7 +8,7 @@
  * DEFAULT_MAP_WINDOW         ((1UL << 47) - PAGE_SIZE)
  */
 #define TASK_UNMAPPED_BASE \
-    TARGET_PAGE_ALIGN((1ull << TARGET_VIRT_ADDR_SPACE_BITS) / 3)
+    ((size_t) TARGET_PAGE_ALIGN((1ull << TARGET_VIRT_ADDR_SPACE_BITS) / 3))
 
 /* arch/x86/include/asm/elf.h */
 #define ELF_ET_DYN_BASE       (TASK_UNMAPPED_BASE * 2)

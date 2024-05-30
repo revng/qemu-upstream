@@ -4,7 +4,7 @@
  * TASK_SIZE64                0x1UL << (... ? VA_BITS : ...)
  */
 #define TASK_UNMAPPED_BASE \
-    TARGET_PAGE_ALIGN((1ull << TARGET_VIRT_ADDR_SPACE_BITS) / 3)
+    ((size_t) TARGET_PAGE_ALIGN((1ull << TARGET_VIRT_ADDR_SPACE_BITS) / 3))
 
 /* arch/loongarch/include/asm/elf.h */
 #define ELF_ET_DYN_BASE       (TASK_UNMAPPED_BASE * 2)

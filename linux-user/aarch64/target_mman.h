@@ -12,10 +12,10 @@
  * DEFAULT_MAP_WINDOW_64  UL(1) << VA_BITS_MIN
  * VA_BITS_MIN            48 (unless explicitly configured smaller)
  */
-#define TASK_UNMAPPED_BASE      (1ull << (48 - 2))
+#define TASK_UNMAPPED_BASE  (1ull << (48 - 2))
 
 /* arch/arm64/include/asm/elf.h */
-#define ELF_ET_DYN_BASE         TARGET_PAGE_ALIGN((1ull << 48) / 3 * 2)
+#define ELF_ET_DYN_BASE     ((size_t) TARGET_PAGE_ALIGN((1ull << 48) / 3 * 2))
 
 #include "../generic/target_mman.h"
 
