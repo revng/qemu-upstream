@@ -236,6 +236,40 @@ TcgInstCombinePass::run(llvm::Module &M, llvm::ModuleAnalysisManager &MAM) {
     //   1. Perform simpler and independent replacements
     //   2. Save other replacements with dependencies to worklists
     for (Instruction &I : instructions(F)) {
+      {
+        if (I.getOpcode() == Instruction::AShr) {
+          auto *IntTy = dyn_cast<IntegerType>(I.getType());
+          if (IntTy and IntTy->getBitWidth() < 32) {
+            SmallVector<Value *, 8> UsesToExplore;
+            SmallVector<Value *, 8> Downcasts;
+
+            IRBuilder<> Builder(&I);
+            auto *IntTy = Builder.getInt32Ty();
+
+            Value *Op1 = I.getOperand(0);
+            Value *Op2 = I.getOperand(1);
+            Value *NewOp1 = I.getOperand(0);
+            Value *NewOp2 = I.getOperand(1);
+            if (auto *ConstInt = dyn_cast<ConstantInt>(Op1)) {
+              NewOp1 = ConstantInt::get(IntTy, ConstInt->getZExtValue());
+            } else {
+              NewOp1 = Builder.CreateSExt(Op1, IntTy);
+            }
+            if (auto *ConstInt = dyn_cast<ConstantInt>(Op2)) {
+              NewOp2 = ConstantInt::get(IntTy, ConstInt->getZExtValue());
+            } else {
+              NewOp2 = Builder.CreateSExt(Op2, IntTy);
+            }
+            auto *AShr = Builder.CreateAShr(NewOp1, NewOp2);
+            auto *Trunc = Builder.CreateTrunc(AShr, I.getType());
+            I.replaceAllUsesWith(Trunc);
+            InstToErase.push_back(&I);
+
+
+          }
+        }
+      }
+
       // Convert vector intrinsics
       //   %0 = insertelement ...
       //   %1 = shuffle ...
@@ -296,7 +330,7 @@ TcgInstCombinePass::run(llvm::Module &M, llvm::ModuleAnalysisManager &MAM) {
         if (auto *Store = dyn_cast<StoreInst>(&I)) {
           Value* ValueOp = Store->getValueOperand();
           Type *ValueTy = ValueOp->getType();
-          if (ValueTy->isVectorTy() and isa<BinaryOperator>(ValueOp)) {
+          if (ValueTy->isVectorTy()) {
             auto *Bitcast = cast<BitCastInst>(Store->getPointerOperand());
             Value *PtrOp = Bitcast->getOperand(0);
             Type *PtrTy = Bitcast->getType();
@@ -311,10 +345,6 @@ TcgInstCombinePass::run(llvm::Module &M, llvm::ModuleAnalysisManager &MAM) {
                 .PtrTy = PtrTy,
                 .ValueTy = ValueTy,
               });
-              // Remove store instruction, this ensures DCE can cleanup the rest,
-              // we also remove ValueOp here since it's a call and won't get cleaned
-              // by DCE.
-              InstToErase.push_back(Store);
             }
           }
         }
@@ -379,7 +409,7 @@ TcgInstCombinePass::run(llvm::Module &M, llvm::ModuleAnalysisManager &MAM) {
           bool IsLoad = Name.consume_front("ld");
           bool IsStore = !IsLoad and Name.consume_front("st");
           if (IsLoad or IsStore) {
-            bool Signed = Name.consume_front("u");
+            bool Signed = !Name.consume_front("u");
             uint8_t Size = 0;
             switch (Name[0]) {
               case 'b': Size = 1; break;
@@ -689,49 +719,130 @@ TcgInstCombinePass::run(llvm::Module &M, llvm::ModuleAnalysisManager &MAM) {
         Builder.CreateCall(Fn, {PtrOp,
                            BinOp->getOperand(0),
                            BinOp->getOperand(1)});
+        // Remove store instruction, this ensures DCE can cleanup the rest,
+        // we also remove ValueOp here since it's a call and won't get cleaned
+        // by DCE.
+        InstToErase.push_back(Info.Store);
       } else if (auto *Call = dyn_cast<CallInst>(ValueOp)) {
-        Expected<PseudoInst> OldInst = getPseudoInstFromCall(Call);
-        if (!OldInst) {
-          errs() << "aaaaa: " << OldInst.takeError() << "\n";
-        }
-        assert(OldInst);
-        PseudoInst NewInst;
-        switch (OldInst.get()) {
-        case VecNot:        NewInst = VecNotStore;        break;
-        case VecAddScalar:  NewInst = VecAddScalarStore;  break;
-        case VecSubScalar:  NewInst = VecSubScalarStore;  break;
-        case VecMulScalar:  NewInst = VecMulScalarStore;  break;
-        case VecXorScalar:  NewInst = VecXorScalarStore;  break;
-        case VecOrScalar:   NewInst = VecOrScalarStore;   break;
-        case VecAndScalar:  NewInst = VecAndScalarStore;  break;
-        case VecShlScalar:  NewInst = VecShlScalarStore;  break;
-        case VecLShrScalar: NewInst = VecLShrScalarStore; break;
-        case VecAShrScalar: NewInst = VecAShrScalarStore; break;
-        default: abort();
-        }
-        IRBuilder<> Builder(Info.Store);
-        if (NewInst == VecNotStore) {
-          // Unary ops
+        Function *F = Call->getCalledFunction();
+        if (Expected<PseudoInst> OldInst = getPseudoInstFromCall(Call)) {
+          // Map scalar vector pseudo instructions to store variants
+          PseudoInst NewInst;
+          switch (OldInst.get()) {
+          case VecNot:        NewInst = VecNotStore;        break;
+          case VecAddScalar:  NewInst = VecAddScalarStore;  break;
+          case VecSubScalar:  NewInst = VecSubScalarStore;  break;
+          case VecMulScalar:  NewInst = VecMulScalarStore;  break;
+          case VecXorScalar:  NewInst = VecXorScalarStore;  break;
+          case VecOrScalar:   NewInst = VecOrScalarStore;   break;
+          case VecAndScalar:  NewInst = VecAndScalarStore;  break;
+          case VecShlScalar:  NewInst = VecShlScalarStore;  break;
+          case VecLShrScalar: NewInst = VecLShrScalarStore; break;
+          case VecAShrScalar: NewInst = VecAShrScalarStore; break;
+          default: abort();
+          }
+          IRBuilder<> Builder(Info.Store);
+          if (NewInst == VecNotStore) {
+            // Unary ops
+            FunctionCallee Fn = pseudoInstFunction(M, NewInst, Builder.getVoidTy(),
+                                                   {Info.PtrTy,
+                                                    Info.ValueTy});
+            Builder.CreateCall(Fn, {PtrOp, Call->getOperand(0)});
+            InstToErase.push_back(cast<Instruction>(ValueOp));
+          } else {
+            // Binary ops
+            FunctionCallee Fn = pseudoInstFunction(M, NewInst, Builder.getVoidTy(),
+                                                   {Info.PtrTy,
+                                                    Info.ValueTy,
+                                                    Call->getOperand(1)->getType()});
+            Builder.CreateCall(Fn, {PtrOp, Call->getOperand(0), Call->getOperand(1)});
+            InstToErase.push_back(cast<Instruction>(ValueOp));
+          }
+          // Remove store instruction, this ensures DCE can cleanup the rest,
+          // we also remove ValueOp here since it's a call and won't get cleaned
+          // by DCE.
+          InstToErase.push_back(Info.Store);
+        } else if (F->isIntrinsic()) {
+          Instruction *Inst = cast<Instruction>(ValueOp);
+          PseudoInst NewInst;
+          switch (F->getIntrinsicID()) {
+          case Intrinsic::sadd_sat: NewInst = VecSignedSatAddStore; break;
+          case Intrinsic::ssub_sat: NewInst = VecSignedSatSubStore; break;
+          case Intrinsic::fshr: NewInst = VecFunnelShrStore; break;
+          case Intrinsic::abs: NewInst = VecAbsStore; break;
+          case Intrinsic::smax: NewInst = VecSignedMaxStore; break;
+          case Intrinsic::umax: NewInst = VecUnsignedMaxStore; break;
+          case Intrinsic::smin: NewInst = VecSignedMinStore; break;
+          case Intrinsic::umin: NewInst = VecUnsignedMinStore; break;
+          case Intrinsic::ctlz: NewInst = VecCtlzStore; break;
+          case Intrinsic::cttz: NewInst = VecCttzStore; break;
+          case Intrinsic::ctpop: NewInst = VecCtpopStore; break;
+          default:
+            dbgs() << "Uhandled vector + bitcast + store op. " << *ValueOp << "\n";
+            abort();
+          }
+          const uint8_t ArgCount = pseudoInstArgCount(NewInst);
+          // Add one to account for extra store pointer argument of Vec*Store
+          // pseudo instructions.
+          assert(ArgCount > 0 and ArgCount-1 <= Inst->getNumOperands());
+          IRBuilder<> Builder(Info.Store);
+          SmallVector<Type *, 8> ArgTys;
+          SmallVector<Value *, 8> Args;
+          ArgTys.push_back(Info.PtrTy);
+          Args.push_back(PtrOp);
+          for (unsigned I = 0; I < ArgCount-1; ++I) {
+            Value *Op = Inst->getOperand(I);
+            ArgTys.push_back(Op->getType());
+            Args.push_back(Op);
+          }
           FunctionCallee Fn = pseudoInstFunction(M, NewInst, Builder.getVoidTy(),
-                                                 {Info.PtrTy,
-                                                  Info.ValueTy});
-          Builder.CreateCall(Fn, {PtrOp, Call->getOperand(0)});
+                                                 ArgTys);
+          Builder.CreateCall(Fn, Args);
           InstToErase.push_back(cast<Instruction>(ValueOp));
+          // Remove store instruction, this ensures DCE can cleanup the rest,
+          // we also remove ValueOp here since it's a call and won't get cleaned
+          // by DCE.
+          InstToErase.push_back(Info.Store);
         } else {
-          // Binary ops
-          FunctionCallee Fn = pseudoInstFunction(M, NewInst, Builder.getVoidTy(),
-                                                 {Info.PtrTy,
-                                                  Info.ValueTy,
-                                                  Call->getOperand(1)->getType()});
-          Builder.CreateCall(Fn, {PtrOp, Call->getOperand(0), Call->getOperand(1)});
-          InstToErase.push_back(cast<Instruction>(ValueOp));
+          dbgs() << "Uhandled vector + bitcast + store op. " << *ValueOp << "\n";
+          abort();
         }
       } else {
-        abort();
+        Instruction *Inst = cast<Instruction>(ValueOp);
+        PseudoInst NewInst;
+        switch (Inst->getOpcode()) {
+        case Instruction::Trunc: NewInst = VecTruncStore; break;
+        case Instruction::Select: NewInst = VecSelectStore; break;
+        default:
+          dbgs() << "Uhandled vector + bitcast + store op. " << *ValueOp << "\n";
+          abort();
+        }
+        const uint8_t ArgCount = pseudoInstArgCount(NewInst);
+        // Add one to account for extra store pointer argument of Vec*Store
+        // pseudo instructions.
+        assert(ArgCount > 0 and ArgCount-1 <= Inst->getNumOperands());
+        IRBuilder<> Builder(Info.Store);
+        SmallVector<Type *, 8> ArgTys;
+        SmallVector<Value *, 8> Args;
+        ArgTys.push_back(Info.PtrTy);
+        Args.push_back(PtrOp);
+        for (unsigned I = 0; I < ArgCount-1; ++I) {
+          Value *Op = Inst->getOperand(I);
+          ArgTys.push_back(Op->getType());
+          Args.push_back(Op);
+        }
+        FunctionCallee Fn = pseudoInstFunction(M, NewInst, Builder.getVoidTy(),
+                                               ArgTys);
+        Builder.CreateCall(Fn, Args);
+        InstToErase.push_back(cast<Instruction>(ValueOp));
+        // Remove store instruction, this ensures DCE can cleanup the rest,
+        // we also remove ValueOp here since it's a call and won't get cleaned
+        // by DCE.
+        InstToErase.push_back(Info.Store);
       }
     }
 
-    for (Instruction *I : InstToErase) { 
+    for (Instruction *I : InstToErase) {
       I->eraseFromParent();
     }
   }
