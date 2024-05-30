@@ -33,7 +33,7 @@ static bool shouldRemoveFunction(const Module &M, const Function &F,
   }
 
   if (!hasValidReturnTy(M, &F)) {
-      return true;
+    return true;
   }
 
   auto hasCorrectAnnotation = [](const Annotation &Ann) {
@@ -47,7 +47,7 @@ static bool shouldRemoveFunction(const Module &M, const Function &F,
     const Function *F = Worklist.front();
     Worklist.pop();
     if (F->isDeclaration() or Visited.find(F) != Visited.end()) {
-        continue;
+      continue;
     }
     Visited.insert(F);
 
@@ -128,7 +128,7 @@ FilterFunctionsPass::run(llvm::Module &M, llvm::ModuleAnalysisManager &MAM) {
     }
   }
 
-  // Defer replacement to not invalidate iterators 
+  // Defer replacement to not invalidate iterators
   for (RetAddrReplaceInfo &RI : UsesToReplace) {
     auto *Undef = UndefValue::get(RI.Ty);
     RI.Parent->setOperand(RI.OpIndex, Undef);
