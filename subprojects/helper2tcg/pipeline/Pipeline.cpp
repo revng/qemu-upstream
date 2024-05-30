@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
     FunctionPassManager FPM;
 #if LLVM_VERSION_MAJOR < 14
     FPM.addPass(SROA());
-#elif
+#else
     FPM.addPass(SROAPass());
 #endif
     MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
