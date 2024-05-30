@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string>
 #include <assert.h>
+#include <optional>
 
 using llvm::Twine;
 
@@ -191,5 +192,5 @@ struct TcgBinOp {
 
 struct TcgVecBinOp {
   std::string Code;
-  llvm::Optional<uint32_t> RequiredOp2Size;
+  std::optional<uint32_t> RequiredOp2Size;
 };
