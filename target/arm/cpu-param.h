@@ -18,23 +18,20 @@
 # define TARGET_VIRT_ADDR_SPACE_BITS  32
 #endif
 
+#define TARGET_PAGE_BITS_VARY
 #ifdef CONFIG_USER_ONLY
 # ifdef TARGET_AARCH64
 #  define TARGET_TAGGED_ADDRESSES
 /* Allow user-only to vary page size from 4k */
 #  define TARGET_PAGE_BITS_VARY_NEW_TEMP
-#  define TARGET_PAGE_BITS_VARY
-#  define TARGET_PAGE_BITS_MIN  12
-# else
-#  define TARGET_PAGE_BITS 12
 # endif
+# define TARGET_PAGE_BITS_MIN 12
 #else /* !CONFIG_USER_ONLY */
 /*
  * ARMv7 and later CPUs have 4K pages minimum, but ARMv5 and v6
  * have to support 1K tiny pages.
  */
 # define TARGET_PAGE_BITS_VARY_NEW_TEMP
-# define TARGET_PAGE_BITS_VARY
 # define TARGET_PAGE_BITS_MIN  10
 #endif /* !CONFIG_USER_ONLY */
 

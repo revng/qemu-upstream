@@ -18,7 +18,8 @@
 #ifndef HEXAGON_CPU_PARAM_H
 #define HEXAGON_CPU_PARAM_H
 
-#define TARGET_PAGE_BITS 16     /* 64K pages */
+#define TARGET_PAGE_BITS_VARY
+#define TARGET_PAGE_BITS_MIN 16     /* 64K pages */
 #define TARGET_LONG_BITS 32
 
 #define TARGET_PHYS_ADDR_SPACE_BITS 36
