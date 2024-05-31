@@ -25,7 +25,7 @@
 #endif
 
 #ifndef CONFIG_USER_ONLY
-# define TARGET_PAGE_BITS_VARY_NEW_TEMP
+# define TARGET_PAGE_BITS_VARY
 #endif
 
 #define TARGET_PAGE_BITS_MIN 12
