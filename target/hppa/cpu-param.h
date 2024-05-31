@@ -19,7 +19,6 @@
 # define TARGET_VIRT_ADDR_SPACE_BITS  64
 #endif
 
-#define TARGET_PAGE_BITS_VARY
 #define TARGET_PAGE_BITS_MIN 12
 
 /* PA-RISC 1.x processors have a strong memory model.  */

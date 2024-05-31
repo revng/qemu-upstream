@@ -22,7 +22,6 @@
 # define TARGET_PHYS_ADDR_SPACE_BITS  36
 # define TARGET_VIRT_ADDR_SPACE_BITS  32
 #endif
-#define TARGET_PAGE_BITS_VARY
 #define TARGET_PAGE_BITS_MIN 12
 
 /* The x86 has a strong memory model with some store-after-load re-ordering */

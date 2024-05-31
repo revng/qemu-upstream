@@ -7,7 +7,6 @@
 #ifndef SPARC_CPU_PARAM_H
 #define SPARC_CPU_PARAM_H
 
-#define TARGET_PAGE_BITS_VARY
 #ifdef TARGET_SPARC64
 # define TARGET_LONG_BITS 64
 # define TARGET_PAGE_BITS_MIN 13 /* 8k */
