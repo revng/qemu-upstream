@@ -24,14 +24,14 @@
 /* Allow user-only to vary page size from 4k */
 #  define TARGET_PAGE_BITS_VARY
 # endif
-# define TARGET_PAGE_BITS_MIN 12
+# define TARGET_PAGE_BITS_MIN_SPECIFIC 12
 #else /* !CONFIG_USER_ONLY */
 /*
  * ARMv7 and later CPUs have 4K pages minimum, but ARMv5 and v6
  * have to support 1K tiny pages.
  */
 # define TARGET_PAGE_BITS_VARY
-# define TARGET_PAGE_BITS_MIN  10
+# define TARGET_PAGE_BITS_MIN_SPECIFIC  10
 #endif /* !CONFIG_USER_ONLY */
 
 /* ARM processors have a weak memory model */

@@ -22,7 +22,7 @@
 # define TARGET_PHYS_ADDR_SPACE_BITS  36
 # define TARGET_VIRT_ADDR_SPACE_BITS  32
 #endif
-#define TARGET_PAGE_BITS_MIN 12
+#define TARGET_PAGE_BITS_MIN_SPECIFIC 12
 
 /* The x86 has a strong memory model with some store-after-load re-ordering */
 #define TCG_GUEST_DEFAULT_MO      (TCG_MO_ALL & ~TCG_MO_ST_LD)

@@ -662,7 +662,7 @@ void ioinst_handle_chsc(S390CPU *cpu, uint32_t ipb, uintptr_t ra)
     uint16_t len;
     uint16_t command;
     CPUS390XState *env = &cpu->env;
-    uint8_t buf[1 << TARGET_PAGE_BITS_MIN];
+    uint8_t buf[1 << TARGET_PAGE_BITS_MIN_SPECIFIC];
     uint16_t max_res_data_len;
 
     trace_ioinst("chsc");

@@ -28,7 +28,7 @@
  *     should be implemented as a device and not memory
  * 2.  SRAM starts at the address 0x0100
  */
-#define TARGET_PAGE_BITS_MIN 8
+#define TARGET_PAGE_BITS_MIN_SPECIFIC 8
 #define TARGET_PHYS_ADDR_SPACE_BITS 24
 #define TARGET_VIRT_ADDR_SPACE_BITS 24
 

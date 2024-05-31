@@ -26,7 +26,7 @@
 bool set_preferred_target_page_bits(int bits)
 {
 #if defined(TARGET_PAGE_BITS_VARY)
-    assert(bits >= TARGET_PAGE_BITS_MIN);
+    assert(bits >= TARGET_PAGE_BITS_MIN_SPECIFIC);
     return set_preferred_target_page_bits_common(bits);
 #else
     return true;
@@ -35,5 +35,5 @@ bool set_preferred_target_page_bits(int bits)
 
 void finalize_target_page_bits(void)
 {
-    finalize_target_page_bits_common(TARGET_PAGE_BITS_MIN);
+    finalize_target_page_bits_common(TARGET_PAGE_BITS_MIN_SPECIFIC);
 }

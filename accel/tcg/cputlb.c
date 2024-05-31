@@ -331,6 +331,9 @@ void tlb_init(CPUState *cpu)
     int64_t now = get_clock_realtime();
     int i;
 
+    /* The two sets of flags must not overlap. */
+    assert((TLB_FLAGS_MASK & TLB_SLOW_FLAGS_MASK) == 0);
+
     qemu_spin_init(&cpu->neg.tlb.c.lock);
 
     /* All tlbs are initialized flushed. */

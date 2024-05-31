@@ -48,6 +48,7 @@ void finalize_target_page_bits_common(int min)
     if (target_page.bits == 0) {
         target_page.bits = min;
     }
+    target_page.bits_min = min;
     target_page.mask = -1ull << target_page.bits;
     target_page.decided = true;
 }
