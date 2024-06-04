@@ -135,26 +135,6 @@ static inline void stl_phys_notdirty(AddressSpace *as, hwaddr addr, uint32_t val
 #include "exec/memory_ldst_phys.h.inc"
 #endif
 
-/* page related stuff */
-
-# include "exec/page-vary.h"
-extern const TargetPageBits target_page;
-#ifdef CONFIG_DEBUG_TCG
-# define TARGET_PAGE_BITS       ({ assert(target_page.decided); \
-                                   target_page.bits; })
-# define TARGET_PAGE_BITS_MIN   ({ assert(target_page.decided); \
-                                   target_page.bits_min; })
-# define TARGET_PAGE_MASK       ({ assert(target_page.decided); \
-                                   (target_long)target_page.mask; })
-#else
-# define TARGET_PAGE_BITS       target_page.bits
-# define TARGET_PAGE_BITS_MIN   target_page.bits_min
-# define TARGET_PAGE_MASK       ((target_long)target_page.mask)
-#endif
-#define TARGET_PAGE_SIZE        (-(int)TARGET_PAGE_MASK)
-
-#define TARGET_PAGE_ALIGN(addr) ROUND_UP((addr), TARGET_PAGE_SIZE)
-
 #if defined(CONFIG_USER_ONLY)
 void page_dump(FILE *f);
 
