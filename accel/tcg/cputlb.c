@@ -20,6 +20,7 @@
 #include "qemu/osdep.h"
 #include "qemu/main-loop.h"
 #include "hw/core/tcg-cpu-ops.h"
+#include "hw/core/tcg-cpu-params.h"
 #include "exec/exec-all.h"
 #include "exec/page-protection.h"
 #include "exec/memory.h"
@@ -209,8 +210,8 @@ static void tb_jmp_cache_clear_page(CPUState *cpu, vaddr page_addr)
  * high), since otherwise we are likely to have a significant amount of
  * conflict misses.
  */
-static void tlb_mmu_resize_locked(CPUTLBDesc *desc, CPUTLBDescFast *fast,
-                                  int64_t now)
+static void tlb_mmu_resize_locked(CPUState *cpu, CPUTLBDesc *desc,
+                                  CPUTLBDescFast *fast, int64_t now)
 {
     size_t old_size = tlb_n_entries(fast);
     size_t rate;
@@ -225,7 +226,7 @@ static void tlb_mmu_resize_locked(CPUTLBDesc *desc, CPUTLBDescFast *fast,
     rate = desc->window_max_entries * 100 / old_size;
 
     if (rate > 70) {
-        new_size = MIN(old_size << 1, 1 << CPU_TLB_DYN_MAX_BITS);
+        new_size = MIN(old_size << 1, 1 << tlb_dyn_max_bits(cpu));
     } else if (rate < 30 && window_expired) {
         size_t ceil = pow2ceil(desc->window_max_entries);
         size_t expected_rate = desc->window_max_entries * 100 / ceil;
@@ -300,7 +301,7 @@ static void tlb_flush_one_mmuidx_locked(CPUState *cpu, int mmu_idx,
     CPUTLBDesc *desc = &cpu->neg.tlb.d[mmu_idx];
     CPUTLBDescFast *fast = &cpu->neg.tlb.f[mmu_idx];
 
-    tlb_mmu_resize_locked(desc, fast, now);
+    tlb_mmu_resize_locked(cpu, desc, fast, now);
     tlb_mmu_flush_locked(desc, fast);
 }
 
@@ -324,6 +325,25 @@ static inline void tlb_n_used_entries_inc(CPUState *cpu, uintptr_t mmu_idx)
 static inline void tlb_n_used_entries_dec(CPUState *cpu, uintptr_t mmu_idx)
 {
     cpu->neg.tlb.d[mmu_idx].n_used_entries--;
+}
+
+int tlb_dyn_max_bits(CPUState *cpu)
+{
+#if HOST_LONG_BITS == 32
+    /* Make sure we do not require a double-word shift for the TLB load */
+    return 32 - TARGET_PAGE_BITS;
+#else /* HOST_LONG_BITS == 64 */
+    /*
+     * Assuming TARGET_PAGE_BITS==12, with 2**22 entries we can cover 2**(22+12) ==
+     * 2**34 == 16G of address space. This is roughly what one would expect a
+     * TLB to cover in a modern (as of 2018) x86_64 CPU. For instance, Intel
+     * Skylake's Level-2 STLB has 16 1G entries.
+     * Also, make sure we do not size the TLB past the guest's address space.
+     */
+    const TCGCPUParams *params = cpu->cc->tcg_params;
+    const int tlb_bits = params->virt_addr_space_bits - TARGET_PAGE_BITS;
+    return MIN(22, tlb_bits);
+#endif
 }
 
 void tlb_init(CPUState *cpu)

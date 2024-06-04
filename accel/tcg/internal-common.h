@@ -41,4 +41,10 @@ static inline bool cpu_plugin_mem_cbs_enabled(const CPUState *cpu)
 #endif
 }
 
+#ifndef CONFIG_USER_ONLY
+#define CPU_TLB_DYN_MIN_BITS 6
+#define CPU_TLB_DYN_DEFAULT_BITS 8
+int tlb_dyn_max_bits(CPUState *cpu);
+#endif
+
 #endif
