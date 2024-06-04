@@ -42,7 +42,7 @@ extern const TargetPageBits target_page;
 #define TARGET_PAGE_SIZE        (-(int)TARGET_PAGE_MASK)
 #define TARGET_PAGE_ALIGN(addr) ROUND_UP((addr), TARGET_PAGE_SIZE)
 
-#ifdef CONFIG_LINUX_USER
+#ifdef CONFIG_USER_ONLY
 /*
  * Allow some level of source compatibility with softmmu.  We do not
  * support any of the more exotic features, so only invalid pages may
