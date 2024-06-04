@@ -34,6 +34,7 @@
 #include "qemu/rcu_queue.h"
 #include "qemu/queue.h"
 #include "qemu/thread.h"
+#include "qemu/typedefs.h"
 #include "qom/object.h"
 
 typedef int (*WriteCoreDumpFunction)(const void *buf, size_t size,
@@ -174,8 +175,9 @@ struct CPUClass {
     /* when system emulation is not available, this pointer is NULL */
     const struct SysemuCPUOps *sysemu_ops;
 
-    /* when TCG is not available, this pointer is NULL */
+    /* when TCG is not available, these pointers are NULL */
     const TCGCPUOps *tcg_ops;
+    const TCGCPUParams *tcg_params;
 
     /*
      * if not NULL, this is called in order for the CPUClass to initialize
