@@ -300,6 +300,7 @@ static void cpu_common_class_init(ObjectClass *klass, void *data)
     dc->unrealize = cpu_common_unrealizefn;
     rc->phases.hold = cpu_common_reset_hold;
     cpu_class_init_props(dc);
+    cpu_class_init_tcg_params(k);
     /*
      * Reason: CPUs still need special care by board code: wiring up
      * IRQs, adding reset handlers, halting non-first CPUs, ...

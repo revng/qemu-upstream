@@ -44,8 +44,15 @@
 #include "exec/translate-all.h"
 #include "exec/log.h"
 #include "hw/core/accel-cpu.h"
+#include "hw/core/tcg-cpu-params.h"
 #include "trace/trace-root.h"
 #include "qemu/accel.h"
+
+#ifdef CONFIG_TCG
+TCGCPUParams tcg_params = {
+    .virt_addr_space_bits = TARGET_VIRT_ADDR_SPACE_BITS,
+};
+#endif /* CONFIG_TCG */
 
 #ifndef CONFIG_USER_ONLY
 static int cpu_common_post_load(void *opaque, int version_id)
@@ -233,6 +240,15 @@ void cpu_class_init_props(DeviceClass *dc)
 #endif
 
     device_class_set_props(dc, cpu_common_props);
+}
+
+void cpu_class_init_tcg_params(CPUClass *cc)
+{
+#ifdef CONFIG_TCG
+    cc->tcg_params = &tcg_params;
+#else
+    cc->tcg_params = NULL;
+#endif
 }
 
 void cpu_exec_initfn(CPUState *cpu)
