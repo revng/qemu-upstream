@@ -58,6 +58,7 @@
 #include "sysemu/tcg.h"
 #include "qapi/error.h"
 #include "hw/core/tcg-cpu-ops.h"
+#include "hw/core/tcg-cpu-params.h"
 #include "tb-jmp-cache.h"
 #include "tb-hash.h"
 #include "tb-context.h"
@@ -105,7 +106,7 @@ static int64_t decode_sleb128(const uint8_t **pp)
         val |= (int64_t)(byte & 0x7f) << shift;
         shift += 7;
     } while (byte & 0x80);
-    if (shift < TARGET_LONG_BITS && (byte & 0x40)) {
+    if (shift < TARGET_PAGE_BITS && (byte & 0x40)) {
         val |= -(int64_t)1 << shift;
     }
 
@@ -293,6 +294,7 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
     tb_page_addr_t phys_pc, phys_p2;
     tcg_insn_unit *gen_code_buf;
     int gen_code_size, search_size, max_insns;
+    int target_long_bits;
     int64_t ti;
     void *host_pc;
 
@@ -300,6 +302,7 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
     qemu_thread_jit_write();
 
     phys_pc = get_page_addr_code_hostp(env, pc, &host_pc);
+    target_long_bits = cpu->cc->tcg_params->long_bits;
 
     if (phys_pc == -1) {
         /* Generate a one-shot TB with 1 insn in it */
@@ -339,7 +342,7 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
     }
 
     tcg_ctx->gen_tb = tb;
-    tcg_ctx->addr_type = TARGET_LONG_BITS == 32 ? TCG_TYPE_I32 : TCG_TYPE_I64;
+    tcg_ctx->addr_type = target_long_bits == 32 ? TCG_TYPE_I32 : TCG_TYPE_I64;
 #ifdef CONFIG_SOFTMMU
     tcg_ctx->page_bits = TARGET_PAGE_BITS;
     tcg_ctx->page_mask = TARGET_PAGE_MASK;

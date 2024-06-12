@@ -32,6 +32,7 @@
 #include "exec/mmu-access-type.h"
 #include "exec/tlb-common.h"
 #include "exec/vaddr.h"
+#include "tcg-target-reg-bits.h"
 #include "tcg/tcg.h"
 #include "qemu/error-report.h"
 #include "exec/log.h"
@@ -100,7 +101,7 @@ static inline size_t sizeof_tlb(CPUTLBDescFast *fast)
     return fast->mask + (1 << CPU_TLB_ENTRY_BITS);
 }
 
-static inline uint64_t tlb_read_idx(const CPUTLBEntry *entry,
+static inline uint64_t tlb_read_idx(CPUState *cpu, const CPUTLBEntry *entry,
                                     MMUAccessType access_type)
 {
     /* Do not rearrange the CPUTLBEntry structure members. */
@@ -111,25 +112,29 @@ static inline uint64_t tlb_read_idx(const CPUTLBEntry *entry,
     QEMU_BUILD_BUG_ON(offsetof(CPUTLBEntry, addr_code) !=
                       MMU_INST_FETCH * sizeof(uint64_t));
 
-#if TARGET_LONG_BITS == 32
-    /* Use qatomic_read, in case of addr_write; only care about low bits. */
-    const uint32_t *ptr = (uint32_t *)&entry->addr_idx[access_type];
-    ptr += HOST_BIG_ENDIAN;
-    return qatomic_read(ptr);
-#else
-    const uint64_t *ptr = &entry->addr_idx[access_type];
-# if TCG_OVERSIZED_GUEST
-    return *ptr;
-# else
-    /* ofs might correspond to .addr_write, so use qatomic_read */
-    return qatomic_read(ptr);
-# endif
-#endif
+    if (cpu->cc->tcg_params->long_bits == 32) {
+        /*
+         * Use qatomic_read, in case of addr_write; only care about
+         * low bits.
+         */
+        const uint32_t *ptr = (uint32_t *)&entry->addr_idx[access_type];
+        ptr += HOST_BIG_ENDIAN;
+        return qatomic_read(ptr);
+    } else {
+        const uint64_t *ptr = &entry->addr_idx[access_type];
+        if (TCG_TARGET_REG_BITS == 32) {
+            /* oversized guest */
+            return *ptr;
+        } else {
+            /* ofs might correspond to .addr_write, so use qatomic_read */
+            return qatomic_read(ptr);
+        }
+    }
 }
 
-static inline uint64_t tlb_addr_write(const CPUTLBEntry *entry)
+static inline uint64_t tlb_addr_write(CPUState *cpu, const CPUTLBEntry *entry)
 {
-    return tlb_read_idx(entry, MMU_DATA_STORE);
+    return tlb_read_idx(cpu, entry, MMU_DATA_STORE);
 }
 
 /* Find the TLB index corresponding to the mmu_idx + address pair.  */
@@ -466,20 +471,21 @@ void tlb_flush_all_cpus_synced(CPUState *src_cpu)
     tlb_flush_by_mmuidx_all_cpus_synced(src_cpu, ALL_MMUIDX_BITS);
 }
 
-static bool tlb_hit_page_mask_anyprot(CPUTLBEntry *tlb_entry,
+static bool tlb_hit_page_mask_anyprot(CPUState *cpu, CPUTLBEntry *tlb_entry,
                                       vaddr page, vaddr mask)
 {
     page &= mask;
     mask &= TARGET_PAGE_MASK | TLB_INVALID_MASK;
 
     return (page == (tlb_entry->addr_read & mask) ||
-            page == (tlb_addr_write(tlb_entry) & mask) ||
+            page == (tlb_addr_write(cpu, tlb_entry) & mask) ||
             page == (tlb_entry->addr_code & mask));
 }
 
-static inline bool tlb_hit_page_anyprot(CPUTLBEntry *tlb_entry, vaddr page)
+static inline bool tlb_hit_page_anyprot(CPUState *cpu, CPUTLBEntry *tlb_entry,
+                                        vaddr page)
 {
-    return tlb_hit_page_mask_anyprot(tlb_entry, page, -1);
+    return tlb_hit_page_mask_anyprot(cpu, tlb_entry, page, -1);
 }
 
 /**
@@ -492,20 +498,21 @@ static inline bool tlb_entry_is_empty(const CPUTLBEntry *te)
 }
 
 /* Called with tlb_c.lock held */
-static bool tlb_flush_entry_mask_locked(CPUTLBEntry *tlb_entry,
-                                        vaddr page,
-                                        vaddr mask)
+static bool tlb_flush_entry_mask_locked(CPUState *cpu, CPUTLBEntry *tlb_entry,
+                                        vaddr page, vaddr mask)
 {
-    if (tlb_hit_page_mask_anyprot(tlb_entry, page, mask)) {
+    if (tlb_hit_page_mask_anyprot(cpu, tlb_entry, page, mask)) {
         memset(tlb_entry, -1, sizeof(*tlb_entry));
         return true;
     }
     return false;
 }
 
-static inline bool tlb_flush_entry_locked(CPUTLBEntry *tlb_entry, vaddr page)
+static inline bool tlb_flush_entry_locked(CPUState *cpu,
+                                          CPUTLBEntry *tlb_entry,
+                                          vaddr page)
 {
-    return tlb_flush_entry_mask_locked(tlb_entry, page, -1);
+    return tlb_flush_entry_mask_locked(cpu, tlb_entry, page, -1);
 }
 
 /* Called with tlb_c.lock held */
@@ -518,7 +525,7 @@ static void tlb_flush_vtlb_page_mask_locked(CPUState *cpu, int mmu_idx,
 
     assert_cpu_is_self(cpu);
     for (k = 0; k < CPU_VTLB_SIZE; k++) {
-        if (tlb_flush_entry_mask_locked(&d->vtable[k], page, mask)) {
+        if (tlb_flush_entry_mask_locked(cpu, &d->vtable[k], page, mask)) {
             tlb_n_used_entries_dec(cpu, mmu_idx);
         }
     }
@@ -542,7 +549,7 @@ static void tlb_flush_page_locked(CPUState *cpu, int midx, vaddr page)
                   midx, lp_addr, lp_mask);
         tlb_flush_one_mmuidx_locked(cpu, midx, get_clock_realtime());
     } else {
-        if (tlb_flush_entry_locked(tlb_entry(cpu, midx, page), page)) {
+        if (tlb_flush_entry_locked(cpu, tlb_entry(cpu, midx, page), page)) {
             tlb_n_used_entries_dec(cpu, midx);
         }
         tlb_flush_vtlb_page_locked(cpu, midx, page);
@@ -734,7 +741,7 @@ static void tlb_flush_range_locked(CPUState *cpu, int midx,
         vaddr page = addr + i;
         CPUTLBEntry *entry = tlb_entry(cpu, midx, page);
 
-        if (tlb_flush_entry_mask_locked(entry, page, mask)) {
+        if (tlb_flush_entry_mask_locked(cpu, entry, page, mask)) {
             tlb_n_used_entries_dec(cpu, midx);
         }
         tlb_flush_vtlb_page_mask_locked(cpu, midx, page, mask);
@@ -799,6 +806,7 @@ void tlb_flush_range_by_mmuidx(CPUState *cpu, vaddr addr,
                                unsigned bits)
 {
     TLBFlushRangeData d;
+    const int target_long_bits = cpu->cc->tcg_params->long_bits;
 
     assert_cpu_is_self(cpu);
 
@@ -806,7 +814,7 @@ void tlb_flush_range_by_mmuidx(CPUState *cpu, vaddr addr,
      * If all bits are significant, and len is small,
      * this devolves to tlb_flush_page.
      */
-    if (bits >= TARGET_LONG_BITS && len <= TARGET_PAGE_SIZE) {
+    if (bits >= target_long_bits && len <= TARGET_PAGE_SIZE) {
         tlb_flush_page_by_mmuidx(cpu, addr, idxmap);
         return;
     }
@@ -839,12 +847,13 @@ void tlb_flush_range_by_mmuidx_all_cpus_synced(CPUState *src_cpu,
 {
     TLBFlushRangeData d, *p;
     CPUState *dst_cpu;
+    const int target_long_bits = src_cpu->cc->tcg_params->long_bits;
 
     /*
      * If all bits are significant, and len is small,
      * this devolves to tlb_flush_page.
      */
-    if (bits >= TARGET_LONG_BITS && len <= TARGET_PAGE_SIZE) {
+    if (bits >= target_long_bits && len <= TARGET_PAGE_SIZE) {
         tlb_flush_page_by_mmuidx_all_cpus_synced(src_cpu, addr, idxmap);
         return;
     }
@@ -916,26 +925,28 @@ void tlb_unprotect_code(ram_addr_t ram_addr)
  *
  * Called with tlb_c.lock held.
  */
-static void tlb_reset_dirty_range_locked(CPUTLBEntry *tlb_entry,
+static void tlb_reset_dirty_range_locked(CPUState *cpu, CPUTLBEntry *tlb_entry,
                                          uintptr_t start, uintptr_t length)
 {
     uintptr_t addr = tlb_entry->addr_write;
+    const int target_long_bits = cpu->cc->tcg_params->long_bits;
 
     if ((addr & (TLB_INVALID_MASK | TLB_MMIO |
                  TLB_DISCARD_WRITE | TLB_NOTDIRTY)) == 0) {
         addr &= TARGET_PAGE_MASK;
         addr += tlb_entry->addend;
         if ((addr - start) < length) {
-#if TARGET_LONG_BITS == 32
-            uint32_t *ptr_write = (uint32_t *)&tlb_entry->addr_write;
-            ptr_write += HOST_BIG_ENDIAN;
-            qatomic_set(ptr_write, *ptr_write | TLB_NOTDIRTY);
-#elif TCG_OVERSIZED_GUEST
-            tlb_entry->addr_write |= TLB_NOTDIRTY;
-#else
-            qatomic_set(&tlb_entry->addr_write,
-                        tlb_entry->addr_write | TLB_NOTDIRTY);
-#endif
+            if (target_long_bits == 32) {
+                uint32_t *ptr_write = (uint32_t *)&tlb_entry->addr_write;
+                ptr_write += HOST_BIG_ENDIAN;
+                qatomic_set(ptr_write, *ptr_write | TLB_NOTDIRTY);
+            } else if (TCG_TARGET_REG_BITS == 32) {
+                /* Oversized guest */
+                tlb_entry->addr_write |= TLB_NOTDIRTY;
+            } else {
+                qatomic_set(&tlb_entry->addr_write,
+                            tlb_entry->addr_write | TLB_NOTDIRTY);
+            }
         }
     }
 }
@@ -964,12 +975,14 @@ void tlb_reset_dirty(CPUState *cpu, ram_addr_t start1, ram_addr_t length)
         unsigned int n = tlb_n_entries(&cpu->neg.tlb.f[mmu_idx]);
 
         for (i = 0; i < n; i++) {
-            tlb_reset_dirty_range_locked(&cpu->neg.tlb.f[mmu_idx].table[i],
+            tlb_reset_dirty_range_locked(cpu,
+                                         &cpu->neg.tlb.f[mmu_idx].table[i],
                                          start1, length);
         }
 
         for (i = 0; i < CPU_VTLB_SIZE; i++) {
-            tlb_reset_dirty_range_locked(&cpu->neg.tlb.d[mmu_idx].vtable[i],
+            tlb_reset_dirty_range_locked(cpu,
+                                         &cpu->neg.tlb.d[mmu_idx].vtable[i],
                                          start1, length);
         }
     }
@@ -1164,7 +1177,7 @@ void tlb_set_page_full(CPUState *cpu, int mmu_idx,
      * Only evict the old entry to the victim tlb if it's for a
      * different page; otherwise just overwrite the stale data.
      */
-    if (!tlb_hit_page_anyprot(te, addr_page) && !tlb_entry_is_empty(te)) {
+    if (!tlb_hit_page_anyprot(cpu, te, addr_page) && !tlb_entry_is_empty(te)) {
         unsigned vidx = desc->vindex++ % CPU_VTLB_SIZE;
         CPUTLBEntry *tv = &desc->vtable[vidx];
 
@@ -1312,7 +1325,7 @@ static bool victim_tlb_hit(CPUState *cpu, size_t mmu_idx, size_t index,
     assert_cpu_is_self(cpu);
     for (vidx = 0; vidx < CPU_VTLB_SIZE; ++vidx) {
         CPUTLBEntry *vtlb = &cpu->neg.tlb.d[mmu_idx].vtable[vidx];
-        uint64_t cmp = tlb_read_idx(vtlb, access_type);
+        uint64_t cmp = tlb_read_idx(cpu, vtlb, access_type);
 
         if (cmp == page) {
             /* Found entry in victim tlb, swap tlb and iotlb.  */
@@ -1366,7 +1379,7 @@ static int probe_access_internal(CPUState *cpu, vaddr addr,
 {
     uintptr_t index = tlb_index(cpu, mmu_idx, addr);
     CPUTLBEntry *entry = tlb_entry(cpu, mmu_idx, addr);
-    uint64_t tlb_addr = tlb_read_idx(entry, access_type);
+    uint64_t tlb_addr = tlb_read_idx(cpu, entry, access_type);
     vaddr page_addr = addr & TARGET_PAGE_MASK;
     int flags = TLB_FLAGS_MASK & ~TLB_FORCE_SLOW;
     bool force_mmio = check_mem_cbs && cpu_plugin_mem_cbs_enabled(cpu);
@@ -1393,7 +1406,7 @@ static int probe_access_internal(CPUState *cpu, vaddr addr,
              */
             flags &= ~TLB_INVALID_MASK;
         }
-        tlb_addr = tlb_read_idx(entry, access_type);
+        tlb_addr = tlb_read_idx(cpu, entry, access_type);
     }
     flags &= tlb_addr;
 
@@ -1582,7 +1595,7 @@ bool tlb_plugin_lookup(CPUState *cpu, vaddr addr, int mmu_idx,
     CPUTLBEntry *tlbe = tlb_entry(cpu, mmu_idx, addr);
     uintptr_t index = tlb_index(cpu, mmu_idx, addr);
     MMUAccessType access_type = is_store ? MMU_DATA_STORE : MMU_DATA_LOAD;
-    uint64_t tlb_addr = tlb_read_idx(tlbe, access_type);
+    uint64_t tlb_addr = tlb_read_idx(cpu, tlbe, access_type);
     CPUTLBEntryFull *full;
 
     if (unlikely(!tlb_hit(tlb_addr, addr))) {
@@ -1645,7 +1658,7 @@ static bool mmu_lookup1(CPUState *cpu, MMULookupPageData *data,
     vaddr addr = data->addr;
     uintptr_t index = tlb_index(cpu, mmu_idx, addr);
     CPUTLBEntry *entry = tlb_entry(cpu, mmu_idx, addr);
-    uint64_t tlb_addr = tlb_read_idx(entry, access_type);
+    uint64_t tlb_addr = tlb_read_idx(cpu, entry, access_type);
     bool maybe_resized = false;
     CPUTLBEntryFull *full;
     int flags;
@@ -1659,7 +1672,7 @@ static bool mmu_lookup1(CPUState *cpu, MMULookupPageData *data,
             index = tlb_index(cpu, mmu_idx, addr);
             entry = tlb_entry(cpu, mmu_idx, addr);
         }
-        tlb_addr = tlb_read_idx(entry, access_type) & ~TLB_INVALID_MASK;
+        tlb_addr = tlb_read_idx(cpu, entry, access_type) & ~TLB_INVALID_MASK;
     }
 
     full = &cpu->neg.tlb.d[mmu_idx].fulltlb[index];
@@ -1852,7 +1865,7 @@ static void *atomic_mmu_lookup(CPUState *cpu, vaddr addr, MemOpIdx oi,
     tlbe = tlb_entry(cpu, mmu_idx, addr);
 
     /* Check TLB entry and enforce page permissions.  */
-    tlb_addr = tlb_addr_write(tlbe);
+    tlb_addr = tlb_addr_write(cpu, tlbe);
     if (!tlb_hit(tlb_addr, addr)) {
         if (!victim_tlb_hit(cpu, mmu_idx, index, MMU_DATA_STORE,
                             addr & TARGET_PAGE_MASK)) {
@@ -1861,7 +1874,7 @@ static void *atomic_mmu_lookup(CPUState *cpu, vaddr addr, MemOpIdx oi,
             index = tlb_index(cpu, mmu_idx, addr);
             tlbe = tlb_entry(cpu, mmu_idx, addr);
         }
-        tlb_addr = tlb_addr_write(tlbe) & ~TLB_INVALID_MASK;
+        tlb_addr = tlb_addr_write(cpu, tlbe) & ~TLB_INVALID_MASK;
     }
 
     /*

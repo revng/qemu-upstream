@@ -51,6 +51,7 @@
 #ifdef CONFIG_TCG
 TCGCPUParams tcg_params = {
     .virt_addr_space_bits = TARGET_VIRT_ADDR_SPACE_BITS,
+    .long_bits = TARGET_LONG_BITS,
 };
 #endif /* CONFIG_TCG */
 

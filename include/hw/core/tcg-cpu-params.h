@@ -13,6 +13,7 @@
 
 struct TCGCPUParams {
     uint32_t virt_addr_space_bits;
+    int long_bits;
 };
 
 #endif /* TCG_CPU_PARAMS_H */
