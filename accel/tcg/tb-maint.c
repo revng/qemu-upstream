@@ -151,12 +151,23 @@ static PageForEachNext foreach_tb_next(PageForEachNext tb,
 #else
 /*
  * In system mode we want L1_MAP to be based on ram offsets.
+ *
+ * TODO(anjo): This is bad.
+ *
+ * Worst case (avr w. 24 bit phys. addr space on 64-bit host) we would end up
+ * w.
+ *   - l1 bits = (64 - 8) % 10 = 6
+ *   - l1 shift = 64 - 8 - 6 = 50
+ *   - v2 levels = l1_bits/10 - 1 = 9
+ * compared to
+ *   - l1 bits = (24 - 8) % 10 = 6
+ *   - l1 shift = 24 - 8 - 6 = 10
+ *   - v2 levels = l1_bits/10 - 1 = 0
+ *
+ * so a table lookup would go from probably 1 cached ram (l1) lookup + 1 heap
+ * lookup, to 1 l1, 10 heap lookups ;c
  */
-#if HOST_LONG_BITS < TARGET_PHYS_ADDR_SPACE_BITS
-# define L1_MAP_ADDR_SPACE_BITS  HOST_LONG_BITS
-#else
-# define L1_MAP_ADDR_SPACE_BITS  TARGET_PHYS_ADDR_SPACE_BITS
-#endif
+#define L1_MAP_ADDR_SPACE_BITS 64
 
 /* Size of the L2 (and L3, etc) page tables.  */
 #define V_L2_BITS 10
