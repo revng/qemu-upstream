@@ -3694,6 +3694,19 @@ void qemu_init(int argc, char **argv)
     qobject_unref(machine_opts_dict);
     phase_advance(PHASE_MACHINE_CREATED);
 
+    machine_class = MACHINE_GET_CLASS(current_machine);
+    if (!qtest_enabled() && machine_class->deprecation_reason) {
+        warn_report("Machine type '%s' is deprecated: %s",
+                     machine_class->name, machine_class->deprecation_reason);
+    }
+
+    /* parse features once if machine provides default cpu_type */
+    current_machine->cpu_type = machine_class_default_cpu_type(machine_class);
+    if (cpu_option) {
+        current_machine->cpu_type = parse_cpu_option(cpu_option);
+    }
+    /* NB: for machine none cpu_type could STILL be NULL here! */
+
     /*
      * Note: uses machine properties such as kernel-irqchip, must run
      * after qemu_apply_machine_options.
@@ -3717,12 +3730,6 @@ void qemu_init(int argc, char **argv)
      * called from do_configure_accelerator().
      */
 
-    machine_class = MACHINE_GET_CLASS(current_machine);
-    if (!qtest_enabled() && machine_class->deprecation_reason) {
-        warn_report("Machine type '%s' is deprecated: %s",
-                     machine_class->name, machine_class->deprecation_reason);
-    }
-
     /*
      * Create backends before creating migration objects, so that it can
      * check against compatibilities on the backend memories (e.g. postcopy
@@ -3736,13 +3743,6 @@ void qemu_init(int argc, char **argv)
      * compat properties have been set up.
      */
     migration_object_init();
-
-    /* parse features once if machine provides default cpu_type */
-    current_machine->cpu_type = machine_class_default_cpu_type(machine_class);
-    if (cpu_option) {
-        current_machine->cpu_type = parse_cpu_option(cpu_option);
-    }
-    /* NB: for machine none cpu_type could STILL be NULL here! */
 
     qemu_resolve_machine_memdev();
     parse_numa_opts(current_machine);
