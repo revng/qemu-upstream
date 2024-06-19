@@ -36,6 +36,10 @@
 #include "qapi/error.h"
 #include "qemu/cutils.h"
 
+void hmp_info_tlb(Monitor *mon, const QDict *qdict)
+{
+}
+
 #if defined(TARGET_S390X)
 #include "hw/s390x/storage-keys.h"
 #include "hw/s390x/storage-attributes.h"
