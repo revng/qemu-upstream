@@ -251,11 +251,11 @@ int module_load(const char *prefix, const char *name, Error **errp)
     for (modinfo = module_info; modinfo->name != NULL; modinfo++) {
         if (modinfo->arch) {
             if (strcmp(modinfo->name, module_name) == 0) {
-                if (!module_check_arch(modinfo)) {
-                    error_setg(errp, "module arch does not match: "
-                        "expected '%s', got '%s'", module_arch, modinfo->arch);
-                    goto out;
-                }
+                //if (!module_check_arch(modinfo)) {
+                //    error_setg(errp, "module arch does not match: "
+                //        "expected '%s', got '%s'", module_arch, modinfo->arch);
+                //    goto out;
+                //}
             }
         }
         if (modinfo->deps) {
@@ -332,9 +332,9 @@ int module_load_qom(const char *type, Error **errp)
         if (!modinfo->objs) {
             continue;
         }
-        if (!module_check_arch(modinfo)) {
-            continue;
-        }
+        //if (!module_check_arch(modinfo)) {
+        //    continue;
+        //}
         for (sl = modinfo->objs; *sl != NULL; sl++) {
             if (strcmp(type, *sl) == 0) {
                 if (rv > 0) {
