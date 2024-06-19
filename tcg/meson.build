@@ -44,7 +44,8 @@ libtcg_system = static_library('tcg_system',
                                 name_suffix: 'fa',
                                 dependencies: tcg_ss.dependencies(),
                                 c_args: '-DCONFIG_SOFTMMU',
-                                build_by_default: false)
+                                build_by_default: false,
+                                pic: true)
 
 tcg_system = declare_dependency(link_with: libtcg_system)
 system_ss.add(tcg_system)
