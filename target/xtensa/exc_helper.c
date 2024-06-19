@@ -106,7 +106,7 @@ void HELPER(waiti)(CPUXtensaState *env, uint32_t pc, uint32_t intlevel)
         (intlevel << PS_INTLEVEL_SHIFT);
 
     bql_lock();
-    check_interrupts(env);
+    //check_interrupts(env);
     bql_unlock();
 
     if (env->pending_irq_level) {
@@ -121,7 +121,7 @@ void HELPER(waiti)(CPUXtensaState *env, uint32_t pc, uint32_t intlevel)
 void HELPER(check_interrupts)(CPUXtensaState *env)
 {
     bql_lock();
-    check_interrupts(env);
+    //check_interrupts(env);
     bql_unlock();
 }
 
@@ -257,7 +257,7 @@ void xtensa_cpu_do_interrupt(CPUState *cs)
                  __func__, env->pc, cs->exception_index);
         break;
     }
-    check_interrupts(env);
+    //check_interrupts(env);
 }
 
 bool xtensa_cpu_exec_interrupt(CPUState *cs, int interrupt_request)

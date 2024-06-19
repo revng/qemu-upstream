@@ -93,8 +93,8 @@ static void xtensa_ccompare_cb(void *opaque)
 
 static void xtensa_set_runstall(void *opaque, int irq, int active)
 {
-    CPUXtensaState *env = opaque;
-    xtensa_runstall(env, active);
+    //CPUXtensaState *env = opaque;
+    //xtensa_runstall(env, active);
 }
 
 void xtensa_irq_init(CPUXtensaState *env)
