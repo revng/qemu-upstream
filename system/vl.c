@@ -134,6 +134,8 @@
 #include "qemu/guest-random.h"
 #include "qemu/keyval.h"
 
+#include "hw/core/tcg-cpu-params.h"
+
 #define MAX_VIRTIO_CONSOLES 1
 
 typedef struct BlockdevOptionsQueueEntry {
@@ -3700,12 +3702,27 @@ void qemu_init(int argc, char **argv)
                      machine_class->name, machine_class->deprecation_reason);
     }
 
+    {
+        Error *error = NULL;
+        int res = module_load_qom(cpu_option, &error);
+        printf("res: %d\n", res);
+        if (error != NULL) {
+            error_report_err(error);
+        }
+    }
+
     /* parse features once if machine provides default cpu_type */
     current_machine->cpu_type = machine_class_default_cpu_type(machine_class);
     if (cpu_option) {
         current_machine->cpu_type = parse_cpu_option(cpu_option);
     }
     /* NB: for machine none cpu_type could STILL be NULL here! */
+
+    {
+        ObjectClass *oc = object_class_by_name(current_machine->cpu_type);
+        CPUClass *cc = CPU_CLASS(oc);
+        printf("va bits: %ld\n", cc->tcg_params->virt_addr_space_bits);
+    }
 
     /*
      * Note: uses machine properties such as kernel-irqchip, must run
