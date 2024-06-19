@@ -243,6 +243,7 @@ static const TCGCPUOps xtensa_tcg_ops = {
 
 static void xtensa_cpu_class_init(ObjectClass *oc, void *data)
 {
+    assert(false);
     DeviceClass *dc = DEVICE_CLASS(oc);
     CPUClass *cc = CPU_CLASS(oc);
     XtensaCPUClass *xcc = XTENSA_CPU_CLASS(cc);
@@ -288,3 +289,7 @@ static void xtensa_cpu_register_types(void)
 }
 
 type_init(xtensa_cpu_register_types)
+
+#ifdef LIBTCG_MODULE
+module_obj(TYPE_XTENSA_CPU);
+#endif

@@ -421,6 +421,7 @@ static const TCGCPUOps mb_tcg_ops = {
 
 static void mb_cpu_class_init(ObjectClass *oc, void *data)
 {
+    assert(false);
     DeviceClass *dc = DEVICE_CLASS(oc);
     CPUClass *cc = CPU_CLASS(oc);
     MicroBlazeCPUClass *mcc = MICROBLAZE_CPU_CLASS(oc);
@@ -467,3 +468,7 @@ static void mb_cpu_register_types(void)
 }
 
 type_init(mb_cpu_register_types)
+
+#ifdef LIBTCG_MODULE
+module_obj(TYPE_MICROBLAZE_CPU);
+#endif
