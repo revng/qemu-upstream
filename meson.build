@@ -3396,6 +3396,7 @@ tcg_module_ss = ss.source_set()
 
 modules = {}
 target_modules = {}
+libtcg_modules = {}
 hw_arch = {}
 target_arch = {}
 target_system_arch = {}
@@ -3634,26 +3635,6 @@ foreach d, list : target_modules
   endforeach
 endforeach
 
-if enable_modules
-  foreach target : target_dirs
-    if target.endswith('-softmmu')
-      config_target = config_target_mak[target]
-      config_devices_mak = target + '-config-devices.mak'
-      modinfo_src = custom_target('modinfo-' + target + '.c',
-                                  output: 'modinfo-' + target + '.c',
-                                  input: modinfo_files,
-                                  command: [modinfo_generate, '--devices', config_devices_mak, '@INPUT@'],
-                                  capture: true)
-
-      modinfo_lib = static_library('modinfo-' + target + '.c', modinfo_src)
-      modinfo_dep = declare_dependency(link_with: modinfo_lib)
-
-      arch = config_target['TARGET_NAME'] == 'sparc64' ? 'sparc64' : config_target['TARGET_BASE_ARCH']
-      hw_arch[arch].add(modinfo_dep)
-    endif
-  endforeach
-endif
-
 nm = find_program('nm')
 undefsym = find_program('scripts/undefsym.py')
 block_syms = custom_target('block.syms', output: 'block.syms',
@@ -3745,19 +3726,6 @@ common_ss.add(hwcore)
 # Targets #
 ###########
 
-emulator_modules = []
-foreach m : block_mods + system_mods
-  emulator_modules += shared_module(m.name(),
-                build_by_default: true,
-                name_prefix: '',
-                link_whole: m,
-                install: true,
-                install_dir: qemu_moddir)
-endforeach
-if emulator_modules.length() > 0
-  alias_target('modules', emulator_modules)
-endif
-
 system_ss.add(authz, blockdev, chardev, crypto, io, qmp)
 common_ss.add(qom, qemuutil)
 
@@ -3773,13 +3741,98 @@ common_all = static_library('common',
                             include_directories: common_user_inc,
                             implicit_include_directories: false,
                             dependencies: common_ss.all_dependencies(),
+                            c_args: '-fPIC',
                             name_suffix: 'fa')
+
+
+foreach target : target_dirs
+  if target.endswith('-softmmu')
+      config_target = config_target_mak[target]
+    target_base = config_target['TARGET_BASE_ARCH']
+    d = target_base
+    module_ss = libtcg_modules[d]
+
+      target_inc = [include_directories('target' / target_base)]
+      c_args = ['-DCOMPILING_PER_TARGET',
+                '-DLIBTCG_MODULE',
+                '-DCONFIG_TARGET="@0@-config-target.h"'.format(target),
+                '-DCONFIG_DEVICES="@0@-config-devices.h"'.format(target)]
+      target_module_ss = module_ss.apply(config_target, strict: false)
+      if target_module_ss.sources() != []
+          # arch_deps = []
+
+          # target_common = common_ss.apply(config_target, strict: false)
+          # objects = common_all.extract_objects(target_common.sources())
+          # arch_deps += target_common.dependencies()
+
+          # arch_srcs = [config_target_h[target]]
+          # target_specific = specific_ss.apply(config_target, strict: false)
+          # arch_srcs += target_specific.sources()
+          # arch_deps += target_specific.dependencies()
+        module_name = 'libtcg' + d + '-' + config_target['TARGET_NAME']
+            # allow using headers from the dependencies but do not include the sources,
+            # because this emulator only needs those in "objects".  For external
+            # dependencies, the full dependency is included below in the executable.
+          #  lib_deps = []
+          #foreach dep : arch_deps
+          #  lib_deps += dep.partial_dependency(compile_args: true, includes: true)
+          #endforeach
+        sl = static_library(module_name,
+                            [genh, target_module_ss.sources()],
+                            dependencies: [modulecommon, target_module_ss.dependencies(), tcg_system],
+                            include_directories: target_inc,
+                            c_args: c_args,
+                            pic: true)
+        system_mods += sl
+        modinfo_files += custom_target(module_name + '.modinfo',
+                                       output: module_name + '.modinfo',
+                                       input: target_module_ss.sources() + genh,
+                                       capture: true,
+                                       command: [modinfo_collect, '--target', target, '@INPUT@'])
+      endif
+  endif
+endforeach
+
+if enable_modules
+  foreach target : target_dirs
+    if target.endswith('-softmmu')
+      config_target = config_target_mak[target]
+      config_devices_mak = target + '-config-devices.mak'
+      modinfo_src = custom_target('modinfo-' + target + '.c',
+                                  output: 'modinfo-' + target + '.c',
+                                  input: modinfo_files,
+                                  command: [modinfo_generate, '--devices', config_devices_mak, '@INPUT@'],
+                                  capture: true)
+
+      modinfo_lib = static_library('modinfo-' + target + '.c', modinfo_src)
+      modinfo_dep = declare_dependency(link_with: modinfo_lib)
+
+      arch = config_target['TARGET_NAME'] == 'sparc64' ? 'sparc64' : config_target['TARGET_BASE_ARCH']
+      hw_arch[arch].add(modinfo_dep)
+    endif
+  endforeach
+endif
+
+emulator_modules = []
+foreach m : block_mods + system_mods
+  emulator_modules += shared_module(m.name(),
+                build_by_default: true,
+                name_prefix: '',
+                link_whole: m,
+                install: true,
+                install_dir: qemu_moddir)
+endforeach
+if emulator_modules.length() > 0
+  alias_target('modules', emulator_modules)
+endif
+
 
 feature_to_c = find_program('scripts/feature_to_c.py')
 
 if host_os == 'darwin'
   entitlement = find_program('scripts/entitlement.sh')
 endif
+
 
 traceable = []
 emulators = {}
@@ -3800,9 +3853,9 @@ foreach target : target_dirs
   endif
   if target.endswith('-softmmu')
     target_type='system'
-    t = target_system_arch[target_base_arch].apply(config_target, strict: false)
-    arch_srcs += t.sources()
-    arch_deps += t.dependencies()
+      #t = target_system_arch[target_base_arch].apply(config_target, strict: false)
+      #arch_srcs += t.sources()
+      #arch_deps += t.dependencies()
 
     hw_dir = target_name == 'sparc64' ? 'sparc64' : target_base_arch
     if hw_arch.has_key(hw_dir)
@@ -3856,9 +3909,9 @@ foreach target : target_dirs
     arch_srcs += gdbstub_xml
   endif
 
-  t = target_arch[target_base_arch].apply(config_target, strict: false)
-  arch_srcs += t.sources()
-  arch_deps += t.dependencies()
+    #t = target_arch[target_base_arch].apply(config_target, strict: false)
+    #arch_srcs += t.sources()
+    #arch_deps += t.dependencies()
 
   target_common = common_ss.apply(config_target, strict: false)
   objects = common_all.extract_objects(target_common.sources())
