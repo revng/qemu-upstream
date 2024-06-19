@@ -23,5 +23,7 @@ xtensa_system_ss.add(files(
   'xtensa-semi.c',
 ))
 
-target_arch += {'xtensa': xtensa_ss}
-target_system_arch += {'xtensa': xtensa_system_ss}
+#target_arch += {'xtensa': xtensa_ss}
+#target_system_arch += {'xtensa': xtensa_system_ss}
+xtensa_ss.add_all(xtensa_system_ss)
+libtcg_modules += {'xtensa' : xtensa_ss}

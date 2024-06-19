@@ -16,5 +16,7 @@ microblaze_system_ss.add(files(
   'machine.c',
 ))
 
-target_arch += {'microblaze': microblaze_ss}
-target_system_arch += {'microblaze': microblaze_system_ss}
+#target_arch += {'microblaze': microblaze_ss}
+#target_system_arch += {'microblaze': microblaze_system_ss}
+microblaze_ss.add_all(microblaze_system_ss)
+libtcg_modules += {'microblaze' : microblaze_ss}
