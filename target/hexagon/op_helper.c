@@ -31,6 +31,7 @@
 #include "mmvec/macros.h"
 #include "op_helper.h"
 #include "translate.h"
+#include "helper-to-tcg/annotate.h"
 
 #define SF_BIAS        127
 #define SF_MANTBITS    23
