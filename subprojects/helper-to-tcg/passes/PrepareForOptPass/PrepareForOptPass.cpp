@@ -25,6 +25,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Intrinsics.h>
 #include <llvm/IR/Module.h>
+#include <llvm/Transforms/Utils/Local.h>
 
 #include <queue>
 #include <set>
@@ -249,5 +250,11 @@ PreservedAnalyses PrepareForOptPass::run(Module &M, ModuleAnalysisManager &MAM)
     collectAnnotations(M, ResultAnnotations);
     cullUnusedFunctions(M, ResultAnnotations, TranslateAllHelpers);
     replaceRetaddrWithUndef(M);
+    // Remove noinline function attributes automatically added by -O0
+    for (Function &F : M) {
+        if (F.hasFnAttribute(Attribute::AttrKind::NoInline)) {
+            F.removeFnAttr(Attribute::AttrKind::NoInline);
+        }
+    }
     return PreservedAnalyses::none();
 }
