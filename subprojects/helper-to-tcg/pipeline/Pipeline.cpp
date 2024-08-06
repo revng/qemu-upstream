@@ -24,6 +24,7 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PassManager.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/InitializePasses.h>
 #include <llvm/Linker/Linker.h>
@@ -34,10 +35,12 @@
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Target/TargetMachine.h>
+#include <llvm/Transforms/Scalar/DCE.h>
 #include <llvm/Transforms/Scalar/SROA.h>
 
 #include <PrepareForOptPass.h>
-#include "llvm-compat.h"
+#include <PrepareForTcgPass.h>
+#include <llvm-compat.h>
 
 using namespace llvm;
 
@@ -51,6 +54,13 @@ cl::opt<std::string> InputFile(cl::Positional, cl::desc("[input LLVM module]"),
 cl::opt<bool> TranslateAllHelpers(
     "translate-all-helpers", cl::init(false),
     cl::desc("Translate all functions starting with helper_*"), cl::cat(Cat));
+
+// Options for PrepareForTcgPass
+cl::opt<std::string> TcgGlobalMappingsName(
+    "tcg-global-mappings",
+    cl::desc("<Name of global cpu_mappings[] used for mapping accesses"
+             "into a struct to TCG globals>"),
+    cl::Required, cl::cat(Cat));
 
 // Define a TargetTransformInfo (TTI) subclass, this allows for overriding
 // common per-llvm-target information expected by other LLVM passes, such
@@ -199,6 +209,20 @@ int main(int argc, char **argv)
         compat::OptimizationLevel::Os, compat::LTOPhase));
     MPM.addPass(
         PB.buildModuleOptimizationPipeline(compat::OptimizationLevel::Os));
+
+    //
+    // Next, we run our final transformations, including removing phis and our
+    // own instruction combining that prioritizes instructions that map more
+    // easily to TCG.
+    //
+
+    MPM.addPass(PrepareForTcgPass());
+    MPM.addPass(VerifierPass());
+    {
+        FunctionPassManager FPM;
+        FPM.addPass(DCEPass());
+        MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+    }
 
     return 0;
 }

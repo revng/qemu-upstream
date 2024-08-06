@@ -46,6 +46,7 @@ sources = [
     'pipeline/Pipeline.cpp',
     'passes/PrepareForOptPass/PrepareForOptPass.cpp',
     'passes/PseudoInst.cpp',
+    'passes/PrepareForTcgPass/PrepareForTcgPass.cpp',
 ]
 
 clang = bindir / 'clang'
