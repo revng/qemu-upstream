@@ -1,3 +1,5 @@
+#pragma once
+
 //
 //  Copyright(c) 2024 rev.ng Labs Srl. All Rights Reserved.
 //
@@ -15,18 +17,15 @@
 //  along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#pragma once
+#include <llvm/ADT/StringRef.h>
+#include <llvm/ADT/DenseMap.h>
+#include <stdint.h>
 
-#include "TcgGlobalMap.h"
-#include <llvm/IR/PassManager.h>
-
-class PrepareForTcgPass : public llvm::PassInfoMixin<PrepareForTcgPass> {
-    TcgGlobalMap &ResultTcgGlobalMap;
-public:
-    PrepareForTcgPass(TcgGlobalMap &ResultTcgGlobalMap)
-        : ResultTcgGlobalMap(ResultTcgGlobalMap)
-    {
-    }
-    llvm::PreservedAnalyses run(llvm::Module &M,
-                                llvm::ModuleAnalysisManager &MAM);
+struct TcgGlobal {
+  llvm::StringRef Code;
+  uint64_t Size;
+  uint64_t NumElements;
+  uint64_t Stride;
 };
+
+using TcgGlobalMap = llvm::DenseMap<uint32_t, TcgGlobal>;

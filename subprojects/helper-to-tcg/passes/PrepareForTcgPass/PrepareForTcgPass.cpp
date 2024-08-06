@@ -15,6 +15,7 @@
 //  along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <CmdLineOptions.h>
 #include <PrepareForTcgPass.h>
 #include <llvm/ADT/SCCIterator.h>
 #include <llvm/IR/Function.h>
@@ -71,11 +72,53 @@ inline void demotePhis(Function &F)
     }
 }
 
+static void collectTcgGlobals(Module &M, TcgGlobalMap &ResultTcgGlobalMap)
+{
+    auto *Map = M.getGlobalVariable(TcgGlobalMappingsName);
+    if (!Map) {
+        return;
+    }
+
+    // In case the `tcg_global_mappings` array is empty,
+    // casting to `ConstantArray` will fail, even though it's a
+    // `[0 x %struct.cpu_tcg_mapping]`.
+    auto *MapElems = dyn_cast<ConstantArray>(Map->getOperand(0));
+    if (!MapElems) {
+        return;
+    }
+
+    for (auto Row : MapElems->operand_values()) {
+        auto *ConstRow = cast<ConstantStruct>(Row);
+
+        // Get code string
+        auto *CodePtr = ConstRow->getOperand(0);
+        auto CodeStr =
+            cast<ConstantDataArray>(
+                cast<Constant>(CodePtr->getOperand(0))->getOperand(0))
+                ->getAsString();
+        CodeStr = CodeStr.rtrim('\0');
+
+        // Get offset in cpu env
+        auto *Offset = cast<ConstantInt>(ConstRow->getOperand(3));
+        // Get size of variable in cpu env
+        auto *SizeInBytes = cast<ConstantInt>(ConstRow->getOperand(4));
+        unsigned SizeInBits = 8 * SizeInBytes->getLimitedValue();
+
+        auto *Stride = cast<ConstantInt>(ConstRow->getOperand(5));
+        auto *NumElements = cast<ConstantInt>(ConstRow->getOperand(6));
+
+        ResultTcgGlobalMap[Offset->getLimitedValue()] = {
+            CodeStr, SizeInBits, NumElements->getLimitedValue(),
+            Stride->getLimitedValue()};
+    }
+}
+
 PreservedAnalyses PrepareForTcgPass::run(Module &M, ModuleAnalysisManager &MAM)
 {
     removeFunctionsWithLoops(M, MAM);
     for (Function &F : M) {
         demotePhis(F);
     }
+    collectTcgGlobals(M, ResultTcgGlobalMap);
     return PreservedAnalyses::none();
 }
