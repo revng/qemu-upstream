@@ -16,10 +16,42 @@
 //
 
 #include <PrepareForTcgPass.h>
+#include <llvm/ADT/SCCIterator.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/Module.h>
 
 using namespace llvm;
 
+static void removeFunctionsWithLoops(Module &M, ModuleAnalysisManager &MAM)
+{
+    // Iterate over all Strongly Connected Components (SCCs), a SCC implies
+    // the existence of loops if:
+    //   - it has more than one node, or;
+    //   - it has a self-edge.
+    SmallVector<Function *, 16> FunctionsToRemove;
+    for (Function &F : M) {
+        if (F.isDeclaration()) {
+            continue;
+        }
+        for (auto It = scc_begin(&F); !It.isAtEnd(); ++It) {
+#if LLVM_VERSION_MAJOR > 10
+            if (It.hasCycle()) {
+#else
+            if (It.hasLoop()) {
+#endif
+                FunctionsToRemove.push_back(&F);
+                break;
+            }
+        }
+    }
+
+    for (auto *F : FunctionsToRemove) {
+        F->deleteBody();
+    }
+}
+
 PreservedAnalyses PrepareForTcgPass::run(Module &M, ModuleAnalysisManager &MAM)
 {
+    removeFunctionsWithLoops(M, MAM);
     return PreservedAnalyses::none();
 }
