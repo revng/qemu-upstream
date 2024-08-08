@@ -17,6 +17,7 @@
 
 #include <CmdLineOptions.h>
 #include <PrepareForTcgPass.h>
+#include "TransformGEPs.h"
 #include <llvm/ADT/SCCIterator.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/InstIterator.h>
@@ -120,5 +121,8 @@ PreservedAnalyses PrepareForTcgPass::run(Module &M, ModuleAnalysisManager &MAM)
         demotePhis(F);
     }
     collectTcgGlobals(M, ResultTcgGlobalMap);
+    for (Function &F : M) {
+        transformGEPs(M, F, ResultTcgGlobalMap);
+    }
     return PreservedAnalyses::none();
 }

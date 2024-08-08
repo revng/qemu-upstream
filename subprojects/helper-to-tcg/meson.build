@@ -47,6 +47,7 @@ sources = [
     'passes/PrepareForOptPass/PrepareForOptPass.cpp',
     'passes/PseudoInst.cpp',
     'passes/PrepareForTcgPass/PrepareForTcgPass.cpp',
+    'passes/PrepareForTcgPass/TransformGEPs.cpp',
 ]
 
 clang = bindir / 'clang'
