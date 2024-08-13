@@ -19,16 +19,19 @@
 
 #include "DebugInfo.hpp"
 #include "TcgGlobalMap.hpp"
+#include "VectorLayout.hpp"
 #include <llvm/IR/PassManager.h>
 
 class PrepareForTcgPass : public llvm::PassInfoMixin<PrepareForTcgPass> {
     TcgGlobalMap &ResultTcgGlobalMap;
     const DebugInfoMapTy &DebugInfo;
+    const VectorLayout &VL;
 
 public:
     PrepareForTcgPass(TcgGlobalMap &ResultTcgGlobalMap,
-                      const DebugInfoMapTy &DebugInfo)
-        : ResultTcgGlobalMap(ResultTcgGlobalMap), DebugInfo(DebugInfo) {}
+                      const DebugInfoMapTy &DebugInfo, const VectorLayout &VL)
+        : ResultTcgGlobalMap(ResultTcgGlobalMap), DebugInfo(DebugInfo), VL(VL) {
+    }
     llvm::PreservedAnalyses run(llvm::Module &M,
                                 llvm::ModuleAnalysisManager &MAM);
 };
