@@ -15,6 +15,7 @@
 //  along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+#include "CanonicalizeIR.h"
 #include <CmdLineOptions.h>
 #include <PrepareForTcgPass.h>
 #include "TransformGEPs.h"
@@ -124,5 +125,6 @@ PreservedAnalyses PrepareForTcgPass::run(Module &M, ModuleAnalysisManager &MAM)
     for (Function &F : M) {
         transformGEPs(M, F, ResultTcgGlobalMap);
     }
+    canonicalizeIR(M);
     return PreservedAnalyses::none();
 }
