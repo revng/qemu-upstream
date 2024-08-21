@@ -352,6 +352,10 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
     tcg_ctx->guest_mo = TCG_MO_ALL;
 #endif
 
+#if defined(CONFIG_HELPER_TO_TCG) && defined(TARGET_HELPER_DISPATCHER)
+    tcg_ctx->helper_dispatcher = TARGET_HELPER_DISPATCHER;
+#endif
+
  restart_translate:
     trace_translate_block(tb, pc, tb->tc.ptr);
 

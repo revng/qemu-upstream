@@ -2252,6 +2252,11 @@ static void tcg_gen_callN(void *func, TCGHelperInfo *info,
     }
 
     total_args = info->nr_out + info->nr_in + 2;
+    if (unlikely(tcg_ctx->helper_dispatcher) &&
+        tcg_ctx->helper_dispatcher(info->func, ret, total_args, args)) {
+        return;
+    }
+
     op = tcg_op_alloc(INDEX_op_call, total_args);
 
 #ifdef CONFIG_PLUGIN
