@@ -39,6 +39,7 @@ endif
 
 sources = [
     'src/LlvmCompat.cpp',
+    'src/Pipeline.cpp',
 ]
 
 clang = bindir / 'clang'
