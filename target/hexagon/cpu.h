@@ -153,6 +153,18 @@ static inline void cpu_get_tb_cpu_state(CPUHexagonState *env, vaddr *pc,
     }
 }
 
+// Returns the current mmu index given tb_flags of the current translation
+// block.  Required by helper-to-tcg in order to retrieve the mmu index for
+// memory operations without changing the signature of helper functions.
+static inline int get_tb_mmu_index(uint32_t flags)
+{
+#ifdef CONFIG_USER_ONLY
+    return MMU_USER_IDX;
+#else
+#error System mode not supported on Hexagon yet
+#endif
+}
+
 typedef HexagonCPU ArchCPU;
 
 void hexagon_translate_init(void);
