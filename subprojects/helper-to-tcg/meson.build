@@ -41,6 +41,7 @@ if version_major < 10 or version_major > 14
 endif
 
 sources = [
+    'pipeline/Pipeline.cpp',
     'passes/llvm-compat.cpp',
 ]
 
