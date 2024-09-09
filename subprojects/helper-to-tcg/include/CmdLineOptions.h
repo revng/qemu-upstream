@@ -27,3 +27,6 @@ extern llvm::cl::opt<bool> TranslateAllHelpers;
 extern llvm::cl::opt<std::string> TcgGlobalMappingsName;
 // Options for TcgTempAllocation
 extern llvm::cl::opt<uint32_t> GuestPtrSize;
+// Options for TcgEmit
+extern llvm::cl::opt<std::string> MmuIndexFunction;
+extern llvm::cl::opt<std::string> TempVectorBlock;

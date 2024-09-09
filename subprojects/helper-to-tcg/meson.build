@@ -51,6 +51,7 @@ sources = [
     'passes/PrepareForTcgPass/CanonicalizeIR.cpp',
     'passes/PrepareForTcgPass/IdentityMap.cpp',
     'passes/backend/TcgTempAllocationPass.cpp',
+    'passes/backend/TcgEmit.cpp',
 ]
 
 clang = bindir / 'clang'

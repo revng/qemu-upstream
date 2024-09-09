@@ -68,6 +68,19 @@ cl::opt<uint32_t>
                  cl::desc("Pointer size of the guest architecture"),
                  cl::init(32), cl::cat(Cat));
 
+// Options for TcgEmit
+cl::opt<std::string> MmuIndexFunction(
+    "mmu-index-function",
+    cl::desc("Name of a (uint32_t tb_flag) -> int function returning the "
+             "mmu index from the tb_flags of the current translation block"),
+    cl::init("get_tb_mmu_index"), cl::cat(Cat));
+
+cl::opt<std::string>
+    TempVectorBlock("temp-vector-block",
+                    cl::desc("Name of uint8_t[...] field in CPUArchState used "
+                             "for allocating temporary gvec variables"),
+                    cl::init("tmp_vmem"), cl::cat(Cat));
+
 // Define a TargetTransformInfo (TTI) subclass, this allows for overriding
 // common per-llvm-target information expected by other LLVM passes, such
 // as the width of the largest scalar/vector registers.  Needed for consistent
