@@ -4008,3 +4008,81 @@ void tcg_gen_gvec_bitsel(unsigned vece, uint32_t dofs, uint32_t aofs,
 
     tcg_gen_gvec_4(dofs, aofs, bofs, cofs, oprsz, maxsz, &g);
 }
+
+void tcg_gen_gvec_trunc(unsigned vecde, unsigned vecse,
+                        uint32_t dofs, uint32_t aofs,
+                        uint32_t doprsz, uint32_t aoprsz,
+                        uint32_t maxsz)
+{
+    gen_helper_gvec_2 * const fns[4][4] = {
+        [MO_64] = {
+            [MO_32] = gen_helper_gvec_trunc64_32,
+            [MO_16] = gen_helper_gvec_trunc64_16,
+            [MO_8]  = gen_helper_gvec_trunc64_8,
+        },
+        [MO_32] = {
+            [MO_16] = gen_helper_gvec_trunc32_16,
+            [MO_8]  = gen_helper_gvec_trunc32_8,
+        },
+        [MO_16] = {
+            [MO_8]  = gen_helper_gvec_trunc16_8,
+        },
+    };
+
+    gen_helper_gvec_2 *fn = fns[vecse][vecde];
+    tcg_debug_assert(fn != 0 && vecse > vecde);
+
+    tcg_gen_gvec_2_ool(dofs, aofs, doprsz, maxsz, 0, fn);
+}
+
+void tcg_gen_gvec_zext(unsigned vecde, unsigned vecse,
+                       uint32_t dofs, uint32_t aofs,
+                       uint32_t doprsz, uint32_t aoprsz,
+                       uint32_t maxsz)
+{
+    gen_helper_gvec_2 * const fns[4][4] = {
+        [MO_8] = {
+            [MO_16] = gen_helper_gvec_zext8_16,
+            [MO_32] = gen_helper_gvec_zext8_32,
+            [MO_64] = gen_helper_gvec_zext8_64,
+        },
+        [MO_16] = {
+            [MO_32] = gen_helper_gvec_zext16_32,
+            [MO_64] = gen_helper_gvec_zext16_64,
+        },
+        [MO_32] = {
+            [MO_64] = gen_helper_gvec_zext32_64,
+        },
+    };
+
+    gen_helper_gvec_2 *fn = fns[vecse][vecde];
+    tcg_debug_assert(fn != 0 && vecse < vecde);
+
+    tcg_gen_gvec_2_ool(dofs, aofs, doprsz, maxsz, 0, fn);
+}
+
+void tcg_gen_gvec_sext(unsigned vecde, unsigned vecse,
+                       uint32_t dofs, uint32_t aofs,
+                       uint32_t doprsz, uint32_t aoprsz,
+                       uint32_t maxsz)
+{
+    gen_helper_gvec_2 * const fns[4][4] = {
+        [MO_8] = {
+            [MO_16] = gen_helper_gvec_sext8_16,
+            [MO_32] = gen_helper_gvec_sext8_32,
+            [MO_64] = gen_helper_gvec_sext8_64,
+        },
+        [MO_16] = {
+            [MO_32] = gen_helper_gvec_sext16_32,
+            [MO_64] = gen_helper_gvec_sext16_64,
+        },
+        [MO_32] = {
+            [MO_64] = gen_helper_gvec_sext32_64,
+        },
+    };
+
+    gen_helper_gvec_2 *fn = fns[vecse][vecde];
+    tcg_debug_assert(fn != 0 && vecse < vecde);
+
+    tcg_gen_gvec_2_ool(dofs, aofs, doprsz, maxsz, 0, fn);
+}

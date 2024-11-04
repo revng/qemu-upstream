@@ -1569,3 +1569,44 @@ void HELPER(gvec_bitsel)(void *d, void *a, void *b, void *c, uint32_t desc)
     }
     clear_high(d, oprsz, desc);
 }
+
+#define DO_SZ_OP1(NAME, DSTTY, SRCTY)                                      \
+void HELPER(NAME)(void *d, void *a, uint32_t desc)                         \
+{                                                                          \
+    intptr_t oprsz = simd_oprsz(desc);                                     \
+    intptr_t elsz = oprsz/sizeof(DSTTY);                                   \
+    intptr_t i;                                                            \
+                                                                           \
+    for (i = 0; i < elsz; ++i) {                                           \
+        SRCTY aa = *((SRCTY *) a + i);                                     \
+        *((DSTTY *) d + i) = aa;                                           \
+    }                                                                      \
+    clear_high(d, oprsz, desc);                                            \
+}
+
+#define DO_SZ_OP2(NAME, INTTY, DSTSZ, SRCSZ) \
+    DO_SZ_OP1(NAME##SRCSZ##_##DSTSZ, INTTY##DSTSZ##_t, INTTY##SRCSZ##_t)
+
+DO_SZ_OP2(gvec_trunc, uint, 32, 64)
+DO_SZ_OP2(gvec_trunc, uint, 16, 64)
+DO_SZ_OP2(gvec_trunc, uint, 8,  64)
+DO_SZ_OP2(gvec_trunc, uint, 16, 32)
+DO_SZ_OP2(gvec_trunc, uint, 8,  32)
+DO_SZ_OP2(gvec_trunc, uint, 8,  16)
+
+DO_SZ_OP2(gvec_zext, uint, 64, 32)
+DO_SZ_OP2(gvec_zext, uint, 64, 16)
+DO_SZ_OP2(gvec_zext, uint, 64, 8)
+DO_SZ_OP2(gvec_zext, uint, 32, 16)
+DO_SZ_OP2(gvec_zext, uint, 32, 8)
+DO_SZ_OP2(gvec_zext, uint, 16, 8)
+
+DO_SZ_OP2(gvec_sext, int, 64, 32)
+DO_SZ_OP2(gvec_sext, int, 64, 16)
+DO_SZ_OP2(gvec_sext, int, 64, 8)
+DO_SZ_OP2(gvec_sext, int, 32, 16)
+DO_SZ_OP2(gvec_sext, int, 32, 8)
+DO_SZ_OP2(gvec_sext, int, 16, 8)
+
+#undef DO_SZ_OP1
+#undef DO_SZ_OP2
