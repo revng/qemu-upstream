@@ -39,7 +39,7 @@
 /* XXX: make safe guess about sizes */
 #define MAX_OP_PER_INSTR 266
 
-#define CPU_TEMP_BUF_NLONGS 128
+#define CPU_TEMP_BUF_NLONGS 256
 #define TCG_STATIC_FRAME_SIZE  (CPU_TEMP_BUF_NLONGS * sizeof(long))
 
 #if TCG_TARGET_REG_BITS == 32
@@ -231,7 +231,7 @@ typedef struct TCGPool {
 
 #define TCG_POOL_CHUNK_SIZE 32768
 
-#define TCG_MAX_TEMPS 512
+#define TCG_MAX_TEMPS 1024
 #define TCG_MAX_INSNS 512
 
 /* when the size of the arguments of a called function is smaller than
