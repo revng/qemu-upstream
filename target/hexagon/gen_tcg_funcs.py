@@ -75,7 +75,18 @@ def gen_tcg_func(f, tag, regs, imms):
 
         arguments = ", ".join(["ctx", "ctx->insn", "ctx->pkt"] + declared)
         f.write(f"    emit_{tag}({arguments});\n")
+    elif hex_common.is_helper_to_tcg_enabled(tag) and tag.startswith("V6_"):
+        ## For vector functions translated by helper-to-tcg we need to
+        ## manually call the emitted code.  All other instructions translated
+        ## are automatically called by the helper-functions dispatcher in
+        ## tcg_gen_callN.
+        declared = []
+        ## Handle registers
+        for arg in hex_common.helper_to_tcg_hvx_call_args(tag, regs, imms):
+            declared.append(arg)
 
+        arguments = ", ".join(declared)
+        f.write(f"    emit_{tag}({arguments});\n")
     elif hex_common.skip_qemu_helper(tag):
         f.write(f"    fGEN_TCG_{tag}({hex_common.semdict[tag]});\n")
     else:
@@ -119,6 +130,8 @@ def main():
         f.write("#define HEXAGON_TCG_FUNCS_H\n\n")
         if args.idef_parser:
             f.write('#include "idef-generated-emitter.h.inc"\n\n')
+        if args.helper_to_tcg:
+            f.write('#include "helper-to-tcg-emitted.h"\n\n')
 
         for tag in hex_common.tags:
             ## Skip the priv instructions
