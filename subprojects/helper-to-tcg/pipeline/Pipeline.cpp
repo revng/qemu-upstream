@@ -174,7 +174,8 @@ int main(int argc, char **argv)
         MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
     }
 
-    MPM.addPass(PrepareForOptPass());
+    AnnotationMapTy Annotations;
+    MPM.addPass(PrepareForOptPass(Annotations));
 
     {
         FunctionPassManager FPM;
