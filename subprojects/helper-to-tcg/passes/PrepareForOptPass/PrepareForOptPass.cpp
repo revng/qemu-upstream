@@ -15,11 +15,11 @@
 //  along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#pragma once
+#include <PrepareForOptPass.h>
 
-#include <llvm/Support/CommandLine.h>
+using namespace llvm;
 
-// Options for pipeline
-extern llvm::cl::list<std::string> InputFiles;
-// Options for PrepareForOptPass
-extern llvm::cl::opt<bool> TranslateAllHelpers;
+PreservedAnalyses PrepareForOptPass::run(Module &M, ModuleAnalysisManager &MAM)
+{
+    return PreservedAnalyses::none();
+}

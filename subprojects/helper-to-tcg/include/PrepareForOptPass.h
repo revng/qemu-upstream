@@ -17,9 +17,18 @@
 
 #pragma once
 
-#include <llvm/Support/CommandLine.h>
+#include <llvm/IR/PassManager.h>
 
-// Options for pipeline
-extern llvm::cl::list<std::string> InputFiles;
-// Options for PrepareForOptPass
-extern llvm::cl::opt<bool> TranslateAllHelpers;
+//
+// PrepareForOptPass
+//
+// Pass that performs either early information collection or basic culling of
+// the input module. simplify the module, or to allow for further optimization.
+//
+
+class PrepareForOptPass : public llvm::PassInfoMixin<PrepareForOptPass> {
+public:
+    PrepareForOptPass() {}
+    llvm::PreservedAnalyses run(llvm::Module &M,
+                                llvm::ModuleAnalysisManager &MAM);
+};

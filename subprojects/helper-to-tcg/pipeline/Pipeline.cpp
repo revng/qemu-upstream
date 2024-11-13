@@ -34,7 +34,9 @@
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Target/TargetMachine.h>
+#include <llvm/Transforms/Scalar/SROA.h>
 
+#include <PrepareForOptPass.h>
 #include "llvm-compat.h"
 
 using namespace llvm;
@@ -154,6 +156,31 @@ int main(int argc, char **argv)
     PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
 
     ModulePassManager MPM;
+
+    //
+    // Start by Filtering out functions we don't want to translate,
+    // following by a pass that removes `noinline`s that are inserted
+    // by clang on -O0. We finally run a UnifyExitNodesPass to make sure
+    // the helpers we parse only has a single exit.
+    //
+
+    {
+        FunctionPassManager FPM;
+#if LLVM_VERSION_MAJOR < 14
+        FPM.addPass(SROA());
+#else
+        FPM.addPass(SROAPass());
+#endif
+        MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+    }
+
+    MPM.addPass(PrepareForOptPass());
+
+    {
+        FunctionPassManager FPM;
+        FPM.addPass(compat::UnifyFunctionExitNodesPass());
+        MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+    }
 
     return 0;
 }

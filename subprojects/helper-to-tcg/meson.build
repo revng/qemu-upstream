@@ -43,6 +43,8 @@ endif
 sources = [
     'pipeline/Pipeline.cpp',
     'passes/llvm-compat.cpp',
+    'pipeline/Pipeline.cpp',
+    'passes/PrepareForOptPass/PrepareForOptPass.cpp',
 ]
 
 clang = bindir / 'clang'
