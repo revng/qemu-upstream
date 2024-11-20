@@ -29,9 +29,12 @@
 
 class PrepareForOptPass : public llvm::PassInfoMixin<PrepareForOptPass> {
     AnnotationMapTy &ResultAnnotations;
+    bool TranslateAllHelpers;
 public:
-    PrepareForOptPass(AnnotationMapTy &ResultAnnotations)
-        : ResultAnnotations(ResultAnnotations)
+    PrepareForOptPass(AnnotationMapTy &ResultAnnotations,
+                      bool TranslateAllHelpers)
+        : ResultAnnotations(ResultAnnotations),
+          TranslateAllHelpers(TranslateAllHelpers)
     {
     }
     llvm::PreservedAnalyses run(llvm::Module &M,

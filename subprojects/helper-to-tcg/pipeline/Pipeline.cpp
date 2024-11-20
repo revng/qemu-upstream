@@ -47,6 +47,11 @@ cl::OptionCategory Cat("helper-to-tcg Options");
 cl::opt<std::string> InputFile(cl::Positional, cl::desc("[input LLVM module]"),
                                cl::cat(Cat));
 
+// Options for PrepareForOptPass
+cl::opt<bool> TranslateAllHelpers(
+    "translate-all-helpers", cl::init(false),
+    cl::desc("Translate all functions starting with helper_*"), cl::cat(Cat));
+
 // Define a TargetTransformInfo (TTI) subclass, this allows for overriding
 // common per-llvm-target information expected by other LLVM passes, such
 // as the width of the largest scalar/vector registers.  Needed for consistent
@@ -175,7 +180,7 @@ int main(int argc, char **argv)
     }
 
     AnnotationMapTy Annotations;
-    MPM.addPass(PrepareForOptPass(Annotations));
+    MPM.addPass(PrepareForOptPass(Annotations, TranslateAllHelpers));
 
     {
         FunctionPassManager FPM;

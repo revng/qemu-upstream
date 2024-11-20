@@ -17,11 +17,16 @@
 
 #include <PrepareForOptPass.h>
 #include <Error.h>
+#include <FunctionAnnotation.h>
 
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instruction.h>
+#include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
+
+#include <queue>
+#include <set>
 
 using namespace llvm;
 
@@ -105,8 +110,96 @@ static void collectAnnotations(Module &M, AnnotationMapTy &ResultAnnotations)
     }
 }
 
+inline bool hasValidReturnTy(const Module &M, const Function *F)
+{
+    Type *RetTy = F->getReturnType();
+    return RetTy == Type::getVoidTy(F->getContext()) ||
+           RetTy == Type::getInt8Ty(M.getContext()) ||
+           RetTy == Type::getInt16Ty(M.getContext()) ||
+           RetTy == Type::getInt32Ty(M.getContext()) ||
+           RetTy == Type::getInt64Ty(M.getContext());
+}
+
+// Functions that should be removed:
+//   - No helper-to-tcg annotation (if TranslateAllHelpers == false);
+//   - Invalid (non-integer/void) return type
+static bool shouldRemoveFunction(const Module &M, const Function &F,
+                                 const AnnotationMapTy &AnnotationMap,
+                                 bool TranslateAllHelpers)
+{
+    if (F.isDeclaration()) {
+        return false;
+    }
+
+    if (!hasValidReturnTy(M, &F)) {
+        return true;
+    }
+
+    auto hasCorrectAnnotation = [](const Annotation &Ann) {
+        return Ann.Kind == AnnotationKind::HelperToTcg;
+    };
+
+    std::queue<const Function *> Worklist;
+    std::set<const Function *> Visited;
+    Worklist.push(&F);
+    while (!Worklist.empty()) {
+        const Function *F = Worklist.front();
+        Worklist.pop();
+        if (F->isDeclaration() or Visited.find(F) != Visited.end()) {
+            continue;
+        }
+        Visited.insert(F);
+
+        // Check for llvm-to-tcg annotation
+        if (TranslateAllHelpers and F->getName().startswith("helper_")) {
+            return false;
+        } else {
+            auto It = AnnotationMap.find(F);
+            if (It != AnnotationMap.end()) {
+                const auto &AnnotationVec = It->second;
+                auto Res = find_if(AnnotationVec, hasCorrectAnnotation);
+                if (Res != AnnotationVec.end()) {
+                    return false;
+                }
+            }
+        }
+
+        // Push functions that call F to the worklist, this way we retain
+        // functions that are being called by functions with the llvm-to-tcg
+        // annotation.
+        for (const User *U : F->users()) {
+            auto Call = dyn_cast<CallInst>(U);
+            if (!Call) {
+                continue;
+            }
+            const Function *ParentF = Call->getParent()->getParent();
+            Worklist.push(ParentF);
+        }
+    }
+
+    return true;
+}
+
+static void cullUnusedFunctions(Module &M, AnnotationMapTy &Annotations,
+                                bool TranslateAllHelpers)
+{
+    SmallVector<Function *, 16> FunctionsToRemove;
+    for (auto &F : M) {
+        if (shouldRemoveFunction(M, F, Annotations, TranslateAllHelpers)) {
+            FunctionsToRemove.push_back(&F);
+        }
+    }
+
+    for (Function *F : FunctionsToRemove) {
+        Annotations.erase(F);
+        F->setComdat(nullptr);
+        F->deleteBody();
+    }
+}
+
 PreservedAnalyses PrepareForOptPass::run(Module &M, ModuleAnalysisManager &MAM)
 {
     collectAnnotations(M, ResultAnnotations);
+    cullUnusedFunctions(M, ResultAnnotations, TranslateAllHelpers);
     return PreservedAnalyses::none();
 }
