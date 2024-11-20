@@ -34,12 +34,14 @@
 #include <llvm/Support/InitLLVM.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/ToolOutputFile.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Transforms/Scalar/DCE.h>
 #include <llvm/Transforms/Scalar/SROA.h>
 
 #include <PrepareForOptPass.h>
 #include <PrepareForTcgPass.h>
+#include <backend/TcgGenPass.h>
 #include <llvm-compat.h>
 
 using namespace llvm;
@@ -80,6 +82,30 @@ cl::opt<std::string>
                     cl::desc("Name of uint8_t[...] field in CPUArchState used "
                              "for allocating temporary gvec variables"),
                     cl::init("tmp_vmem"), cl::cat(Cat));
+
+// Options for TcgGenPass
+cl::opt<std::string> OutputSourceFile("output-source",
+                                      cl::desc("output .c file"),
+                                      cl::init("helper-to-tcg-emitted.c"),
+                                      cl::cat(Cat));
+
+cl::opt<std::string> OutputHeaderFile("output-header",
+                                      cl::desc("output .h file"),
+                                      cl::init("helper-to-tcg-emitted.h"),
+                                      cl::cat(Cat));
+
+cl::opt<std::string>
+    OutputEnabledFile("output-enabled",
+                      cl::desc("output list of parsed functions"),
+                      cl::init("helper-to-tcg-enabled"), cl::cat(Cat));
+
+cl::opt<std::string> OutputLogFile("output-log", cl::desc("output log file"),
+                                   cl::init("helper-to-tcg-log"), cl::cat(Cat));
+
+cl::opt<bool>
+    ErrorOnTranslationFailure("error-on-translation-failure",
+                              cl::desc("Abort translation on first failure"),
+                              cl::init(false), cl::cat(Cat));
 
 // Define a TargetTransformInfo (TTI) subclass, this allows for overriding
 // common per-llvm-target information expected by other LLVM passes, such
@@ -243,6 +269,29 @@ int main(int argc, char **argv)
         FPM.addPass(DCEPass());
         MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
     }
+
+    //
+    // Finally we run a backend pass that converts from LLVM IR to TCG,
+    // and emits the final code.
+    //
+
+    std::error_code EC;
+    ToolOutputFile OutSource(OutputSourceFile, EC, compat::OpenFlags);
+    ToolOutputFile OutHeader(OutputHeaderFile, EC, compat::OpenFlags);
+    ToolOutputFile OutEnabled(OutputEnabledFile, EC, compat::OpenFlags);
+    ToolOutputFile OutLog(OutputLogFile, EC, compat::OpenFlags);
+    assert(!EC);
+
+    MPM.addPass(TcgGenPass(OutSource.os(), OutHeader.os(), OutEnabled.os(),
+                           OutLog.os(), OutputHeaderFile, Annotations,
+                           TcgGlobals));
+
+    MPM.run(*M, MAM);
+
+    OutSource.keep();
+    OutHeader.keep();
+    OutEnabled.keep();
+    OutLog.keep();
 
     return 0;
 }

@@ -30,3 +30,9 @@ extern llvm::cl::opt<uint32_t> GuestPtrSize;
 // Options for TcgEmit
 extern llvm::cl::opt<std::string> MmuIndexFunction;
 extern llvm::cl::opt<std::string> TempVectorBlock;
+// Options for TcgGenPass
+extern llvm::cl::opt<std::string> OutputSourceFile;
+extern llvm::cl::opt<std::string> OutputHeaderFile;
+extern llvm::cl::opt<std::string> OutputEnabledFile;
+extern llvm::cl::opt<std::string> OutputLogFile;
+extern llvm::cl::opt<bool> ErrorOnTranslationFailure;
