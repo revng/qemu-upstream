@@ -23,6 +23,7 @@
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instruction.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/Intrinsics.h>
 #include <llvm/IR/Module.h>
 
 #include <queue>
@@ -197,9 +198,56 @@ static void cullUnusedFunctions(Module &M, AnnotationMapTy &Annotations,
     }
 }
 
+struct RetAddrReplaceInfo {
+    User *Parent;
+    unsigned OpIndex;
+    Type *Ty;
+};
+
+static void replaceRetaddrWithUndef(Module &M)
+{
+    // Replace uses of llvm.returnaddress arguments to cpu_ld* w. undef,
+    // and let optimizations remove it.  Needed as llvm.returnaddress is
+    // not reprensentable in TCG.
+    SmallVector<RetAddrReplaceInfo, 24> UsesToReplace;
+    Function *Retaddr = Intrinsic::getDeclaration(&M, Intrinsic::returnaddress);
+    // Loop over all calls to llvm.returnaddress
+    for (auto *CallUser : Retaddr->users()) {
+        auto *Call = dyn_cast<CallInst>(CallUser);
+        if (!Call) {
+            continue;
+        }
+        for (auto *PtrToIntUser : Call->users()) {
+            auto *Cast = dyn_cast<PtrToIntInst>(PtrToIntUser);
+            if (!Cast) {
+                continue;
+            }
+            for (Use &U : Cast->uses()) {
+                auto *Call = dyn_cast<CallInst>(U.getUser());
+                Function *F = Call->getCalledFunction();
+                StringRef Name = F->getName();
+                if (Name.startswith("cpu_ld") or Name.startswith("cpu_st")) {
+                    UsesToReplace.push_back({
+                        .Parent = U.getUser(),
+                        .OpIndex = U.getOperandNo(),
+                        .Ty = U->getType(),
+                    });
+                }
+            }
+        }
+    }
+
+    // Defer replacement to not invalidate iterators
+    for (RetAddrReplaceInfo &RI : UsesToReplace) {
+        auto *Undef = UndefValue::get(RI.Ty);
+        RI.Parent->setOperand(RI.OpIndex, Undef);
+    }
+}
+
 PreservedAnalyses PrepareForOptPass::run(Module &M, ModuleAnalysisManager &MAM)
 {
     collectAnnotations(M, ResultAnnotations);
     cullUnusedFunctions(M, ResultAnnotations, TranslateAllHelpers);
+    replaceRetaddrWithUndef(M);
     return PreservedAnalyses::none();
 }
