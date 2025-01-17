@@ -63,6 +63,9 @@ def main():
         f.write('#include "macros.h.inc"\n\n')
 
         for tag in hex_common.tags:
+            ## Skip instructions with overrides
+            if hex_common.skip_qemu_helper(tag):
+                continue
             ## Skip instructions translated by helper-to-tcg
             if hex_common.is_helper_to_tcg_enabled(tag):
                 continue
