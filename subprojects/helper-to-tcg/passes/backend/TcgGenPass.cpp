@@ -1311,7 +1311,7 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
                     }
                     tcg::genDeposit(Out, *MaybeRes, Args[0], Args[1], Args[2],
                                     Args[3]);
-                } else if (Name.startswith("helper")) {
+                } else if (StringRef(Name).startswith("helper")) {
                     // Map and adapt arguments to the call
                     SmallVector<TcgV, 8> IArgs;
                     for (auto Arg : Args) {
@@ -1679,7 +1679,6 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
 
 PreservedAnalyses TcgGenPass::run(Module &M, ModuleAnalysisManager &MAM)
 {
-    errs() << M << "\n";
     auto &CG = MAM.getResult<CallGraphAnalysis>(M);
 
     // Vector of translation results
