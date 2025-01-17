@@ -35,7 +35,6 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PatternMatch.h>
 #include <llvm/Support/Casting.h>
-#include <pthread.h>
 
 using namespace llvm;
 using namespace PatternMatch;
