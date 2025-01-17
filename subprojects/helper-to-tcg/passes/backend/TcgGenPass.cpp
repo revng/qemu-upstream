@@ -17,6 +17,7 @@
 
 #include "TcgGenPass.h"
 #include "CmdLineOptions.h"
+#include "Demangle.h"
 #include "Error.h"
 #include "FunctionAnnotation.h"
 #include "PseudoInst.h"
@@ -28,8 +29,8 @@
 #include <llvm/ADT/Optional.h>
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/ADT/SmallBitVector.h>
+#include <llvm/ADT/StringRef.h>
 #include <llvm/Analysis/CallGraph.h>
-#include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
@@ -785,32 +786,9 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
     const TempAllocationData TAD = MaybeTAD.get();
 
     {
-        StringRef NameRef(TF.Name);
-        std::string DemangledFuncName = demangle(TF.Name);
-        if (TF.Name != DemangledFuncName) {
-            // If the function name changed when trying to demangle the name,
-            // the name was mangled.  The resulting demangled name might look
-            // something like
-            //
-            //   namespace::subnamespace::function(...)
-            //
-            // extract the function name, this assumes 0 name collisions in
-            // the output.
-            size_t Index = 0;
-            NameRef = DemangledFuncName;
-            // Remove namespaces
-            Index = NameRef.find_last_of(':');
-            if (Index != StringRef::npos) {
-                NameRef = NameRef.substr(Index + 1);
-            }
-            // Remove arguments
-            Index = NameRef.find_first_of('(');
-            if (Index != StringRef::npos) {
-                NameRef = NameRef.substr(0, Index);
-            }
-        }
-
+        TF.Name = getDemangleFunctionName(TF.Name);
         // Remove prefix for helper functions to get cleaner emitted names
+        StringRef NameRef(TF.Name);
         TF.IsHelper = NameRef.consume_front("helper_");
         TF.Name = NameRef.str();
     }
@@ -1229,7 +1207,7 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
                     return mkError("Indirect function calls not handled: ", &I);
                 }
                 assert(F->hasName());
-                StringRef Name = F->getName();
+                std::string Name = getDemangleFunctionName(F->getName());
 
                 // These are the calls we currently no-op/ignore
                 if (Name == "__assert_fail" or
