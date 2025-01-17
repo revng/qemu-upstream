@@ -556,13 +556,14 @@ static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call,
 {
     Function *F = Call->getCalledFunction();
     std::string Name = getDemangleFunctionName(F->getName());
-    if (Name.consume_front("cpu_")) {
-        bool IsLoad = Name.consume_front("ld");
-        bool IsStore = !IsLoad and Name.consume_front("st");
+    StringRef NameRef(Name);
+    if (NameRef.consume_front("cpu_")) {
+        bool IsLoad = NameRef.consume_front("ld");
+        bool IsStore = !IsLoad and NameRef.consume_front("st");
         if (IsLoad or IsStore) {
-            bool Signed = !Name.consume_front("u");
+            bool Signed = !NameRef.consume_front("u");
             uint8_t Size = 0;
-            switch (Name[0]) {
+            switch (NameRef[0]) {
             case 'b':
                 Size = 1;
                 break;
@@ -581,8 +582,8 @@ static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call,
 
             uint8_t Endianness = 0; // unknown
             if (Size > 1) {
-                Name = Name.drop_front(2);
-                switch (Name[0]) {
+                NameRef = NameRef.drop_front(2);
+                switch (NameRef[0]) {
                 case 'l':
                     Endianness = 1;
                     break;
@@ -637,7 +638,7 @@ static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call,
 static void convertExceptionCallsToPseudoInst(Module &M, CallInst *Call)
 {
     Function *F = Call->getCalledFunction();
-    StringRef Name = F->getName();
+    std::string Name = getDemangleFunctionName(F->getName());
     // NOTE: expand as needed
     if (Name == "raise_exception_ra") {
         IRBuilder<> Builder(Call);
