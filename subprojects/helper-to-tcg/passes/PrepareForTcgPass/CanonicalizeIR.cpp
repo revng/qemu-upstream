@@ -35,6 +35,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PatternMatch.h>
 #include <llvm/Support/Casting.h>
+#include <pthread.h>
 
 using namespace llvm;
 using namespace PatternMatch;
@@ -81,8 +82,11 @@ static void simplifyVecBinOpWithSplat(EraseInstVec &InstToErase,
 
 static void convertSelectICmp(Module &M, SelectInst *Select, ICmpInst *ICmp);
 
-static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call);
+static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call,
+                                             EraseInstVec &InstToErase,
+                                             UsageCountMap &UsageMap);
 static void convertExceptionCallsToPseudoInst(Module &M, CallInst *Call);
+static void convertReturnAddrToPseudoInst(Module &M, CallInst *Call);
 static void convertVecStoreBitcastToPseudoInst(EraseInstVec &InstToErase,
                                                Module &M, StoreInst *Store);
 static void convertICmpBrToPseudInst(LLVMContext &Context,
@@ -126,8 +130,9 @@ void canonicalizeIR(Module &M)
 
             // Independent of above, can run at any point
             if (auto *Call = dyn_cast<CallInst>(&I)) {
-                convertQemuLoadStoreToPseudoInst(M, Call);
+                convertQemuLoadStoreToPseudoInst(M, Call, InstToErase, UsageMap);
                 convertExceptionCallsToPseudoInst(M, Call);
+                convertReturnAddrToPseudoInst(M, Call);
             }
 
             // Depends on other vector conversions performed above, needs to
@@ -545,7 +550,9 @@ static void convertSelectICmp(Module &M, SelectInst *Select, ICmpInst *ICmp)
 //
 // Makes the backend agnostic to what instructions or calls are used to
 // represent loads and stores.
-static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call)
+static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call,
+                                             EraseInstVec &InstToErase,
+                                             UsageCountMap &UsageMap)
 {
     Function *F = Call->getCalledFunction();
     StringRef Name = F->getName();
@@ -611,6 +618,7 @@ static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call)
                     Builder.CreateCall(Fn, {AddrOp, ValueOp, SizeOp, EndianOp});
             }
             Call->replaceAllUsesWith(NewCall);
+            InstToErase.push_back(Call);
         }
     }
 }
@@ -641,6 +649,38 @@ static void convertExceptionCallsToPseudoInst(Module &M, CallInst *Call)
         CallInst *NewCall = Builder.CreateCall(Fn, {Op0, Op1});
         Call->replaceAllUsesWith(NewCall);
     }
+}
+
+// Convert QEMU exception calls
+//
+//   %0 = call @llvm.returnaddr(...),
+//   %1 = ptrtoint %0
+//   ...
+//
+// to a pseudo instruction
+//
+//   %0 = call @getpc(...);
+//
+static void convertReturnAddrToPseudoInst(Module &M, CallInst *Call)
+{
+    Function *F = Call->getCalledFunction();
+    if (!F->isIntrinsic() or F->getIntrinsicID() != Intrinsic::returnaddress) {
+        return;
+    }
+    if (!Call->hasOneUse()) {
+        return;
+    }
+
+    auto *PtrToInt = dyn_cast<PtrToIntInst>(*Call->user_begin());
+    if (!PtrToInt) {
+        return;
+    }
+
+    IRBuilder<> Builder(PtrToInt);
+    FunctionCallee Fn =
+        pseudoInstFunction(M, GetPC, PtrToInt->getType(), {});
+    CallInst *NewCall = Builder.CreateCall(Fn, {});
+    PtrToInt->replaceAllUsesWith(NewCall);
 }
 
 //
