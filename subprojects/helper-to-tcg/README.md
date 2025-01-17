@@ -263,3 +263,6 @@ which produces `helpers.ll` to be fed into `helper-to-tcg`
 $ ./helper-to-tcg helpers.ll --translate-all-helpers
 ```
 where `--translate-all-helpers` means "translate all functions starting with helper_*". Finally, the above command produces `helper-to-tcg-emitted.[c|h]` with emitted TCG code.
+
+By default meson uses `llvm-config` to find LLVM, usually this corresponds to the latest version installed on the system. Since `helper-to-tcg` only supports LLVM 10-14, the path to `llvm-config` can be manually overriden using `meson configure -Dllvm_config_path=...` when needed. This is also useful for testing multiple LLVM versions. If `helper-to-tcg` is used as a part of `QEMU`, this is specified using `../configure -Dhelper_to_tcg:llvm_config_path=...`.
+
