@@ -359,6 +359,16 @@ static bool translatePseudoInstCall(raw_ostream &Out, CallInst *Call,
     case IdentityMap: {
         Mapper.mapExplicitly(Call, Args[0]);
     } break;
+    case GetPC: {
+        Expected<TcgV> MaybeRes = mapCallReturnValue(Mapper, Call);
+        if (!MaybeRes) {
+            return false;
+        }
+
+        SmallVector<TcgV, 1> IArgs;
+        IArgs.push_back(MaybeRes.get());
+        tcg::genCallHelper(Out, "helper_getpc", IArgs.begin(), IArgs.end());
+    } break;
     case PtrAdd: {
         if (Args[0].Kind == IrPtr or Args[0].Kind == IrEnv) {
             Expected<TcgV> MaybeRes = mapCallReturnValue(Mapper, Call);
@@ -577,7 +587,7 @@ static bool translatePseudoInstCall(raw_ostream &Out, CallInst *Call,
         default:
             abort();
         }
-        tcg::genQemuLoad(Out, *MaybeRes, Args[0], MemOpStream.str().c_str());
+        tcg::genQemuLoad(Out, *MaybeRes, tcg::materialize(Args[0]), MemOpStream.str().c_str());
     } break;
     case GuestStore: {
         uint8_t Size = cast<ConstantInt>(Call->getOperand(2))->getZExtValue();
@@ -1691,6 +1701,7 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
 
 PreservedAnalyses TcgGenPass::run(Module &M, ModuleAnalysisManager &MAM)
 {
+    errs() << M << "\n";
     auto &CG = MAM.getResult<CallGraphAnalysis>(M);
 
     // Vector of translation results
@@ -1713,11 +1724,11 @@ PreservedAnalyses TcgGenPass::run(Module &M, ModuleAnalysisManager &MAM)
             // If F in the call graph has already been translated and failed,
             // abort translation of the current function. (NOTE: use of .find()
             // over .contains() is to appease LLVM 10.)
-            bool FailedTranslation = FailedToTranslateFunction.find(F) !=
-                                     FailedToTranslateFunction.end();
-            if (FailedTranslation) {
-                break;
-            }
+            //bool FailedTranslation = FailedToTranslateFunction.find(F) !=
+            //                         FailedToTranslateFunction.end();
+            //if (FailedTranslation) {
+            //    break;
+            //}
 
             // Skip translation of invalid functions or functions that have
             // already been translated. (NOTE: use of .find() over .contains()
@@ -1733,19 +1744,18 @@ PreservedAnalyses TcgGenPass::run(Module &M, ModuleAnalysisManager &MAM)
             auto Translated = translateFunction(F, TcgGlobals, Annotations,
                                                 HasTranslatedFunction);
             if (!Translated) {
-                FailedToTranslateFunction.insert(F);
+                //FailedToTranslateFunction.insert(F);
                 OutLog << F->getName() << ": " << Translated.takeError()
                        << "\n";
                 if (ErrorOnTranslationFailure) {
                     return PreservedAnalyses::all();
                 } else {
-                    break;
                 }
+            } else {
+                TranslatedFunctions.push_back(*Translated);
+                HasTranslatedFunction.insert(F);
+                OutLog << F->getName() << ": OK\n";
             }
-
-            TranslatedFunctions.push_back(*Translated);
-            HasTranslatedFunction.insert(F);
-            OutLog << F->getName() << ": OK\n";
         }
     }
 
