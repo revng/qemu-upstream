@@ -16,8 +16,9 @@
 //
 
 #include "CanonicalizeIR.h"
-#include <PseudoInst.h>
-#include <llvm-compat.h>
+#include "Demangle.h"
+#include "PseudoInst.h"
+#include "llvm-compat.h"
 
 #include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/ADT/SmallSet.h>
@@ -554,7 +555,7 @@ static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call,
                                              UsageCountMap &UsageMap)
 {
     Function *F = Call->getCalledFunction();
-    StringRef Name = F->getName();
+    std::string Name = getDemangleFunctionName(F->getName());
     if (Name.consume_front("cpu_")) {
         bool IsLoad = Name.consume_front("ld");
         bool IsStore = !IsLoad and Name.consume_front("st");
