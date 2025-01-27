@@ -73,6 +73,7 @@ typedef struct StringBuffer {
     size_t size;
 } StringBuffer;
 
+__attribute__((format(printf, 2, 3)))
 static inline void fmt_append_to_stringbuffer(StringBuffer *buffer,
                                               const char *fmt, ...)
 {
@@ -182,14 +183,15 @@ void libtcg_dump_instruction_name_to_buffer(LibTcgInstruction *insn, char *buf,
         fmt_append_to_stringbuffer(&buffer, " ----");
 
         for (uint32_t i = 0; i < insn->nb_cargs; ++i) {
-            fmt_append_to_stringbuffer(&buffer, " %016x",
+            fmt_append_to_stringbuffer(&buffer, " %016lx",
                                        insn->constant_args[i].constant);
         }
     } else {
         fmt_append_to_stringbuffer(&buffer, "%s", insn_name);
     }
 
-    fmt_append_to_stringbuffer(&buffer, "\0");
+    assert(buffer.at < size);
+    buf[buffer.at] = 0;
 }
 
 /*
@@ -217,7 +219,7 @@ void libtcg_dump_instruction_to_buffer(LibTcgInstruction *insn, char *buf,
         fmt_append_to_stringbuffer(&buffer, "\n ----");
 
         for (uint32_t i = 0; i < insn->nb_cargs; ++i) {
-            fmt_append_to_stringbuffer(&buffer, " %016x",
+            fmt_append_to_stringbuffer(&buffer, " %016lx",
                                        insn->constant_args[i].constant);
         }
     } else if (c == LIBTCG_op_call) {
@@ -333,5 +335,6 @@ void libtcg_dump_instruction_to_buffer(LibTcgInstruction *insn, char *buf,
         }
     }
 
-    fmt_append_to_stringbuffer(&buffer, "\0");
+    assert(buffer.at < size);
+    buf[buffer.at] = 0;
 }
