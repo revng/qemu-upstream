@@ -30,7 +30,7 @@ void identityMap(Module &M, Function &F)
 {
     SmallVector<Instruction *, 8> InstToErase;
 
-    for (auto &I : instructions(F)) {
+    for (Instruction &I : instructions(F)) {
         auto *ZExt = dyn_cast<ZExtInst>(&I);
         if (ZExt) {
             auto *IntTy0 =
