@@ -2390,7 +2390,7 @@ void tcg_optimize(TCGContext *s)
 
         if (def->nb_oargs > 0) {
             bool skip = false;
-            for (int i = 0; i < def->nb_oargs; ++i) {
+            for (i = 0; i < def->nb_oargs; ++i) {
                 TCGTempKind kind = arg_temp(op->args[i])->kind;
                 if (kind == TEMP_GLOBAL || kind == TEMP_FIXED) {
                     skip = true;
