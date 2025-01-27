@@ -16,6 +16,7 @@
 //
 
 #include "TcgTempAllocationPass.h"
+#include "Demangle.h"
 #include "PseudoInst.h"
 #include "backend/TcgEmit.h"
 #include "llvm-compat.h"
@@ -313,7 +314,7 @@ static bool shouldSkipInstruction(const Instruction *const I,
     if (!F) {
         return false;
     }
-    StringRef Name = F->getName();
+    std::string Name = getDemangleFunctionName(F->getName());
     return (Name == "__assert_fail" or Name == "g_assertion_message_expr" or
             isa<DbgValueInst>(I) or isa<DbgLabelInst>(I));
 }
