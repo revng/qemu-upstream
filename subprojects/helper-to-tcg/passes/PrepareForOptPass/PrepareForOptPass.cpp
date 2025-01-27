@@ -15,6 +15,7 @@
 //  along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+#include "Demangle.h"
 #include <PrepareForOptPass.h>
 #include <Error.h>
 #include <FunctionAnnotation.h>
@@ -226,8 +227,10 @@ static void replaceRetaddrWithUndef(Module &M)
             for (Use &U : Cast->uses()) {
                 auto *Call = dyn_cast<CallInst>(U.getUser());
                 Function *F = Call->getCalledFunction();
-                StringRef Name = F->getName();
-                if (Name.startswith("cpu_ld") or Name.startswith("cpu_st")) {
+                std::string Name = getDemangleFunctionName(F->getName());
+                StringRef NameRef(Name);
+                if (NameRef.startswith("cpu_ld") or
+                    NameRef.startswith("cpu_st")) {
                     UsesToReplace.push_back({
                         .Parent = U.getUser(),
                         .OpIndex = U.getOperandNo(),
