@@ -37,7 +37,7 @@ typedef uint16_t uint16;
 typedef uint64_t img_address;
 
 typedef enum  {
-    instruction,
+    instruction_enum,
     call_instruction,
     branch_instruction,
     return_instruction,
@@ -571,7 +571,7 @@ static int Disassemble(const uint16 *data, char **dis,
                                        table[i].next_table,
                                        table[i].next_table_size,
                                        info);
-                } else if ((table[i].type == instruction) ||
+                } else if ((table[i].type == instruction_enum) ||
                            (table[i].type == call_instruction) ||
                            (table[i].type == branch_instruction) ||
                            (table[i].type == return_instruction)) {
@@ -16209,31 +16209,31 @@ static char *YIELD(uint64 instruction, Dis_info *info)
  *                             └─ P16.BR1
  *
  *
- *  (FP, DPS, and some minor instruction pools are omitted from the diagram)
+ *  (FP, DPS, and some minor instruction_enum pools are omitted from the diagram)
  *
  */
 
 static const Pool P_SYSCALL[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfffc0000, 0x00080000, &SYSCALL_32_      , 0,
        0x0                 },        /* SYSCALL[32] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfffc0000, 0x000c0000, &HYPCALL          , 0,
        CP0_ | VZ_          },        /* HYPCALL */
 };
 
 
 static const Pool P_RI[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfff80000, 0x00000000, &SIGRIE           , 0,
        0x0                 },        /* SIGRIE */
     { pool                , P_SYSCALL           , 2   , 32,
        0xfff80000, 0x00080000, 0                      , 0,
        0x0                 },        /* P.SYSCALL */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfff80000, 0x00100000, &BREAK_32_        , 0,
        0x0                 },        /* BREAK[32] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfff80000, 0x00180000, &SDBBP_32_        , 0,
        EJTAG_              },        /* SDBBP[32] */
 };
@@ -16243,47 +16243,47 @@ static const Pool P_ADDIU[2] = {
     { pool                , P_RI                , 4   , 32,
        0xffe00000, 0x00000000, 0                      , 0,
        0x0                 },        /* P.RI */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000000, 0x00000000, &ADDIU_32_        , &ADDIU_32__cond   ,
        0x0                 },        /* ADDIU[32] */
 };
 
 
 static const Pool P_TRAP[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000000, &TEQ              , 0,
        XMMS_               },        /* TEQ */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000400, &TNE              , 0,
        XMMS_               },        /* TNE */
 };
 
 
 static const Pool P_CMOVE[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000210, &MOVZ             , 0,
        0x0                 },        /* MOVZ */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000610, &MOVN             , 0,
        0x0                 },        /* MOVN */
 };
 
 
 static const Pool P_D_MT_VPE[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1f3fff, 0x20010ab0, &DMT              , 0,
        MT_                 },        /* DMT */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1f3fff, 0x20000ab0, &DVPE             , 0,
        MT_                 },        /* DVPE */
 };
 
 
 static const Pool P_E_MT_VPE[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1f3fff, 0x20010eb0, &EMT              , 0,
        MT_                 },        /* EMT */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1f3fff, 0x20000eb0, &EVPE             , 0,
        MT_                 },        /* EVPE */
 };
@@ -16328,10 +16328,10 @@ static const Pool P_MT_VPE[8] = {
 
 
 static const Pool P_DVP[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x20000390, &DVP              , 0,
        0x0                 },        /* DVP */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x20000790, &EVP              , 0,
        0x0                 },        /* EVP */
 };
@@ -16341,7 +16341,7 @@ static const Pool P_SLTU[2] = {
     { pool                , P_DVP               , 2   , 32,
        0xfc00fbff, 0x20000390, 0                      , 0,
        0x0                 },        /* P.DVP */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000390, &SLTU             , &SLTU_cond        ,
        0x0                 },        /* SLTU */
 };
@@ -16351,13 +16351,13 @@ static const Pool _POOL32A0[128] = {
     { pool                , P_TRAP              , 2   , 32,
        0xfc0003ff, 0x20000000, 0                      , 0,
        0x0                 },        /* P.TRAP */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000008, &SEB              , 0,
        XMMS_               },        /* SEB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000010, &SLLV             , 0,
        0x0                 },        /* SLLV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000018, &MUL_32_          , 0,
        0x0                 },        /* MUL[32] */
     { reserved_block      , 0                   , 0   , 32,
@@ -16366,22 +16366,22 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000028, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(5) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000030, &MFC0             , 0,
        0x0                 },        /* MFC0 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000038, &MFHC0            , 0,
        CP0_ | MVH_         },        /* MFHC0 */
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000040, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(8) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000048, &SEH              , 0,
        0x0                 },        /* SEH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000050, &SRLV             , 0,
        0x0                 },        /* SRLV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000058, &MUH              , 0,
        0x0                 },        /* MUH */
     { reserved_block      , 0                   , 0   , 32,
@@ -16390,10 +16390,10 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000068, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(13) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000070, &MTC0             , 0,
        CP0_                },        /* MTC0 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000078, &MTHC0            , 0,
        CP0_ | MVH_         },        /* MTHC0 */
     { reserved_block      , 0                   , 0   , 32,
@@ -16402,10 +16402,10 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000088, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(17) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000090, &SRAV             , 0,
        0x0                 },        /* SRAV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000098, &MULU             , 0,
        0x0                 },        /* MULU */
     { reserved_block      , 0                   , 0   , 32,
@@ -16414,10 +16414,10 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200000a8, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(21) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200000b0, &MFGC0            , 0,
        CP0_ | VZ_          },        /* MFGC0 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200000b8, &MFHGC0           , 0,
        CP0_ | VZ_ | MVH_   },        /* MFHGC0 */
     { reserved_block      , 0                   , 0   , 32,
@@ -16426,10 +16426,10 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200000c8, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(25) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200000d0, &ROTRV            , 0,
        0x0                 },        /* ROTRV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200000d8, &MUHU             , 0,
        0x0                 },        /* MUHU */
     { reserved_block      , 0                   , 0   , 32,
@@ -16438,10 +16438,10 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200000e8, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(29) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200000f0, &MTGC0            , 0,
        CP0_ | VZ_          },        /* MTGC0 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200000f8, &MTHGC0           , 0,
        CP0_ | VZ_ | MVH_   },        /* MTHGC0 */
     { reserved_block      , 0                   , 0   , 32,
@@ -16450,10 +16450,10 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000108, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(33) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000110, &ADD              , 0,
        XMMS_               },        /* ADD */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000118, &DIV              , 0,
        0x0                 },        /* DIV */
     { reserved_block      , 0                   , 0   , 32,
@@ -16462,7 +16462,7 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000128, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(37) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000130, &DMFC0            , 0,
        CP0_ | MIPS64_      },        /* DMFC0 */
     { reserved_block      , 0                   , 0   , 32,
@@ -16474,10 +16474,10 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000148, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(41) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000150, &ADDU_32_         , 0,
        0x0                 },        /* ADDU[32] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000158, &MOD              , 0,
        0x0                 },        /* MOD */
     { reserved_block      , 0                   , 0   , 32,
@@ -16486,7 +16486,7 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000168, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(45) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000170, &DMTC0            , 0,
        CP0_ | MIPS64_      },        /* DMTC0 */
     { reserved_block      , 0                   , 0   , 32,
@@ -16498,10 +16498,10 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000188, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(49) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000190, &SUB              , 0,
        XMMS_               },        /* SUB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000198, &DIVU             , 0,
        0x0                 },        /* DIVU */
     { reserved_block      , 0                   , 0   , 32,
@@ -16510,22 +16510,22 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200001a8, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(53) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200001b0, &DMFGC0           , 0,
        CP0_ | MIPS64_ | VZ_},        /* DMFGC0 */
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200001b8, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(55) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200001c0, &RDHWR            , 0,
        XMMS_               },        /* RDHWR */
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200001c8, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(57) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200001d0, &SUBU_32_         , 0,
        0x0                 },        /* SUBU[32] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200001d8, &MODU             , 0,
        0x0                 },        /* MODU */
     { reserved_block      , 0                   , 0   , 32,
@@ -16534,7 +16534,7 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200001e8, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(61) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200001f0, &DMTGC0           , 0,
        CP0_ | MIPS64_ | VZ_},        /* DMTGC0 */
     { reserved_block      , 0                   , 0   , 32,
@@ -16555,13 +16555,13 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000220, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(68) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000228, &FORK             , 0,
        MT_                 },        /* FORK */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000230, &MFTR             , 0,
        MT_                 },        /* MFTR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000238, &MFHTR            , 0,
        MT_                 },        /* MFHTR */
     { reserved_block      , 0                   , 0   , 32,
@@ -16570,7 +16570,7 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000248, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(73) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000250, &AND_32_          , 0,
        0x0                 },        /* AND[32] */
     { reserved_block      , 0                   , 0   , 32,
@@ -16579,13 +16579,13 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000260, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(76) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000268, &YIELD            , 0,
        MT_                 },        /* YIELD */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000270, &MTTR             , 0,
        MT_                 },        /* MTTR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000278, &MTHTR            , 0,
        MT_                 },        /* MTHTR */
     { reserved_block      , 0                   , 0   , 32,
@@ -16594,7 +16594,7 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000288, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(81) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000290, &OR_32_           , 0,
        0x0                 },        /* OR[32] */
     { reserved_block      , 0                   , 0   , 32,
@@ -16618,7 +16618,7 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200002c8, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(89) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200002d0, &NOR              , 0,
        0x0                 },        /* NOR */
     { reserved_block      , 0                   , 0   , 32,
@@ -16642,7 +16642,7 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000308, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(97) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000310, &XOR_32_          , 0,
        0x0                 },        /* XOR[32] */
     { reserved_block      , 0                   , 0   , 32,
@@ -16666,7 +16666,7 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000348, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(105) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000350, &SLT              , 0,
        0x0                 },        /* SLT */
     { reserved_block      , 0                   , 0   , 32,
@@ -16714,7 +16714,7 @@ static const Pool _POOL32A0[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200003c8, 0                      , 0,
        0x0                 },        /* _POOL32A0~*(121) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200003d0, &SOV              , 0,
        0x0                 },        /* SOV */
     { reserved_block      , 0                   , 0   , 32,
@@ -16736,183 +16736,183 @@ static const Pool _POOL32A0[128] = {
 
 
 static const Pool ADDQ__S__PH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000000d, &ADDQ_PH          , 0,
        DSP_                },        /* ADDQ.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000040d, &ADDQ_S_PH        , 0,
        DSP_                },        /* ADDQ_S.PH */
 };
 
 
 static const Pool MUL__S__PH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000002d, &MUL_PH           , 0,
        DSP_                },        /* MUL.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000042d, &MUL_S_PH         , 0,
        DSP_                },        /* MUL_S.PH */
 };
 
 
 static const Pool ADDQH__R__PH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000004d, &ADDQH_PH         , 0,
        DSP_                },        /* ADDQH.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000044d, &ADDQH_R_PH       , 0,
        DSP_                },        /* ADDQH_R.PH */
 };
 
 
 static const Pool ADDQH__R__W[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000008d, &ADDQH_W          , 0,
        DSP_                },        /* ADDQH.W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000048d, &ADDQH_R_W        , 0,
        DSP_                },        /* ADDQH_R.W */
 };
 
 
 static const Pool ADDU__S__QB[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200000cd, &ADDU_QB          , 0,
        DSP_                },        /* ADDU.QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200004cd, &ADDU_S_QB        , 0,
        DSP_                },        /* ADDU_S.QB */
 };
 
 
 static const Pool ADDU__S__PH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000010d, &ADDU_PH          , 0,
        DSP_                },        /* ADDU.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000050d, &ADDU_S_PH        , 0,
        DSP_                },        /* ADDU_S.PH */
 };
 
 
 static const Pool ADDUH__R__QB[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000014d, &ADDUH_QB         , 0,
        DSP_                },        /* ADDUH.QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000054d, &ADDUH_R_QB       , 0,
        DSP_                },        /* ADDUH_R.QB */
 };
 
 
 static const Pool SHRAV__R__PH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000018d, &SHRAV_PH         , 0,
        DSP_                },        /* SHRAV.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000058d, &SHRAV_R_PH       , 0,
        DSP_                },        /* SHRAV_R.PH */
 };
 
 
 static const Pool SHRAV__R__QB[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200001cd, &SHRAV_QB         , 0,
        DSP_                },        /* SHRAV.QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200005cd, &SHRAV_R_QB       , 0,
        DSP_                },        /* SHRAV_R.QB */
 };
 
 
 static const Pool SUBQ__S__PH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000020d, &SUBQ_PH          , 0,
        DSP_                },        /* SUBQ.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000060d, &SUBQ_S_PH        , 0,
        DSP_                },        /* SUBQ_S.PH */
 };
 
 
 static const Pool SUBQH__R__PH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000024d, &SUBQH_PH         , 0,
        DSP_                },        /* SUBQH.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000064d, &SUBQH_R_PH       , 0,
        DSP_                },        /* SUBQH_R.PH */
 };
 
 
 static const Pool SUBQH__R__W[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000028d, &SUBQH_W          , 0,
        DSP_                },        /* SUBQH.W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000068d, &SUBQH_R_W        , 0,
        DSP_                },        /* SUBQH_R.W */
 };
 
 
 static const Pool SUBU__S__QB[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200002cd, &SUBU_QB          , 0,
        DSP_                },        /* SUBU.QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200006cd, &SUBU_S_QB        , 0,
        DSP_                },        /* SUBU_S.QB */
 };
 
 
 static const Pool SUBU__S__PH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000030d, &SUBU_PH          , 0,
        DSP_                },        /* SUBU.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000070d, &SUBU_S_PH        , 0,
        DSP_                },        /* SUBU_S.PH */
 };
 
 
 static const Pool SHRA__R__PH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000335, &SHRA_PH          , 0,
        DSP_                },        /* SHRA.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000735, &SHRA_R_PH        , 0,
        DSP_                },        /* SHRA_R.PH */
 };
 
 
 static const Pool SUBUH__R__QB[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000034d, &SUBUH_QB         , 0,
        DSP_                },        /* SUBUH.QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000074d, &SUBUH_R_QB       , 0,
        DSP_                },        /* SUBUH_R.QB */
 };
 
 
 static const Pool SHLLV__S__PH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000038d, &SHLLV_PH         , 0,
        DSP_                },        /* SHLLV.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x2000078d, &SHLLV_S_PH       , 0,
        DSP_                },        /* SHLLV_S.PH */
 };
 
 
 static const Pool SHLL__S__PH[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000fff, 0x200003b5, &SHLL_PH          , 0,
        DSP_                },        /* SHLL.PH */
     { reserved_block      , 0                   , 0   , 32,
        0xfc000fff, 0x200007b5, 0                      , 0,
        0x0                 },        /* SHLL[_S].PH~*(1) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000fff, 0x20000bb5, &SHLL_S_PH        , 0,
        DSP_                },        /* SHLL_S.PH */
     { reserved_block      , 0                   , 0   , 32,
@@ -16922,17 +16922,17 @@ static const Pool SHLL__S__PH[4] = {
 
 
 static const Pool PRECR_SRA__R__PH_W[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200003cd, &PRECR_SRA_PH_W   , 0,
        DSP_                },        /* PRECR_SRA.PH.W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200007cd, &PRECR_SRA_R_PH_W , 0,
        DSP_                },        /* PRECR_SRA_R.PH.W */
 };
 
 
 static const Pool _POOL32A5[128] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000005, &CMP_EQ_PH        , 0,
        DSP_                },        /* CMP.EQ.PH */
     { pool                , ADDQ__S__PH         , 2   , 32,
@@ -16941,10 +16941,10 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000015, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(2) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x2000001d, &SHILO            , 0,
        DSP_                },        /* SHILO */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000025, &MULEQ_S_W_PHL    , 0,
        DSP_                },        /* MULEQ_S.W.PHL */
     { pool                , MUL__S__PH          , 2   , 32,
@@ -16953,10 +16953,10 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000035, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(6) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x2000003d, &REPL_PH          , 0,
        DSP_                },        /* REPL.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000045, &CMP_LT_PH        , 0,
        DSP_                },        /* CMP.LT.PH */
     { pool                , ADDQH__R__PH        , 2   , 32,
@@ -16968,10 +16968,10 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x2000005d, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(11) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000065, &MULEQ_S_W_PHR    , 0,
        DSP_                },        /* MULEQ_S.W.PHR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x2000006d, &PRECR_QB_PH      , 0,
        DSP_                },        /* PRECR.QB.PH */
     { reserved_block      , 0                   , 0   , 32,
@@ -16980,13 +16980,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x2000007d, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(15) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000085, &CMP_LE_PH        , 0,
        DSP_                },        /* CMP.LE.PH */
     { pool                , ADDQH__R__W         , 2   , 32,
        0xfc0003ff, 0x2000008d, 0                      , 0,
        0x0                 },        /* ADDQH[_R].W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000095, &MULEU_S_PH_QBL   , 0,
        DSP_                },        /* MULEU_S.PH.QBL */
     { reserved_block      , 0                   , 0   , 32,
@@ -16995,7 +16995,7 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200000a5, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(20) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200000ad, &PRECRQ_QB_PH     , 0,
        DSP_                },        /* PRECRQ.QB.PH */
     { reserved_block      , 0                   , 0   , 32,
@@ -17004,13 +17004,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200000bd, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(23) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200000c5, &CMPGU_EQ_QB      , 0,
        DSP_                },        /* CMPGU.EQ.QB */
     { pool                , ADDU__S__QB         , 2   , 32,
        0xfc0003ff, 0x200000cd, 0                      , 0,
        0x0                 },        /* ADDU[_S].QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200000d5, &MULEU_S_PH_QBR   , 0,
        DSP_                },        /* MULEU_S.PH.QBR */
     { reserved_block      , 0                   , 0   , 32,
@@ -17019,7 +17019,7 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200000e5, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(28) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200000ed, &PRECRQ_PH_W      , 0,
        DSP_                },        /* PRECRQ.PH.W */
     { reserved_block      , 0                   , 0   , 32,
@@ -17028,13 +17028,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200000fd, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(31) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000105, &CMPGU_LT_QB      , 0,
        DSP_                },        /* CMPGU.LT.QB */
     { pool                , ADDU__S__PH         , 2   , 32,
        0xfc0003ff, 0x2000010d, 0                      , 0,
        0x0                 },        /* ADDU[_S].PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000115, &MULQ_RS_PH       , 0,
        DSP_                },        /* MULQ_RS.PH */
     { reserved_block      , 0                   , 0   , 32,
@@ -17043,7 +17043,7 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000125, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(36) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x2000012d, &PRECRQ_RS_PH_W   , 0,
        DSP_                },        /* PRECRQ_RS.PH.W */
     { reserved_block      , 0                   , 0   , 32,
@@ -17052,13 +17052,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x2000013d, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(39) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000145, &CMPGU_LE_QB      , 0,
        DSP_                },        /* CMPGU.LE.QB */
     { pool                , ADDUH__R__QB        , 2   , 32,
        0xfc0003ff, 0x2000014d, 0                      , 0,
        0x0                 },        /* ADDUH[_R].QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000155, &MULQ_S_PH        , 0,
        DSP_                },        /* MULQ_S.PH */
     { reserved_block      , 0                   , 0   , 32,
@@ -17067,7 +17067,7 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000165, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(44) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x2000016d, &PRECRQU_S_QB_PH  , 0,
        DSP_                },        /* PRECRQU_S.QB.PH */
     { reserved_block      , 0                   , 0   , 32,
@@ -17076,13 +17076,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x2000017d, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(47) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000185, &CMPGDU_EQ_QB     , 0,
        DSP_                },        /* CMPGDU.EQ.QB */
     { pool                , SHRAV__R__PH        , 2   , 32,
        0xfc0003ff, 0x2000018d, 0                      , 0,
        0x0                 },        /* SHRAV[_R].PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000195, &MULQ_RS_W        , 0,
        DSP_                },        /* MULQ_RS.W */
     { reserved_block      , 0                   , 0   , 32,
@@ -17091,7 +17091,7 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200001a5, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(52) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200001ad, &PACKRL_PH        , 0,
        DSP_                },        /* PACKRL.PH */
     { reserved_block      , 0                   , 0   , 32,
@@ -17100,13 +17100,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200001bd, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(55) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200001c5, &CMPGDU_LT_QB     , 0,
        DSP_                },        /* CMPGDU.LT.QB */
     { pool                , SHRAV__R__QB        , 2   , 32,
        0xfc0003ff, 0x200001cd, 0                      , 0,
        0x0                 },        /* SHRAV[_R].QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200001d5, &MULQ_S_W         , 0,
        DSP_                },        /* MULQ_S.W */
     { reserved_block      , 0                   , 0   , 32,
@@ -17115,7 +17115,7 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200001e5, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(60) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200001ed, &PICK_QB          , 0,
        DSP_                },        /* PICK.QB */
     { reserved_block      , 0                   , 0   , 32,
@@ -17124,13 +17124,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200001fd, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(63) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000205, &CMPGDU_LE_QB     , 0,
        DSP_                },        /* CMPGDU.LE.QB */
     { pool                , SUBQ__S__PH         , 2   , 32,
        0xfc0003ff, 0x2000020d, 0                      , 0,
        0x0                 },        /* SUBQ[_S].PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000215, &APPEND           , 0,
        DSP_                },        /* APPEND */
     { reserved_block      , 0                   , 0   , 32,
@@ -17139,7 +17139,7 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x20000225, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(68) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x2000022d, &PICK_PH          , 0,
        DSP_                },        /* PICK.PH */
     { reserved_block      , 0                   , 0   , 32,
@@ -17148,13 +17148,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x2000023d, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(71) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000245, &CMPU_EQ_QB       , 0,
        DSP_                },        /* CMPU.EQ.QB */
     { pool                , SUBQH__R__PH        , 2   , 32,
        0xfc0003ff, 0x2000024d, 0                      , 0,
        0x0                 },        /* SUBQH[_R].PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000255, &PREPEND          , 0,
        DSP_                },        /* PREPEND */
     { reserved_block      , 0                   , 0   , 32,
@@ -17172,13 +17172,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x2000027d, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(79) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000285, &CMPU_LT_QB       , 0,
        DSP_                },        /* CMPU.LT.QB */
     { pool                , SUBQH__R__W         , 2   , 32,
        0xfc0003ff, 0x2000028d, 0                      , 0,
        0x0                 },        /* SUBQH[_R].W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000295, &MODSUB           , 0,
        DSP_                },        /* MODSUB */
     { reserved_block      , 0                   , 0   , 32,
@@ -17196,13 +17196,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200002bd, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(87) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200002c5, &CMPU_LE_QB       , 0,
        DSP_                },        /* CMPU.LE.QB */
     { pool                , SUBU__S__QB         , 2   , 32,
        0xfc0003ff, 0x200002cd, 0                      , 0,
        0x0                 },        /* SUBU[_S].QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200002d5, &SHRAV_R_W        , 0,
        DSP_                },        /* SHRAV_R.W */
     { reserved_block      , 0                   , 0   , 32,
@@ -17214,19 +17214,19 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200002ed, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(93) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200002f5, &SHRA_R_W         , 0,
        DSP_                },        /* SHRA_R.W */
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200002fd, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(95) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000305, &ADDQ_S_W         , 0,
        DSP_                },        /* ADDQ_S.W */
     { pool                , SUBU__S__PH         , 2   , 32,
        0xfc0003ff, 0x2000030d, 0                      , 0,
        0x0                 },        /* SUBU[_S].PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000315, &SHRLV_PH         , 0,
        DSP_                },        /* SHRLV.PH */
     { reserved_block      , 0                   , 0   , 32,
@@ -17244,13 +17244,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x2000033d, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(103) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000345, &SUBQ_S_W         , 0,
        DSP_                },        /* SUBQ_S.W */
     { pool                , SUBUH__R__QB        , 2   , 32,
        0xfc0003ff, 0x2000034d, 0                      , 0,
        0x0                 },        /* SUBUH[_R].QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000355, &SHRLV_QB         , 0,
        DSP_                },        /* SHRLV.QB */
     { reserved_block      , 0                   , 0   , 32,
@@ -17268,13 +17268,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x2000037d, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(111) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000385, &ADDSC            , 0,
        DSP_                },        /* ADDSC */
     { pool                , SHLLV__S__PH        , 2   , 32,
        0xfc0003ff, 0x2000038d, 0                      , 0,
        0x0                 },        /* SHLLV[_S].PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x20000395, &SHLLV_QB         , 0,
        DSP_                },        /* SHLLV.QB */
     { reserved_block      , 0                   , 0   , 32,
@@ -17292,13 +17292,13 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200003bd, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(119) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200003c5, &ADDWC            , 0,
        DSP_                },        /* ADDWC */
     { pool                , PRECR_SRA__R__PH_W  , 2   , 32,
        0xfc0003ff, 0x200003cd, 0                      , 0,
        0x0                 },        /* PRECR_SRA[_R].PH.W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200003d5, &SHLLV_S_W        , 0,
        DSP_                },        /* SHLLV_S.W */
     { reserved_block      , 0                   , 0   , 32,
@@ -17310,7 +17310,7 @@ static const Pool _POOL32A5[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0003ff, 0x200003ed, 0                      , 0,
        0x0                 },        /* _POOL32A5~*(125) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0x200003f5, &SHLL_S_W         , 0,
        DSP_                },        /* SHLL_S.W */
     { reserved_block      , 0                   , 0   , 32,
@@ -17320,52 +17320,52 @@ static const Pool _POOL32A5[128] = {
 
 
 static const Pool PP_LSX[16] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000007, &LBX              , 0,
        0x0                 },        /* LBX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000087, &SBX              , 0,
        XMMS_               },        /* SBX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000107, &LBUX             , 0,
        0x0                 },        /* LBUX */
     { reserved_block      , 0                   , 0   , 32,
        0xfc0007ff, 0x20000187, 0                      , 0,
        0x0                 },        /* PP.LSX~*(3) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000207, &LHX              , 0,
        0x0                 },        /* LHX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000287, &SHX              , 0,
        XMMS_               },        /* SHX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000307, &LHUX             , 0,
        0x0                 },        /* LHUX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000387, &LWUX             , 0,
        MIPS64_             },        /* LWUX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000407, &LWX              , 0,
        0x0                 },        /* LWX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000487, &SWX              , 0,
        XMMS_               },        /* SWX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000507, &LWC1X            , 0,
        CP1_                },        /* LWC1X */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000587, &SWC1X            , 0,
        CP1_                },        /* SWC1X */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000607, &LDX              , 0,
        MIPS64_             },        /* LDX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000687, &SDX              , 0,
        MIPS64_             },        /* SDX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000707, &LDC1X            , 0,
        CP1_                },        /* LDC1X */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000787, &SDC1X            , 0,
        CP1_                },        /* SDC1X */
 };
@@ -17384,40 +17384,40 @@ static const Pool PP_LSXS[16] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0007ff, 0x200001c7, 0                      , 0,
        0x0                 },        /* PP.LSXS~*(3) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000247, &LHXS             , 0,
        0x0                 },        /* LHXS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200002c7, &SHXS             , 0,
        XMMS_               },        /* SHXS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000347, &LHUXS            , 0,
        0x0                 },        /* LHUXS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200003c7, &LWUXS            , 0,
        MIPS64_             },        /* LWUXS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000447, &LWXS_32_         , 0,
        0x0                 },        /* LWXS[32] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200004c7, &SWXS             , 0,
        XMMS_               },        /* SWXS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000547, &LWC1XS           , 0,
        CP1_                },        /* LWC1XS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200005c7, &SWC1XS           , 0,
        CP1_                },        /* SWC1XS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000647, &LDXS             , 0,
        MIPS64_             },        /* LDXS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200006c7, &SDXS             , 0,
        MIPS64_             },        /* SDXS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x20000747, &LDC1XS           , 0,
        CP1_                },        /* LDC1XS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0x200007c7, &SDC1XS           , 0,
        CP1_                },        /* SDC1XS */
 };
@@ -17434,26 +17434,26 @@ static const Pool P_LSX[2] = {
 
 
 static const Pool POOL32Axf_1_0[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x2000007f, &MFHI_DSP_        , 0,
        DSP_                },        /* MFHI[DSP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x2000107f, &MFLO_DSP_        , 0,
        DSP_                },        /* MFLO[DSP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x2000207f, &MTHI_DSP_        , 0,
        DSP_                },        /* MTHI[DSP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x2000307f, &MTLO_DSP_        , 0,
        DSP_                },        /* MTLO[DSP] */
 };
 
 
 static const Pool POOL32Axf_1_1[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x2000027f, &MTHLIP           , 0,
        DSP_                },        /* MTHLIP */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x2000127f, &SHILOV           , 0,
        DSP_                },        /* SHILOV */
     { reserved_block      , 0                   , 0   , 32,
@@ -17466,46 +17466,46 @@ static const Pool POOL32Axf_1_1[4] = {
 
 
 static const Pool POOL32Axf_1_3[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x2000067f, &RDDSP            , 0,
        DSP_                },        /* RDDSP */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x2000167f, &WRDSP            , 0,
        DSP_                },        /* WRDSP */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x2000267f, &EXTP             , 0,
        DSP_                },        /* EXTP */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x2000367f, &EXTPDP           , 0,
        DSP_                },        /* EXTPDP */
 };
 
 
 static const Pool POOL32Axf_1_4[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc001fff, 0x2000087f, &SHLL_QB          , 0,
        DSP_                },        /* SHLL.QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc001fff, 0x2000187f, &SHRL_QB          , 0,
        DSP_                },        /* SHRL.QB */
 };
 
 
 static const Pool MAQ_S_A__W_PHR[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20000a7f, &MAQ_S_W_PHR      , 0,
        DSP_                },        /* MAQ_S.W.PHR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20002a7f, &MAQ_SA_W_PHR     , 0,
        DSP_                },        /* MAQ_SA.W.PHR */
 };
 
 
 static const Pool MAQ_S_A__W_PHL[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20001a7f, &MAQ_S_W_PHL      , 0,
        DSP_                },        /* MAQ_S.W.PHL */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20003a7f, &MAQ_SA_W_PHL     , 0,
        DSP_                },        /* MAQ_SA.W.PHL */
 };
@@ -17522,16 +17522,16 @@ static const Pool POOL32Axf_1_5[2] = {
 
 
 static const Pool POOL32Axf_1_7[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20000e7f, &EXTR_W           , 0,
        DSP_                },        /* EXTR.W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20001e7f, &EXTR_R_W         , 0,
        DSP_                },        /* EXTR_R.W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20002e7f, &EXTR_RS_W        , 0,
        DSP_                },        /* EXTR_RS.W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20003e7f, &EXTR_S_H         , 0,
        DSP_                },        /* EXTR_S.H */
 };
@@ -17566,112 +17566,112 @@ static const Pool POOL32Axf_1[8] = {
 
 
 static const Pool POOL32Axf_2_DSP__0_7[8] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200000bf, &DPA_W_PH         , 0,
        DSP_                },        /* DPA.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200002bf, &DPAQ_S_W_PH      , 0,
        DSP_                },        /* DPAQ_S.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200004bf, &DPS_W_PH         , 0,
        DSP_                },        /* DPS.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200006bf, &DPSQ_S_W_PH      , 0,
        DSP_                },        /* DPSQ_S.W.PH */
     { reserved_block      , 0                   , 0   , 32,
        0xfc003fff, 0x200008bf, 0                      , 0,
        0x0                 },        /* POOL32Axf_2(DSP)_0_7~*(4) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20000abf, &MADD_DSP_        , 0,
        DSP_                },        /* MADD[DSP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20000cbf, &MULT_DSP_        , 0,
        DSP_                },        /* MULT[DSP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20000ebf, &EXTRV_W          , 0,
        DSP_                },        /* EXTRV.W */
 };
 
 
 static const Pool POOL32Axf_2_DSP__8_15[8] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200010bf, &DPAX_W_PH        , 0,
        DSP_                },        /* DPAX.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200012bf, &DPAQ_SA_L_W      , 0,
        DSP_                },        /* DPAQ_SA.L.W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200014bf, &DPSX_W_PH        , 0,
        DSP_                },        /* DPSX.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200016bf, &DPSQ_SA_L_W      , 0,
        DSP_                },        /* DPSQ_SA.L.W */
     { reserved_block      , 0                   , 0   , 32,
        0xfc003fff, 0x200018bf, 0                      , 0,
        0x0                 },        /* POOL32Axf_2(DSP)_8_15~*(4) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20001abf, &MADDU_DSP_       , 0,
        DSP_                },        /* MADDU[DSP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20001cbf, &MULTU_DSP_       , 0,
        DSP_                },        /* MULTU[DSP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20001ebf, &EXTRV_R_W        , 0,
        DSP_                },        /* EXTRV_R.W */
 };
 
 
 static const Pool POOL32Axf_2_DSP__16_23[8] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200020bf, &DPAU_H_QBL       , 0,
        DSP_                },        /* DPAU.H.QBL */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200022bf, &DPAQX_S_W_PH     , 0,
        DSP_                },        /* DPAQX_S.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200024bf, &DPSU_H_QBL       , 0,
        DSP_                },        /* DPSU.H.QBL */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200026bf, &DPSQX_S_W_PH     , 0,
        DSP_                },        /* DPSQX_S.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200028bf, &EXTPV            , 0,
        DSP_                },        /* EXTPV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20002abf, &MSUB_DSP_        , 0,
        DSP_                },        /* MSUB[DSP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20002cbf, &MULSA_W_PH       , 0,
        DSP_                },        /* MULSA.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20002ebf, &EXTRV_RS_W       , 0,
        DSP_                },        /* EXTRV_RS.W */
 };
 
 
 static const Pool POOL32Axf_2_DSP__24_31[8] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200030bf, &DPAU_H_QBR       , 0,
        DSP_                },        /* DPAU.H.QBR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200032bf, &DPAQX_SA_W_PH    , 0,
        DSP_                },        /* DPAQX_SA.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200034bf, &DPSU_H_QBR       , 0,
        DSP_                },        /* DPSU.H.QBR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200036bf, &DPSQX_SA_W_PH    , 0,
        DSP_                },        /* DPSQX_SA.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x200038bf, &EXTPDPV          , 0,
        DSP_                },        /* EXTPDPV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20003abf, &MSUBU_DSP_       , 0,
        DSP_                },        /* MSUBU[DSP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20003cbf, &MULSAQ_S_W_PH    , 0,
        DSP_                },        /* MULSAQ_S.W.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0x20003ebf, &EXTRV_S_H        , 0,
        DSP_                },        /* EXTRV_S.H */
 };
@@ -17694,10 +17694,10 @@ static const Pool POOL32Axf_2[4] = {
 
 
 static const Pool POOL32Axf_4[128] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000013f, &ABSQ_S_QB        , 0,
        DSP_                },        /* ABSQ_S.QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000033f, &REPLV_PH         , 0,
        DSP_                },        /* REPLV.PH */
     { reserved_block      , 0                   , 0   , 32,
@@ -17718,10 +17718,10 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20000f3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(7) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000113f, &ABSQ_S_PH        , 0,
        DSP_                },        /* ABSQ_S.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000133f, &REPLV_QB         , 0,
        DSP_                },        /* REPLV.QB */
     { reserved_block      , 0                   , 0   , 32,
@@ -17742,7 +17742,7 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20001f3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(15) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000213f, &ABSQ_S_W         , 0,
        DSP_                },        /* ABSQ_S.W */
     { reserved_block      , 0                   , 0   , 32,
@@ -17790,7 +17790,7 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20003f3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(31) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000413f, &INSV             , 0,
        DSP_                },        /* INSV */
     { reserved_block      , 0                   , 0   , 32,
@@ -17805,16 +17805,16 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000493f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(36) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x20004b3f, &CLO              , 0,
        XMMS_               },        /* CLO */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x20004d3f, &MFC2             , 0,
        CP2_                },        /* MFC2 */
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20004f3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(39) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000513f, &PRECEQ_W_PHL     , 0,
        DSP_                },        /* PRECEQ.W.PHL */
     { reserved_block      , 0                   , 0   , 32,
@@ -17829,16 +17829,16 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000593f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(44) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x20005b3f, &CLZ              , 0,
        XMMS_               },        /* CLZ */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x20005d3f, &MTC2             , 0,
        CP2_                },        /* MTC2 */
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20005f3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(47) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000613f, &PRECEQ_W_PHR     , 0,
        DSP_                },        /* PRECEQ.W.PHR */
     { reserved_block      , 0                   , 0   , 32,
@@ -17856,16 +17856,16 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20006b3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(53) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x20006d3f, &DMFC2            , 0,
        CP2_                },        /* DMFC2 */
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20006f3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(55) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000713f, &PRECEQU_PH_QBL   , 0,
        DSP_                },        /* PRECEQU.PH.QBL */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000733f, &PRECEQU_PH_QBLA  , 0,
        DSP_                },        /* PRECEQU.PH.QBLA */
     { reserved_block      , 0                   , 0   , 32,
@@ -17880,7 +17880,7 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20007b3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(61) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x20007d3f, &DMTC2            , 0,
        CP2_                },        /* DMTC2 */
     { reserved_block      , 0                   , 0   , 32,
@@ -17904,16 +17904,16 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20008b3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(69) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x20008d3f, &MFHC2            , 0,
        CP2_                },        /* MFHC2 */
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20008f3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(71) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000913f, &PRECEQU_PH_QBR   , 0,
        DSP_                },        /* PRECEQU.PH.QBR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000933f, &PRECEQU_PH_QBRA  , 0,
        DSP_                },        /* PRECEQU.PH.QBRA */
     { reserved_block      , 0                   , 0   , 32,
@@ -17928,7 +17928,7 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20009b3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(77) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x20009d3f, &MTHC2            , 0,
        CP2_                },        /* MTHC2 */
     { reserved_block      , 0                   , 0   , 32,
@@ -17958,10 +17958,10 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000af3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(87) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000b13f, &PRECEU_PH_QBL    , 0,
        DSP_                },        /* PRECEU.PH.QBL */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000b33f, &PRECEU_PH_QBLA   , 0,
        DSP_                },        /* PRECEU.PH.QBLA */
     { reserved_block      , 0                   , 0   , 32,
@@ -18000,16 +18000,16 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000cb3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(101) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000cd3f, &CFC2             , 0,
        CP2_                },        /* CFC2 */
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000cf3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(103) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000d13f, &PRECEU_PH_QBR    , 0,
        DSP_                },        /* PRECEU.PH.QBR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000d33f, &PRECEU_PH_QBRA   , 0,
        DSP_                },        /* PRECEU.PH.QBRA */
     { reserved_block      , 0                   , 0   , 32,
@@ -18024,7 +18024,7 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000db3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(109) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000dd3f, &CTC2             , 0,
        CP2_                },        /* CTC2 */
     { reserved_block      , 0                   , 0   , 32,
@@ -18054,7 +18054,7 @@ static const Pool POOL32Axf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000ef3f, 0                      , 0,
        0x0                 },        /* POOL32Axf_4~*(119) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000f13f, &RADDU_W_QB       , 0,
        DSP_                },        /* RADDU.W.QB */
     { reserved_block      , 0                   , 0   , 32,
@@ -18082,16 +18082,16 @@ static const Pool POOL32Axf_4[128] = {
 
 
 static const Pool POOL32Axf_5_group0[32] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000017f, &TLBGP            , 0,
        CP0_ | VZ_ | TLB_   },        /* TLBGP */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000037f, &TLBP             , 0,
        CP0_ | TLB_         },        /* TLBP */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000057f, &TLBGINV          , 0,
        CP0_ | VZ_ | TLB_ | TLBINV_},        /* TLBGINV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000077f, &TLBINV           , 0,
        CP0_ | TLB_ | TLBINV_},        /* TLBINV */
     { reserved_block      , 0                   , 0   , 32,
@@ -18106,16 +18106,16 @@ static const Pool POOL32Axf_5_group0[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20000f7f, 0                      , 0,
        0x0                 },        /* POOL32Axf_5_group0~*(7) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000117f, &TLBGR            , 0,
        CP0_ | VZ_ | TLB_   },        /* TLBGR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000137f, &TLBR             , 0,
        CP0_ | TLB_         },        /* TLBR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000157f, &TLBGINVF         , 0,
        CP0_ | VZ_ | TLB_ | TLBINV_},        /* TLBGINVF */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000177f, &TLBINVF          , 0,
        CP0_ | TLB_ | TLBINV_},        /* TLBINVF */
     { reserved_block      , 0                   , 0   , 32,
@@ -18130,10 +18130,10 @@ static const Pool POOL32Axf_5_group0[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20001f7f, 0                      , 0,
        0x0                 },        /* POOL32Axf_5_group0~*(15) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000217f, &TLBGWI           , 0,
        CP0_ | VZ_ | TLB_   },        /* TLBGWI */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000237f, &TLBWI            , 0,
        CP0_ | TLB_         },        /* TLBWI */
     { reserved_block      , 0                   , 0   , 32,
@@ -18154,10 +18154,10 @@ static const Pool POOL32Axf_5_group0[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x20002f7f, 0                      , 0,
        0x0                 },        /* POOL32Axf_5_group0~*(23) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000317f, &TLBGWR           , 0,
        CP0_ | VZ_ | TLB_   },        /* TLBGWR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000337f, &TLBWR            , 0,
        CP0_ | TLB_         },        /* TLBWR */
     { reserved_block      , 0                   , 0   , 32,
@@ -18191,7 +18191,7 @@ static const Pool POOL32Axf_5_group1[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000457f, 0                      , 0,
        0x0                 },        /* POOL32Axf_5_group1~*(2) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000477f, &DI               , 0,
        0x0                 },        /* DI */
     { reserved_block      , 0                   , 0   , 32,
@@ -18215,7 +18215,7 @@ static const Pool POOL32Axf_5_group1[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000557f, 0                      , 0,
        0x0                 },        /* POOL32Axf_5_group1~*(10) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000577f, &EI               , 0,
        0x0                 },        /* EI */
     { reserved_block      , 0                   , 0   , 32,
@@ -18282,10 +18282,10 @@ static const Pool POOL32Axf_5_group1[32] = {
 
 
 static const Pool ERETx[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc01ffff, 0x2000f37f, &ERET             , 0,
        0x0                 },        /* ERET */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc01ffff, 0x2001f37f, &ERETNC           , 0,
        0x0                 },        /* ERETNC */
 };
@@ -18295,7 +18295,7 @@ static const Pool POOL32Axf_5_group3[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000c17f, 0                      , 0,
        0x0                 },        /* POOL32Axf_5_group3~*(0) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000c37f, &WAIT             , 0,
        0x0                 },        /* WAIT */
     { reserved_block      , 0                   , 0   , 32,
@@ -18319,7 +18319,7 @@ static const Pool POOL32Axf_5_group3[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000d17f, 0                      , 0,
        0x0                 },        /* POOL32Axf_5_group3~*(8) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000d37f, &IRET             , 0,
        MCU_                },        /* IRET */
     { reserved_block      , 0                   , 0   , 32,
@@ -18340,10 +18340,10 @@ static const Pool POOL32Axf_5_group3[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000df7f, 0                      , 0,
        0x0                 },        /* POOL32Axf_5_group3~*(15) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000e17f, &RDPGPR           , 0,
        CP0_                },        /* RDPGPR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000e37f, &DERET            , 0,
        EJTAG_              },        /* DERET */
     { reserved_block      , 0                   , 0   , 32,
@@ -18364,7 +18364,7 @@ static const Pool POOL32Axf_5_group3[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0x2000ef7f, 0                      , 0,
        0x0                 },        /* POOL32Axf_5_group3~*(23) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0x2000f17f, &WRPGPR           , 0,
        CP0_                },        /* WRPGPR */
     { pool                , ERETx               , 2   , 32,
@@ -18408,10 +18408,10 @@ static const Pool POOL32Axf_5[4] = {
 
 
 static const Pool SHRA__R__QB[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc001fff, 0x200001ff, &SHRA_QB          , 0,
        DSP_                },        /* SHRA.QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc001fff, 0x200011ff, &SHRA_R_QB        , 0,
        DSP_                },        /* SHRA_R.QB */
 };
@@ -18421,10 +18421,10 @@ static const Pool POOL32Axf_7[8] = {
     { pool                , SHRA__R__QB         , 2   , 32,
        0xfc000fff, 0x200001ff, 0                      , 0,
        0x0                 },        /* SHRA[_R].QB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000fff, 0x200003ff, &SHRL_PH          , 0,
        DSP_                },        /* SHRL.PH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000fff, 0x200005ff, &REPL_QB          , 0,
        DSP_                },        /* REPL.QB */
     { reserved_block      , 0                   , 0   , 32,
@@ -18477,13 +18477,13 @@ static const Pool _POOL32A7[8] = {
     { pool                , P_LSX               , 2   , 32,
        0xfc00003f, 0x20000007, 0                      , 0,
        0x0                 },        /* P.LSX */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00003f, 0x2000000f, &LSA              , 0,
        0x0                 },        /* LSA */
     { reserved_block      , 0                   , 0   , 32,
        0xfc00003f, 0x20000017, 0                      , 0,
        0x0                 },        /* _POOL32A7~*(2) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00003f, 0x2000001f, &EXTW             , 0,
        0x0                 },        /* EXTW */
     { reserved_block      , 0                   , 0   , 32,
@@ -18505,13 +18505,13 @@ static const Pool P32A[8] = {
     { pool                , _POOL32A0           , 128 , 32,
        0xfc000007, 0x20000000, 0                      , 0,
        0x0                 },        /* _POOL32A0 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000007, 0x20000001, &SPECIAL2         , 0,
        UDI_                },        /* SPECIAL2 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000007, 0x20000002, &COP2_1           , 0,
        CP2_                },        /* COP2_1 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000007, 0x20000003, &UDI              , 0,
        UDI_                },        /* UDI */
     { reserved_block      , 0                   , 0   , 32,
@@ -18530,42 +18530,42 @@ static const Pool P32A[8] = {
 
 
 static const Pool P_GP_D[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000007, 0x40000001, &LD_GP_           , 0,
        MIPS64_             },        /* LD[GP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000007, 0x40000005, &SD_GP_           , 0,
        MIPS64_             },        /* SD[GP] */
 };
 
 
 static const Pool P_GP_W[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000003, 0x40000000, &ADDIU_GP_W_      , 0,
        0x0                 },        /* ADDIU[GP.W] */
     { pool                , P_GP_D              , 2   , 32,
        0xfc000003, 0x40000001, 0                      , 0,
        0x0                 },        /* P.GP.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000003, 0x40000002, &LW_GP_           , 0,
        0x0                 },        /* LW[GP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000003, 0x40000003, &SW_GP_           , 0,
        0x0                 },        /* SW[GP] */
 };
 
 
 static const Pool POOL48I[32] = {
-    { instruction         , 0                   , 0   , 48,
+    { instruction_enum         , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x600000000000ull, &LI_48_           , 0,
        XMMS_               },        /* LI[48] */
-    { instruction         , 0                   , 0   , 48,
+    { instruction_enum         , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x600100000000ull, &ADDIU_48_        , 0,
        XMMS_               },        /* ADDIU[48] */
-    { instruction         , 0                   , 0   , 48,
+    { instruction_enum         , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x600200000000ull, &ADDIU_GP48_      , 0,
        XMMS_               },        /* ADDIU[GP48] */
-    { instruction         , 0                   , 0   , 48,
+    { instruction_enum         , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x600300000000ull, &ADDIUPC_48_      , 0,
        XMMS_               },        /* ADDIUPC[48] */
     { reserved_block      , 0                   , 0   , 48,
@@ -18589,7 +18589,7 @@ static const Pool POOL48I[32] = {
     { reserved_block      , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x600a00000000ull, 0                      , 0,
        0x0                 },        /* POOL48I~*(10) */
-    { instruction         , 0                   , 0   , 48,
+    { instruction_enum         , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x600b00000000ull, &LWPC_48_         , 0,
        XMMS_               },        /* LWPC[48] */
     { reserved_block      , 0                   , 0   , 48,
@@ -18601,13 +18601,13 @@ static const Pool POOL48I[32] = {
     { reserved_block      , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x600e00000000ull, 0                      , 0,
        0x0                 },        /* POOL48I~*(14) */
-    { instruction         , 0                   , 0   , 48,
+    { instruction_enum         , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x600f00000000ull, &SWPC_48_         , 0,
        XMMS_               },        /* SWPC[48] */
     { reserved_block      , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x601000000000ull, 0                      , 0,
        0x0                 },        /* POOL48I~*(16) */
-    { instruction         , 0                   , 0   , 48,
+    { instruction_enum         , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x601100000000ull, &DADDIU_48_       , 0,
        MIPS64_             },        /* DADDIU[48] */
     { reserved_block      , 0                   , 0   , 48,
@@ -18616,7 +18616,7 @@ static const Pool POOL48I[32] = {
     { reserved_block      , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x601300000000ull, 0                      , 0,
        0x0                 },        /* POOL48I~*(19) */
-    { instruction         , 0                   , 0   , 48,
+    { instruction_enum         , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x601400000000ull, &DLUI_48_         , 0,
        MIPS64_             },        /* DLUI[48] */
     { reserved_block      , 0                   , 0   , 48,
@@ -18637,7 +18637,7 @@ static const Pool POOL48I[32] = {
     { reserved_block      , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x601a00000000ull, 0                      , 0,
        0x0                 },        /* POOL48I~*(26) */
-    { instruction         , 0                   , 0   , 48,
+    { instruction_enum         , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x601b00000000ull, &LDPC_48_         , 0,
        MIPS64_             },        /* LDPC[48] */
     { reserved_block      , 0                   , 0   , 48,
@@ -18649,33 +18649,33 @@ static const Pool POOL48I[32] = {
     { reserved_block      , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x601e00000000ull, 0                      , 0,
        0x0                 },        /* POOL48I~*(30) */
-    { instruction         , 0                   , 0   , 48,
+    { instruction_enum         , 0                   , 0   , 48,
        0xfc1f00000000ull, 0x601f00000000ull, &SDPC_48_         , 0,
        MIPS64_             },        /* SDPC[48] */
 };
 
 
 static const Pool PP_SR[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc10f003, 0x80003000, &SAVE_32_         , 0,
        0x0                 },        /* SAVE[32] */
     { reserved_block      , 0                   , 0   , 32,
        0xfc10f003, 0x80003001, 0                      , 0,
        0x0                 },        /* PP.SR~*(1) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc10f003, 0x80003002, &RESTORE_32_      , 0,
        0x0                 },        /* RESTORE[32] */
-    { return_instruction  , 0                   , 0   , 32,
+    { return_instruction, 0                   , 0   , 32,
        0xfc10f003, 0x80003003, &RESTORE_JRC_32_  , 0,
        0x0                 },        /* RESTORE.JRC[32] */
 };
 
 
 static const Pool P_SR_F[8] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc10f007, 0x80103000, &SAVEF            , 0,
        CP1_                },        /* SAVEF */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc10f007, 0x80103001, &RESTOREF         , 0,
        CP1_                },        /* RESTOREF */
     { reserved_block      , 0                   , 0   , 32,
@@ -18710,19 +18710,19 @@ static const Pool P_SR[2] = {
 
 
 static const Pool P_SLL[5] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xffe0f1ff, 0x8000c000, &NOP_32_          , 0,
        0x0                 },        /* NOP[32] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xffe0f1ff, 0x8000c003, &EHB              , 0,
        0x0                 },        /* EHB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xffe0f1ff, 0x8000c005, &PAUSE            , 0,
        0x0                 },        /* PAUSE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xffe0f1ff, 0x8000c006, &SYNC             , 0,
        0x0                 },        /* SYNC */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c000, &SLL_32_          , 0,
        0x0                 },        /* SLL[32] */
 };
@@ -18735,53 +18735,53 @@ static const Pool P_SHIFT[16] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c020, 0                      , 0,
        0x0                 },        /* P.SHIFT~*(1) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c040, &SRL_32_          , 0,
        0x0                 },        /* SRL[32] */
     { reserved_block      , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c060, 0                      , 0,
        0x0                 },        /* P.SHIFT~*(3) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c080, &SRA              , 0,
        0x0                 },        /* SRA */
     { reserved_block      , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c0a0, 0                      , 0,
        0x0                 },        /* P.SHIFT~*(5) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c0c0, &ROTR             , 0,
        0x0                 },        /* ROTR */
     { reserved_block      , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c0e0, 0                      , 0,
        0x0                 },        /* P.SHIFT~*(7) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c100, &DSLL             , 0,
        MIPS64_             },        /* DSLL */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c120, &DSLL32           , 0,
        MIPS64_             },        /* DSLL32 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c140, &DSRL             , 0,
        MIPS64_             },        /* DSRL */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c160, &DSRL32           , 0,
        MIPS64_             },        /* DSRL32 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c180, &DSRA             , 0,
        MIPS64_             },        /* DSRA */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c1a0, &DSRA32           , 0,
        MIPS64_             },        /* DSRA32 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c1c0, &DROTR            , 0,
        MIPS64_             },        /* DROTR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f1e0, 0x8000c1e0, &DROTR32          , 0,
        MIPS64_             },        /* DROTR32 */
 };
 
 
 static const Pool P_ROTX[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f820, 0x8000d000, &ROTX             , 0,
        XMMS_               },        /* ROTX */
     { reserved_block      , 0                   , 0   , 32,
@@ -18797,72 +18797,72 @@ static const Pool P_ROTX[4] = {
 
 
 static const Pool P_INS[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f820, 0x8000e000, &INS              , 0,
        XMMS_               },        /* INS */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f820, 0x8000e020, &DINSU            , 0,
        MIPS64_             },        /* DINSU */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f820, 0x8000e800, &DINSM            , 0,
        MIPS64_             },        /* DINSM */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f820, 0x8000e820, &DINS             , 0,
        MIPS64_             },        /* DINS */
 };
 
 
 static const Pool P_EXT[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f820, 0x8000f000, &EXT              , 0,
        XMMS_               },        /* EXT */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f820, 0x8000f020, &DEXTU            , 0,
        MIPS64_             },        /* DEXTU */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f820, 0x8000f800, &DEXTM            , 0,
        MIPS64_             },        /* DEXTM */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f820, 0x8000f820, &DEXT             , 0,
        MIPS64_             },        /* DEXT */
 };
 
 
 static const Pool P_U12[16] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x80000000, &ORI              , 0,
        0x0                 },        /* ORI */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x80001000, &XORI             , 0,
        0x0                 },        /* XORI */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x80002000, &ANDI_32_         , 0,
        0x0                 },        /* ANDI[32] */
     { pool                , P_SR                , 2   , 32,
        0xfc00f000, 0x80003000, 0                      , 0,
        0x0                 },        /* P.SR */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x80004000, &SLTI             , 0,
        0x0                 },        /* SLTI */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x80005000, &SLTIU            , 0,
        0x0                 },        /* SLTIU */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x80006000, &SEQI             , 0,
        0x0                 },        /* SEQI */
     { reserved_block      , 0                   , 0   , 32,
        0xfc00f000, 0x80007000, 0                      , 0,
        0x0                 },        /* P.U12~*(7) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x80008000, &ADDIU_NEG_       , 0,
        0x0                 },        /* ADDIU[NEG] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x80009000, &DADDIU_U12_      , 0,
        MIPS64_             },        /* DADDIU[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x8000a000, &DADDIU_NEG_      , 0,
        MIPS64_             },        /* DADDIU[NEG] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x8000b000, &DROTX            , 0,
        MIPS64_             },        /* DROTX */
     { pool                , P_SHIFT             , 16  , 32,
@@ -18881,17 +18881,17 @@ static const Pool P_U12[16] = {
 
 
 static const Pool RINT_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000020, &RINT_S           , 0,
        CP1_                },        /* RINT.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000220, &RINT_D           , 0,
        CP1_                },        /* RINT.D */
 };
 
 
 static const Pool ADD_fmt0[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000030, &ADD_S            , 0,
        CP1_                },        /* ADD.S */
     { reserved_block      , 0                   , 0   , 32,
@@ -18901,27 +18901,27 @@ static const Pool ADD_fmt0[2] = {
 
 
 static const Pool SELEQZ_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000038, &SELEQZ_S         , 0,
        CP1_                },        /* SELEQZ.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000238, &SELEQZ_D         , 0,
        CP1_                },        /* SELEQZ.D */
 };
 
 
 static const Pool CLASS_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000060, &CLASS_S          , 0,
        CP1_                },        /* CLASS.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000260, &CLASS_D          , 0,
        CP1_                },        /* CLASS.D */
 };
 
 
 static const Pool SUB_fmt0[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000070, &SUB_S            , 0,
        CP1_                },        /* SUB.S */
     { reserved_block      , 0                   , 0   , 32,
@@ -18931,17 +18931,17 @@ static const Pool SUB_fmt0[2] = {
 
 
 static const Pool SELNEZ_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000078, &SELNEZ_S         , 0,
        CP1_                },        /* SELNEZ.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000278, &SELNEZ_D         , 0,
        CP1_                },        /* SELNEZ.D */
 };
 
 
 static const Pool MUL_fmt0[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa00000b0, &MUL_S            , 0,
        CP1_                },        /* MUL.S */
     { reserved_block      , 0                   , 0   , 32,
@@ -18951,17 +18951,17 @@ static const Pool MUL_fmt0[2] = {
 
 
 static const Pool SEL_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa00000b8, &SEL_S            , 0,
        CP1_                },        /* SEL.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa00002b8, &SEL_D            , 0,
        CP1_                },        /* SEL.D */
 };
 
 
 static const Pool DIV_fmt0[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa00000f0, &DIV_S            , 0,
        CP1_                },        /* DIV.S */
     { reserved_block      , 0                   , 0   , 32,
@@ -18971,7 +18971,7 @@ static const Pool DIV_fmt0[2] = {
 
 
 static const Pool ADD_fmt1[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000130, &ADD_D            , 0,
        CP1_                },        /* ADD.D */
     { reserved_block      , 0                   , 0   , 32,
@@ -18981,7 +18981,7 @@ static const Pool ADD_fmt1[2] = {
 
 
 static const Pool SUB_fmt1[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa0000170, &SUB_D            , 0,
        CP1_                },        /* SUB.D */
     { reserved_block      , 0                   , 0   , 32,
@@ -18991,7 +18991,7 @@ static const Pool SUB_fmt1[2] = {
 
 
 static const Pool MUL_fmt1[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa00001b0, &MUL_D            , 0,
        CP1_                },        /* MUL.D */
     { reserved_block      , 0                   , 0   , 32,
@@ -19001,17 +19001,17 @@ static const Pool MUL_fmt1[2] = {
 
 
 static const Pool MADDF_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa00001b8, &MADDF_S          , 0,
        CP1_                },        /* MADDF.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa00003b8, &MADDF_D          , 0,
        CP1_                },        /* MADDF.D */
 };
 
 
 static const Pool DIV_fmt1[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa00001f0, &DIV_D            , 0,
        CP1_                },        /* DIV.D */
     { reserved_block      , 0                   , 0   , 32,
@@ -19021,10 +19021,10 @@ static const Pool DIV_fmt1[2] = {
 
 
 static const Pool MSUBF_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa00001f8, &MSUBF_S          , 0,
        CP1_                },        /* MSUBF.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0003ff, 0xa00003f8, &MSUBF_D          , 0,
        CP1_                },        /* MSUBF.D */
 };
@@ -19227,170 +19227,170 @@ static const Pool POOL32F_0[64] = {
 
 
 static const Pool MIN_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00023f, 0xa0000003, &MIN_S            , 0,
        CP1_                },        /* MIN.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00023f, 0xa0000203, &MIN_D            , 0,
        CP1_                },        /* MIN.D */
 };
 
 
 static const Pool MAX_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00023f, 0xa000000b, &MAX_S            , 0,
        CP1_                },        /* MAX.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00023f, 0xa000020b, &MAX_D            , 0,
        CP1_                },        /* MAX.D */
 };
 
 
 static const Pool MINA_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00023f, 0xa0000023, &MINA_S           , 0,
        CP1_                },        /* MINA.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00023f, 0xa0000223, &MINA_D           , 0,
        CP1_                },        /* MINA.D */
 };
 
 
 static const Pool MAXA_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00023f, 0xa000002b, &MAXA_S           , 0,
        CP1_                },        /* MAXA.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00023f, 0xa000022b, &MAXA_D           , 0,
        CP1_                },        /* MAXA.D */
 };
 
 
 static const Pool CVT_L_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000013b, &CVT_L_S          , 0,
        CP1_                },        /* CVT.L.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000413b, &CVT_L_D          , 0,
        CP1_                },        /* CVT.L.D */
 };
 
 
 static const Pool RSQRT_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000023b, &RSQRT_S          , 0,
        CP1_                },        /* RSQRT.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000423b, &RSQRT_D          , 0,
        CP1_                },        /* RSQRT.D */
 };
 
 
 static const Pool FLOOR_L_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000033b, &FLOOR_L_S        , 0,
        CP1_                },        /* FLOOR.L.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000433b, &FLOOR_L_D        , 0,
        CP1_                },        /* FLOOR.L.D */
 };
 
 
 static const Pool CVT_W_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000093b, &CVT_W_S          , 0,
        CP1_                },        /* CVT.W.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000493b, &CVT_W_D          , 0,
        CP1_                },        /* CVT.W.D */
 };
 
 
 static const Pool SQRT_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0000a3b, &SQRT_S           , 0,
        CP1_                },        /* SQRT.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0004a3b, &SQRT_D           , 0,
        CP1_                },        /* SQRT.D */
 };
 
 
 static const Pool FLOOR_W_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0000b3b, &FLOOR_W_S        , 0,
        CP1_                },        /* FLOOR.W.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0004b3b, &FLOOR_W_D        , 0,
        CP1_                },        /* FLOOR.W.D */
 };
 
 
 static const Pool RECIP_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000123b, &RECIP_S          , 0,
        CP1_                },        /* RECIP.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000523b, &RECIP_D          , 0,
        CP1_                },        /* RECIP.D */
 };
 
 
 static const Pool CEIL_L_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000133b, &CEIL_L_S         , 0,
        CP1_                },        /* CEIL.L.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000533b, &CEIL_L_D         , 0,
        CP1_                },        /* CEIL.L.D */
 };
 
 
 static const Pool CEIL_W_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0001b3b, &CEIL_W_S         , 0,
        CP1_                },        /* CEIL.W.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0005b3b, &CEIL_W_D         , 0,
        CP1_                },        /* CEIL.W.D */
 };
 
 
 static const Pool TRUNC_L_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000233b, &TRUNC_L_S        , 0,
        CP1_                },        /* TRUNC.L.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000633b, &TRUNC_L_D        , 0,
        CP1_                },        /* TRUNC.L.D */
 };
 
 
 static const Pool TRUNC_W_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0002b3b, &TRUNC_W_S        , 0,
        CP1_                },        /* TRUNC.W.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0006b3b, &TRUNC_W_D        , 0,
        CP1_                },        /* TRUNC.W.D */
 };
 
 
 static const Pool ROUND_L_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000333b, &ROUND_L_S        , 0,
        CP1_                },        /* ROUND.L.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000733b, &ROUND_L_D        , 0,
        CP1_                },        /* ROUND.L.D */
 };
 
 
 static const Pool ROUND_W_fmt[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0003b3b, &ROUND_W_S        , 0,
        CP1_                },        /* ROUND.W.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0007b3b, &ROUND_W_D        , 0,
        CP1_                },        /* ROUND.W.D */
 };
@@ -19445,7 +19445,7 @@ static const Pool POOL32Fxf_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc003fff, 0xa0000f3b, 0                      , 0,
        CP1_                },        /* POOL32Fxf_0~*(15) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0xa000103b, &CFC1             , 0,
        CP1_                },        /* CFC1 */
     { reserved_block      , 0                   , 0   , 32,
@@ -19469,7 +19469,7 @@ static const Pool POOL32Fxf_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc003fff, 0xa000173b, 0                      , 0,
        CP1_                },        /* POOL32Fxf_0~*(23) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0xa000183b, &CTC1             , 0,
        CP1_                },        /* CTC1 */
     { reserved_block      , 0                   , 0   , 32,
@@ -19493,10 +19493,10 @@ static const Pool POOL32Fxf_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc003fff, 0xa0001f3b, 0                      , 0,
        CP1_                },        /* POOL32Fxf_0~*(31) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0xa000203b, &MFC1             , 0,
        CP1_                },        /* MFC1 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0xa000213b, &CVT_S_PL         , 0,
        CP1_                },        /* CVT.S.PL */
     { reserved_block      , 0                   , 0   , 32,
@@ -19505,7 +19505,7 @@ static const Pool POOL32Fxf_0[64] = {
     { pool                , TRUNC_L_fmt         , 2   , 32,
        0xfc003fff, 0xa000233b, 0                      , 0,
        CP1_                },        /* TRUNC.L.fmt */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0xa000243b, &DMFC1            , 0,
        CP1_ | MIPS64_      },        /* DMFC1 */
     { reserved_block      , 0                   , 0   , 32,
@@ -19517,10 +19517,10 @@ static const Pool POOL32Fxf_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc003fff, 0xa000273b, 0                      , 0,
        CP1_                },        /* POOL32Fxf_0~*(39) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0xa000283b, &MTC1             , 0,
        CP1_                },        /* MTC1 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0xa000293b, &CVT_S_PU         , 0,
        CP1_                },        /* CVT.S.PU */
     { reserved_block      , 0                   , 0   , 32,
@@ -19529,7 +19529,7 @@ static const Pool POOL32Fxf_0[64] = {
     { pool                , TRUNC_W_fmt         , 2   , 32,
        0xfc003fff, 0xa0002b3b, 0                      , 0,
        CP1_                },        /* TRUNC.W.fmt */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0xa0002c3b, &DMTC1            , 0,
        CP1_ | MIPS64_      },        /* DMTC1 */
     { reserved_block      , 0                   , 0   , 32,
@@ -19541,7 +19541,7 @@ static const Pool POOL32Fxf_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc003fff, 0xa0002f3b, 0                      , 0,
        CP1_                },        /* POOL32Fxf_0~*(47) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0xa000303b, &MFHC1            , 0,
        CP1_                },        /* MFHC1 */
     { reserved_block      , 0                   , 0   , 32,
@@ -19565,7 +19565,7 @@ static const Pool POOL32Fxf_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc003fff, 0xa000373b, 0                      , 0,
        CP1_                },        /* POOL32Fxf_0~*(55) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc003fff, 0xa000383b, &MTHC1            , 0,
        CP1_                },        /* MTHC1 */
     { reserved_block      , 0                   , 0   , 32,
@@ -19593,10 +19593,10 @@ static const Pool POOL32Fxf_0[64] = {
 
 
 static const Pool MOV_fmt[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000007b, &MOV_S            , 0,
        CP1_                },        /* MOV.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000207b, &MOV_D            , 0,
        CP1_                },        /* MOV.D */
     { reserved_block      , 0                   , 0   , 32,
@@ -19609,10 +19609,10 @@ static const Pool MOV_fmt[4] = {
 
 
 static const Pool ABS_fmt[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000037b, &ABS_S            , 0,
        CP1_                },        /* ABS.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000237b, &ABS_D            , 0,
        CP1_                },        /* ABS.D */
     { reserved_block      , 0                   , 0   , 32,
@@ -19625,10 +19625,10 @@ static const Pool ABS_fmt[4] = {
 
 
 static const Pool NEG_fmt[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0000b7b, &NEG_S            , 0,
        CP1_                },        /* NEG.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0002b7b, &NEG_D            , 0,
        CP1_                },        /* NEG.D */
     { reserved_block      , 0                   , 0   , 32,
@@ -19641,13 +19641,13 @@ static const Pool NEG_fmt[4] = {
 
 
 static const Pool CVT_D_fmt[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000137b, &CVT_D_S          , 0,
        CP1_                },        /* CVT.D.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000337b, &CVT_D_W          , 0,
        CP1_                },        /* CVT.D.W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa000537b, &CVT_D_L          , 0,
        CP1_                },        /* CVT.D.L */
     { reserved_block      , 0                   , 0   , 32,
@@ -19657,13 +19657,13 @@ static const Pool CVT_D_fmt[4] = {
 
 
 static const Pool CVT_S_fmt[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0001b7b, &CVT_S_D          , 0,
        CP1_                },        /* CVT.S.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0003b7b, &CVT_S_W          , 0,
        CP1_                },        /* CVT.S.W */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007fff, 0xa0005b7b, &CVT_S_L          , 0,
        CP1_                },        /* CVT.S.L */
     { reserved_block      , 0                   , 0   , 32,
@@ -19817,64 +19817,64 @@ static const Pool POOL32F_3[8] = {
 
 
 static const Pool CMP_condn_S[32] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000005, &CMP_AF_S         , 0,
        CP1_                },        /* CMP.AF.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000045, &CMP_UN_S         , 0,
        CP1_                },        /* CMP.UN.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000085, &CMP_EQ_S         , 0,
        CP1_                },        /* CMP.EQ.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00000c5, &CMP_UEQ_S        , 0,
        CP1_                },        /* CMP.UEQ.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000105, &CMP_LT_S         , 0,
        CP1_                },        /* CMP.LT.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000145, &CMP_ULT_S        , 0,
        CP1_                },        /* CMP.ULT.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000185, &CMP_LE_S         , 0,
        CP1_                },        /* CMP.LE.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00001c5, &CMP_ULE_S        , 0,
        CP1_                },        /* CMP.ULE.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000205, &CMP_SAF_S        , 0,
        CP1_                },        /* CMP.SAF.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000245, &CMP_SUN_S        , 0,
        CP1_                },        /* CMP.SUN.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000285, &CMP_SEQ_S        , 0,
        CP1_                },        /* CMP.SEQ.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00002c5, &CMP_SUEQ_S       , 0,
        CP1_                },        /* CMP.SUEQ.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000305, &CMP_SLT_S        , 0,
        CP1_                },        /* CMP.SLT.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000345, &CMP_SULT_S       , 0,
        CP1_                },        /* CMP.SULT.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000385, &CMP_SLE_S        , 0,
        CP1_                },        /* CMP.SLE.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00003c5, &CMP_SULE_S       , 0,
        CP1_                },        /* CMP.SULE.S */
     { reserved_block      , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000405, 0                      , 0,
        CP1_                },        /* CMP.condn.S~*(16) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000445, &CMP_OR_S         , 0,
        CP1_                },        /* CMP.OR.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000485, &CMP_UNE_S        , 0,
        CP1_                },        /* CMP.UNE.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00004c5, &CMP_NE_S         , 0,
        CP1_                },        /* CMP.NE.S */
     { reserved_block      , 0                   , 0   , 32,
@@ -19892,13 +19892,13 @@ static const Pool CMP_condn_S[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000605, 0                      , 0,
        CP1_                },        /* CMP.condn.S~*(24) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000645, &CMP_SOR_S        , 0,
        CP1_                },        /* CMP.SOR.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000685, &CMP_SUNE_S       , 0,
        CP1_                },        /* CMP.SUNE.S */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00006c5, &CMP_SNE_S        , 0,
        CP1_                },        /* CMP.SNE.S */
     { reserved_block      , 0                   , 0   , 32,
@@ -19917,64 +19917,64 @@ static const Pool CMP_condn_S[32] = {
 
 
 static const Pool CMP_condn_D[32] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000015, &CMP_AF_D         , 0,
        CP1_                },        /* CMP.AF.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000055, &CMP_UN_D         , 0,
        CP1_                },        /* CMP.UN.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000095, &CMP_EQ_D         , 0,
        CP1_                },        /* CMP.EQ.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00000d5, &CMP_UEQ_D        , 0,
        CP1_                },        /* CMP.UEQ.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000115, &CMP_LT_D         , 0,
        CP1_                },        /* CMP.LT.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000155, &CMP_ULT_D        , 0,
        CP1_                },        /* CMP.ULT.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000195, &CMP_LE_D         , 0,
        CP1_                },        /* CMP.LE.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00001d5, &CMP_ULE_D        , 0,
        CP1_                },        /* CMP.ULE.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000215, &CMP_SAF_D        , 0,
        CP1_                },        /* CMP.SAF.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000255, &CMP_SUN_D        , 0,
        CP1_                },        /* CMP.SUN.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000295, &CMP_SEQ_D        , 0,
        CP1_                },        /* CMP.SEQ.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00002d5, &CMP_SUEQ_D       , 0,
        CP1_                },        /* CMP.SUEQ.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000315, &CMP_SLT_D        , 0,
        CP1_                },        /* CMP.SLT.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000355, &CMP_SULT_D       , 0,
        CP1_                },        /* CMP.SULT.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000395, &CMP_SLE_D        , 0,
        CP1_                },        /* CMP.SLE.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00003d5, &CMP_SULE_D       , 0,
        CP1_                },        /* CMP.SULE.D */
     { reserved_block      , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000415, 0                      , 0,
        CP1_                },        /* CMP.condn.D~*(16) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000455, &CMP_OR_D         , 0,
        CP1_                },        /* CMP.OR.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000495, &CMP_UNE_D        , 0,
        CP1_                },        /* CMP.UNE.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00004d5, &CMP_NE_D         , 0,
        CP1_                },        /* CMP.NE.D */
     { reserved_block      , 0                   , 0   , 32,
@@ -19992,13 +19992,13 @@ static const Pool CMP_condn_D[32] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000615, 0                      , 0,
        CP1_                },        /* CMP.condn.D~*(24) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000655, &CMP_SOR_D        , 0,
        CP1_                },        /* CMP.SOR.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa0000695, &CMP_SUNE_D       , 0,
        CP1_                },        /* CMP.SUNE.D */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0007ff, 0xa00006d5, &CMP_SNE_D        , 0,
        CP1_                },        /* CMP.SNE.D */
     { reserved_block      , 0                   , 0   , 32,
@@ -20076,13 +20076,13 @@ static const Pool POOL32S_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000000, 0                      , 0,
        0x0                 },        /* POOL32S_0~*(0) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000008, &DLSA             , 0,
        MIPS64_             },        /* DLSA */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000010, &DSLLV            , 0,
        MIPS64_             },        /* DSLLV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000018, &DMUL             , 0,
        MIPS64_             },        /* DMUL */
     { reserved_block      , 0                   , 0   , 32,
@@ -20103,10 +20103,10 @@ static const Pool POOL32S_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000048, 0                      , 0,
        0x0                 },        /* POOL32S_0~*(9) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000050, &DSRLV            , 0,
        MIPS64_             },        /* DSRLV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000058, &DMUH             , 0,
        MIPS64_             },        /* DMUH */
     { reserved_block      , 0                   , 0   , 32,
@@ -20127,10 +20127,10 @@ static const Pool POOL32S_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000088, 0                      , 0,
        0x0                 },        /* POOL32S_0~*(17) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000090, &DSRAV            , 0,
        MIPS64_             },        /* DSRAV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000098, &DMULU            , 0,
        MIPS64_             },        /* DMULU */
     { reserved_block      , 0                   , 0   , 32,
@@ -20151,10 +20151,10 @@ static const Pool POOL32S_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0001ff, 0xc00000c8, 0                      , 0,
        0x0                 },        /* POOL32S_0~*(25) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc00000d0, &DROTRV           , 0,
        MIPS64_             },        /* DROTRV */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc00000d8, &DMUHU            , 0,
        MIPS64_             },        /* DMUHU */
     { reserved_block      , 0                   , 0   , 32,
@@ -20175,10 +20175,10 @@ static const Pool POOL32S_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000108, 0                      , 0,
        0x0                 },        /* POOL32S_0~*(33) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000110, &DADD             , 0,
        MIPS64_             },        /* DADD */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000118, &DDIV             , 0,
        MIPS64_             },        /* DDIV */
     { reserved_block      , 0                   , 0   , 32,
@@ -20199,10 +20199,10 @@ static const Pool POOL32S_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000148, 0                      , 0,
        0x0                 },        /* POOL32S_0~*(41) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000150, &DADDU            , 0,
        MIPS64_             },        /* DADDU */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000158, &DMOD             , 0,
        MIPS64_             },        /* DMOD */
     { reserved_block      , 0                   , 0   , 32,
@@ -20223,10 +20223,10 @@ static const Pool POOL32S_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000188, 0                      , 0,
        0x0                 },        /* POOL32S_0~*(49) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000190, &DSUB             , 0,
        MIPS64_             },        /* DSUB */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc0000198, &DDIVU            , 0,
        MIPS64_             },        /* DDIVU */
     { reserved_block      , 0                   , 0   , 32,
@@ -20247,10 +20247,10 @@ static const Pool POOL32S_0[64] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc0001ff, 0xc00001c8, 0                      , 0,
        0x0                 },        /* POOL32S_0~*(57) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc00001d0, &DSUBU            , 0,
        MIPS64_             },        /* DSUBU */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc0001ff, 0xc00001d8, &DMODU            , 0,
        MIPS64_             },        /* DMODU */
     { reserved_block      , 0                   , 0   , 32,
@@ -20380,7 +20380,7 @@ static const Pool POOL32Sxf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0xc000493c, 0                      , 0,
        0x0                 },        /* POOL32Sxf_4~*(36) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0xc0004b3c, &DCLO             , 0,
        MIPS64_             },        /* DCLO */
     { reserved_block      , 0                   , 0   , 32,
@@ -20404,7 +20404,7 @@ static const Pool POOL32Sxf_4[128] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc00ffff, 0xc000593c, 0                      , 0,
        0x0                 },        /* POOL32Sxf_4~*(44) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00ffff, 0xc0005b3c, &DCLZ             , 0,
        MIPS64_             },        /* DCLZ */
     { reserved_block      , 0                   , 0   , 32,
@@ -20685,10 +20685,10 @@ static const Pool POOL32Sxf[8] = {
 
 
 static const Pool POOL32S_4[8] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00003f, 0xc0000004, &EXTD             , 0,
        MIPS64_             },        /* EXTD */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00003f, 0xc000000c, &EXTD32           , 0,
        MIPS64_             },        /* EXTD32 */
     { reserved_block      , 0                   , 0   , 32,
@@ -20741,27 +20741,27 @@ static const Pool POOL32S[8] = {
 
 
 static const Pool P_LUI[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000002, 0xe0000000, &LUI              , 0,
        0x0                 },        /* LUI */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000002, 0xe0000002, &ALUIPC           , 0,
        0x0                 },        /* ALUIPC */
 };
 
 
 static const Pool P_GP_LH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0001, 0x44100000, &LH_GP_           , 0,
        0x0                 },        /* LH[GP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0001, 0x44100001, &LHU_GP_          , 0,
        0x0                 },        /* LHU[GP] */
 };
 
 
 static const Pool P_GP_SH[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0001, 0x44140000, &SH_GP_           , 0,
        0x0                 },        /* SH[GP] */
     { reserved_block      , 0                   , 0   , 32,
@@ -20771,23 +20771,23 @@ static const Pool P_GP_SH[2] = {
 
 
 static const Pool P_GP_CP1[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0003, 0x44180000, &LWC1_GP_         , 0,
        CP1_                },        /* LWC1[GP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0003, 0x44180001, &SWC1_GP_         , 0,
        CP1_                },        /* SWC1[GP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0003, 0x44180002, &LDC1_GP_         , 0,
        CP1_                },        /* LDC1[GP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0003, 0x44180003, &SDC1_GP_         , 0,
        CP1_                },        /* SDC1[GP] */
 };
 
 
 static const Pool P_GP_M64[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0003, 0x441c0000, &LWU_GP_          , 0,
        MIPS64_             },        /* LWU[GP] */
     { reserved_block      , 0                   , 0   , 32,
@@ -20803,16 +20803,16 @@ static const Pool P_GP_M64[4] = {
 
 
 static const Pool P_GP_BH[8] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0000, 0x44000000, &LB_GP_           , 0,
        0x0                 },        /* LB[GP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0000, 0x44040000, &SB_GP_           , 0,
        0x0                 },        /* SB[GP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0000, 0x44080000, &LBU_GP_          , 0,
        0x0                 },        /* LBU[GP] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc1c0000, 0x440c0000, &ADDIU_GP_B_      , 0,
        0x0                 },        /* ADDIU[GP.B] */
     { pool                , P_GP_LH             , 2   , 32,
@@ -20831,134 +20831,134 @@ static const Pool P_GP_BH[8] = {
 
 
 static const Pool P_LS_U12[16] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x84000000, &LB_U12_          , 0,
        0x0                 },        /* LB[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x84001000, &SB_U12_          , 0,
        0x0                 },        /* SB[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x84002000, &LBU_U12_         , 0,
        0x0                 },        /* LBU[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x84003000, &PREF_U12_        , 0,
        0x0                 },        /* PREF[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x84004000, &LH_U12_          , 0,
        0x0                 },        /* LH[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x84005000, &SH_U12_          , 0,
        0x0                 },        /* SH[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x84006000, &LHU_U12_         , 0,
        0x0                 },        /* LHU[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x84007000, &LWU_U12_         , 0,
        MIPS64_             },        /* LWU[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x84008000, &LW_U12_          , 0,
        0x0                 },        /* LW[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x84009000, &SW_U12_          , 0,
        0x0                 },        /* SW[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x8400a000, &LWC1_U12_        , 0,
        CP1_                },        /* LWC1[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x8400b000, &SWC1_U12_        , 0,
        CP1_                },        /* SWC1[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x8400c000, &LD_U12_          , 0,
        MIPS64_             },        /* LD[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x8400d000, &SD_U12_          , 0,
        MIPS64_             },        /* SD[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x8400e000, &LDC1_U12_        , 0,
        CP1_                },        /* LDC1[U12] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc00f000, 0x8400f000, &SDC1_U12_        , 0,
        CP1_                },        /* SDC1[U12] */
 };
 
 
 static const Pool P_PREF_S9_[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xffe07f00, 0xa7e01800, &SYNCI            , 0,
        0x0                 },        /* SYNCI */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4001800, &PREF_S9_         , &PREF_S9__cond    ,
        0x0                 },        /* PREF[S9] */
 };
 
 
 static const Pool P_LS_S0[16] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4000000, &LB_S9_           , 0,
        0x0                 },        /* LB[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4000800, &SB_S9_           , 0,
        0x0                 },        /* SB[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4001000, &LBU_S9_          , 0,
        0x0                 },        /* LBU[S9] */
     { pool                , P_PREF_S9_          , 2   , 32,
        0xfc007f00, 0xa4001800, 0                      , 0,
        0x0                 },        /* P.PREF[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4002000, &LH_S9_           , 0,
        0x0                 },        /* LH[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4002800, &SH_S9_           , 0,
        0x0                 },        /* SH[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4003000, &LHU_S9_          , 0,
        0x0                 },        /* LHU[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4003800, &LWU_S9_          , 0,
        MIPS64_             },        /* LWU[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4004000, &LW_S9_           , 0,
        0x0                 },        /* LW[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4004800, &SW_S9_           , 0,
        0x0                 },        /* SW[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4005000, &LWC1_S9_         , 0,
        CP1_                },        /* LWC1[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4005800, &SWC1_S9_         , 0,
        CP1_                },        /* SWC1[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4006000, &LD_S9_           , 0,
        MIPS64_             },        /* LD[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4006800, &SD_S9_           , 0,
        MIPS64_             },        /* SD[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4007000, &LDC1_S9_         , 0,
        CP1_                },        /* LDC1[S9] */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4007800, &SDC1_S9_         , 0,
        CP1_                },        /* SDC1[S9] */
 };
 
 
 static const Pool ASET_ACLR[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfe007f00, 0xa4001100, &ASET             , 0,
        MCU_                },        /* ASET */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfe007f00, 0xa6001100, &ACLR             , 0,
        MCU_                },        /* ACLR */
 };
 
 
 static const Pool P_LL[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f03, 0xa4005100, &LL               , 0,
        0x0                 },        /* LL */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f03, 0xa4005101, &LLWP             , 0,
        XNP_                },        /* LLWP */
     { reserved_block      , 0                   , 0   , 32,
@@ -20971,10 +20971,10 @@ static const Pool P_LL[4] = {
 
 
 static const Pool P_SC[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f03, 0xa4005900, &SC               , 0,
        0x0                 },        /* SC */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f03, 0xa4005901, &SCWP             , 0,
        XNP_                },        /* SCWP */
     { reserved_block      , 0                   , 0   , 32,
@@ -20987,10 +20987,10 @@ static const Pool P_SC[4] = {
 
 
 static const Pool P_LLD[8] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f07, 0xa4007100, &LLD              , 0,
        MIPS64_             },        /* LLD */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f07, 0xa4007101, &LLDP             , 0,
        MIPS64_             },        /* LLDP */
     { reserved_block      , 0                   , 0   , 32,
@@ -21015,10 +21015,10 @@ static const Pool P_LLD[8] = {
 
 
 static const Pool P_SCD[8] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f07, 0xa4007900, &SCD              , 0,
        MIPS64_             },        /* SCD */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f07, 0xa4007901, &SCDP             , 0,
        MIPS64_             },        /* SCDP */
     { reserved_block      , 0                   , 0   , 32,
@@ -21055,22 +21055,22 @@ static const Pool P_LS_S1[16] = {
     { reserved_block      , 0                   , 0   , 32,
        0xfc007f00, 0xa4001900, 0                      , 0,
        0x0                 },        /* P.LS.S1~*(3) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4002100, &UALH             , 0,
        XMMS_               },        /* UALH */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4002900, &UASH             , 0,
        XMMS_               },        /* UASH */
     { reserved_block      , 0                   , 0   , 32,
        0xfc007f00, 0xa4003100, 0                      , 0,
        0x0                 },        /* P.LS.S1~*(6) */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4003900, &CACHE            , 0,
        CP0_                },        /* CACHE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4004100, &LWC2             , 0,
        CP2_                },        /* LWC2 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4004900, &SWC2             , 0,
        CP2_                },        /* SWC2 */
     { pool                , P_LL                , 4   , 32,
@@ -21079,10 +21079,10 @@ static const Pool P_LS_S1[16] = {
     { pool                , P_SC                , 4   , 32,
        0xfc007f00, 0xa4005900, 0                      , 0,
        0x0                 },        /* P.SC */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4006100, &LDC2             , 0,
        CP2_                },        /* LDC2 */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4006900, &SDC2             , 0,
        CP2_                },        /* SDC2 */
     { pool                , P_LLD               , 8   , 32,
@@ -21095,20 +21095,20 @@ static const Pool P_LS_S1[16] = {
 
 
 static const Pool P_PREFE[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xffe07f00, 0xa7e01a00, &SYNCIE           , 0,
        CP0_ | EVA_         },        /* SYNCIE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4001a00, &PREFE            , &PREFE_cond       ,
        CP0_ | EVA_         },        /* PREFE */
 };
 
 
 static const Pool P_LLE[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f03, 0xa4005200, &LLE              , 0,
        CP0_ | EVA_         },        /* LLE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f03, 0xa4005201, &LLWPE            , 0,
        CP0_ | EVA_         },        /* LLWPE */
     { reserved_block      , 0                   , 0   , 32,
@@ -21121,10 +21121,10 @@ static const Pool P_LLE[4] = {
 
 
 static const Pool P_SCE[4] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f03, 0xa4005a00, &SCE              , 0,
        CP0_ | EVA_         },        /* SCE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f03, 0xa4005a01, &SCWPE            , 0,
        CP0_ | EVA_         },        /* SCWPE */
     { reserved_block      , 0                   , 0   , 32,
@@ -21137,34 +21137,34 @@ static const Pool P_SCE[4] = {
 
 
 static const Pool P_LS_E0[16] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4000200, &LBE              , 0,
        CP0_ | EVA_         },        /* LBE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4000a00, &SBE              , 0,
        CP0_ | EVA_         },        /* SBE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4001200, &LBUE             , 0,
        CP0_ | EVA_         },        /* LBUE */
     { pool                , P_PREFE             , 2   , 32,
        0xfc007f00, 0xa4001a00, 0                      , 0,
        0x0                 },        /* P.PREFE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4002200, &LHE              , 0,
        CP0_ | EVA_         },        /* LHE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4002a00, &SHE              , 0,
        CP0_ | EVA_         },        /* SHE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4003200, &LHUE             , 0,
        CP0_ | EVA_         },        /* LHUE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4003a00, &CACHEE           , 0,
        CP0_ | EVA_         },        /* CACHEE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4004200, &LWE              , 0,
        CP0_ | EVA_         },        /* LWE */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc007f00, 0xa4004a00, &SWE              , 0,
        CP0_ | EVA_         },        /* SWE */
     { pool                , P_LLE               , 4   , 32,
@@ -21189,40 +21189,40 @@ static const Pool P_LS_E0[16] = {
 
 
 static const Pool P_LS_WM[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000f00, 0xa4000400, &LWM              , 0,
        XMMS_               },        /* LWM */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000f00, 0xa4000c00, &SWM              , 0,
        XMMS_               },        /* SWM */
 };
 
 
 static const Pool P_LS_UAWM[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000f00, 0xa4000500, &UALWM            , 0,
        XMMS_               },        /* UALWM */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000f00, 0xa4000d00, &UASWM            , 0,
        XMMS_               },        /* UASWM */
 };
 
 
 static const Pool P_LS_DM[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000f00, 0xa4000600, &LDM              , 0,
        MIPS64_             },        /* LDM */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000f00, 0xa4000e00, &SDM              , 0,
        MIPS64_             },        /* SDM */
 };
 
 
 static const Pool P_LS_UADM[2] = {
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000f00, 0xa4000700, &UALDM            , 0,
        MIPS64_             },        /* UALDM */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000f00, 0xa4000f00, &UASDM            , 0,
        MIPS64_             },        /* UASDM */
 };
@@ -21513,7 +21513,7 @@ static const Pool P32[32] = {
     { pool                , P_LUI               , 2   , 32,
        0xfc000000, 0xe0000000, 0                      , 0,
        0x0                 },        /* P.LUI */
-    { instruction         , 0                   , 0   , 32,
+    { instruction_enum         , 0                   , 0   , 32,
        0xfc000000, 0x04000000, &ADDIUPC_32_      , 0,
        0x0                 },        /* ADDIUPC[32] */
     { reserved_block      , 0                   , 0   , 32,
@@ -21589,10 +21589,10 @@ static const Pool P32[32] = {
 
 
 static const Pool P16_SYSCALL[2] = {
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfffc    , 0x1008    , &SYSCALL_16_      , 0,
        0x0                 },        /* SYSCALL[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfffc    , 0x100c    , &HYPCALL_16_      , 0,
        CP0_ | VZ_          },        /* HYPCALL[16] */
 };
@@ -21605,10 +21605,10 @@ static const Pool P16_RI[4] = {
     { pool                , P16_SYSCALL         , 2   , 16,
        0xfff8    , 0x1008    , 0                      , 0,
        0x0                 },        /* P16.SYSCALL */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfff8    , 0x1010    , &BREAK_16_        , 0,
        0x0                 },        /* BREAK[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfff8    , 0x1018    , &SDBBP_16_        , 0,
        EJTAG_              },        /* SDBBP[16] */
 };
@@ -21618,33 +21618,33 @@ static const Pool P16_MV[2] = {
     { pool                , P16_RI              , 4   , 16,
        0xffe0    , 0x1000    , 0                      , 0,
        0x0                 },        /* P16.RI */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0x1000    , &MOVE             , &MOVE_cond        ,
        0x0                 },        /* MOVE */
 };
 
 
 static const Pool P16_SHIFT[2] = {
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc08    , 0x3000    , &SLL_16_          , 0,
        0x0                 },        /* SLL[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc08    , 0x3008    , &SRL_16_          , 0,
        0x0                 },        /* SRL[16] */
 };
 
 
 static const Pool POOL16C_00[4] = {
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc0f    , 0x5000    , &NOT_16_          , 0,
        0x0                 },        /* NOT[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc0f    , 0x5004    , &XOR_16_          , 0,
        0x0                 },        /* XOR[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc0f    , 0x5008    , &AND_16_          , 0,
        0x0                 },        /* AND[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc0f    , 0x500c    , &OR_16_           , 0,
        0x0                 },        /* OR[16] */
 };
@@ -21664,7 +21664,7 @@ static const Pool P16C[2] = {
     { pool                , POOL16C_0           , 2   , 16,
        0xfc01    , 0x5000    , 0                      , 0,
        0x0                 },        /* POOL16C_0 */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc01    , 0x5001    , &LWXS_16_         , 0,
        0x0                 },        /* LWXS[16] */
 };
@@ -21674,24 +21674,24 @@ static const Pool P16_A1[2] = {
     { reserved_block      , 0                   , 0   , 16,
        0xfc40    , 0x7000    , 0                      , 0,
        0x0                 },        /* P16.A1~*(0) */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc40    , 0x7040    , &ADDIU_R1_SP_     , 0,
        0x0                 },        /* ADDIU[R1.SP] */
 };
 
 
 static const Pool P_ADDIU_RS5_[2] = {
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xffe8    , 0x9008    , &NOP_16_          , 0,
        0x0                 },        /* NOP[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc08    , 0x9008    , &ADDIU_RS5_       , &ADDIU_RS5__cond  ,
        0x0                 },        /* ADDIU[RS5] */
 };
 
 
 static const Pool P16_A2[2] = {
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc08    , 0x9000    , &ADDIU_R2_        , 0,
        0x0                 },        /* ADDIU[R2] */
     { pool                , P_ADDIU_RS5_        , 2   , 16,
@@ -21701,10 +21701,10 @@ static const Pool P16_A2[2] = {
 
 
 static const Pool P16_ADDU[2] = {
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc01    , 0xb000    , &ADDU_16_         , 0,
        0x0                 },        /* ADDU[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc01    , 0xb001    , &SUBU_16_         , 0,
        0x0                 },        /* SUBU[16] */
 };
@@ -21741,7 +21741,7 @@ static const Pool P16_BR[2] = {
 
 
 static const Pool P16_SR[2] = {
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfd00    , 0x1c00    , &SAVE_16_         , 0,
        0x0                 },        /* SAVE[16] */
     { return_instruction  , 0                   , 0   , 16,
@@ -21751,10 +21751,10 @@ static const Pool P16_SR[2] = {
 
 
 static const Pool P16_4X4[4] = {
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfd08    , 0x3c00    , &ADDU_4X4_        , 0,
        XMMS_               },        /* ADDU[4X4] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfd08    , 0x3c08    , &MUL_4X4_         , 0,
        XMMS_               },        /* MUL[4X4] */
     { reserved_block      , 0                   , 0   , 16,
@@ -21767,13 +21767,13 @@ static const Pool P16_4X4[4] = {
 
 
 static const Pool P16_LB[4] = {
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc0c    , 0x5c00    , &LB_16_           , 0,
        0x0                 },        /* LB[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc0c    , 0x5c04    , &SB_16_           , 0,
        0x0                 },        /* SB[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc0c    , 0x5c08    , &LBU_16_          , 0,
        0x0                 },        /* LBU[16] */
     { reserved_block      , 0                   , 0   , 16,
@@ -21783,13 +21783,13 @@ static const Pool P16_LB[4] = {
 
 
 static const Pool P16_LH[4] = {
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc09    , 0x7c00    , &LH_16_           , 0,
        0x0                 },        /* LH[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc09    , 0x7c01    , &SH_16_           , 0,
        0x0                 },        /* SH[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc09    , 0x7c08    , &LHU_16_          , 0,
        0x0                 },        /* LHU[16] */
     { reserved_block      , 0                   , 0   , 16,
@@ -21817,34 +21817,34 @@ static const Pool P16[32] = {
     { pool                , P16_ADDU            , 2   , 16,
        0xfc00    , 0xb000    , 0                      , 0,
        0x0                 },        /* P16.ADDU */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0xd000    , &LI_16_           , 0,
        0x0                 },        /* LI[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0xf000    , &ANDI_16_         , 0,
        0x0                 },        /* ANDI[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0x1400    , &LW_16_           , 0,
        0x0                 },        /* LW[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0x3400    , &LW_SP_           , 0,
        0x0                 },        /* LW[SP] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0x5400    , &LW_GP16_         , 0,
        0x0                 },        /* LW[GP16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0x7400    , &LW_4X4_          , 0,
        XMMS_               },        /* LW[4X4] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0x9400    , &SW_16_           , 0,
        0x0                 },        /* SW[16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0xb400    , &SW_SP_           , 0,
        0x0                 },        /* SW[SP] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0xd400    , &SW_GP16_         , 0,
        0x0                 },        /* SW[GP16] */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0xf400    , &SW_4X4_          , 0,
        XMMS_               },        /* SW[4X4] */
     { branch_instruction  , 0                   , 0   , 16,
@@ -21886,13 +21886,13 @@ static const Pool P16[32] = {
     { reserved_block      , 0                   , 0   , 16,
        0xfc00    , 0x9c00    , 0                      , 0,
        0x0                 },        /* P16~*(19) */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0xbc00    , &MOVEP            , 0,
        XMMS_               },        /* MOVEP */
     { reserved_block      , 0                   , 0   , 16,
        0xfc00    , 0xdc00    , 0                      , 0,
        0x0                 },        /* P16~*(27) */
-    { instruction         , 0                   , 0   , 16,
+    { instruction_enum         , 0                   , 0   , 16,
        0xfc00    , 0xfc00    , &MOVEP_REV_       , 0,
        XMMS_               },        /* MOVEP[REV] */
 };
