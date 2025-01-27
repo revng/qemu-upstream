@@ -137,10 +137,12 @@ typedef struct DisasContext {
     int delayed_branch;
 } DisasContext;
 
+#ifndef CONFIG_LIBTCG
 static void gen_BUG(DisasContext *dc, const char *file, int line)
 {
     cpu_abort(CPU(dc->cpu), "%s:%d pc=%x\n", file, line, dc->pc);
 }
+#endif
 
 static const char * const regnames_v32[] =
 {
