@@ -187,7 +187,9 @@ void cpu_loop(CPUARMState *env)
 
 void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
 {
+#if !defined(GEN_LLVM_HELPERS) && !defined(CONFIG_LIBTCG)
     ARMCPU *cpu = env_archcpu(env);
+#endif
     CPUState *cs = env_cpu(env);
     TaskState *ts = cs->opaque;
     struct image_info *info = ts->info;
@@ -212,7 +214,7 @@ void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
     arm_rebuild_hflags(env);
 #endif
 
-#ifndef GEN_LLVM_HELPERS
+#if !defined(GEN_LLVM_HELPERS) && !defined(CONFIG_LIBTCG)
     if (cpu_isar_feature(aa64_pauth, cpu)) {
         qemu_guest_getrandom_nofail(&env->keys, sizeof(env->keys));
     }
