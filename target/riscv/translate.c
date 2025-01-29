@@ -1167,6 +1167,22 @@ static uint32_t opcode_at(DisasContextBase *dcbase, target_ulong pc)
 /* Include decoders for factored-out extensions */
 #include "decode-XVentanaCondOps.c.inc"
 
+static void xqci_jump_pcrel(DisasContext *ctx, TCGv pc, int imm)
+{
+    gen_goto_tb(ctx, 0, imm);
+    ctx->base.is_jmp = DISAS_NORETURN;
+}
+
+/* Include decoders for Xqci */
+#include "xqci/xqciu_tcg.c"
+#include "decode-xqciu-16.c.inc"
+#include "decode-xqciu-32.c.inc"
+#include "decode-xqciu-16.c.inc"
+#include "xqci/xqciu-decode-extra-16.c.inc"
+#include "xqci/xqciu-decode-extra-32.c.inc"
+#include "xqci/xqciu-decode-extra-48.c.inc"
+#include "xqci/xqciu_trans.c.inc"
+
 /* The specification allows for longer insns, but not supported by qemu. */
 #define MAX_INSN_LEN  4
 
@@ -1179,6 +1195,7 @@ const RISCVDecoder decoder_table[] = {
     { always_true_p, decode_insn32 },
     { has_xthead_p, decode_xthead},
     { has_XVentanaCondOps_p, decode_XVentanaCodeOps},
+    { has_xqci_p, decode_xqci},
 };
 
 const size_t decoder_table_size = ARRAY_SIZE(decoder_table);
