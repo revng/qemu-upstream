@@ -1,0 +1,11 @@
+%shamt_2_5 2:5
+%rd_7_3 7:3
+%uimm_5_1_10_3_6_1 5:1 10:3 6:1
+%rs1_7_3 7:3
+%rd_2_3 2:3
+%rs1_7_5 7:5
+%width_minus1_2_5 2:5
+qc_c_bexti 100100 ........ 01 shamt=%shamt_2_5 rd=%rd_7_3
+qc_c_bseti 100101 ........ 01 shamt=%shamt_2_5 rd=%rd_7_3
+qc_c_muladdi 001 ........... 10 uimm=%uimm_5_1_10_3_6_1 rs1=%rs1_7_3 rd=%rd_2_3
+qc_c_setint_qc_c_extu_qc_c_mienter_nest_qc_c_mienter_qc_c_eir_qc_c_dir_qc_c_clrint_qc_c_di_qc_c_ei 0001 .......... 10 rs1=%rs1_7_5 width_minus1=%width_minus1_2_5
