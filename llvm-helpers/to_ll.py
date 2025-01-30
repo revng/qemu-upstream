@@ -8,6 +8,8 @@ import sys
 import subprocess
 
 common_files = [
+    "accel/tcg/tcg-runtime.c",
+    "accel/tcg/tcg-runtime-gvec.c",
     "accel/tcg/user-exec.c",
     "linux-user/main.c",
     "linux-user/syscall.c",
@@ -98,6 +100,8 @@ helpers = {
         "target/s390x/tcg/vec_helper.c",
         "target/s390x/tcg/vec_int_helper.c",
         "target/s390x/tcg/vec_string_helper.c",
+        "target/s390x/interrupt.c",
+        "target/s390x/cpu-dump.c",
         "linux-user/s390x/cpu_loop.c",
         "linux-user/s390x/signal.c",
     ],
@@ -170,6 +174,7 @@ helpers = {
         "target/hexagon/genptr.c",
         "target/hexagon/op_helper.c",
         "target/hexagon/translate.c",
+        "target/hexagon/arch.c",
         "linux-user/hexagon/cpu_loop.c",
         "linux-user/hexagon/signal.c",
     ],
@@ -178,6 +183,7 @@ helpers = {
         "target/loongarch/op_helper.c",
         "target/loongarch/translate.c",
         "target/loongarch/vec_helper.c",
+        "target/loongarch/cpu.c",
         "linux-user/loongarch64/cpu_loop.c",
         "linux-user/loongarch64/signal.c",
     ],
