@@ -8283,6 +8283,7 @@ void target_exception_dump(CPUArchState *env, const char *fmt, int code)
 #endif
 }
 
+#ifndef GEN_LLVM_HELPERS
 #include "target_proc.h"
 
 #if HOST_BIG_ENDIAN != TARGET_BIG_ENDIAN || \
@@ -8337,6 +8338,7 @@ static int open_net_route(CPUArchState *cpu_env, int fd)
 
     return 0;
 }
+#endif
 #endif
 
 int do_guest_openat(CPUArchState *cpu_env, int dirfd, const char *fname,

@@ -1064,7 +1064,9 @@ static inline abi_ulong target_shmlba(CPUArchState *cpu_env)
 abi_ulong target_shmat(CPUArchState *cpu_env, int shmid,
                        abi_ulong shmaddr, int shmflg)
 {
+#ifndef GEN_LLVM_HELPERS
     CPUState *cpu = env_cpu(cpu_env);
+#endif
     abi_ulong raddr;
     struct shmid_ds shm_info;
     int ret;
