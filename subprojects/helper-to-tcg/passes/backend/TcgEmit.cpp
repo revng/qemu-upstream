@@ -30,8 +30,9 @@ namespace tcg
 
 // Constant used to represent the MMU INDEX for all memory operations.
 // get_tb_mmu_index is a function assumed to be defined by the target.
-static const TcgV MmuIndex =
-    TcgV::makeImmediate(MmuIndexFunction + "(tcg_ctx->gen_tb->flags)", 32, 32);
+//static const TcgV MmuIndex =
+//    TcgV::makeImmediate(MmuIndexFunction + "(tcg_ctx->gen_tb->flags)", 32, 32);
+static const TcgV MmuIndex = TcgV::makeImmediate("ctx->mem_idx", 32, 32);
 
 void resetNameIndices()
 {

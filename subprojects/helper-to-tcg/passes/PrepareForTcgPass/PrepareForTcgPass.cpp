@@ -53,6 +53,9 @@ static void removeFunctionsWithLoops(Module &M, ModuleAnalysisManager &MAM)
     }
 
     for (auto *F : FunctionsToRemove) {
+        errs() << "Removing due to loop:\n";
+        errs() << *F << "\n";
+        F->setComdat(nullptr);
         F->deleteBody();
     }
 }

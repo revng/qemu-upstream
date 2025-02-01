@@ -829,6 +829,14 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
         CArgs.push_back(MaybeMapped.get());
     }
 
+    bool EmitDisasContext = true;
+    if (EmitDisasContext) {
+        HeaderWriter << "DisasContext *ctx";
+        if (!CArgs.empty()) {
+            HeaderWriter << ", ";
+        }
+    }
+
     auto CArgIt = CArgs.begin();
     if (CArgIt != CArgs.end()) {
         HeaderWriter << tcg::getType(*CArgIt) << ' ' << tcg::getName(*CArgIt);
@@ -1319,10 +1327,13 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
                     }
                     tcg::genCallHelper(Out, Name, IArgs.begin(), IArgs.end());
                 } else {
-                    if (F->isDeclaration()) {
+                    bool AllowCallToDeclaration = true;
+                    if (!AllowCallToDeclaration and F->isDeclaration()) {
                         return mkError("call to declaration: ", Call);
                     }
-                    if (HasTranslatedFunction.find(F) ==
+
+                    if (!F->isDeclaration() and
+                        HasTranslatedFunction.find(F) ==
                         HasTranslatedFunction.end()) {
                         return mkError(
                             "call to function which failed to translate: ",
@@ -1335,7 +1346,18 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
 
                     StringRef Name = F->getName();
                     Name.consume_front("helper_");
-                    Out << "emit_" << Name << "(";
+                    if (!F->isDeclaration()) {
+                        Out << "emit_";
+                    }
+                    Out << getDemangleFunctionName(Name) << "(";
+
+                    bool EmitDisasContext = true;
+                    if (EmitDisasContext) {
+                        Out << "ctx";
+                        if (MaybeRes or !Args.empty()) {
+                            Out << ", ";
+                        }
+                    }
 
                     if (MaybeRes) {
                         Out << tcg::getName(MaybeRes.get());
@@ -1345,7 +1367,8 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
                     }
 
                     for (unsigned i = 0; i < Args.size(); ++i) {
-                        Out << tcg::getName(tcg::materialize(Args[i]));
+                        Out << tcg::getName(Args[i]);
+                        //Out << tcg::getName(tcg::materialize(Args[i]));
                         if (i < Args.size() - 1) {
                             Out << ", ";
                         }
@@ -1679,6 +1702,7 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
 
 PreservedAnalyses TcgGenPass::run(Module &M, ModuleAnalysisManager &MAM)
 {
+    errs() << M << "\n";
     auto &CG = MAM.getResult<CallGraphAnalysis>(M);
 
     // Vector of translation results

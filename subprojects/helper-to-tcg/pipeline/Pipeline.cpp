@@ -251,9 +251,9 @@ int main(int argc, char **argv)
 
     // Optimization passes
     MPM.addPass(PB.buildModuleSimplificationPipeline(
-        compat::OptimizationLevel::Os, compat::LTOPhase));
+        compat::OptimizationLevel::O3, compat::LTOPhase));
     MPM.addPass(
-        PB.buildModuleOptimizationPipeline(compat::OptimizationLevel::Os));
+        PB.buildModuleOptimizationPipeline(compat::OptimizationLevel::O3));
 
     //
     // Next, we run our final transformations, including removing phis and our
