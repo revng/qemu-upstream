@@ -64,8 +64,8 @@ typedef struct DisasContext {
     RISCVMXL misa_mxl_max;
     RISCVMXL xl;
     RISCVMXL address_xl;
+    uint64_t opcode;
     uint32_t misa_ext;
-    uint32_t opcode;
     RISCVExtStatus mstatus_fs;
     RISCVExtStatus mstatus_vs;
     uint32_t mem_idx;
@@ -115,7 +115,9 @@ typedef struct DisasContext {
     /* FRM is known to contain a valid value. */
     bool frm_valid;
     bool insn_start_updated;
-    const GPtrArray *decoders;
+    const GPtrArray *decoders_16;
+    const GPtrArray *decoders_32;
+    const GPtrArray *decoders_48;
     /* zicfilp extension. fcfi_enabled, lp expected or not */
     bool fcfi_enabled;
     bool fcfi_lp_expected;
@@ -1173,32 +1175,54 @@ static void xqci_jump_pcrel(DisasContext *ctx, TCGv pc, int imm)
     ctx->base.is_jmp = DISAS_NORETURN;
 }
 
-/* Include decoders for Xqci */
-#include "xqci/xqciu_tcg.c"
+static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
+                                          int offset, int length)
+{
+    return 0;
+}
+
 #include "decode-xqciu-16.c.inc"
 #include "decode-xqciu-32.c.inc"
-#include "decode-xqciu-16.c.inc"
-#include "xqci/xqciu-decode-extra-16.c.inc"
-#include "xqci/xqciu-decode-extra-32.c.inc"
-#include "xqci/xqciu-decode-extra-48.c.inc"
+#include "decode-xqciu-48.c.inc"
+#include "xqci/xqciu_tcg.c"
 #include "xqci/xqciu_trans.c.inc"
+//#include "xqci/xqciu-decode-extra-16.c.inc"
+//#include "xqci/xqciu-decode-extra-32.c.inc"
+//#include "xqci/xqciu-decode-extra-48.c.inc"
 
 /* The specification allows for longer insns, but not supported by qemu. */
-#define MAX_INSN_LEN  4
+#define MAX_INSN_LEN  8
 
 static inline int insn_len(uint16_t first_word)
 {
-    return (first_word & 3) == 3 ? 4 : 2;
+    if ((first_word & 0b1111111) == 0b0011111) {
+        //TODO(anjo): This is vendorspecific..
+        return 6;
+    } else if ((first_word & 0b11) == 0b11) {
+        return 4;
+    } else {
+        return 2;
+    }
 }
 
-const RISCVDecoder decoder_table[] = {
+const RISCVDecoder16 decoder_table_16[] = {
+    { always_true_p, decode_xqci_16},
+};
+
+const RISCVDecoder32 decoder_table_32[] = {
     { always_true_p, decode_insn32 },
     { has_xthead_p, decode_xthead},
     { has_XVentanaCondOps_p, decode_XVentanaCodeOps},
-    { has_xqci_p, decode_xqci},
+    { always_true_p, decode_xqci_32},
 };
 
-const size_t decoder_table_size = ARRAY_SIZE(decoder_table);
+const RISCVDecoder48 decoder_table_48[] = {
+    { always_true_p, decode_xqci_48},
+};
+
+const size_t decoder_table_size_16 = ARRAY_SIZE(decoder_table_16);
+const size_t decoder_table_size_32 = ARRAY_SIZE(decoder_table_32);
+const size_t decoder_table_size_48 = ARRAY_SIZE(decoder_table_48);
 
 static void decode_opc(CPURISCVState *env, DisasContext *ctx, uint16_t opcode)
 {
@@ -1215,16 +1239,37 @@ static void decode_opc(CPURISCVState *env, DisasContext *ctx, uint16_t opcode)
             decode_insn16(ctx, opcode)) {
             return;
         }
-    } else {
+
+        for (guint i = 0; i < ctx->decoders_16->len; ++i) {
+            riscv_cpu_decode_16_fn func = g_ptr_array_index(ctx->decoders_16, i);
+            if (func(ctx, opcode)) {
+                return;
+            }
+        }
+    } else if (ctx->cur_insn_len == 4) {
         uint32_t opcode32 = opcode;
         opcode32 = deposit32(opcode32, 16, 16,
                              translator_lduw(env, &ctx->base,
                                              ctx->base.pc_next + 2));
         ctx->opcode = opcode32;
 
-        for (guint i = 0; i < ctx->decoders->len; ++i) {
-            riscv_cpu_decode_fn func = g_ptr_array_index(ctx->decoders, i);
+        for (guint i = 0; i < ctx->decoders_32->len; ++i) {
+            riscv_cpu_decode_32_fn func = g_ptr_array_index(ctx->decoders_32, i);
             if (func(ctx, opcode32)) {
+                return;
+            }
+        }
+    } else if (ctx->cur_insn_len == 6) {
+        uint64_t opcode48 = opcode;
+        opcode48 = deposit32(opcode48, 16, 16,
+                             translator_ldl(env, &ctx->base,
+                                             ctx->base.pc_next + 4));
+        opcode48 <<= (64-48);
+        ctx->opcode = opcode48;
+
+        for (guint i = 0; i < ctx->decoders_48->len; ++i) {
+            riscv_cpu_decode_48_fn func = g_ptr_array_index(ctx->decoders_48, i);
+            if (func(ctx, opcode48)) {
                 return;
             }
         }
@@ -1272,7 +1317,9 @@ static void riscv_tr_init_disas_context(DisasContextBase *dcbase, CPUState *cs)
     ctx->fcfi_enabled = FIELD_EX32(tb_flags, TB_FLAGS, FCFI_ENABLED);
     ctx->zero = tcg_constant_tl(0);
     ctx->virt_inst_excp = false;
-    ctx->decoders = cpu->decoders;
+    ctx->decoders_16 = cpu->decoders_16;
+    ctx->decoders_32 = cpu->decoders_32;
+    ctx->decoders_48 = cpu->decoders_48;
 }
 
 static void riscv_tr_tb_start(DisasContextBase *db, CPUState *cpu)
