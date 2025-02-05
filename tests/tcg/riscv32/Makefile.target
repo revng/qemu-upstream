@@ -1,0 +1,9 @@
+
+SRC=$(SRC_PATH)/tests/tcg/riscv32
+
+assemble:
+	for instname in $(SRC)/klee_io/*; do \
+		echo $(instname) \
+	done
+
+TESTS += assemble
