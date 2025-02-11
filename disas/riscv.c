@@ -26,6 +26,7 @@
 /* Vendor extensions */
 #include "disas/riscv-xthead.h"
 #include "disas/riscv-xventana.h"
+#include "disas/riscv-xqci.h"
 
 typedef enum {
     /* 0 is reserved for rv_op_illegal. */
@@ -5407,11 +5408,12 @@ static void decode_inst_decompress(rv_decode *dec, rv_isa isa)
 /* disassemble instruction */
 
 static GString *disasm_inst(rv_isa isa, uint64_t pc, rv_inst inst,
-                            RISCVCPUConfig *cfg)
+                            size_t inst_length, RISCVCPUConfig *cfg)
 {
     rv_decode dec = { 0 };
     dec.pc = pc;
     dec.inst = inst;
+    dec.inst_length = inst_length;
     dec.cfg = cfg;
 
     static const struct {
@@ -5419,6 +5421,7 @@ static GString *disasm_inst(rv_isa isa, uint64_t pc, rv_inst inst,
         const rv_opcode_data *opcode_data;
         void (*decode_func)(rv_decode *, rv_isa);
     } decoders[] = {
+        { always_true_p, xqci_opcode_data, decode_xqci },
         { always_true_p, rvi_opcode_data, decode_inst_opcode },
         { has_xtheadba_p, xthead_opcode_data, decode_xtheadba },
         { has_xtheadbb_p, xthead_opcode_data, decode_xtheadbb },
@@ -5507,7 +5510,7 @@ print_insn_riscv(bfd_vma memaddr, struct disassemble_info *info, rv_isa isa)
     }
 
     g_autoptr(GString) str =
-        disasm_inst(isa, memaddr, inst, (RISCVCPUConfig *)info->target_info);
+        disasm_inst(isa, memaddr, inst, len, (RISCVCPUConfig *)info->target_info);
     (*info->fprintf_func)(info->stream, "%s", str->str);
 
     return len;
