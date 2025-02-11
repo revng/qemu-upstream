@@ -131,6 +131,11 @@ static bool trans_qc_c_extu(DisasContext *ctx, arg_qc_c_extu *arg)
     emit_qc_c_extu(ctx, tcg_env, arg->width_minus1, arg->rd);
     return true;
 }
+static bool trans_qc_c_muliadd(DisasContext *ctx, arg_qc_c_muliadd *arg)
+{
+    emit_qc_c_muliadd(ctx, tcg_env, arg->uimm, arg->rs1, arg->rd);
+    return true;
+}
 static bool trans_qc_c_setint(DisasContext *ctx, arg_qc_c_setint *arg)
 {
     if (arg->rs1 == 0) {

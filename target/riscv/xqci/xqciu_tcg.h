@@ -12,6 +12,7 @@ void emit_qc_c_dir(DisasContext *ctx, TCGv_env env, int8_t vi_4);
 void emit_qc_c_ei(DisasContext *ctx, TCGv_env env);
 void emit_qc_c_eir(DisasContext *ctx, TCGv_env env, int8_t vi_6);
 void emit_qc_c_extu(DisasContext *ctx, TCGv_env env, int8_t vi_9, int8_t vi_7);
+void emit_qc_c_muliadd(DisasContext *ctx, TCGv_env env, int8_t vi_7, int8_t vi_10, int8_t vi_12);
 void emit_qc_c_setint(DisasContext *ctx, TCGv_env env, int8_t vi_12);
 void emit_qc_clo(DisasContext *ctx, TCGv_env env, int8_t vi_8, int8_t vi_4);
 void emit_qc_clrinti(DisasContext *ctx, TCGv_env env, int16_t vi_13);

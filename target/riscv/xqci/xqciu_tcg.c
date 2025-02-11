@@ -179,6 +179,17 @@ tcg_gen_andi_i32(temp0, temp0, ((2 << vi_9) + -1));
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_7)], temp0);
 }
 
+// void _ZN12CPUArchState12qc_c_muliaddEhhh
+void emit_qc_c_muliadd(DisasContext *ctx, TCGv_env env, int8_t vi_7, int8_t vi_10, int8_t vi_12) {
+TCGv_i32 temp2 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp2, cpu_gpr[(((uint64_t) (uint32_t) vi_12) + 8ull)]);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[(((uint64_t) (uint32_t) vi_10) + 8ull)]);
+tcg_gen_muli_i32(temp0, temp0, vi_7);
+tcg_gen_add_i32(temp0, temp0, temp2);
+tcg_gen_mov_i32(cpu_gpr[(((uint64_t) (uint32_t) vi_12) + 8ull)], temp0);
+}
+
 // void _ZN12CPUArchState11qc_c_setintEh
 void emit_qc_c_setint(DisasContext *ctx, TCGv_env env, int8_t vi_12) {
 TCGv_ptr ptr1 = tcg_temp_new_ptr();
