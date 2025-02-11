@@ -192,6 +192,7 @@ typedef struct {
     RISCVCPUConfig *cfg;
     uint64_t  pc;
     uint64_t  inst;
+    size_t    inst_length;
     const rv_opcode_data *opcode_data;
     int32_t   imm;
     int32_t   imm1;
@@ -211,6 +212,14 @@ typedef struct {
     uint8_t   vm;
     uint32_t  vzimm;
     uint8_t   rlist;
+    /* Xqci specific fields */
+    int32_t   uimm;
+    uint32_t  shamt;
+    int32_t   width_minus1;
+    int32_t   simm;
+    int32_t   simm1;
+    int32_t   simm2;
+    uint64_t  offset;
 } rv_decode;
 
 enum {
