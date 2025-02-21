@@ -4560,6 +4560,9 @@ static void decode_inst_operands(rv_decode *dec, rv_isa isa)
     rv_inst inst = dec->inst;
     dec->codec = opcode_data[dec->op].codec;
     switch (dec->codec) {
+    case rv_codec_skip:
+        /* do nothing */
+        break;
     case rv_codec_none:
         dec->rd = dec->rs1 = dec->rs2 = rv_ireg_zero;
         dec->imm = 0;
@@ -5314,6 +5317,12 @@ static GString *format_inst(size_t tab, rv_decode *dec)
         }
         case 'h':
             g_string_append(buf, rv_fli_name_const[dec->imm]);
+            break;
+        case 'k':
+            g_string_append_printf(buf, "%u", dec->uimm);
+            break;
+        case 'Z':
+            g_string_append_printf(buf, "%lu", dec->offset);
             break;
         default:
             break;
