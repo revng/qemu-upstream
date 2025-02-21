@@ -1163,7 +1163,7 @@ static uint32_t opcode_at(DisasContextBase *dcbase, target_ulong pc)
 
 static void xqci_jump_pcrel(DisasContext *ctx, TCGv pc, int imm)
 {
-    gen_goto_tb(ctx, 0, imm);
+    gen_goto_tb(ctx, 1, imm);
     ctx->base.is_jmp = DISAS_NORETURN;
 }
 
@@ -1177,6 +1177,7 @@ static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
 #include "decode-xqciu-32.c.inc"
 #include "decode-xqciu-48.c.inc"
 #include "xqci/xqciu_tcg.c"
+#include "xqci/xqciu_tcg_manual.c.inc"
 #include "xqci/xqciu_trans.c.inc"
 //#include "xqci/xqciu-decode-extra-16.c.inc"
 //#include "xqci/xqciu-decode-extra-32.c.inc"
@@ -1223,6 +1224,14 @@ static void decode_opc(CPURISCVState *env, DisasContext *ctx, uint16_t opcode)
     /* Check for compressed insn */
     if (ctx->cur_insn_len == 2) {
         ctx->opcode = opcode;
+
+        for (guint i = 0; i < ctx->decoders_16->len; ++i) {
+            riscv_cpu_decode_16_fn func = g_ptr_array_index(ctx->decoders_16, i);
+            if (func(ctx, opcode)) {
+                return;
+            }
+        }
+
         /*
          * The Zca extension is added as way to refer to instructions in the C
          * extension that do not include the floating-point loads and stores
@@ -1230,13 +1239,6 @@ static void decode_opc(CPURISCVState *env, DisasContext *ctx, uint16_t opcode)
         if ((has_ext(ctx, RVC) || ctx->cfg_ptr->ext_zca) &&
             decode_insn16(ctx, opcode)) {
             return;
-        }
-
-        for (guint i = 0; i < ctx->decoders_16->len; ++i) {
-            riscv_cpu_decode_16_fn func = g_ptr_array_index(ctx->decoders_16, i);
-            if (func(ctx, opcode)) {
-                return;
-            }
         }
     } else if (ctx->cur_insn_len == 4) {
         uint32_t opcode32 = opcode;
@@ -1253,9 +1255,9 @@ static void decode_opc(CPURISCVState *env, DisasContext *ctx, uint16_t opcode)
         }
     } else if (ctx->cur_insn_len == 6) {
         uint64_t opcode48 = opcode;
-        opcode48 = deposit32(opcode48, 16, 16,
+        opcode48 = deposit64(opcode48, 16, 32,
                              translator_ldl(env, &ctx->base,
-                                             ctx->base.pc_next + 4));
+                                             ctx->base.pc_next + 2));
         opcode48 <<= (64-48);
         ctx->opcode = opcode48;
 
