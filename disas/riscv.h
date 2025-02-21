@@ -97,6 +97,7 @@ typedef enum {
 
 typedef enum {
     rv_codec_illegal,
+    rv_codec_skip,
     rv_codec_none,
     rv_codec_u,
     rv_codec_uj,
@@ -213,12 +214,7 @@ typedef struct {
     uint32_t  vzimm;
     uint8_t   rlist;
     /* Xqci specific fields */
-    int32_t   uimm;
-    uint32_t  shamt;
-    int32_t   width_minus1;
-    int32_t   simm;
-    int32_t   simm1;
-    int32_t   simm2;
+    uint32_t  uimm;
     uint64_t  offset;
 } rv_decode;
 
