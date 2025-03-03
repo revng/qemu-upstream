@@ -1,2 +1,36 @@
-32 0 0 0 
-0 0 0 0 
+- variables:
+  - name: "shamt"
+    in: 31
+  - name: "rs2"
+    in: 2147483648
+  - name: "rs1"
+    in: 255
+  - name: "rd"
+    in: 4278190080
+    out: 0
+  overflow: 1
+  underflow: 0
+- variables:
+  - name: "shamt"
+    in: 22
+  - name: "rs2"
+    in: 4194304
+  - name: "rs1"
+    in: 16384
+  - name: "rd"
+    in: 4278190080
+    out: 4194304
+  overflow: 1
+  underflow: 0
+- variables:
+  - name: "shamt"
+    in: 30
+  - name: "rs2"
+    in: 3221225472
+  - name: "rs1"
+    in: 2
+  - name: "rd"
+    in: 4278190080
+    out: 1073741824
+  overflow: 1
+  underflow: 0

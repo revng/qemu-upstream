@@ -1,9 +1,30 @@
-
 SRC=$(SRC_PATH)/tests/tcg/riscv32
+KLEE_IO_DIR=$(SRC)/klee_io
+OUT_DIR=xqci-test
+INST_DIR=$(SRC)/Xqci
+QEMU=./qemu-riscv32
 
-assemble:
-	for instname in $(SRC)/klee_io/*; do \
-		echo $(instname) \
+# These tests are a bit annoying to run in a makefile since any given input yaml file
+# in $(KLEE_IO_DIR)/* can generate multiple tests
+
+.PHONY: build-xqci-tests
+build-xqci-tests:
+	mkdir -p $(OUT_DIR)
+	@for in_io in $(KLEE_IO_DIR)/*; do \
+		instname=$$(basename $$in_io); \
+		echo "Building tests for" $$instname; \
+		python $(SRC)/assemble.py --inst-dir $(INST_DIR) --inst-name $$instname --io-file $$in_io --out $(OUT_DIR)/$$instname; \
 	done
+	chmod +x $(OUT_DIR)/*
 
-TESTS += assemble
+.PHONY: run-xqci-tests
+run-xqci-tests: xqci-test/*
+	@for exe in xqci-test/*; do \
+		out=$$($(QEMU) -cpu rv32 $$exe); \
+		err=$$?; \
+		if [ $$err -eq 0 ]; then \
+			echo "PASS" $$exe; \
+		else \
+			echo "FAIL ($${err}) $${exe}"; \
+		fi; \
+	done
