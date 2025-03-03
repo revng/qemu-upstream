@@ -9,86 +9,149 @@
 
 #include "xqciu_tcg.h"
 
-// void _ZN12CPUArchState7qc_beqiEthh
-void emit_qc_beqi(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_9, int8_t vi_13) {
+// void _ZN12CPUArchState9qc_shlsatEhhh
+void emit_qc_shlsat(DisasContext *ctx, TCGv_env env, int8_t vi_12, int8_t vi_10, int8_t vi_4) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
+TCGv_i64 temp3 = tcg_temp_new_i64();
+tcg_gen_ext_i32_i64(temp3, temp0);
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_10)]);
+tcg_gen_andi_i32(temp0, temp0, 31);
+TCGv_i64 temp8 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp8, temp0);
+tcg_gen_shl_i64(temp3, temp3, temp8);
+tcg_gen_smin_i64(temp3, temp3, tcg_constant_i64(2147483647ull));
+tcg_gen_smax_i64(temp3, temp3, tcg_constant_i64(-2147483648ll));
+tcg_gen_extrl_i64_i32(temp0, temp3);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState10qc_shlusatEhhh
+void emit_qc_shlusat(DisasContext *ctx, TCGv_env env, int8_t vi_11, int8_t vi_9, int8_t vi_4) {
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_11)]);
+TCGv_i64 temp3 = tcg_temp_new_i64();
+tcg_gen_ext_i32_i64(temp3, temp0);
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_9)]);
+tcg_gen_andi_i32(temp0, temp0, 31);
+TCGv_i64 temp7 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp7, temp0);
+tcg_gen_shl_i64(temp3, temp3, temp7);
+tcg_gen_smin_i64(temp3, temp3, tcg_constant_i64(4294967295ull));
+tcg_gen_extrl_i64_i32(temp0, temp3);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState10qc_addusatEhhh
+void emit_qc_addusat(DisasContext *ctx, TCGv_env env, int8_t vi_14, int8_t vi_12, int8_t vi_6) {
+TCGv_i32 temp8 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp8, cpu_gpr[((uint64_t) (uint32_t) vi_14)]);
+TCGv_i32 temp5 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp5, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_add_i32(temp0, temp5, temp8);
+tcg_gen_setcondi_i32(TCG_COND_LT, temp8, temp8, 0);
+tcg_gen_setcondi_i32(TCG_COND_LT, temp5, temp5, 0);
+tcg_gen_movcond_i32(TCG_COND_NE, temp5, temp8, tcg_constant_i32(0), tcg_constant_i32(true), temp5);
+tcg_gen_setcondi_i32(TCG_COND_GT, temp8, temp0, -1);
+tcg_gen_movcond_i32(TCG_COND_NE, temp5, temp5, tcg_constant_i32(0), temp8, tcg_constant_i32(false));
+TCGLabel * label24 = gen_new_label();
+TCGLabel * label25 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_NE, temp5, 0, label24);
+tcg_gen_br(label25);
+gen_set_label(label24);
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], -1);
+tcg_gen_br(label25);
+gen_set_label(label25);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], temp0);
+}
+
+// void _ZN12CPUArchState7qc_beqiEthh
+void emit_qc_beqi(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_8, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
 TCGLabel * label18 = gen_new_label();
 TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_NE, temp0, vi_9, label18);
+tcg_gen_brcondi_i32(TCG_COND_NE, temp1, ((int32_t) (int32_t) vi_8), label18);
 gen_set_label(label19);
+TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
 tcg_gen_br(label18);
 gen_set_label(label18);
 }
 
 // void _ZN12CPUArchState7qc_bgeiEthh
-void emit_qc_bgei(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_9, int8_t vi_13) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_bgei(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_8, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
 TCGLabel * label18 = gen_new_label();
 TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_LT, temp0, vi_9, label18);
+tcg_gen_brcondi_i32(TCG_COND_LT, temp1, ((int32_t) (int32_t) vi_8), label18);
 gen_set_label(label19);
+TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
 tcg_gen_br(label18);
 gen_set_label(label18);
 }
 
 // void _ZN12CPUArchState8qc_bgeuiEthh
-void emit_qc_bgeui(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_11, int8_t vi_13) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_bgeui(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_10, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
+TCGLabel * label17 = gen_new_label();
 TCGLabel * label18 = gen_new_label();
-TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_LTU, temp0, vi_11, label18);
-gen_set_label(label19);
-tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
-tcg_gen_br(label18);
+tcg_gen_brcondi_i32(TCG_COND_LTU, temp1, vi_10, label17);
 gen_set_label(label18);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_pc);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
+tcg_gen_br(label17);
+gen_set_label(label17);
 }
 
 // void _ZN12CPUArchState7qc_bltiEthh
-void emit_qc_blti(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_9, int8_t vi_13) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_blti(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_8, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
 TCGLabel * label18 = gen_new_label();
 TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_GE, temp0, vi_9, label18);
+tcg_gen_brcondi_i32(TCG_COND_GE, temp1, ((int32_t) (int32_t) vi_8), label18);
 gen_set_label(label19);
+TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
 tcg_gen_br(label18);
 gen_set_label(label18);
 }
 
 // void _ZN12CPUArchState8qc_bltuiEthh
-void emit_qc_bltui(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_11, int8_t vi_13) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_bltui(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_10, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
+TCGLabel * label17 = gen_new_label();
 TCGLabel * label18 = gen_new_label();
-TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_GEU, temp0, vi_11, label18);
-gen_set_label(label19);
-tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
-tcg_gen_br(label18);
+tcg_gen_brcondi_i32(TCG_COND_GEU, temp1, vi_10, label17);
 gen_set_label(label18);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_pc);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
+tcg_gen_br(label17);
+gen_set_label(label17);
 }
 
 // void _ZN12CPUArchState7qc_bneiEthh
-void emit_qc_bnei(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_9, int8_t vi_13) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_bnei(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_8, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
 TCGLabel * label18 = gen_new_label();
 TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_EQ, temp0, vi_9, label18);
+tcg_gen_brcondi_i32(TCG_COND_EQ, temp1, ((int32_t) (int32_t) vi_8), label18);
 gen_set_label(label19);
+TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
 tcg_gen_br(label18);
 gen_set_label(label18);
 }
@@ -116,7 +179,7 @@ TCGv_ptr ptr1 = tcg_temp_new_ptr();
 tcg_gen_addi_ptr(ptr1, env, 324ull);
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_ld_i32(temp0, ptr1, 0);
-tcg_gen_addi_i32(temp0, temp0, ((int8_t) vi_13 >> 5));
+tcg_gen_addi_i32(temp0, temp0, ((uint8_t) vi_13 >> 5));
 TCGv_i64 temp6 = tcg_temp_new_i64();
 tcg_gen_extu_i32_i64(temp6, temp0);
 tcg_gen_muli_i64(temp6, temp6, 24ull);
@@ -172,11 +235,11 @@ tcg_gen_st_i32(temp0, ptr1, 0);
 }
 
 // void _ZN12CPUArchState9qc_c_extuEhh
-void emit_qc_c_extu(DisasContext *ctx, TCGv_env env, int8_t vi_9, int8_t vi_7) {
+void emit_qc_c_extu(DisasContext *ctx, TCGv_env env, int8_t vi_10, int8_t vi_8) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_7)]);
-tcg_gen_andi_i32(temp0, temp0, ((2 << vi_9) + -1));
-tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_7)], temp0);
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_8)]);
+tcg_gen_andi_i32(temp0, temp0, ((-2ll << ((uint64_t) (uint32_t) vi_10)) ^ -1));
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_8)], temp0);
 }
 
 // void _ZN12CPUArchState12qc_c_muliaddEhhh
@@ -196,7 +259,7 @@ TCGv_ptr ptr1 = tcg_temp_new_ptr();
 tcg_gen_addi_ptr(ptr1, env, 324ull);
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_ld_i32(temp0, ptr1, 0);
-tcg_gen_addi_i32(temp0, temp0, ((int8_t) vi_12 >> 5));
+tcg_gen_addi_i32(temp0, temp0, ((uint8_t) vi_12 >> 5));
 TCGv_i64 temp5 = tcg_temp_new_i64();
 tcg_gen_extu_i32_i64(temp5, temp0);
 tcg_gen_muli_i64(temp5, temp5, 24ull);
@@ -225,7 +288,7 @@ TCGv_ptr ptr1 = tcg_temp_new_ptr();
 tcg_gen_addi_ptr(ptr1, env, 324ull);
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_ld_i32(temp0, ptr1, 0);
-tcg_gen_addi_i32(temp0, temp0, ((int16_t) vi_13 >> 5));
+tcg_gen_addi_i32(temp0, temp0, ((uint16_t) vi_13 >> 5));
 TCGv_i64 temp6 = tcg_temp_new_i64();
 tcg_gen_extu_i32_i64(temp6, temp0);
 tcg_gen_muli_i64(temp6, temp6, 24ull);
@@ -375,7 +438,7 @@ tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], temp0);
 void emit_qc_e_addi(DisasContext *ctx, TCGv_env env, int32_t vi_8, int8_t vi_10, int8_t vi_4) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_10)]);
-tcg_gen_addi_i32(temp0, temp0, ((uint32_t) (vi_8 << 6) >> 6));
+tcg_gen_addi_i32(temp0, temp0, ((int32_t) (vi_8 << 6) >> 6));
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
@@ -391,90 +454,81 @@ tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], temp0);
 void emit_qc_e_andi(DisasContext *ctx, TCGv_env env, int32_t vi_8, int8_t vi_10, int8_t vi_4) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_10)]);
-tcg_gen_andi_i32(temp0, temp0, ((uint32_t) (vi_8 << 6) >> 6));
+tcg_gen_andi_i32(temp0, temp0, ((int32_t) (vi_8 << 6) >> 6));
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
 // void _ZN12CPUArchState9qc_e_beqiEtth
-void emit_qc_e_beqi(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_9, int8_t vi_13) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_e_beqi(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_8, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
 TCGLabel * label18 = gen_new_label();
 TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_NE, temp0, vi_9, label18);
+tcg_gen_brcondi_i32(TCG_COND_NE, temp1, ((int32_t) (int32_t) vi_8), label18);
 gen_set_label(label19);
-tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
-tcg_gen_br(label18);
-gen_set_label(label18);
-}
-
-// void _ZN12CPUArchState9qc_e_bgeiEtth
-void emit_qc_e_bgei(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_9, int8_t vi_13) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
-TCGLabel * label18 = gen_new_label();
-TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_LT, temp0, vi_9, label18);
-gen_set_label(label19);
 tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
 tcg_gen_br(label18);
 gen_set_label(label18);
 }
 
 // void _ZN12CPUArchState10qc_e_bgeuiEtth
-void emit_qc_e_bgeui(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_11, int8_t vi_13) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_e_bgeui(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_10, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
+TCGLabel * label17 = gen_new_label();
 TCGLabel * label18 = gen_new_label();
-TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_LTU, temp0, vi_11, label18);
-gen_set_label(label19);
-tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
-tcg_gen_br(label18);
+tcg_gen_brcondi_i32(TCG_COND_LTU, temp1, vi_10, label17);
 gen_set_label(label18);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_pc);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
+tcg_gen_br(label17);
+gen_set_label(label17);
 }
 
 // void _ZN12CPUArchState9qc_e_bltiEtth
-void emit_qc_e_blti(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_9, int8_t vi_13) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_e_blti(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_8, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
 TCGLabel * label18 = gen_new_label();
 TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_GE, temp0, vi_9, label18);
+tcg_gen_brcondi_i32(TCG_COND_GE, temp1, ((int32_t) (int32_t) vi_8), label18);
 gen_set_label(label19);
+TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
 tcg_gen_br(label18);
 gen_set_label(label18);
 }
 
 // void _ZN12CPUArchState10qc_e_bltuiEtth
-void emit_qc_e_bltui(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_11, int8_t vi_13) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_e_bltui(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_10, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
+TCGLabel * label17 = gen_new_label();
 TCGLabel * label18 = gen_new_label();
-TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_GEU, temp0, vi_11, label18);
-gen_set_label(label19);
-tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
-tcg_gen_br(label18);
+tcg_gen_brcondi_i32(TCG_COND_GEU, temp1, vi_10, label17);
 gen_set_label(label18);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_pc);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
+tcg_gen_br(label17);
+gen_set_label(label17);
 }
 
 // void _ZN12CPUArchState9qc_e_bneiEtth
-void emit_qc_e_bnei(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_9, int8_t vi_13) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_e_bnei(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_8, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
 TCGLabel * label18 = gen_new_label();
 TCGLabel * label19 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_EQ, temp0, vi_9, label18);
+tcg_gen_brcondi_i32(TCG_COND_EQ, temp1, ((int32_t) (int32_t) vi_8), label18);
 gen_set_label(label19);
+TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_pc);
-xqci_jump_pcrel(ctx, temp0, vi_2);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
 tcg_gen_br(label18);
 gen_set_label(label18);
 }
@@ -562,7 +616,7 @@ tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], temp0);
 void emit_qc_e_ori(DisasContext *ctx, TCGv_env env, int32_t vi_8, int8_t vi_10, int8_t vi_4) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_10)]);
-tcg_gen_ori_i32(temp0, temp0, ((uint32_t) (vi_8 << 6) >> 6));
+tcg_gen_ori_i32(temp0, temp0, ((int32_t) (vi_8 << 6) >> 6));
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
@@ -610,7 +664,7 @@ tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], temp0);
 void emit_qc_e_xori(DisasContext *ctx, TCGv_env env, int32_t vi_8, int8_t vi_10, int8_t vi_4) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_10)]);
-tcg_gen_xori_i32(temp0, temp0, ((uint32_t) (vi_8 << 6) >> 6));
+tcg_gen_xori_i32(temp0, temp0, ((int32_t) (vi_8 << 6) >> 6));
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
@@ -817,35 +871,208 @@ tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
 // void _ZN12CPUArchState6qc_extEhhhh
-void emit_qc_ext(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_11, int8_t vi_13, int8_t vi_4) {
-TCGv_i32 temp8 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp8, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+void emit_qc_ext(DisasContext *ctx, TCGv_env env, int8_t vi_17, int8_t vi_12, int8_t vi_14, int8_t vi_4) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_shri_i32(temp0, temp8, vi_11);
-tcg_gen_andi_i32(temp0, temp0, ((2 << vi_15) + -1));
-tcg_gen_shli_i32(temp0, temp0, (32 - vi_15));
-tcg_gen_sari_i32(temp0, temp0, (32 - vi_15));
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_14)]);
+tcg_gen_shri_i32(temp0, temp0, vi_12);
+tcg_gen_andi_i32(temp0, temp0, ((-1ll << ((uint64_t) (uint32_t) (vi_17 + 1))) ^ -1));
+tcg_gen_shli_i32(temp0, temp0, (32 - vi_17));
+tcg_gen_sari_i32(temp0, temp0, (32 - vi_17));
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState7qc_extdEhhhh
+void emit_qc_extd(DisasContext *ctx, TCGv_env env, int8_t vi_11, int8_t vi_9, int8_t vi_15, int8_t vi_4) {
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp6, cpu_gpr[(((uint64_t) (uint32_t) vi_15) + 1ull)]);
+TCGv_i64 temp8 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp8, temp6);
+tcg_gen_shli_i64(temp8, temp8, 32ull);
+tcg_gen_mov_i32(temp6, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
+TCGv_i64 temp3 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp3, temp6);
+tcg_gen_or_i64(temp3, temp8, temp3);
+tcg_gen_shri_i64(temp3, temp3, ((uint64_t) (uint32_t) vi_9));
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_extrl_i64_i32(temp0, temp3);
+tcg_gen_shli_i32(temp0, temp0, (32 - vi_11));
+tcg_gen_sari_i32(temp0, temp0, (32 - vi_11));
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState9qc_extdprEhhh
+void emit_qc_extdpr(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_17, int8_t vi_4) {
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_17)]);
+TCGv_i32 temp11 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp11, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
+TCGv_i32 temp8 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp8, temp11, 8);
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_andi_i32(temp6, temp8, 255);
+tcg_gen_addi_i32(temp8, temp6, 1);
+tcg_gen_andi_i32(temp11, temp11, 255);
+tcg_gen_shr_i32(temp0, temp0, temp11);
+TCGv_i64 temp3 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp3, temp8);
+tcg_gen_shl_i64(temp3, tcg_constant_i64(-1ll), temp3);
+tcg_gen_extrl_i64_i32(temp8, temp3);
+tcg_gen_xori_i32(temp8, temp8, -1);
+tcg_gen_and_i32(temp0, temp0, temp8);
+tcg_gen_sub_i32(temp6, tcg_constant_i32(32), temp6);
+tcg_gen_shl_i32(temp0, temp0, temp6);
+tcg_gen_sar_i32(temp0, temp0, temp6);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState10qc_extdprhEhhh
+void emit_qc_extdprh(DisasContext *ctx, TCGv_env env, int8_t vi_16, int8_t vi_18, int8_t vi_4) {
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_18)]);
+TCGv_i32 temp11 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp11, cpu_gpr[((uint64_t) (uint32_t) vi_16)]);
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp6, temp11, 24);
+TCGv_i32 temp8 = tcg_temp_new_i32();
+tcg_gen_addi_i32(temp8, temp6, 1);
+tcg_gen_shri_i32(temp11, temp11, 16);
+tcg_gen_andi_i32(temp11, temp11, 255);
+tcg_gen_shr_i32(temp0, temp0, temp11);
+TCGv_i64 temp3 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp3, temp8);
+tcg_gen_shl_i64(temp3, tcg_constant_i64(-1ll), temp3);
+tcg_gen_extrl_i64_i32(temp8, temp3);
+tcg_gen_xori_i32(temp8, temp8, -1);
+tcg_gen_and_i32(temp0, temp0, temp8);
+tcg_gen_sub_i32(temp6, tcg_constant_i32(32), temp6);
+tcg_gen_shl_i32(temp0, temp0, temp6);
+tcg_gen_sar_i32(temp0, temp0, temp6);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState8qc_extdrEhhh
+void emit_qc_extdr(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_17, int8_t vi_4) {
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_17)]);
+TCGv_i32 temp11 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp11, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp6, temp11, 16);
+TCGv_i32 temp8 = tcg_temp_new_i32();
+tcg_gen_addi_i32(temp8, temp6, 1);
+tcg_gen_andi_i32(temp11, temp11, 65535);
+tcg_gen_shr_i32(temp0, temp0, temp11);
+TCGv_i64 temp3 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp3, temp8);
+tcg_gen_shl_i64(temp3, tcg_constant_i64(-1ll), temp3);
+tcg_gen_extrl_i64_i32(temp8, temp3);
+tcg_gen_xori_i32(temp8, temp8, -1);
+tcg_gen_and_i32(temp0, temp0, temp8);
+tcg_gen_sub_i32(temp6, tcg_constant_i32(32), temp6);
+tcg_gen_shl_i32(temp0, temp0, temp6);
+tcg_gen_sar_i32(temp0, temp0, temp6);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState8qc_extduEhhhh
+void emit_qc_extdu(DisasContext *ctx, TCGv_env env, int8_t vi_12, int8_t vi_10, int8_t vi_16, int8_t vi_4) {
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[(((uint64_t) (uint32_t) vi_16) + 1ull)]);
+TCGv_i64 temp6 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp6, temp0);
+TCGv_i64 temp9 = tcg_temp_new_i64();
+tcg_gen_shli_i64(temp9, temp6, 32ull);
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_16)]);
+TCGv_i64 temp3 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp3, temp0);
+tcg_gen_or_i64(temp3, temp9, temp3);
+tcg_gen_shri_i64(temp3, temp3, ((uint64_t) (uint32_t) vi_10));
+tcg_gen_andi_i64(temp3, temp3, ((-2ll << ((uint64_t) (uint32_t) vi_12)) ^ -1ll));
+tcg_gen_extrl_i64_i32(temp0, temp3);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState10qc_extduprEhhh
+void emit_qc_extdupr(DisasContext *ctx, TCGv_env env, int8_t vi_13, int8_t vi_15, int8_t vi_4) {
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
+TCGv_i32 temp9 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp9, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp6, temp9, 8);
+tcg_gen_andi_i32(temp6, temp6, 255);
+tcg_gen_addi_i32(temp6, temp6, 1);
+tcg_gen_andi_i32(temp9, temp9, 255);
+tcg_gen_shr_i32(temp0, temp0, temp9);
+TCGv_i64 temp3 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp3, temp6);
+tcg_gen_shl_i64(temp3, tcg_constant_i64(-1ll), temp3);
+tcg_gen_extrl_i64_i32(temp6, temp3);
+tcg_gen_xori_i32(temp6, temp6, -1);
+tcg_gen_and_i32(temp0, temp0, temp6);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState11qc_extduprhEhhh
+void emit_qc_extduprh(DisasContext *ctx, TCGv_env env, int8_t vi_14, int8_t vi_16, int8_t vi_4) {
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_16)]);
+TCGv_i32 temp9 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp9, cpu_gpr[((uint64_t) (uint32_t) vi_14)]);
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp6, temp9, 24);
+tcg_gen_addi_i32(temp6, temp6, 1);
+tcg_gen_shri_i32(temp9, temp9, 16);
+tcg_gen_andi_i32(temp9, temp9, 255);
+tcg_gen_shr_i32(temp0, temp0, temp9);
+TCGv_i64 temp3 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp3, temp6);
+tcg_gen_shl_i64(temp3, tcg_constant_i64(-1ll), temp3);
+tcg_gen_extrl_i64_i32(temp6, temp3);
+tcg_gen_xori_i32(temp6, temp6, -1);
+tcg_gen_and_i32(temp0, temp0, temp6);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState9qc_extdurEhhh
+void emit_qc_extdur(DisasContext *ctx, TCGv_env env, int8_t vi_13, int8_t vi_15, int8_t vi_4) {
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
+TCGv_i32 temp9 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp9, cpu_gpr[((uint64_t) (uint32_t) vi_13)]);
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp6, temp9, 16);
+tcg_gen_addi_i32(temp6, temp6, 1);
+tcg_gen_andi_i32(temp9, temp9, 65535);
+tcg_gen_shr_i32(temp0, temp0, temp9);
+TCGv_i64 temp3 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp3, temp6);
+tcg_gen_shl_i64(temp3, tcg_constant_i64(-1ll), temp3);
+tcg_gen_extrl_i64_i32(temp6, temp3);
+tcg_gen_xori_i32(temp6, temp6, -1);
+tcg_gen_and_i32(temp0, temp0, temp6);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
 // void _ZN12CPUArchState7qc_extuEhhhh
 void emit_qc_extu(DisasContext *ctx, TCGv_env env, int8_t vi_14, int8_t vi_10, int8_t vi_12, int8_t vi_4) {
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp6, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
 TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
-tcg_gen_shri_i32(temp0, temp0, vi_10);
-tcg_gen_andi_i32(temp0, temp0, ((2 << vi_14) + -1));
+tcg_gen_shri_i32(temp0, temp6, vi_10);
+tcg_gen_andi_i32(temp0, temp0, ((-2ll << ((uint64_t) (uint32_t) vi_14)) ^ -1));
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
 // void _ZN12CPUArchState7qc_insbEhhhh
-void emit_qc_insb(DisasContext *ctx, TCGv_env env, int8_t vi_16, int8_t vi_13, int8_t vi_8, int8_t vi_11) {
+void emit_qc_insb(DisasContext *ctx, TCGv_env env, int8_t vi_18, int8_t vi_14, int8_t vi_8, int8_t vi_11) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_11)]);
 TCGv_i32 temp2 = tcg_temp_new_i32();
-tcg_gen_andi_i32(temp2, temp0, ((((2 << vi_16) + -1) << vi_13) ^ -1));
+tcg_gen_andi_i32(temp2, temp0, ((((-2ll << ((uint64_t) (uint32_t) vi_18)) ^ -1ll) << ((uint64_t) (uint32_t) vi_14)) ^ -1));
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_8)]);
-tcg_gen_shli_i32(temp0, temp0, vi_13);
-tcg_gen_andi_i32(temp0, temp0, (((2 << vi_16) + -1) << vi_13));
+tcg_gen_shli_i32(temp0, temp0, vi_14);
+tcg_gen_andi_i32(temp0, temp0, (((-2ll << ((uint64_t) (uint32_t) vi_18)) ^ -1ll) << ((uint64_t) (uint32_t) vi_14)));
 tcg_gen_or_i32(temp0, temp0, temp2);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_11)], temp0);
 }
@@ -901,27 +1128,31 @@ gen_set_label(label25);
 }
 
 // void _ZN12CPUArchState8qc_insbiEhhhh
-void emit_qc_insbi(DisasContext *ctx, TCGv_env env, int8_t vi_16, int8_t vi_13, int8_t vi_5, int8_t vi_11) {
+void emit_qc_insbi(DisasContext *ctx, TCGv_env env, int8_t vi_18, int8_t vi_14, int8_t vi_5, int8_t vi_11) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_11)]);
-tcg_gen_andi_i32(temp0, temp0, ((((2 << vi_16) + -1) << vi_13) ^ -1));
-tcg_gen_ori_i32(temp0, temp0, ((((2 << vi_16) + -1) << vi_13) & (vi_5 << vi_13)));
+tcg_gen_andi_i32(temp0, temp0, ((((-2ll << ((uint64_t) (uint32_t) vi_18)) ^ -1ll) << ((uint64_t) (uint32_t) vi_14)) ^ -1));
+tcg_gen_ori_i32(temp0, temp0, ((vi_5 << vi_14) & (((-2ll << ((uint64_t) (uint32_t) vi_18)) ^ -1ll) << ((uint64_t) (uint32_t) vi_14))));
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_11)], temp0);
 }
 
 // void _ZN12CPUArchState9qc_insbprEhhh
-void emit_qc_insbpr(DisasContext *ctx, TCGv_env env, int8_t vi_16, int8_t vi_8, int8_t vi_11) {
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_16)]);
-TCGv_i32 temp4 = tcg_temp_new_i32();
-tcg_gen_shri_i32(temp4, temp0, 8);
-TCGv_i32 temp2 = tcg_temp_new_i32();
-tcg_gen_andi_i32(temp2, temp4, 255);
-tcg_gen_andi_i32(temp4, temp0, 255);
-tcg_gen_shl_i32(temp0, tcg_constant_i32(2), temp2);
-tcg_gen_addi_i32(temp2, temp0, -1);
-tcg_gen_shl_i32(temp0, temp2, temp4);
+void emit_qc_insbpr(DisasContext *ctx, TCGv_env env, int8_t vi_17, int8_t vi_8, int8_t vi_11) {
 TCGv_i32 temp3 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_17)]);
+TCGv_i32 temp2 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp2, temp3, 8);
+TCGv_i32 temp4 = tcg_temp_new_i32();
+tcg_gen_andi_i32(temp4, temp2, 255);
+tcg_gen_addi_i32(temp2, temp4, 1);
+tcg_gen_andi_i32(temp4, temp3, 255);
+TCGv_i64 temp7 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp7, temp2);
+tcg_gen_shl_i64(temp7, tcg_constant_i64(-1ll), temp7);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_extrl_i64_i32(temp0, temp7);
+tcg_gen_xori_i32(temp2, temp0, -1);
+tcg_gen_shl_i32(temp0, temp2, temp4);
 tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_11)]);
 tcg_gen_xori_i32(temp2, temp0, -1);
 tcg_gen_and_i32(temp2, temp3, temp2);
@@ -932,9 +1163,88 @@ tcg_gen_or_i32(temp0, temp0, temp2);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_11)], temp0);
 }
 
+// void _ZN12CPUArchState10qc_insbprhEhhh
+void emit_qc_insbprh(DisasContext *ctx, TCGv_env env, int8_t vi_18, int8_t vi_8, int8_t vi_11) {
+TCGv_i32 temp4 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp4, cpu_gpr[((uint64_t) (uint32_t) vi_18)]);
+TCGv_i32 temp3 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp3, temp4, 24);
+TCGv_i32 temp2 = tcg_temp_new_i32();
+tcg_gen_addi_i32(temp2, temp3, 1);
+tcg_gen_shri_i32(temp3, temp4, 16);
+tcg_gen_andi_i32(temp4, temp3, 255);
+TCGv_i64 temp7 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp7, temp2);
+tcg_gen_shl_i64(temp7, tcg_constant_i64(-1ll), temp7);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_extrl_i64_i32(temp0, temp7);
+tcg_gen_xori_i32(temp2, temp0, -1);
+tcg_gen_shl_i32(temp0, temp2, temp4);
+tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_11)]);
+tcg_gen_xori_i32(temp2, temp0, -1);
+tcg_gen_and_i32(temp2, temp3, temp2);
+tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_8)]);
+tcg_gen_shl_i32(temp3, temp3, temp4);
+tcg_gen_and_i32(temp0, temp0, temp3);
+tcg_gen_or_i32(temp0, temp0, temp2);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_11)], temp0);
+}
+
+// void _ZN12CPUArchState8qc_insbrEhhh
+void emit_qc_insbr(DisasContext *ctx, TCGv_env env, int8_t vi_17, int8_t vi_8, int8_t vi_11) {
+TCGv_i32 temp3 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_17)]);
+TCGv_i32 temp4 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp4, temp3, 16);
+TCGv_i32 temp2 = tcg_temp_new_i32();
+tcg_gen_addi_i32(temp2, temp4, 1);
+tcg_gen_andi_i32(temp4, temp3, 65535);
+TCGv_i64 temp7 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp7, temp2);
+tcg_gen_shl_i64(temp7, tcg_constant_i64(-1ll), temp7);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_extrl_i64_i32(temp0, temp7);
+tcg_gen_xori_i32(temp2, temp0, -1);
+tcg_gen_shl_i32(temp0, temp2, temp4);
+tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_11)]);
+tcg_gen_xori_i32(temp2, temp0, -1);
+tcg_gen_and_i32(temp2, temp3, temp2);
+tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_8)]);
+tcg_gen_shl_i32(temp3, temp3, temp4);
+tcg_gen_and_i32(temp0, temp0, temp3);
+tcg_gen_or_i32(temp0, temp0, temp2);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_11)], temp0);
+}
+
+// void _ZN12CPUArchState9qc_insbriEthh
+void emit_qc_insbri(DisasContext *ctx, TCGv_env env, int16_t vi_5, int8_t vi_17, int8_t vi_11) {
+TCGv_i32 temp2 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp2, cpu_gpr[((uint64_t) (uint32_t) vi_17)]);
+TCGv_i32 temp4 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp4, temp2, 16);
+TCGv_i32 temp7 = tcg_temp_new_i32();
+tcg_gen_addi_i32(temp7, temp4, 1);
+tcg_gen_andi_i32(temp4, temp2, 65535);
+TCGv_i64 temp10 = tcg_temp_new_i64();
+tcg_gen_extu_i32_i64(temp10, temp7);
+tcg_gen_shl_i64(temp10, tcg_constant_i64(-1ll), temp10);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_extrl_i64_i32(temp0, temp10);
+tcg_gen_xori_i32(temp7, temp0, -1);
+tcg_gen_shl_i32(temp0, temp7, temp4);
+tcg_gen_mov_i32(temp2, cpu_gpr[((uint64_t) (uint32_t) vi_11)]);
+tcg_gen_xori_i32(temp7, temp0, -1);
+tcg_gen_and_i32(temp2, temp2, temp7);
+TCGv_i32 temp3 = tcg_temp_new_i32();
+tcg_gen_shl_i32(temp3, tcg_constant_i32(vi_5), temp4);
+tcg_gen_and_i32(temp0, temp0, temp3);
+tcg_gen_or_i32(temp0, temp0, temp2);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_11)], temp0);
+}
+
 // void _ZN12CPUArchState5qc_liEjh
 void emit_qc_li(DisasContext *ctx, TCGv_env env, int32_t vi_7, int8_t vi_4) {
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 12) >> 12));
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 12) >> 12));
 }
 
 // void _ZN12CPUArchState7qc_lieqEhhhh
@@ -956,13 +1266,13 @@ gen_set_label(label22);
 void emit_qc_lieqi(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_13, int8_t vi_7, int8_t vi_4) {
 TCGv_i32 temp11 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp11, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
-TCGLabel * label20 = gen_new_label();
 TCGLabel * label21 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_NE, temp11, vi_13, label20);
+TCGLabel * label22 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_NE, temp11, ((int32_t) (int32_t) vi_13), label21);
+gen_set_label(label22);
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
+tcg_gen_br(label21);
 gen_set_label(label21);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
-tcg_gen_br(label20);
-gen_set_label(label20);
 }
 
 // void _ZN12CPUArchState7qc_ligeEhhhh
@@ -975,7 +1285,7 @@ TCGLabel * label22 = gen_new_label();
 TCGLabel * label23 = gen_new_label();
 tcg_gen_brcond_i32(TCG_COND_LT, temp11, temp12, label22);
 gen_set_label(label23);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
 tcg_gen_br(label22);
 gen_set_label(label22);
 }
@@ -984,13 +1294,13 @@ gen_set_label(label22);
 void emit_qc_ligei(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_13, int8_t vi_7, int8_t vi_4) {
 TCGv_i32 temp11 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp11, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
-TCGLabel * label20 = gen_new_label();
 TCGLabel * label21 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_LT, temp11, vi_13, label20);
+TCGLabel * label22 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_LT, temp11, ((int32_t) (int32_t) vi_13), label21);
+gen_set_label(label22);
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
+tcg_gen_br(label21);
 gen_set_label(label21);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
-tcg_gen_br(label20);
-gen_set_label(label20);
 }
 
 // void _ZN12CPUArchState8qc_ligeuEhhhh
@@ -1003,7 +1313,7 @@ TCGLabel * label23 = gen_new_label();
 TCGLabel * label24 = gen_new_label();
 tcg_gen_brcond_i32(TCG_COND_LTU, temp11, temp12, label23);
 gen_set_label(label24);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
 tcg_gen_br(label23);
 gen_set_label(label23);
 }
@@ -1016,7 +1326,7 @@ TCGLabel * label20 = gen_new_label();
 TCGLabel * label21 = gen_new_label();
 tcg_gen_brcondi_i32(TCG_COND_LTU, temp11, vi_13, label20);
 gen_set_label(label21);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
 tcg_gen_br(label20);
 gen_set_label(label20);
 }
@@ -1031,7 +1341,7 @@ TCGLabel * label22 = gen_new_label();
 TCGLabel * label23 = gen_new_label();
 tcg_gen_brcond_i32(TCG_COND_GE, temp11, temp12, label22);
 gen_set_label(label23);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
 tcg_gen_br(label22);
 gen_set_label(label22);
 }
@@ -1040,13 +1350,13 @@ gen_set_label(label22);
 void emit_qc_lilti(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_13, int8_t vi_7, int8_t vi_4) {
 TCGv_i32 temp11 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp11, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
-TCGLabel * label20 = gen_new_label();
 TCGLabel * label21 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_GE, temp11, vi_13, label20);
+TCGLabel * label22 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_GE, temp11, ((int32_t) (int32_t) vi_13), label21);
+gen_set_label(label22);
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
+tcg_gen_br(label21);
 gen_set_label(label21);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
-tcg_gen_br(label20);
-gen_set_label(label20);
 }
 
 // void _ZN12CPUArchState8qc_liltuEhhhh
@@ -1059,7 +1369,7 @@ TCGLabel * label23 = gen_new_label();
 TCGLabel * label24 = gen_new_label();
 tcg_gen_brcond_i32(TCG_COND_GEU, temp11, temp12, label23);
 gen_set_label(label24);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
 tcg_gen_br(label23);
 gen_set_label(label23);
 }
@@ -1072,7 +1382,7 @@ TCGLabel * label20 = gen_new_label();
 TCGLabel * label21 = gen_new_label();
 tcg_gen_brcondi_i32(TCG_COND_GEU, temp11, vi_13, label20);
 gen_set_label(label21);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
 tcg_gen_br(label20);
 gen_set_label(label20);
 }
@@ -1087,7 +1397,7 @@ TCGLabel * label22 = gen_new_label();
 TCGLabel * label23 = gen_new_label();
 tcg_gen_brcond_i32(TCG_COND_EQ, temp11, temp12, label22);
 gen_set_label(label23);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
 tcg_gen_br(label22);
 gen_set_label(label22);
 }
@@ -1096,13 +1406,13 @@ gen_set_label(label22);
 void emit_qc_linei(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_13, int8_t vi_7, int8_t vi_4) {
 TCGv_i32 temp11 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp11, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
-TCGLabel * label20 = gen_new_label();
 TCGLabel * label21 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_EQ, temp11, vi_13, label20);
+TCGLabel * label22 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_EQ, temp11, ((int32_t) (int32_t) vi_13), label21);
+gen_set_label(label22);
+tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((int32_t) (vi_7 << 27) >> 27));
+tcg_gen_br(label21);
 gen_set_label(label21);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], ((uint32_t) (vi_7 << 27) >> 27));
-tcg_gen_br(label20);
-gen_set_label(label20);
 }
 
 // void _ZN12CPUArchState6qc_lrbEhhhh
@@ -1169,6 +1479,17 @@ tcg_gen_qemu_ld_i32(temp0, temp0, ctx->mem_idx, MO_LESL);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
+// void _ZN12CPUArchState10qc_muliaddEthh
+void emit_qc_muliadd(DisasContext *ctx, TCGv_env env, int16_t vi_8, int8_t vi_10, int8_t vi_12) {
+TCGv_i32 temp2 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp2, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_10)]);
+tcg_gen_muli_i32(temp0, temp0, ((int32_t) (vi_8 << 20) >> 20));
+tcg_gen_add_i32(temp0, temp0, temp2);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_12)], temp0);
+}
+
 // void _ZN12CPUArchState7qc_mveqEhhhh
 void emit_qc_mveq(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_13, int8_t vi_8, int8_t vi_6) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
@@ -1189,14 +1510,14 @@ gen_set_label(label22);
 void emit_qc_mveqi(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_13, int8_t vi_8, int8_t vi_6) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
-TCGLabel * label20 = gen_new_label();
 TCGLabel * label21 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_NE, temp0, vi_13, label20);
-gen_set_label(label21);
+TCGLabel * label22 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_NE, temp0, ((int32_t) (int32_t) vi_13), label21);
+gen_set_label(label22);
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_8)]);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], temp0);
-tcg_gen_br(label20);
-gen_set_label(label20);
+tcg_gen_br(label21);
+gen_set_label(label21);
 }
 
 // void _ZN12CPUArchState7qc_mvgeEhhhh
@@ -1219,14 +1540,14 @@ gen_set_label(label22);
 void emit_qc_mvgei(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_13, int8_t vi_8, int8_t vi_6) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
-TCGLabel * label20 = gen_new_label();
 TCGLabel * label21 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_LT, temp0, vi_13, label20);
-gen_set_label(label21);
+TCGLabel * label22 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_LT, temp0, ((int32_t) (int32_t) vi_13), label21);
+gen_set_label(label22);
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_8)]);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], temp0);
-tcg_gen_br(label20);
-gen_set_label(label20);
+tcg_gen_br(label21);
+gen_set_label(label21);
 }
 
 // void _ZN12CPUArchState8qc_mvgeuEhhhh
@@ -1279,14 +1600,14 @@ gen_set_label(label22);
 void emit_qc_mvlti(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_13, int8_t vi_8, int8_t vi_6) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
-TCGLabel * label20 = gen_new_label();
 TCGLabel * label21 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_GE, temp0, vi_13, label20);
-gen_set_label(label21);
+TCGLabel * label22 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_GE, temp0, ((int32_t) (int32_t) vi_13), label21);
+gen_set_label(label22);
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_8)]);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], temp0);
-tcg_gen_br(label20);
-gen_set_label(label20);
+tcg_gen_br(label21);
+gen_set_label(label21);
 }
 
 // void _ZN12CPUArchState8qc_mvltuEhhhh
@@ -1339,14 +1660,14 @@ gen_set_label(label22);
 void emit_qc_mvnei(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_13, int8_t vi_8, int8_t vi_6) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
-TCGLabel * label20 = gen_new_label();
 TCGLabel * label21 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_EQ, temp0, vi_13, label20);
-gen_set_label(label21);
+TCGLabel * label22 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_EQ, temp0, ((int32_t) (int32_t) vi_13), label21);
+gen_set_label(label22);
 tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_8)]);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], temp0);
-tcg_gen_br(label20);
-gen_set_label(label20);
+tcg_gen_br(label21);
+gen_set_label(label21);
 }
 
 // void _ZN12CPUArchState7qc_normEhh
@@ -1407,7 +1728,7 @@ TCGLabel * label26 = gen_new_label();
 TCGLabel * label27 = gen_new_label();
 tcg_gen_brcond_i32(TCG_COND_EQ, temp13, temp14, label26);
 gen_set_label(label27);
-tcg_gen_movi_i32(temp0, ((uint32_t) (vi_9 << 27) >> 27));
+tcg_gen_movi_i32(temp0, ((int32_t) (vi_9 << 27) >> 27));
 TCGLabel * label30 = gen_new_label();
 tcg_gen_br(label30);
 gen_set_label(label26);
@@ -1425,19 +1746,19 @@ void emit_qc_selectieqi(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi
 TCGv_i32 temp0 = tcg_temp_new_i32();
 TCGv_i32 temp13 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp13, cpu_gpr[((uint64_t) (uint32_t) vi_17)]);
-TCGLabel * label23 = gen_new_label();
 TCGLabel * label24 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_EQ, temp13, vi_15, label23);
+TCGLabel * label25 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_EQ, temp13, ((int32_t) (int32_t) vi_15), label24);
+gen_set_label(label25);
+tcg_gen_movi_i32(temp0, ((int32_t) (vi_9 << 27) >> 27));
+TCGLabel * label28 = gen_new_label();
+tcg_gen_br(label28);
 gen_set_label(label24);
-tcg_gen_movi_i32(temp0, ((uint32_t) (vi_9 << 27) >> 27));
-TCGLabel * label27 = gen_new_label();
-tcg_gen_br(label27);
-gen_set_label(label23);
 TCGv_i32 temp2 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp2, cpu_gpr[((uint64_t) (uint32_t) vi_6)]);
 tcg_gen_mov_i32(temp0, temp2);
-tcg_gen_br(label27);
-gen_set_label(label27);
+tcg_gen_br(label28);
+gen_set_label(label28);
 tcg_gen_mov_i32(temp0, temp0);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_17)], temp0);
 }
@@ -1486,7 +1807,7 @@ tcg_gen_mov_i32(temp0, temp6);
 TCGLabel * label29 = gen_new_label();
 tcg_gen_br(label29);
 gen_set_label(label25);
-tcg_gen_movi_i32(temp0, ((uint32_t) (vi_4 << 27) >> 27));
+tcg_gen_movi_i32(temp0, ((int32_t) (vi_4 << 27) >> 27));
 tcg_gen_br(label29);
 gen_set_label(label29);
 tcg_gen_mov_i32(temp0, temp0);
@@ -1498,18 +1819,18 @@ void emit_qc_selectinei(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi
 TCGv_i32 temp0 = tcg_temp_new_i32();
 TCGv_i32 temp6 = tcg_temp_new_i32();
 tcg_gen_mov_i32(temp6, cpu_gpr[((uint64_t) (uint32_t) vi_17)]);
-TCGLabel * label23 = gen_new_label();
 TCGLabel * label24 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_EQ, temp6, vi_15, label23);
-gen_set_label(label24);
+TCGLabel * label25 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_EQ, temp6, ((int32_t) (int32_t) vi_15), label24);
+gen_set_label(label25);
 tcg_gen_mov_i32(temp6, cpu_gpr[((uint64_t) (uint32_t) vi_10)]);
 tcg_gen_mov_i32(temp0, temp6);
-TCGLabel * label27 = gen_new_label();
-tcg_gen_br(label27);
-gen_set_label(label23);
-tcg_gen_movi_i32(temp0, ((uint32_t) (vi_4 << 27) >> 27));
-tcg_gen_br(label27);
-gen_set_label(label27);
+TCGLabel * label28 = gen_new_label();
+tcg_gen_br(label28);
+gen_set_label(label24);
+tcg_gen_movi_i32(temp0, ((int32_t) (vi_4 << 27) >> 27));
+tcg_gen_br(label28);
+gen_set_label(label28);
 tcg_gen_mov_i32(temp0, temp0);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_17)], temp0);
 }
@@ -1520,7 +1841,7 @@ TCGv_ptr ptr1 = tcg_temp_new_ptr();
 tcg_gen_addi_ptr(ptr1, env, 324ull);
 TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_ld_i32(temp0, ptr1, 0);
-tcg_gen_addi_i32(temp0, temp0, ((int16_t) vi_12 >> 5));
+tcg_gen_addi_i32(temp0, temp0, ((uint16_t) vi_12 >> 5));
 TCGv_i64 temp5 = tcg_temp_new_i64();
 tcg_gen_extu_i32_i64(temp5, temp0);
 tcg_gen_muli_i64(temp5, temp5, 24ull);
@@ -1583,6 +1904,17 @@ tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_7)]);
 tcg_gen_qemu_st_i32(temp1, temp0, ctx->mem_idx, MO_LEUL);
 }
 
+// void _ZN12CPUArchState10qc_subusatEhhh
+void emit_qc_subusat(DisasContext *ctx, TCGv_env env, int8_t vi_11, int8_t vi_9, int8_t vi_4) {
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp6, cpu_gpr[((uint64_t) (uint32_t) vi_11)]);
+TCGv_i32 temp7 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp7, cpu_gpr[((uint64_t) (uint32_t) vi_9)]);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_ussub_i32(temp0, temp6, temp7);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
 // void _ZN12CPUArchState7qc_wrapEhhh
 void emit_qc_wrap(DisasContext *ctx, TCGv_env env, int8_t vi_13, int8_t vi_11, int8_t vi_4) {
 TCGv_i32 temp6 = tcg_temp_new_i32();
@@ -1608,6 +1940,21 @@ TCGv_i32 temp0 = tcg_temp_new_i32();
 tcg_gen_movcond_i32(TCG_COND_LT, temp0, temp6, tcg_constant_i32(vi_11), temp8, tcg_constant_i32((0 - vi_11)));
 tcg_gen_add_i32(temp0, temp0, temp6);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState9qc_e_bgeiEtth
+void emit_qc_e_bgei(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_8, int8_t vi_12) {
+TCGv_i32 temp1 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp1, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
+TCGLabel * label18 = gen_new_label();
+TCGLabel * label19 = gen_new_label();
+tcg_gen_brcondi_i32(TCG_COND_LT, temp1, ((int32_t) (int32_t) vi_8), label18);
+gen_set_label(label19);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_pc);
+xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
+tcg_gen_br(label18);
+gen_set_label(label18);
 }
 
 
