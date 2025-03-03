@@ -1,4 +1,24 @@
-217 234 0 0 
-0 0 0 0 
-15 40 0 0 
-26 32 0 0 
+- variables:
+  - name: "width_minus1"
+    in: 0
+  - name: "shamt"
+    in: 0
+  - name: "rs1"
+    in: 0
+  - name: "rd"
+    in: 255
+    out: 255
+  overflow: 0
+  underflow: 0
+- variables:
+  - name: "width_minus1"
+    in: 19
+  - name: "shamt"
+    in: 28
+  - name: "rs1"
+    in: 0
+  - name: "rd"
+    in: 255
+    out: 0
+  overflow: 0
+  underflow: 0
