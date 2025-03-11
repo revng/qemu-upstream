@@ -12,6 +12,16 @@ decode_only = {
     'qc.setwm.yaml',
     'qc.shlsat.yaml',
     'qc.shlusat.yaml',
+    'qc.c.mveqz.yaml',
+    'qc.c.mienter.yaml',
+    'qc.c.mienter.nest.yaml',
+    'qc.c.mileaveret.yaml',
+}
+
+system_only = {
+    'qc.c.mienter',
+    'qc.c.mienter.nest',
+    'qc.c.mileaveret',
 }
 
 def ranges_in_location(loc_str):
