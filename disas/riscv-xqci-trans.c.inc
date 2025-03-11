@@ -1,20 +1,3 @@
-static bool trans_qc_addusat(rv_decode *dec, arg_qc_addusat *arg)
-{
-    if (arg->rs1 == 0) {
-        return false;
-    }
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    dec->rs1 = arg->rs1;
-    dec->rs2 = arg->rs2;
-    dec->rd = arg->rd;
-    dec->op = rv_op_qc_addusat;
-    return true;
-}
 static bool trans_qc_beqi(rv_decode *dec, arg_qc_beqi *arg)
 {
     arg->offset <<= 1;
@@ -188,12 +171,46 @@ static bool trans_qc_c_extu(rv_decode *dec, arg_qc_c_extu *arg)
     dec->op = rv_op_qc_c_extu;
     return true;
 }
+static bool trans_qc_c_mienter_nest(rv_decode *dec, arg_qc_c_mienter_nest *arg)
+{
+#ifdef CONFIG_USER_ONLY
+    return false;
+#else
+    dec->op = rv_op_qc_c_mienter_nest;
+    return true;
+#endif
+}
+static bool trans_qc_c_mienter(rv_decode *dec, arg_qc_c_mienter *arg)
+{
+#ifdef CONFIG_USER_ONLY
+    return false;
+#else
+    dec->op = rv_op_qc_c_mienter;
+    return true;
+#endif
+}
+static bool trans_qc_c_mileaveret(rv_decode *dec, arg_qc_c_mileaveret *arg)
+{
+#ifdef CONFIG_USER_ONLY
+    return false;
+#else
+    dec->op = rv_op_qc_c_mileaveret;
+    return true;
+#endif
+}
 static bool trans_qc_c_muliadd(rv_decode *dec, arg_qc_c_muliadd *arg)
 {
     dec->uimm = arg->uimm;
     dec->rs1 = arg->rs1;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_c_muliadd;
+    return true;
+}
+static bool trans_qc_c_mveqz(rv_decode *dec, arg_qc_c_mveqz *arg)
+{
+    dec->rs1 = arg->rs1;
+    dec->rd = arg->rd;
+    dec->op = rv_op_qc_c_mveqz;
     return true;
 }
 static bool trans_qc_c_setint(rv_decode *dec, arg_qc_c_setint *arg)
@@ -1379,6 +1396,24 @@ static bool trans_qc_normu(rv_decode *dec, arg_qc_normu *arg)
     dec->op = rv_op_qc_normu;
     return true;
 }
+static bool trans_qc_selecteqi(rv_decode *dec, arg_qc_selecteqi *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rs3 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    dec->imm = arg->imm;
+    dec->rs2 = arg->rs2;
+    dec->rs3 = arg->rs3;
+    dec->rd = arg->rd;
+    dec->op = rv_op_qc_selecteqi;
+    return true;
+}
 static bool trans_qc_selectieq(rv_decode *dec, arg_qc_selectieq *arg)
 {
     if (arg->rs1 == 0) {
@@ -1475,6 +1510,24 @@ static bool trans_qc_selectinei(rv_decode *dec, arg_qc_selectinei *arg)
     dec->op = rv_op_qc_selectinei;
     return true;
 }
+static bool trans_qc_selectnei(rv_decode *dec, arg_qc_selectnei *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rs3 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    dec->imm = arg->imm;
+    dec->rs2 = arg->rs2;
+    dec->rs3 = arg->rs3;
+    dec->rd = arg->rd;
+    dec->op = rv_op_qc_selectnei;
+    return true;
+}
 static bool trans_qc_setinti(rv_decode *dec, arg_qc_setinti *arg)
 {
     dec->imm = arg->imm;
@@ -1526,23 +1579,6 @@ static bool trans_qc_shladd(rv_decode *dec, arg_qc_shladd *arg)
     dec->rs1 = arg->rs1;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_shladd;
-    return true;
-}
-static bool trans_qc_shlsat(rv_decode *dec, arg_qc_shlsat *arg)
-{
-    if (arg->rs1 == 0) {
-        return false;
-    }
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    dec->rs1 = arg->rs1;
-    dec->rs2 = arg->rs2;
-    dec->rd = arg->rd;
-    dec->op = rv_op_qc_shlsat;
     return true;
 }
 static bool trans_qc_shlusat(rv_decode *dec, arg_qc_shlusat *arg)
@@ -1682,5 +1718,73 @@ static bool trans_qc_e_bgei(rv_decode *dec, arg_qc_e_bgei *arg)
     dec->imm = arg->imm;
     dec->rs1 = arg->rs1;
     dec->op = rv_op_qc_e_bgei;
+    return true;
+}
+static bool trans_qc_addusat(rv_decode *dec, arg_qc_addusat *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    dec->rs1 = arg->rs1;
+    dec->rs2 = arg->rs2;
+    dec->rd = arg->rd;
+    dec->op = rv_op_qc_addusat;
+    return true;
+}
+static bool trans_qc_subsat(rv_decode *dec, arg_qc_subsat *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    dec->rs1 = arg->rs1;
+    dec->rs2 = arg->rs2;
+    dec->rd = arg->rd;
+    dec->op = rv_op_qc_subsat;
+    return true;
+}
+static bool trans_qc_addsat(rv_decode *dec, arg_qc_addsat *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    dec->rs1 = arg->rs1;
+    dec->rs2 = arg->rs2;
+    dec->rd = arg->rd;
+    dec->op = rv_op_qc_addsat;
+    return true;
+}
+static bool trans_qc_shlsat(rv_decode *dec, arg_qc_shlsat *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    dec->rs1 = arg->rs1;
+    dec->rs2 = arg->rs2;
+    dec->rd = arg->rd;
+    dec->op = rv_op_qc_shlsat;
     return true;
 }
