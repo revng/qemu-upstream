@@ -82,8 +82,7 @@ class InstPrinter:
             len_expected = len(encoding['variables'])
             len_got = len(args)
             if len_got != len_expected:
-                print(f'error: {inst} expected {
-                      len_expected} args got {len_got}')
+                print(f'error: {inst} expected {len_expected} args got {len_got}')
                 return
 
             for i, v in enumerate(encoding['variables']):
