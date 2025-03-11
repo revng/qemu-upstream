@@ -259,6 +259,26 @@ struct CPUArchState {
     uint64_t menvcfg;
     target_ulong senvcfg;
 
+    /* CSRs for Xqci */
+    target_ulong qc_mclicie0;
+    target_ulong qc_mclicie1;
+    target_ulong qc_mclicie2;
+    target_ulong qc_mclicie3;
+    target_ulong qc_mclicie4;
+    target_ulong qc_mclicie5;
+    target_ulong qc_mclicie6;
+    target_ulong qc_mclicie7;
+    target_ulong qc_mclicip0;
+    target_ulong qc_mclicip1;
+    target_ulong qc_mclicip2;
+    target_ulong qc_mclicip3;
+    target_ulong qc_mclicip4;
+    target_ulong qc_mclicip5;
+    target_ulong qc_mclicip6;
+    target_ulong qc_mclicip7;
+    target_ulong qc_mncause;
+    target_ulong qc_mnepc;
+
 #ifndef CONFIG_USER_ONLY
     /* This contains QEMU specific information about the virt state. */
     bool virt_enabled;
