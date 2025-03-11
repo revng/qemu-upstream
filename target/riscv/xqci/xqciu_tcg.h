@@ -1,6 +1,5 @@
 void emit_qc_shlsat(DisasContext *ctx, TCGv_env env, int8_t vi_12, int8_t vi_10, int8_t vi_4);
 void emit_qc_shlusat(DisasContext *ctx, TCGv_env env, int8_t vi_11, int8_t vi_9, int8_t vi_4);
-void emit_qc_addusat(DisasContext *ctx, TCGv_env env, int8_t vi_14, int8_t vi_12, int8_t vi_6);
 void emit_qc_beqi(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_8, int8_t vi_12);
 void emit_qc_bgei(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_8, int8_t vi_12);
 void emit_qc_bgeui(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_10, int8_t vi_12);
@@ -100,12 +99,14 @@ void emit_qc_mvnei(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_13, 
 void emit_qc_norm(DisasContext *ctx, TCGv_env env, int8_t vi_14, int8_t vi_4);
 void emit_qc_normeu(DisasContext *ctx, TCGv_env env, int8_t vi_12, int8_t vi_4);
 void emit_qc_normu(DisasContext *ctx, TCGv_env env, int8_t vi_11, int8_t vi_4);
+void emit_qc_selecteqi(DisasContext *ctx, TCGv_env env, int8_t vi_13, int8_t vi_11, int8_t vi_9, int8_t vi_15);
 void emit_qc_selectieq(DisasContext *ctx, TCGv_env env, int8_t vi_16, int8_t vi_6, int8_t vi_9, int8_t vi_18);
 void emit_qc_selectieqi(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_6, int8_t vi_9, int8_t vi_17);
 void emit_qc_selectiieq(DisasContext *ctx, TCGv_env env, int8_t vi_12, int8_t vi_4, int8_t vi_6, int8_t vi_14);
 void emit_qc_selectiine(DisasContext *ctx, TCGv_env env, int8_t vi_12, int8_t vi_6, int8_t vi_4, int8_t vi_14);
 void emit_qc_selectine(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_10, int8_t vi_4, int8_t vi_17);
 void emit_qc_selectinei(DisasContext *ctx, TCGv_env env, int8_t vi_15, int8_t vi_10, int8_t vi_4, int8_t vi_17);
+void emit_qc_selectnei(DisasContext *ctx, TCGv_env env, int8_t vi_13, int8_t vi_9, int8_t vi_11, int8_t vi_15);
 void emit_qc_setinti(DisasContext *ctx, TCGv_env env, int16_t vi_12);
 void emit_qc_shladd(DisasContext *ctx, TCGv_env env, int8_t vi_9, int8_t vi_7, int8_t vi_11, int8_t vi_4);
 void emit_qc_srb(DisasContext *ctx, TCGv_env env, int8_t vi_11, int8_t vi_15, int8_t vi_13, int8_t vi_8);
@@ -115,4 +116,7 @@ void emit_qc_subusat(DisasContext *ctx, TCGv_env env, int8_t vi_11, int8_t vi_9,
 void emit_qc_wrap(DisasContext *ctx, TCGv_env env, int8_t vi_13, int8_t vi_11, int8_t vi_4);
 void emit_qc_wrapi(DisasContext *ctx, TCGv_env env, int16_t vi_11, int8_t vi_13, int8_t vi_4);
 void emit_qc_e_bgei(DisasContext *ctx, TCGv_env env, int16_t vi_2, int16_t vi_8, int8_t vi_12);
+void emit_qc_addusat(DisasContext *ctx, TCGv_env env, int8_t vi_14, int8_t vi_12, int8_t vi_4);
+void emit_qc_subsat(DisasContext *ctx, TCGv_env env, int8_t vi_19, int8_t vi_17, int8_t vi_4);
+void emit_qc_addsat(DisasContext *ctx, TCGv_env env, int8_t vi_18, int8_t vi_16, int8_t vi_4);
 int helper_to_tcg_dispatcher(void *func, TCGTemp *ret_temp, int nargs, TCGTemp **args);
