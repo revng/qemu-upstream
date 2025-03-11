@@ -42,30 +42,6 @@ tcg_gen_extrl_i64_i32(temp0, temp3);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
-// void _ZN12CPUArchState10qc_addusatEhhh
-void emit_qc_addusat(DisasContext *ctx, TCGv_env env, int8_t vi_14, int8_t vi_12, int8_t vi_6) {
-TCGv_i32 temp8 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp8, cpu_gpr[((uint64_t) (uint32_t) vi_14)]);
-TCGv_i32 temp5 = tcg_temp_new_i32();
-tcg_gen_mov_i32(temp5, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
-TCGv_i32 temp0 = tcg_temp_new_i32();
-tcg_gen_add_i32(temp0, temp5, temp8);
-tcg_gen_setcondi_i32(TCG_COND_LT, temp8, temp8, 0);
-tcg_gen_setcondi_i32(TCG_COND_LT, temp5, temp5, 0);
-tcg_gen_movcond_i32(TCG_COND_NE, temp5, temp8, tcg_constant_i32(0), tcg_constant_i32(true), temp5);
-tcg_gen_setcondi_i32(TCG_COND_GT, temp8, temp0, -1);
-tcg_gen_movcond_i32(TCG_COND_NE, temp5, temp5, tcg_constant_i32(0), temp8, tcg_constant_i32(false));
-TCGLabel * label24 = gen_new_label();
-TCGLabel * label25 = gen_new_label();
-tcg_gen_brcondi_i32(TCG_COND_NE, temp5, 0, label24);
-tcg_gen_br(label25);
-gen_set_label(label24);
-tcg_gen_movi_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], -1);
-tcg_gen_br(label25);
-gen_set_label(label25);
-tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_6)], temp0);
-}
-
 // void _ZN12CPUArchState7qc_beqiEthh
 void emit_qc_beqi(DisasContext *ctx, TCGv_env env, int16_t vi_2, int8_t vi_8, int8_t vi_12) {
 TCGv_i32 temp1 = tcg_temp_new_i32();
@@ -1717,6 +1693,19 @@ tcg_gen_or_i32(temp0, temp0, temp6);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
+// void _ZN12CPUArchState12qc_selecteqiEhhhh
+void emit_qc_selecteqi(DisasContext *ctx, TCGv_env env, int8_t vi_13, int8_t vi_11, int8_t vi_9, int8_t vi_15) {
+TCGv_i32 temp3 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_setcondi_i32(TCG_COND_EQ, temp0, temp3, ((int32_t) (int32_t) vi_13));
+TCGv_i32 temp2 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp2, cpu_gpr[((uint64_t) (uint32_t) vi_11)]);
+tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_9)]);
+tcg_gen_movcond_i32(TCG_COND_NE, temp0, temp0, tcg_constant_i32(0), temp2, temp3);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_15)], temp0);
+}
+
 // void _ZN12CPUArchState12qc_selectieqEhhhh
 void emit_qc_selectieq(DisasContext *ctx, TCGv_env env, int8_t vi_16, int8_t vi_6, int8_t vi_9, int8_t vi_18) {
 TCGv_i32 temp0 = tcg_temp_new_i32();
@@ -1833,6 +1822,19 @@ tcg_gen_br(label28);
 gen_set_label(label28);
 tcg_gen_mov_i32(temp0, temp0);
 tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_17)], temp0);
+}
+
+// void _ZN12CPUArchState12qc_selectneiEhhhh
+void emit_qc_selectnei(DisasContext *ctx, TCGv_env env, int8_t vi_13, int8_t vi_9, int8_t vi_11, int8_t vi_15) {
+TCGv_i32 temp3 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_15)]);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_setcondi_i32(TCG_COND_EQ, temp0, temp3, ((int32_t) (int32_t) vi_13));
+TCGv_i32 temp2 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp2, cpu_gpr[((uint64_t) (uint32_t) vi_11)]);
+tcg_gen_mov_i32(temp3, cpu_gpr[((uint64_t) (uint32_t) vi_9)]);
+tcg_gen_movcond_i32(TCG_COND_NE, temp0, temp0, tcg_constant_i32(0), temp2, temp3);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_15)], temp0);
 }
 
 // void _ZN12CPUArchState10qc_setintiEt
@@ -1955,6 +1957,65 @@ tcg_gen_mov_i32(temp0, cpu_pc);
 xqci_jump_pcrel(ctx, temp0, ((int32_t) (int32_t) vi_2));
 tcg_gen_br(label18);
 gen_set_label(label18);
+}
+
+// void _ZN12CPUArchState10qc_addusatEhhh
+void emit_qc_addusat(DisasContext *ctx, TCGv_env env, int8_t vi_14, int8_t vi_12, int8_t vi_4) {
+TCGv_i32 temp8 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp8, cpu_gpr[((uint64_t) (uint32_t) vi_14)]);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_12)]);
+TCGv_i32 temp7 = tcg_temp_new_i32();
+tcg_gen_add_i32(temp7, temp0, temp8);
+tcg_gen_setcondi_i32(TCG_COND_LT, temp8, temp8, 0);
+tcg_gen_setcondi_i32(TCG_COND_LT, temp0, temp0, 0);
+tcg_gen_movcond_i32(TCG_COND_NE, temp0, temp8, tcg_constant_i32(0), tcg_constant_i32(true), temp0);
+tcg_gen_setcondi_i32(TCG_COND_GT, temp8, temp7, -1);
+tcg_gen_movcond_i32(TCG_COND_NE, temp0, temp0, tcg_constant_i32(0), temp8, tcg_constant_i32(false));
+tcg_gen_movcond_i32(TCG_COND_NE, temp0, temp0, tcg_constant_i32(0), tcg_constant_i32(-1), temp7);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState9qc_subsatEhhh
+void emit_qc_subsat(DisasContext *ctx, TCGv_env env, int8_t vi_19, int8_t vi_17, int8_t vi_4) {
+TCGv_i32 temp7 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp7, cpu_gpr[((uint64_t) (uint32_t) vi_19)]);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_17)]);
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_sub_i32(temp6, temp7, temp0);
+TCGv_i32 temp14 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp14, temp7, 31);
+TCGv_i32 temp13 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp13, temp0, 31);
+tcg_gen_setcond_i32(TCG_COND_EQ, temp0, temp14, temp13);
+tcg_gen_shri_i32(temp13, temp6, 31);
+tcg_gen_setcond_i32(TCG_COND_EQ, temp13, temp13, temp14);
+tcg_gen_movcond_i32(TCG_COND_NE, temp0, temp0, tcg_constant_i32(0), tcg_constant_i32(true), temp13);
+tcg_gen_movcond_i32(TCG_COND_LT, temp7, temp7, tcg_constant_i32(0), tcg_constant_i32(INT32_MIN), tcg_constant_i32(2147483647));
+tcg_gen_movcond_i32(TCG_COND_NE, temp0, temp0, tcg_constant_i32(0), temp6, temp7);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
+}
+
+// void _ZN12CPUArchState9qc_addsatEhhh
+void emit_qc_addsat(DisasContext *ctx, TCGv_env env, int8_t vi_18, int8_t vi_16, int8_t vi_4) {
+TCGv_i32 temp7 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp7, cpu_gpr[((uint64_t) (uint32_t) vi_18)]);
+TCGv_i32 temp0 = tcg_temp_new_i32();
+tcg_gen_mov_i32(temp0, cpu_gpr[((uint64_t) (uint32_t) vi_16)]);
+TCGv_i32 temp6 = tcg_temp_new_i32();
+tcg_gen_add_i32(temp6, temp0, temp7);
+TCGv_i32 temp14 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp14, temp7, 31);
+TCGv_i32 temp13 = tcg_temp_new_i32();
+tcg_gen_shri_i32(temp13, temp0, 31);
+tcg_gen_setcond_i32(TCG_COND_NE, temp0, temp14, temp13);
+tcg_gen_shri_i32(temp13, temp6, 31);
+tcg_gen_setcond_i32(TCG_COND_EQ, temp13, temp13, temp14);
+tcg_gen_movcond_i32(TCG_COND_NE, temp0, temp0, tcg_constant_i32(0), tcg_constant_i32(true), temp13);
+tcg_gen_movcond_i32(TCG_COND_LT, temp7, temp7, tcg_constant_i32(0), tcg_constant_i32(INT32_MIN), tcg_constant_i32(2147483647));
+tcg_gen_movcond_i32(TCG_COND_NE, temp0, temp0, tcg_constant_i32(0), temp6, temp7);
+tcg_gen_mov_i32(cpu_gpr[((uint64_t) (uint32_t) vi_4)], temp0);
 }
 
 
