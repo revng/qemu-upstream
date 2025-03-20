@@ -19,9 +19,9 @@ decode_only = {
 }
 
 system_only = {
-    'qc.c.mienter',
-    'qc.c.mienter.nest',
-    'qc.c.mileaveret',
+    #'qc.c.mienter',
+    #'qc.c.mienter.nest',
+    #'qc.c.mileaveret',
 }
 
 def ranges_in_location(loc_str):
@@ -71,7 +71,17 @@ def sub_to_csr_write(match):
     value = match.group(2)
     return f'xqci_csrw_xreg(this, {str}, {value})'
 
-def op_to_cpp(op, for_klee = False):
+def sub_to_csr_write_field(match):
+    csr = match.group(1)
+    field = match.group(2)
+    value = match.group(3)
+    return f'xqci_csrw_field_xreg(this, {csr}, {csr.upper()}_{field}, {value});'
+
+def op_to_cpp(op, csrs, for_klee = False):
+    for csr in csrs:
+        csr_name = re.sub(r'\.', '_', csr)
+        op = re.sub(csr, csr_name, op)
+
     processed_op = ""
     for line in op.splitlines():
         if len(line) == 0:
@@ -81,7 +91,6 @@ def op_to_cpp(op, for_klee = False):
             processed_op += stripped_line
         else:
             processed_op += stripped_line + '\n'
-
     op = processed_op
 
     op = re.sub(r'#', r'//', op)
@@ -105,9 +114,11 @@ def op_to_cpp(op, for_klee = False):
     op = re.sub(r'\$pc', r'pc', op)
     op = re.sub(r'jump_halfword\(([a-z_A-Z]+)[ ]+\+[ ]+([a-z_A-Z\(\)]+)\)', r'xqci_jump_pcrel(\1, \2)', op)
 
-    op = re.sub(r'CSR\[([a-zA-z0-9]+)\].address\(\)', sub_to_csr_address, op)
-    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\].sw_read\(\)', sub_to_csr_read, op)
-    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\].sw_write\((.*)\)', sub_to_csr_write, op)
+    op = re.sub(r'CSR\[([a-zA-z0-9]+)\]\.address\(\)', sub_to_csr_address, op)
+    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.sw_read\(\)', sub_to_csr_read, op)
+    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.sw_write\((.*)\)', sub_to_csr_write, op)
+
+    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.(.*) = (.*);', sub_to_csr_write_field , op)
 
     if not for_klee:
         op = re.sub(r'X\[(.*)\].* = (.*);', r'xqci_set_gpr_xreg(\1, \2);', op)

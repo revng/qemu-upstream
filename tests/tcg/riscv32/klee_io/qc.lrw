@@ -2,9 +2,9 @@
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 1476394880
+    in: 1073217408
   - name: "rs2"
-    in: 2152726640
+    in: 2172649472
   - name: "rd"
     in: 0
     out: 0
@@ -12,15 +12,15 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 2147497856
+  - address: 4294442880
     value: 0
 - variables:
   - name: "shamt"
     in: 6
   - name: "rs1"
-    in: 3085433024
+    in: 4294961216
   - name: "rs2"
-    in: 18899037
+    in: 192
   - name: "rd"
     in: 0
     out: 305419896
@@ -28,7 +28,7 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 4096
+  - address: 6208
     value: 305419896
 - variables:
   - name: "shamt"
@@ -36,7 +36,7 @@
   - name: "rs1"
     in: 4294958976
   - name: "rs2"
-    in: 2147508316
+    in: 2164260864
   - name: "rd"
     in: 0
     out: 0
@@ -44,15 +44,15 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 3149184
+  - address: 2147475328
     value: 0
 - variables:
   - name: "shamt"
     in: 6
   - name: "rs1"
-    in: 4294967232
+    in: 4294901696
   - name: "rs2"
-    in: 255
+    in: 23106696
   - name: "rd"
     in: 0
     out: 0
@@ -60,31 +60,15 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 16256
+  - address: 1478762944
     value: 0
-- variables:
-  - name: "shamt"
-    in: 2
-  - name: "rs1"
-    in: 4294901756
-  - name: "rs2"
-    in: 2147501120
-  - name: "rd"
-    in: 0
-    out: 305419896
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 4348
-    value: 305419896
 - variables:
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 3456
+    in: 4286579072
   - name: "rs2"
-    in: 2147483680
+    in: 2147549216
   - name: "rd"
     in: 0
     out: 305419896
@@ -92,5 +76,21 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 7552
+  - address: 4480
+    value: 305419896
+- variables:
+  - name: "shamt"
+    in: 5
+  - name: "rs1"
+    in: 4928
+  - name: "rs2"
+    in: 2147483648
+  - name: "rd"
+    in: 0
+    out: 305419896
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 4928
     value: 305419896
