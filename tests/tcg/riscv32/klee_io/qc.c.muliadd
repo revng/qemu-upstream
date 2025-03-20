@@ -1,11 +1,11 @@
 - variables:
   - name: "uimm"
-    in: 31
+    in: 25
   - name: "rs1"
-    in: 2602633282
+    in: 2146975691
   - name: "rd"
-    in: 931135488
-    out: 8388606
+    in: 2160182574
+    out: 1
   overflow: 1
   underflow: 0
 - variables:
@@ -20,11 +20,21 @@
   underflow: 0
 - variables:
   - name: "uimm"
-    in: 5
+    in: 0
   - name: "rs1"
-    in: 702752348
+    in: 0
   - name: "rd"
-    in: 781205556
+    in: 0
+    out: 0
+  overflow: 0
+  underflow: 0
+- variables:
+  - name: "uimm"
+    in: 19
+  - name: "rs1"
+    in: 3
+  - name: "rd"
+    in: 4294967239
     out: 0
   overflow: 1
   underflow: 0

@@ -9,6 +9,9 @@ from math import ceil
 from ctypes import c_int32
 import common
 
+expected_reg = 8
+dst_reg = 9
+address_reg = 10
 
 def ashr32(x, n):
     if x & 0x80000000:
@@ -30,6 +33,35 @@ class InstPrinter:
         # Manually add encoding for two riscv32 instructions which need to be
         # emitted with different operands in tests.
         try:
+            self.yamls['lw'] = yaml.safe_load(
+                """
+            encoding:
+              match:      -----------------010-----0000011
+              variables:
+              - name: imm
+                location: 31-20
+                sign_extend: true
+              - name: rd
+                location: 11-7
+                not: 0
+              - name: rs1
+                location: 19-15
+            """
+            )
+            self.yamls['sw'] = yaml.safe_load(
+                """
+            encoding:
+              match:      -----------------010-----0100011
+              variables:
+              - name: imm
+                location: 31-25|11-7
+                sign_extend: true
+              - name: rs1
+                location: 19-15
+              - name: rs2
+                location: 24-20
+            """
+            )
             self.yamls['lui'] = yaml.safe_load(
                 """
             encoding:
@@ -103,44 +135,33 @@ class InstPrinter:
         num_bytes = ceil(enc_len/8)
         self.bytes += struct.pack('<Q', enc)[0:num_bytes]
 
-    def exit(self):
-        # Hard code checking of expected vs returned value.
-        # Only testing against state in returned register.
+    def exit_success(self):
         self.bytes += bytes.fromhex('13050000')  # li a0, 0
         self.bytes += bytes.fromhex('9308d005')  # li a7 93
         self.bytes += bytes.fromhex('73000000')  # ecall
 
-    def exit_check_result(self):
-        # Hard code checking of expected vs returned value.
-        # Only testing against state in returned register.
-        self.bytes += bytes.fromhex('63169400')  # bne x8,x9,12
-        self.bytes += bytes.fromhex('13050000')  # li a0, 0
-        self.bytes += bytes.fromhex('6f008000')  # j 8
-        self.bytes += bytes.fromhex('1305f00f')  # li a0 255
+    def exit_failure(self):
+        self.bytes += bytes.fromhex('1305f00f')  # li a0,255
         self.bytes += bytes.fromhex('9308d005')  # li a7 93
         self.bytes += bytes.fromhex('73000000')  # ecall
 
-    def exit_check_branch_and_result(self):
+    def check_result(self, expected_result):
+        self.li(expected_result, expected_reg) # 8 bytes in size
+        self.bytes += bytes.fromhex('63089400') # beq s0,s1,16
+        self.exit_failure() # 12 bytes in size
+
+    def check_branch_and_result(self, expected_result):
         # Hard code checking of expected vs returned value.
         # Only testing against state in returned register.
         self.bytes += bytes.fromhex('6f000001')  # j 16
-        self.bytes += bytes.fromhex('63169400')  # bne x8,x9,12
-        self.bytes += bytes.fromhex('13050000')  # li a0, 0
-        self.bytes += bytes.fromhex('6f008000')  # j 8
-        self.bytes += bytes.fromhex('1305f00f')  # li a0 255
-        self.bytes += bytes.fromhex('9308d005')  # li a7 93
-        self.bytes += bytes.fromhex('73000000')  # ecall
+        self.li(expected_result, expected_reg) # 8 bytes in size
+        self.bytes += bytes.fromhex('63089400')  # beq x8,x9,16
+        self.exit_failure() # 12 bytes in size
 
-    def exit_check_branch(self):
-        # Hard code checking of expected vs returned value.
-        # Only testing against state in returned register.
-        self.bytes += bytes.fromhex('6f000001')  # j 16
-        #self.bytes += bytes.fromhex('63169400')  # bne x8,x9,12
-        self.bytes += bytes.fromhex('13050000')  # li a0, 0
+    def check_branch(self):
         self.bytes += bytes.fromhex('6f008000')  # j 8
-        self.bytes += bytes.fromhex('1305f00f')  # li a0 255
-        self.bytes += bytes.fromhex('9308d005')  # li a7 93
-        self.bytes += bytes.fromhex('73000000')  # ecall
+        self.bytes += bytes.fromhex('6f000001')  # j 16
+        self.exit_failure() # 12 bytes in size
 
 
 def output_elf(f, text_bytes):
@@ -151,19 +172,31 @@ def output_elf(f, text_bytes):
     f.write(struct.pack('<H', 243))
     f.write(struct.pack('<I', 1))                  # Version
     # Entry point (dummy address)
-    f.write(struct.pack('<I', 0x10000+52+32))
+    f.write(struct.pack('<I', 0x10000+52+2*32))
     f.write(struct.pack('<I', 52))                 # Program header offset
     f.write(struct.pack('<I', 0))                  # Section header offset
     f.write(struct.pack('<I', 0))                  # Flags
     f.write(struct.pack('<H', 52))                 # ELF Header size
     f.write(struct.pack('<H', 32))                 # Program header entry size
-    f.write(struct.pack('<H', 1))                  # Number of program headers
+    f.write(struct.pack('<H', 2))                  # Number of program headers
     f.write(struct.pack('<H', 0))                  # No. section headers
     f.write(struct.pack('<H', 0))                  # No. section headers
     # No. section header string table
     f.write(struct.pack('<H', 0))
 
-    # Program Header
+    # Program Header (.text)
+    f.write(struct.pack('<I', 1))                  # PT_LOAD
+    f.write(struct.pack('<I', 0))                  # Offset in the file
+    f.write(struct.pack('<I', 0x1000))             # Virtual address
+    f.write(struct.pack('<I', 0x1000))             # Physical address
+    # Size of the segment in the file
+    f.write(struct.pack('<I', 0))
+    # Size of the segment in memory
+    f.write(struct.pack('<I', 0x1000))
+    f.write(struct.pack('<I', 6))                  # R (read) and E (execute)
+    f.write(struct.pack('<I', 0x1000))             # Alignment
+
+    # Program Header (.test_data)
     f.write(struct.pack('<I', 1))                  # PT_LOAD
     f.write(struct.pack('<I', 0))                  # Offset in the file
     f.write(struct.pack('<I', 0x10000))            # Virtual address
@@ -214,13 +247,19 @@ def main():
     for test_index,test in enumerate(io_yaml):
         printer.bytes = bytes()
 
-        expected_reg = 8
-        dst_reg = 9
         expected_result = None
 
         if 'has_jump' in test:
             if test['has_jump']['valid_test_jump'] == 0:
                 continue
+        if 'has_valid_test_memop' in test and test['has_valid_test_memop'] == 0:
+            continue
+
+        if 'has_load' in test:
+            for loadop in test['has_load']:
+                printer.li(loadop['address'], address_reg)
+                printer.li(loadop['value'], dst_reg)
+                printer.append('sw', 0, address_reg, dst_reg)
 
         inst_args = []
         if test_has_variables(test):
@@ -244,19 +283,28 @@ def main():
                     inst_args.append(reg)
 
         printer.append(args.inst_name, *inst_args)
-        if expected_result != None:
-            printer.li(expected_result, expected_reg)
 
         if 'has_jump' in test:
             if expected_result != None:
-                printer.exit_check_branch_and_result()
+                printer.check_branch_and_result(expected_result)
             else:
-                printer.exit_check_branch()
+                printer.check_branch()
         else:
             if expected_result != None:
-                printer.exit_check_result()
-            else:
-                printer.exit()
+                printer.check_result(expected_result)
+
+        if 'has_store' in test:
+            for storeop in test['has_store']:
+                printer.li(storeop['address'], address_reg)
+                printer.append('lw', 0, dst_reg, address_reg)
+                printer.check_result(storeop['value'])
+
+        printer.exit_success()
+                
+        #printer.li(69, 6)
+        #printer.li(0x1234, 7)
+        #printer.append('sw', 0, 7, 6)
+        #printer.append('lw', 0, 5, 7)
 
         with open(f'{args.out}-{test_index}', 'wb') as f:
             output_elf(f, printer.bytes)

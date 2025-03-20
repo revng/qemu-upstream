@@ -55,7 +55,35 @@ def load_yaml_or_exit(path):
             print(f'Failed to load yaml file {path}: {e}', file=sys.stderr)
             exit(1)
 
-def op_to_cpp(op):
+def sub_to_csr_address(match):
+    str = match.group(1)
+    if str.startswith('qc') and not ' ' in str:
+        return f'{match.group(1)}'
+    else:
+        assert(False);
+
+def sub_to_csr_read(match):
+    str = match.group(1)
+    return f'xqci_csrr_xreg(this, {str})'
+
+def sub_to_csr_write(match):
+    str = match.group(1)
+    value = match.group(2)
+    return f'xqci_csrw_xreg(this, {str}, {value})'
+
+def op_to_cpp(op, for_klee = False):
+    processed_op = ""
+    for line in op.splitlines():
+        if len(line) == 0:
+            continue
+        stripped_line = line.rstrip()
+        if not '#' in stripped_line and not stripped_line[-1] in {'{', ';', '}'}:
+            processed_op += stripped_line
+        else:
+            processed_op += stripped_line + '\n'
+
+    op = processed_op
+
     op = re.sub(r'#', r'//', op)
     op = re.sub(r'\$signed', r'_signed', op)
     op = re.sub(r'\$encoding', r'0', op)
@@ -76,4 +104,12 @@ def op_to_cpp(op):
     op = re.sub(r'implemented\?', r'implemented', op)
     op = re.sub(r'\$pc', r'pc', op)
     op = re.sub(r'jump_halfword\(([a-z_A-Z]+)[ ]+\+[ ]+([a-z_A-Z\(\)]+)\)', r'xqci_jump_pcrel(\1, \2)', op)
+
+    op = re.sub(r'CSR\[([a-zA-z0-9]+)\].address\(\)', sub_to_csr_address, op)
+    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\].sw_read\(\)', sub_to_csr_read, op)
+    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\].sw_write\((.*)\)', sub_to_csr_write, op)
+
+    if not for_klee:
+        op = re.sub(r'X\[(.*)\].* = (.*);', r'xqci_set_gpr_xreg(\1, \2);', op)
+
     return op

@@ -1,5 +1,15 @@
 - variables:
   - name: "rs1"
+    in: 4294901761
+  - name: "rs2"
+    in: 1073741824
+  - name: "rd"
+    in: 4278190080
+    out: 1073676289
+  overflow: 1
+  underflow: 0
+- variables:
+  - name: "rs1"
     in: 1
   - name: "rs2"
     in: 2147483648
@@ -10,13 +20,13 @@
   underflow: 0
 - variables:
   - name: "rs1"
-    in: 4294901761
+    in: 255
   - name: "rs2"
-    in: 2181038080
+    in: 255
   - name: "rd"
     in: 4278190080
-    out: 2180972545
-  overflow: 1
+    out: 510
+  overflow: 0
   underflow: 0
 - variables:
   - name: "rs1"
@@ -30,9 +40,9 @@
   underflow: 0
 - variables:
   - name: "rs1"
-    in: 2080374751
+    in: 2011168767
   - name: "rs2"
-    in: 67108912
+    in: 136315008
   - name: "rd"
     in: 4278190080
     out: 2147483647
