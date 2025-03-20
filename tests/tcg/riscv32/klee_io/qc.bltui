@@ -11,7 +11,7 @@
   - name: "offset"
     in: 8
   - name: "imm"
-    in: 16
+    in: 3
   - name: "rs1"
     in: 2
   overflow: 0
@@ -23,7 +23,7 @@
   - name: "offset"
     in: 0
   - name: "imm"
-    in: 16
+    in: 3
   - name: "rs1"
     in: 2
   overflow: 0

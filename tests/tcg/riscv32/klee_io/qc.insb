@@ -14,9 +14,9 @@
   - name: "width_minus1"
     in: 0
   - name: "shamt"
-    in: 14
+    in: 28
   - name: "rs1"
-    in: 1048576
+    in: 16777216
   - name: "rd"
     in: 255
     out: 255

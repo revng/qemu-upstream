@@ -14,7 +14,7 @@
   - name: "rs1"
     in: 32768
   - name: "rs2"
-    in: 49152
+    in: 32896
   - name: "simm"
     in: 0
   - name: "rd"

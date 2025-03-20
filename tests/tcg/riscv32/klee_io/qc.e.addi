@@ -12,9 +12,9 @@
   - name: "imm"
     in: 67108863
   - name: "rs1"
-    in: 4227858433
+    in: 4227923968
   - name: "rd"
     in: 255
-    out: 0
+    out: 65535
   overflow: 1
   underflow: 0

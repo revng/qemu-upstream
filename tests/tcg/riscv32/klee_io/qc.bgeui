@@ -2,9 +2,9 @@
   - name: "offset"
     in: 0
   - name: "imm"
-    in: 16
+    in: 5
   - name: "rs1"
-    in: 8
+    in: 4
   overflow: 0
   underflow: 0
 - variables:

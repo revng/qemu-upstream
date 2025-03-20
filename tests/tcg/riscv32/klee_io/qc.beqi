@@ -11,9 +11,9 @@
   - name: "offset"
     in: 8
   - name: "imm"
-    in: 1
+    in: 31
   - name: "rs1"
-    in: 1
+    in: 31
   overflow: 0
   underflow: 0
   has_jump:
@@ -23,9 +23,9 @@
   - name: "offset"
     in: 0
   - name: "imm"
-    in: 1
+    in: 31
   - name: "rs1"
-    in: 1
+    in: 31
   overflow: 0
   underflow: 0
   has_jump:

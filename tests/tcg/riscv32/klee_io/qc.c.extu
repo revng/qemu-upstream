@@ -1,6 +1,6 @@
 - variables:
   - name: "width_minus1"
-    in: 31
+    in: 24
   - name: "rd"
     in: 255
     out: 255

@@ -1,8 +1,8 @@
 - variables:
   - name: "imm"
-    in: 12288
+    in: 10241
   - name: "rs1"
-    in: 4294959104
+    in: 4294963200
   - name: "rd"
     in: 0
     out: 120
@@ -10,7 +10,7 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 4096
+  - address: 6145
     value: 120
 - variables:
   - name: "imm"
@@ -28,9 +28,9 @@
     value: 0
 - variables:
   - name: "imm"
-    in: 2034
+    in: 3199
   - name: "rs1"
-    in: 2062
+    in: 897
   - name: "rd"
     in: 0
     out: 120

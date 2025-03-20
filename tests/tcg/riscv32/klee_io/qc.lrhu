@@ -2,9 +2,9 @@
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 536346496
+    in: 1073741696
   - name: "rs2"
-    in: 2147487856
+    in: 2172649472
   - name: "rd"
     in: 0
     out: 0
@@ -12,15 +12,15 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 536885120
+  - address: 4294967168
     value: 0
 - variables:
   - name: "shamt"
-    in: 6
+    in: 4
   - name: "rs1"
-    in: 4294702976
+    in: 1965037520
   - name: "rs2"
-    in: 4224
+    in: 145620992
   - name: "rd"
     in: 0
     out: 22136
@@ -28,31 +28,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 6016
+  - address: 6096
     value: 22136
 - variables:
   - name: "shamt"
-    in: 0
+    in: 7
   - name: "rs1"
-    in: 0
+    in: 4288143232
   - name: "rs2"
-    in: 255
-  - name: "rd"
-    in: 0
-    out: 0
-  overflow: 0
-  underflow: 0
-  has_valid_test_memop: 0
-  has_load:
-  - address: 255
-    value: 0
-- variables:
-  - name: "shamt"
-    in: 6
-  - name: "rs1"
-    in: 4294967232
-  - name: "rs2"
-    in: 255
+    in: 2164310016
   - name: "rd"
     in: 0
     out: 0
@@ -60,15 +44,31 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 16256
+  - address: 2146951040
     value: 0
 - variables:
   - name: "shamt"
-    in: 5
+    in: 2
   - name: "rs1"
-    in: 4227854272
+    in: 4291722172
   - name: "rs2"
-    in: 1075839360
+    in: 813336
+  - name: "rd"
+    in: 0
+    out: 0
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 0
+  has_load:
+  - address: 8220
+    value: 0
+- variables:
+  - name: "shamt"
+    in: 1
+  - name: "rs1"
+    in: 1591828158
+  - name: "rs2"
+    in: 3499055265
   - name: "rd"
     in: 0
     out: 22136
@@ -76,15 +76,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 8128
+  - address: 4096
     value: 22136
 - variables:
   - name: "shamt"
-    in: 5
+    in: 1
   - name: "rs1"
-    in: 5952
+    in: 1534
   - name: "rs2"
-    in: 2147483648
+    in: 2147484944
   - name: "rd"
     in: 0
     out: 22136
@@ -92,5 +92,5 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 5952
+  - address: 4126
     value: 22136

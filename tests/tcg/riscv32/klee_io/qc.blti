@@ -2,7 +2,7 @@
   - name: "offset"
     in: 0
   - name: "imm"
-    in: 31
+    in: 1
   - name: "rs1"
     in: 255
   overflow: 0
@@ -11,7 +11,7 @@
   - name: "offset"
     in: 8
   - name: "imm"
-    in: 1
+    in: 31
   - name: "rs1"
     in: 2147483648
   overflow: 0
@@ -23,7 +23,7 @@
   - name: "offset"
     in: 0
   - name: "imm"
-    in: 1
+    in: 31
   - name: "rs1"
     in: 2147483648
   overflow: 0
