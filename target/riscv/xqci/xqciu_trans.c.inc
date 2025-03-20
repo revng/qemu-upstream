@@ -87,56 +87,6 @@ static bool trans_qc_brev32(DisasContext *ctx, arg_qc_brev32 *arg)
     emit_qc_brev32(ctx, tcg_env, arg->rs1, arg->rd);
     return true;
 }
-static bool trans_qc_c_bexti(DisasContext *ctx, arg_qc_c_bexti *arg)
-{
-    if (arg->shamt == 0) {
-        return false;
-    }
-    emit_qc_c_bexti(ctx, tcg_env, arg->shamt, arg->rd);
-    return true;
-}
-static bool trans_qc_c_bseti(DisasContext *ctx, arg_qc_c_bseti *arg)
-{
-    if (arg->shamt == 0) {
-        return false;
-    }
-    emit_qc_c_bseti(ctx, tcg_env, arg->shamt, arg->rd);
-    return true;
-}
-static bool trans_qc_c_clrint(DisasContext *ctx, arg_qc_c_clrint *arg)
-{
-    if (arg->rs1 == 0) {
-        return false;
-    }
-    emit_qc_c_clrint(ctx, tcg_env, arg->rs1);
-    return true;
-}
-static bool trans_qc_c_di(DisasContext *ctx, arg_qc_c_di *arg)
-{
-    emit_qc_c_di(ctx, tcg_env);
-    return true;
-}
-static bool trans_qc_c_dir(DisasContext *ctx, arg_qc_c_dir *arg)
-{
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_c_dir(ctx, tcg_env, arg->rd);
-    return true;
-}
-static bool trans_qc_c_ei(DisasContext *ctx, arg_qc_c_ei *arg)
-{
-    emit_qc_c_ei(ctx, tcg_env);
-    return true;
-}
-static bool trans_qc_c_eir(DisasContext *ctx, arg_qc_c_eir *arg)
-{
-    if (arg->rs1 == 0) {
-        return false;
-    }
-    emit_qc_c_eir(ctx, tcg_env, arg->rs1);
-    return true;
-}
 static bool trans_qc_c_extu(DisasContext *ctx, arg_qc_c_extu *arg)
 {
     if (arg->width_minus1 == 0 || arg->width_minus1 == 1 || arg->width_minus1 == 2 || arg->width_minus1 == 3 || arg->width_minus1 == 4) {
@@ -148,51 +98,6 @@ static bool trans_qc_c_extu(DisasContext *ctx, arg_qc_c_extu *arg)
     emit_qc_c_extu(ctx, tcg_env, arg->width_minus1, arg->rd);
     return true;
 }
-static bool trans_qc_c_mienter_nest(DisasContext *ctx, arg_qc_c_mienter_nest *arg)
-{
-#ifdef CONFIG_USER_ONLY
-    return false;
-#else
-    emit_qc_c_mienter_nest(ctx, tcg_env);
-    return true;
-#endif
-}
-static bool trans_qc_c_mienter(DisasContext *ctx, arg_qc_c_mienter *arg)
-{
-#ifdef CONFIG_USER_ONLY
-    return false;
-#else
-    emit_qc_c_mienter(ctx, tcg_env);
-    return true;
-#endif
-}
-static bool trans_qc_c_mileaveret(DisasContext *ctx, arg_qc_c_mileaveret *arg)
-{
-#ifdef CONFIG_USER_ONLY
-    return false;
-#else
-    emit_qc_c_mileaveret(ctx, tcg_env);
-    return true;
-#endif
-}
-static bool trans_qc_c_muliadd(DisasContext *ctx, arg_qc_c_muliadd *arg)
-{
-    emit_qc_c_muliadd(ctx, tcg_env, arg->uimm, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_c_mveqz(DisasContext *ctx, arg_qc_c_mveqz *arg)
-{
-    emit_qc_c_mveqz(ctx, tcg_env, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_c_setint(DisasContext *ctx, arg_qc_c_setint *arg)
-{
-    if (arg->rs1 == 0) {
-        return false;
-    }
-    emit_qc_c_setint(ctx, tcg_env, arg->rs1);
-    return true;
-}
 static bool trans_qc_clo(DisasContext *ctx, arg_qc_clo *arg)
 {
     if (arg->rs1 == 0) {
@@ -202,11 +107,6 @@ static bool trans_qc_clo(DisasContext *ctx, arg_qc_clo *arg)
         return false;
     }
     emit_qc_clo(ctx, tcg_env, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_clrinti(DisasContext *ctx, arg_qc_clrinti *arg)
-{
-    emit_qc_clrinti(ctx, tcg_env, arg->imm);
     return true;
 }
 static bool trans_qc_compress2(DisasContext *ctx, arg_qc_compress2 *arg)
@@ -229,17 +129,6 @@ static bool trans_qc_compress3(DisasContext *ctx, arg_qc_compress3 *arg)
         return false;
     }
     emit_qc_compress3(ctx, tcg_env, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_cto(DisasContext *ctx, arg_qc_cto *arg)
-{
-    if (arg->rs1 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_cto(ctx, tcg_env, arg->rs1, arg->rd);
     return true;
 }
 static bool trans_qc_e_addai(DisasContext *ctx, arg_qc_e_addai *arg)
@@ -478,88 +367,6 @@ static bool trans_qc_ext(DisasContext *ctx, arg_qc_ext *arg)
     emit_qc_ext(ctx, tcg_env, arg->width_minus1, arg->shamt, arg->rs1, arg->rd);
     return true;
 }
-static bool trans_qc_extd(DisasContext *ctx, arg_qc_extd *arg)
-{
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_extd(ctx, tcg_env, arg->width_minus1, arg->shamt, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_extdpr(DisasContext *ctx, arg_qc_extdpr *arg)
-{
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_extdpr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_extdprh(DisasContext *ctx, arg_qc_extdprh *arg)
-{
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_extdprh(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_extdr(DisasContext *ctx, arg_qc_extdr *arg)
-{
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_extdr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_extdu(DisasContext *ctx, arg_qc_extdu *arg)
-{
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_extdu(ctx, tcg_env, arg->width_minus1, arg->shamt, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_extdupr(DisasContext *ctx, arg_qc_extdupr *arg)
-{
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_extdupr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_extduprh(DisasContext *ctx, arg_qc_extduprh *arg)
-{
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_extduprh(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_extdur(DisasContext *ctx, arg_qc_extdur *arg)
-{
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_extdur(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
 static bool trans_qc_extu(DisasContext *ctx, arg_qc_extu *arg)
 {
     if (arg->rs1 == 0) {
@@ -579,75 +386,12 @@ static bool trans_qc_insb(DisasContext *ctx, arg_qc_insb *arg)
     emit_qc_insb(ctx, tcg_env, arg->width_minus1, arg->shamt, arg->rs1, arg->rd);
     return true;
 }
-static bool trans_qc_insbh(DisasContext *ctx, arg_qc_insbh *arg)
-{
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_insbh(ctx, tcg_env, arg->width_minus1, arg->shamt, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_insbhr(DisasContext *ctx, arg_qc_insbhr *arg)
-{
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_insbhr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
 static bool trans_qc_insbi(DisasContext *ctx, arg_qc_insbi *arg)
 {
     if (arg->rd == 0) {
         return false;
     }
     emit_qc_insbi(ctx, tcg_env, arg->width_minus1, arg->shamt, arg->imm, arg->rd);
-    return true;
-}
-static bool trans_qc_insbpr(DisasContext *ctx, arg_qc_insbpr *arg)
-{
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_insbpr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_insbprh(DisasContext *ctx, arg_qc_insbprh *arg)
-{
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_insbprh(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_insbr(DisasContext *ctx, arg_qc_insbr *arg)
-{
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_insbr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_insbri(DisasContext *ctx, arg_qc_insbri *arg)
-{
-    if (arg->rs1 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_insbri(ctx, tcg_env, arg->imm, arg->rs1, arg->rd);
     return true;
 }
 static bool trans_qc_li(DisasContext *ctx, arg_qc_li *arg)
@@ -1202,11 +946,6 @@ static bool trans_qc_selectnei(DisasContext *ctx, arg_qc_selectnei *arg)
     emit_qc_selectnei(ctx, tcg_env, arg->imm, arg->rs2, arg->rs3, arg->rd);
     return true;
 }
-static bool trans_qc_setinti(DisasContext *ctx, arg_qc_setinti *arg)
-{
-    emit_qc_setinti(ctx, tcg_env, arg->imm);
-    return true;
-}
 static bool trans_qc_setwm(DisasContext *ctx, arg_qc_setwm *arg)
 {
     arg->imm <<= 2;
@@ -1240,20 +979,6 @@ static bool trans_qc_shladd(DisasContext *ctx, arg_qc_shladd *arg)
         return false;
     }
     emit_qc_shladd(ctx, tcg_env, arg->shamt, arg->rs2, arg->rs1, arg->rd);
-    return true;
-}
-static bool trans_qc_shlusat(DisasContext *ctx, arg_qc_shlusat *arg)
-{
-    if (arg->rs1 == 0) {
-        return false;
-    }
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_shlusat(ctx, tcg_env, arg->rs1, arg->rs2, arg->rd);
     return true;
 }
 static bool trans_qc_srb(DisasContext *ctx, arg_qc_srb *arg)
@@ -1347,34 +1072,6 @@ static bool trans_qc_e_bgei(DisasContext *ctx, arg_qc_e_bgei *arg)
     gen_goto_tb(ctx, 0, ctx->cur_insn_len);
     return true;
 }
-static bool trans_qc_addusat(DisasContext *ctx, arg_qc_addusat *arg)
-{
-    if (arg->rs1 == 0) {
-        return false;
-    }
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_addusat(ctx, tcg_env, arg->rs1, arg->rs2, arg->rd);
-    return true;
-}
-static bool trans_qc_subsat(DisasContext *ctx, arg_qc_subsat *arg)
-{
-    if (arg->rs1 == 0) {
-        return false;
-    }
-    if (arg->rs2 == 0) {
-        return false;
-    }
-    if (arg->rd == 0) {
-        return false;
-    }
-    emit_qc_subsat(ctx, tcg_env, arg->rs1, arg->rs2, arg->rd);
-    return true;
-}
 static bool trans_qc_addsat(DisasContext *ctx, arg_qc_addsat *arg)
 {
     if (arg->rs1 == 0) {
@@ -1389,6 +1086,290 @@ static bool trans_qc_addsat(DisasContext *ctx, arg_qc_addsat *arg)
     emit_qc_addsat(ctx, tcg_env, arg->rs1, arg->rs2, arg->rd);
     return true;
 }
+static bool trans_qc_addusat(DisasContext *ctx, arg_qc_addusat *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_addusat(ctx, tcg_env, arg->rs1, arg->rs2, arg->rd);
+    return true;
+}
+static bool trans_qc_c_bexti(DisasContext *ctx, arg_qc_c_bexti *arg)
+{
+    if (arg->shamt == 0) {
+        return false;
+    }
+    emit_qc_c_bexti(ctx, tcg_env, arg->shamt, arg->rd);
+    return true;
+}
+static bool trans_qc_c_bseti(DisasContext *ctx, arg_qc_c_bseti *arg)
+{
+    if (arg->shamt == 0) {
+        return false;
+    }
+    emit_qc_c_bseti(ctx, tcg_env, arg->shamt, arg->rd);
+    return true;
+}
+static bool trans_qc_c_clrint(DisasContext *ctx, arg_qc_c_clrint *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    emit_qc_c_clrint(ctx, tcg_env, arg->rs1);
+    return true;
+}
+static bool trans_qc_c_di(DisasContext *ctx, arg_qc_c_di *arg)
+{
+    emit_qc_c_di(ctx, tcg_env);
+    return true;
+}
+static bool trans_qc_c_dir(DisasContext *ctx, arg_qc_c_dir *arg)
+{
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_c_dir(ctx, tcg_env, arg->rd);
+    return true;
+}
+static bool trans_qc_c_ei(DisasContext *ctx, arg_qc_c_ei *arg)
+{
+    emit_qc_c_ei(ctx, tcg_env);
+    return true;
+}
+static bool trans_qc_c_eir(DisasContext *ctx, arg_qc_c_eir *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    emit_qc_c_eir(ctx, tcg_env, arg->rs1);
+    return true;
+}
+static bool trans_qc_c_mienter_nest(DisasContext *ctx, arg_qc_c_mienter_nest *arg)
+{
+    emit_qc_c_mienter_nest(ctx, tcg_env);
+    return true;
+}
+static bool trans_qc_c_mienter(DisasContext *ctx, arg_qc_c_mienter *arg)
+{
+    emit_qc_c_mienter(ctx, tcg_env);
+    return true;
+}
+static bool trans_qc_c_mileaveret(DisasContext *ctx, arg_qc_c_mileaveret *arg)
+{
+    emit_qc_c_mileaveret(ctx, tcg_env);
+    return true;
+}
+static bool trans_qc_c_muliadd(DisasContext *ctx, arg_qc_c_muliadd *arg)
+{
+    emit_qc_c_muliadd(ctx, tcg_env, arg->uimm, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_c_mveqz(DisasContext *ctx, arg_qc_c_mveqz *arg)
+{
+    emit_qc_c_mveqz(ctx, tcg_env, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_c_setint(DisasContext *ctx, arg_qc_c_setint *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    emit_qc_c_setint(ctx, tcg_env, arg->rs1);
+    return true;
+}
+static bool trans_qc_clrinti(DisasContext *ctx, arg_qc_clrinti *arg)
+{
+    emit_qc_clrinti(ctx, tcg_env, arg->imm);
+    return true;
+}
+static bool trans_qc_cto(DisasContext *ctx, arg_qc_cto *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_cto(ctx, tcg_env, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_extd(DisasContext *ctx, arg_qc_extd *arg)
+{
+    if (arg->rs1 == 31) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_extd(ctx, tcg_env, arg->width_minus1, arg->shamt, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_extdpr(DisasContext *ctx, arg_qc_extdpr *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rs1 == 31) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_extdpr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_extdprh(DisasContext *ctx, arg_qc_extdprh *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rs1 == 31) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_extdprh(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_extdr(DisasContext *ctx, arg_qc_extdr *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rs1 == 31) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_extdr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_extdu(DisasContext *ctx, arg_qc_extdu *arg)
+{
+    if (arg->rs1 == 31) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_extdu(ctx, tcg_env, arg->width_minus1, arg->shamt, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_extdupr(DisasContext *ctx, arg_qc_extdupr *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rs1 == 31) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_extdupr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_extduprh(DisasContext *ctx, arg_qc_extduprh *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rs1 == 31) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_extduprh(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_extdur(DisasContext *ctx, arg_qc_extdur *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_extdur(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_insbh(DisasContext *ctx, arg_qc_insbh *arg)
+{
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_insbh(ctx, tcg_env, arg->width_minus1, arg->shamt, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_insbhr(DisasContext *ctx, arg_qc_insbhr *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_insbhr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_insbpr(DisasContext *ctx, arg_qc_insbpr *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_insbpr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_insbprh(DisasContext *ctx, arg_qc_insbprh *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_insbprh(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_insbr(DisasContext *ctx, arg_qc_insbr *arg)
+{
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_insbr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_insbri(DisasContext *ctx, arg_qc_insbri *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_insbri(ctx, tcg_env, arg->imm, arg->rs1, arg->rd);
+    return true;
+}
+static bool trans_qc_setinti(DisasContext *ctx, arg_qc_setinti *arg)
+{
+    emit_qc_setinti(ctx, tcg_env, arg->imm);
+    return true;
+}
 static bool trans_qc_shlsat(DisasContext *ctx, arg_qc_shlsat *arg)
 {
     if (arg->rs1 == 0) {
@@ -1401,5 +1382,33 @@ static bool trans_qc_shlsat(DisasContext *ctx, arg_qc_shlsat *arg)
         return false;
     }
     emit_qc_shlsat(ctx, tcg_env, arg->rs1, arg->rs2, arg->rd);
+    return true;
+}
+static bool trans_qc_shlusat(DisasContext *ctx, arg_qc_shlusat *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_shlusat(ctx, tcg_env, arg->rs1, arg->rs2, arg->rd);
+    return true;
+}
+static bool trans_qc_subsat(DisasContext *ctx, arg_qc_subsat *arg)
+{
+    if (arg->rs1 == 0) {
+        return false;
+    }
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    if (arg->rd == 0) {
+        return false;
+    }
+    emit_qc_subsat(ctx, tcg_env, arg->rs1, arg->rs2, arg->rd);
     return true;
 }

@@ -36,15 +36,15 @@ void HELPER(xqci_setwm)(CPUArchState *env, target_ulong vaddr, target_ulong leng
     }
 }
 
-#ifndef CONFIG_USER_ONLY
 static void mienter_copy_cpustate(CPUArchState *env, uintptr_t ra)
 {
+    /* TODO(anjo): validate env->gpr[2] */
     target_ulong vaddr = env->gpr[2];
     target_ulong mepc;
-    target_ulong mnepc;
+    //target_ulong mnepc;
     target_ulong mcause;
     target_ulong reserved_val = 0;
-    int mmu_idx = riscv_env_get_mmu_index(env, false);
+    int mmu_idx = riscv_env_mmu_index(env, false);
     target_ulong mask = (1ull << 32) - 1;
     RISCVException ret;
 
@@ -53,21 +53,23 @@ static void mienter_copy_cpustate(CPUArchState *env, uintptr_t ra)
         riscv_raise_exception(env, ret, ra);
     }
 
-    ret = riscv_csrr(env, CSR_QC_MNEPC, &mnepc);
-    if (ret != RISCV_EXCP_NONE) {
-        riscv_raise_exception(env, ret, ra);
-    }
+    // TODO(anjo): QEMU doesn't model MNEPC
+    //ret = riscv_csrr(env, CSR_MNEPC, &mnepc);
+    //if (ret != RISCV_EXCP_NONE) {
+    //    riscv_raise_exception(env, ret, ra);
+    //}
 
     ret = riscv_csrr(env, CSR_MCAUSE, &mcause);
     if (ret != RISCV_EXCP_NONE) {
         riscv_raise_exception(env, ret, ra);
     }
 
-    if (get_field(mcause, MCAUSE_NMI) != 1) {
-        cpu_stl_mmuidx_ra(env, vaddr - 4, mepc, mmu_idx, ra);
-    } else {
-        cpu_stl_mmuidx_ra(env, vaddr - 4, mnepc, mmu_idx, ra);
-    }
+    // TODO(anjo): QEMU doesn't model MNSTATUS
+    //if (get_field(env->mnstatus, MNSTATUS_NMIE) == 1) {
+    //    cpu_stl_mmuidx_ra(env, vaddr - 4, mepc, mmu_idx, ra);
+    //} else {
+    //    cpu_stl_mmuidx_ra(env, vaddr - 4, mnepc, mmu_idx, ra);
+    //}
 
     cpu_stl_mmuidx_ra(env, vaddr - 8,  env->gpr[8] & mask,  mmu_idx, ra);
     cpu_stl_mmuidx_ra(env, vaddr - 12, mcause,              mmu_idx, ra);
@@ -92,6 +94,7 @@ static void mienter_copy_cpustate(CPUArchState *env, uintptr_t ra)
     cpu_stl_mmuidx_ra(env, vaddr - 76, env->gpr[30] & mask, mmu_idx, ra);
     cpu_stl_mmuidx_ra(env, vaddr - 80, env->gpr[31] & mask, mmu_idx, ra);
 
+    env->gpr[8] = env->gpr[2];
     env->gpr[2] -= 96;
 }
 
@@ -102,45 +105,28 @@ void HELPER(xqci_mienter)(CPUArchState *env)
 
 void HELPER(xqci_mienter_nest)(CPUArchState *env)
 {
+    target_ulong qc_mcause_val = env->qc_mcause;
     mienter_copy_cpustate(env, GETPC());
     env->mstatus = set_field(env->mstatus, MSTATUS_MIE, 1);
+    env->qc_mcause = qc_mcause_val | (1 << 26);
 }
 
 void HELPER(xqci_mileaveret)(CPUArchState *env)
 {
-
+    /* TODO(anjo): validate env->gpr[2] */
     target_ulong vaddr = env->gpr[2] + 96;
     target_ulong prev_retpc;
-    target_ulong curr_retpc;
-    int mcause_nmi = get_field(env->mcause, MCAUSE_NMI);
-    int mmu_idx = riscv_env_get_mmu_index(env, false);
-    target_ulong mask = (1ull << 32) - 1;
-    RISCVException ret;
+    target_ulong qc_mcause_val;
+    //int nmie_val = get_field(env->mnstatus, MNSTATUS_NMIE);
+
+    int mmu_idx = riscv_env_mmu_index(env, false);
 
     prev_retpc = cpu_ldl_mmuidx_ra(env, vaddr - 4, mmu_idx, GETPC());
-
-    if (mcause_nmi != 1) {
-        ret = riscv_csrr(env, CSR_MNEPC, &curr_retpc);
-        if (ret != RISCV_EXCP_NONE) {
-            riscv_raise_exception(env, ret, GETPC());
-        }
-        ret = riscv_csrrw(env, CSR_MNEPC, NULL, prev_retpc, -1);
-        if (ret != RISCV_EXCP_NONE) {
-            riscv_raise_exception(env, ret, GETPC());
-        }
-    } else {
-        ret = riscv_csrr(env, CSR_QC_MNEPC, &curr_retpc);
-        if (ret != RISCV_EXCP_NONE) {
-            riscv_raise_exception(env, ret, GETPC());
-        }
-        ret = riscv_csrrw(env, CSR_QC_MNEPC, NULL, prev_retpc, -1);
-        if (ret != RISCV_EXCP_NONE) {
-            riscv_raise_exception(env, ret, GETPC());
-        }
-    }
+    (void)prev_retpc;
+    qc_mcause_val = cpu_ldl_mmuidx_ra(env, vaddr - 12, mmu_idx, GETPC());
 
     env->gpr[8] = cpu_ldl_mmuidx_ra(env, vaddr - 8, mmu_idx, GETPC());
-    env->mcause = cpu_ldl_mmuidx_ra(env, vaddr - 12, mmu_idx, GETPC());
+    env->qc_mcause = qc_mcause_val;
     env->gpr[1] = cpu_ldl_mmuidx_ra(env, vaddr - 16, mmu_idx, GETPC());
 
     env->gpr[5] = cpu_ldl_mmuidx_ra(env, vaddr - 24, mmu_idx, GETPC());
@@ -162,7 +148,49 @@ void HELPER(xqci_mileaveret)(CPUArchState *env)
     env->gpr[31] = cpu_ldl_mmuidx_ra(env, vaddr - 80, mmu_idx, GETPC());
 
     env->gpr[2] += 96;
-    env->pc = curr_retpc;
+
+    // TODO(anjo): QEMU doesn't model mnstatus
+  //if (nmie_val == 1) {
+  //  target_ulong qc_mcause_val_masked = qc_mcause_val & ~(1<<26) & ~(1<<27) & ~(1<<29) & ~(0xFF<<12);
+  //  int mpie_val = (qc_mcause_val >> 27) & 1;
+  //  int mpdt_val = (qc_mcause_val >> 29) & 1;
+  //  int mpil_val = (qc_mcause_val >> 16) & 0xF;
+  //  env->mstatus = set_field(env->mstatus, MSTATUS_MIE, mpie_val);
+  //  env->mstatus = set_field(env->mstatus, MSTATUS_MPIE, 1);
+  //  env->mstatush = set_field(env->mstatush, MSTATUSH_MDT, 1);
+  //  env->qc_mcause = (qc_mcause_val_masked |
+  //                          (1<<27) | (mpie_val<<26) | (0<<29) |
+  //                          (mpil_val << 12) | (0xF << 16));
+  //  //if (mpdt_val == 1'b0) {
+  //  //  if (CSR[mstatus].MPP == 2'b00) {
+  //  //    set_mode(PrivilegeMode::U);
+  //  //  } else if (CSR[mstatus].MPP == 2'b01) {
+  //  //    set_mode(PrivilegeMode::S);
+  //  //  } else if (CSR[mstatus].MPP == 2'b11) {
+  //  //    set_mode(PrivilegeMode::M);
+  //  //  }
+  //  //  CSR[mstatus].MPP = implemented?(ExtensionName::U) ? 2'b00 : 2'b11;
+  //  //}
+  //  env->pc = env->mepc;
+  //} else {
+  //  target_ulong qc_mcause_val_masked = qc_mcause_val & ~(1<<26) & ~(1<<28) & ~(1<<30) & ~(0xF<<12) & ~(0xF<<20);
+  //  int mnpie_val = (qc_mcause_val >> 28) & 1;
+  //  int mnpil_val = (qc_mcause_val >> 20) & 0xF;
+  //  env->mstatus = set_field(env->mstatus, MSTATUS_MIE, mpie_val);
+  //  env->mstatus = set_field(env->mstatus, MSTATUS_NMIE, 1);
+  //  env->qc_mcause = (qc_mcause_val_masked |
+  //                          (1<<28) | (mnpie_val<<26) | (1<<30) |
+  //                          (mnpil_val << 12) | (0xF << 20));
+  //  //if (CSR[mnstatus].MNPP == 2'b00) {
+  //  //  set_mode(PrivilegeMode::U);
+  //  //} else if (CSR[mnstatus].MNPP == 2'b01) {
+  //  //  set_mode(PrivilegeMode::S);
+  //  //} else if (CSR[mnstatus].MNPP == 2'b11) {
+  //  //  set_mode(PrivilegeMode::M);
+  //  //}
+  //  //CSR[mnstatus].MNPP = implemented?(ExtensionName::U) ? 2'b00 : 2'b11;
+  //  env->pc = env->mnepc;
+  //}
 }
 
 static void emit_qc_c_mienter(DisasContext *ctx, TCGv_env tcg_env)
@@ -179,7 +207,6 @@ static void emit_qc_c_mileaveret(DisasContext *ctx, TCGv_env tcg_env)
 {
     gen_helper_xqci_mileaveret(tcg_env);
 }
-#endif
 
 static TCGv xqci_ea(DisasContext *ctx, int rs1, int imm)
 {
