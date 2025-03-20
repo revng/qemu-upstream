@@ -283,7 +283,9 @@ struct CPUArchState {
      * For RV32 this is 32-bit mstatus and 32-bit mstatush.
      * For RV64 this is a 64-bit mstatus.
      */
+#endif
     uint64_t mstatus;
+#ifndef CONFIG_USER_ONLY
 
     uint64_t mip;
     /*
@@ -321,8 +323,10 @@ struct CPUArchState {
     target_ulong scause;
 
     target_ulong mtvec;
+#endif
     target_ulong mepc;
     target_ulong mcause;
+#ifndef CONFIG_USER_ONLY
     target_ulong mtval;  /* since: priv-1.10.0 */
 
     /* Machine and Supervisor interrupt priorities */
@@ -469,7 +473,9 @@ struct CPUArchState {
     void *aia_ireg_rmw_fn_arg[4];
 
     /* True if in debugger mode.  */
+#endif
     bool debugger;
+#ifndef CONFIG_USER_ONLY
 
     /*
      * CSRs for PointerMasking extension

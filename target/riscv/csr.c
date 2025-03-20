@@ -272,10 +272,12 @@ static RISCVException smcntrpmf_32(CPURISCVState *env, int csrno)
     return smcntrpmf(env, csrno);
 }
 
+#endif
 static RISCVException any(CPURISCVState *env, int csrno)
 {
     return RISCV_EXCP_NONE;
 }
+#ifndef CONFIG_USER_ONLY
 
 static RISCVException any32(CPURISCVState *env, int csrno)
 {
@@ -1508,6 +1510,7 @@ static RISCVException read_mhartid(CPURISCVState *env, int csrno,
 
 /* Machine Trap Setup */
 
+#endif
 /* We do not store SD explicitly, only compute it on demand. */
 static uint64_t add_status_sd(RISCVMXL xl, uint64_t status)
 {
@@ -1534,6 +1537,8 @@ static RISCVException read_mstatus(CPURISCVState *env, int csrno,
     *val = add_status_sd(riscv_cpu_mxl(env), env->mstatus);
     return RISCV_EXCP_NONE;
 }
+
+#ifndef CONFIG_USER_ONLY
 
 static bool validate_vm(CPURISCVState *env, target_ulong vm)
 {
@@ -1566,6 +1571,8 @@ static target_ulong legalize_xatp(CPURISCVState *env, target_ulong old_xatp,
     }
     return old_xatp;
 }
+
+#endif
 
 static target_ulong legalize_mpp(CPURISCVState *env, target_ulong old_mpp,
                                  target_ulong val)
@@ -1652,6 +1659,8 @@ static RISCVException write_mstatus(CPURISCVState *env, int csrno,
     return RISCV_EXCP_NONE;
 }
 
+#ifndef CONFIG_USER_ONLY
+
 static RISCVException read_mstatush(CPURISCVState *env, int csrno,
                                     target_ulong *val)
 {
@@ -1670,6 +1679,7 @@ static RISCVException write_mstatush(CPURISCVState *env, int csrno,
     return RISCV_EXCP_NONE;
 }
 
+#endif
 static RISCVException read_mstatus_i128(CPURISCVState *env, int csrno,
                                         Int128 *val)
 {
@@ -1677,6 +1687,7 @@ static RISCVException read_mstatus_i128(CPURISCVState *env, int csrno,
                                                       env->mstatus));
     return RISCV_EXCP_NONE;
 }
+#ifndef CONFIG_USER_ONLY
 
 static RISCVException read_misa_i128(CPURISCVState *env, int csrno,
                                      Int128 *val)
@@ -2322,6 +2333,7 @@ static RISCVException write_mscratch(CPURISCVState *env, int csrno,
     return RISCV_EXCP_NONE;
 }
 
+#endif
 static RISCVException read_mepc(CPURISCVState *env, int csrno,
                                 target_ulong *val)
 {
@@ -2349,6 +2361,8 @@ static RISCVException write_mcause(CPURISCVState *env, int csrno,
     env->mcause = val;
     return RISCV_EXCP_NONE;
 }
+
+#ifndef CONFIG_USER_ONLY
 
 static RISCVException read_mtval(CPURISCVState *env, int csrno,
                                  target_ulong *val)
@@ -5018,6 +5032,12 @@ riscv_csr_operations csr_ops[CSR_TABLE_SIZE] = {
     /* zicfiss Extension, shadow stack register */
     [CSR_SSP]  = { "ssp", cfi_ss, read_ssp, write_ssp },
 
+
+    [CSR_MEPC]     = { "mepc",     any,  read_mepc,     write_mepc     },
+    [CSR_MCAUSE]   = { "mcause",   any,  read_mcause,   write_mcause   },
+    [CSR_MSTATUS]     = { "mstatus",    any,   read_mstatus, write_mstatus,
+                          NULL,                read_mstatus_i128           },
+
 #if !defined(CONFIG_USER_ONLY)
     /* Machine Timers and Counters */
     [CSR_MCYCLE]    = { "mcycle",    any,   read_hpmcounter,
@@ -5038,8 +5058,6 @@ riscv_csr_operations csr_ops[CSR_TABLE_SIZE] = {
     [CSR_MCONFIGPTR]  = { "mconfigptr", any,   read_zero,
                           .min_priv_ver = PRIV_VERSION_1_12_0 },
     /* Machine Trap Setup */
-    [CSR_MSTATUS]     = { "mstatus",    any,   read_mstatus, write_mstatus,
-                          NULL,                read_mstatus_i128           },
     [CSR_MISA]        = { "misa",       any,   read_misa,    write_misa,
                           NULL,                read_misa_i128              },
     [CSR_MIDELEG]     = { "mideleg",    any,   NULL, NULL,   rmw_mideleg   },
@@ -5059,8 +5077,7 @@ riscv_csr_operations csr_ops[CSR_TABLE_SIZE] = {
     /* Machine Trap Handling */
     [CSR_MSCRATCH] = { "mscratch", any,  read_mscratch, write_mscratch,
                        NULL, read_mscratch_i128, write_mscratch_i128   },
-    [CSR_MEPC]     = { "mepc",     any,  read_mepc,     write_mepc     },
-    [CSR_MCAUSE]   = { "mcause",   any,  read_mcause,   write_mcause   },
+
     [CSR_MTVAL]    = { "mtval",    any,  read_mtval,    write_mtval    },
     [CSR_MIP]      = { "mip",      any,  NULL,    NULL, rmw_mip        },
 
