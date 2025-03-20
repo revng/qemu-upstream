@@ -19,6 +19,7 @@
 #include "qemu/osdep.h"
 #include "qemu/log.h"
 #include "cpu.h"
+#include "tcg/tcg-op-common.h"
 #include "tcg/tcg-op.h"
 #include "exec/exec-all.h"
 #include "exec/helper-proto.h"
@@ -1173,6 +1174,28 @@ static void xqci_jump_pcrel(DisasContext *ctx, TCGv pc, int imm)
 {
     gen_goto_tb(ctx, 1, imm);
     ctx->base.is_jmp = DISAS_NORETURN;
+}
+
+static TCGv xqci_get_gpr(DisasContext *ctx, int nr)
+{
+    return get_gpr(ctx, nr, EXT_NONE);
+}
+
+static TCGv xqci_csrr(DisasContext *ctx, TCGv_env env, int csrno)
+{
+    TCGv ret = tcg_temp_new();
+    gen_helper_csrr(ret, env, tcg_constant_tl(csrno));
+    return ret;
+}
+
+static void xqci_csrw(DisasContext *ctx, TCGv_env env, int csrno, TCGv value)
+{
+    gen_helper_csrw(env, tcg_constant_tl(csrno), value);
+}
+
+static void xqci_csrw_field(TCGv_env env, int csrno, int field, int value) {
+    TCGv_i32 ret = tcg_temp_new();
+    gen_helper_csrrw(ret, env, tcg_constant_tl(csrno), tcg_constant_tl(value), tcg_constant_tl(field));
 }
 
 static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
