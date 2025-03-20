@@ -1193,9 +1193,9 @@ static void xqci_csrw(DisasContext *ctx, TCGv_env env, int csrno, TCGv value)
     gen_helper_csrw(env, tcg_constant_tl(csrno), value);
 }
 
-static void xqci_csrw_field(TCGv_env env, int csrno, int field, int value) {
+static void xqci_csrw_field(DisasContext *ctx, TCGv_env env, int csrno, int field, TCGv value) {
     TCGv_i32 ret = tcg_temp_new();
-    gen_helper_csrrw(ret, env, tcg_constant_tl(csrno), tcg_constant_tl(value), tcg_constant_tl(field));
+    gen_helper_csrrw(ret, env, tcg_constant_tl(csrno), value, tcg_constant_tl(field));
 }
 
 static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
