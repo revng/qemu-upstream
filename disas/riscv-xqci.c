@@ -4,7 +4,7 @@
 #include "disas/riscv-xqci.h"
 
 typedef enum {
-    rv_op_qc_addsat,
+    rv_op_qc_addsat = 1,
     rv_op_qc_addusat,
     rv_op_qc_beqi,
     rv_op_qc_bgei,
@@ -139,6 +139,7 @@ typedef enum {
 } rv_xqci_opcode;
 
 const rv_opcode_data xqci_opcode_data[] = {
+    { "qc.illegal", rv_codec_illegal, rv_fmt_none, NULL, 0, 0, 0 },
     { "qc.addsat", rv_codec_skip, "O\t0,2,1", NULL, 0, 0, 0 },
     { "qc.addusat", rv_codec_skip, "O\t0,2,1", NULL, 0, 0, 0 },
     { "qc.beqi", rv_codec_skip, "O\t1,i,Z", NULL, 0, 0, 0 },
@@ -279,7 +280,10 @@ static uint64_t decode_xqci_48_impl_load_bytes(rv_decode *dec, uint64_t insn, in
 }
 #include "riscv-xqci-16-decode.c.inc"
 #include "riscv-xqci-32-decode.c.inc"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 #include "riscv-xqci-48-decode.c.inc"
+#pragma GCC diagnostic pop
 #include "riscv-xqci-trans.c.inc"
 
 void decode_xqci(rv_decode *dec, rv_isa isa) {
