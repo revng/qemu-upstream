@@ -50,11 +50,11 @@ void emit_qc_e_xorai(DisasContext *ctx, TCGv_env env, int32_t vi_7, int8_t vi_4)
 void emit_qc_e_xori(DisasContext *ctx, TCGv_env env, int32_t vi_8, int8_t vi_11, int8_t vi_4);
 void emit_qc_expand2(DisasContext *ctx, TCGv_env env, int8_t vi_58, int8_t vi_4);
 void emit_qc_expand3(DisasContext *ctx, TCGv_env env, int8_t vi_53, int8_t vi_4);
-void emit_qc_ext(DisasContext *ctx, TCGv_env env, int8_t vi_19, int8_t vi_13, int8_t vi_16, int8_t vi_4);
-void emit_qc_extd(DisasContext *ctx, TCGv_env env, int8_t vi_12, int8_t vi_10, int8_t vi_19, int8_t vi_4);
-void emit_qc_extdpr(DisasContext *ctx, TCGv_env env, int8_t vi_23, int8_t vi_14, int8_t vi_4);
-void emit_qc_extdprh(DisasContext *ctx, TCGv_env env, int8_t vi_24, int8_t vi_14, int8_t vi_4);
-void emit_qc_extdr(DisasContext *ctx, TCGv_env env, int8_t vi_23, int8_t vi_14, int8_t vi_4);
+void emit_qc_ext(DisasContext *ctx, TCGv_env env, int8_t vi_11, int8_t vi_18, int8_t vi_21, int8_t vi_4);
+void emit_qc_extd(DisasContext *ctx, TCGv_env env, int8_t vi_11, int8_t vi_16, int8_t vi_23, int8_t vi_4);
+void emit_qc_extdpr(DisasContext *ctx, TCGv_env env, int8_t vi_24, int8_t vi_14, int8_t vi_4);
+void emit_qc_extdprh(DisasContext *ctx, TCGv_env env, int8_t vi_25, int8_t vi_14, int8_t vi_4);
+void emit_qc_extdr(DisasContext *ctx, TCGv_env env, int8_t vi_24, int8_t vi_14, int8_t vi_4);
 void emit_qc_extdu(DisasContext *ctx, TCGv_env env, int8_t vi_12, int8_t vi_10, int8_t vi_19, int8_t vi_4);
 void emit_qc_extdupr(DisasContext *ctx, TCGv_env env, int8_t vi_23, int8_t vi_13, int8_t vi_4);
 void emit_qc_extduprh(DisasContext *ctx, TCGv_env env, int8_t vi_24, int8_t vi_13, int8_t vi_4);
