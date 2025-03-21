@@ -1,4 +1,4 @@
-#!/usr/bin/env python3assemble.py
+#!/usr/bin/env python3
 
 import argparse
 import yaml
@@ -238,8 +238,7 @@ def main():
     if not args.inst_name in printer.yamls:
         printer.load(args.inst_name)
     y = printer.yamls[args.inst_name]
-
-    is_compressed = common.inst_is_compressed(y)
+    op = y['operation()']
 
     vars = common.variables(y)
     var_map = common.variable_map(y)
@@ -267,7 +266,7 @@ def main():
                 if not 'in' in v:
                     continue
 
-                if common.var_is_imm(y['operation()'], v['name']):
+                if common.var_is_imm(op, v['name']):
                     inst_args.append(v['in'])
                 else:
                     reg = dst_reg + 1 + i
@@ -278,7 +277,7 @@ def main():
                     if 'in' in v:
                         printer.li(v['in'], reg)
 
-                    if is_compressed:
+                    if common.var_is_compressed(op, v['name']):
                         reg -= 8
                     inst_args.append(reg)
 

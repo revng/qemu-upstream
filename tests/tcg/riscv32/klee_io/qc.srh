@@ -15,44 +15,44 @@
   - name: "shamt"
     in: 3
   - name: "rs1"
-    in: 1800
+    in: 3592
   - name: "rs2"
-    in: 536871199
+    in: 536870975
   - name: "rs3"
-    in: 4294902015
+    in: 4294967040
   overflow: 1
   underflow: 0
   has_valid_test_memop: 1
   has_store:
   - address: 4096
-    value: 255
+    value: 65280
 - variables:
   - name: "shamt"
     in: 6
   - name: "rs1"
-    in: 2147479488
+    in: 3152835008
   - name: "rs2"
-    in: 167772352
+    in: 286281337
   - name: "rs3"
-    in: 4294902015
+    in: 4294967040
   overflow: 1
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 8128
-    value: 255
+  - address: 4096
+    value: 65280
 - variables:
   - name: "shamt"
     in: 6
   - name: "rs1"
-    in: 3145141696
+    in: 2611311552
   - name: "rs2"
-    in: 17966144
+    in: 26307185
   - name: "rs3"
-    in: 4294902015
+    in: 4294967040
   overflow: 1
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 7616
-    value: 255
+  - address: 4096
+    value: 65280

@@ -24,7 +24,7 @@
   - name: "imm"
     in: 33566737
   - name: "rs2"
-    in: 4278190080
+    in: 255
   - name: "rs1"
     in: 4261404655
   overflow: 1
@@ -32,17 +32,17 @@
   has_valid_test_memop: 1
   has_store:
   - address: 4096
-    value: 4278190080
+    value: 255
 - variables:
   - name: "imm"
-    in: 3127
+    in: 3505
   - name: "rs2"
-    in: 4278190080
+    in: 255
   - name: "rs1"
     in: 4096
   overflow: 0
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 7223
-    value: 4278190080
+  - address: 7601
+    value: 255

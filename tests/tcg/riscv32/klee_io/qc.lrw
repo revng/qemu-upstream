@@ -2,9 +2,9 @@
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 1207959424
+    in: 2013265792
   - name: "rs2"
-    in: 2154823680
+    in: 1073741824
   - name: "rd"
     in: 0
     out: 0
@@ -12,15 +12,15 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 2147483520
+  - address: 2013265792
     value: 0
 - variables:
   - name: "shamt"
     in: 2
   - name: "rs1"
-    in: 1189228668
+    in: 4026396212
   - name: "rs2"
-    in: 776435682
+    in: 67144704
   - name: "rd"
     in: 0
     out: 305419896
@@ -28,15 +28,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 4100
+  - address: 7732
     value: 305419896
 - variables:
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 4290764672
+    in: 4294958976
   - name: "rs2"
-    in: 2155872256
+    in: 2164260864
   - name: "rd"
     in: 0
     out: 0
@@ -44,15 +44,15 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 1069539200
+  - address: 2147475328
     value: 0
 - variables:
   - name: "shamt"
     in: 6
   - name: "rs1"
-    in: 4294836160
+    in: 4294967232
   - name: "rs2"
-    in: 33579042
+    in: 255
   - name: "rd"
     in: 0
     out: 0
@@ -60,15 +60,15 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 2148927552
+  - address: 16256
     value: 0
 - variables:
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 4047214976
+    in: 4225240960
   - name: "rs2"
-    in: 136153344
+    in: 268980256
   - name: "rd"
     in: 0
     out: 305419896
@@ -76,15 +76,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 6528
+  - address: 8064
     value: 305419896
 - variables:
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 3328
+    in: 3584
   - name: "rs2"
-    in: 33554464
+    in: 134217760
   - name: "rd"
     in: 0
     out: 305419896
@@ -92,15 +92,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 7424
+  - address: 7680
     value: 305419896
 - variables:
   - name: "shamt"
     in: 6
   - name: "rs1"
-    in: 4608
+    in: 3456
   - name: "rs2"
-    in: 32
+    in: 64
   - name: "rd"
     in: 0
     out: 305419896
@@ -108,5 +108,5 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 6656
+  - address: 7552
     value: 305419896

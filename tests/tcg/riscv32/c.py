@@ -62,6 +62,7 @@ should_sext = {
     'qc.selectieqi',
     'qc.selectinei',
     'qc.selectnei',
+    'qc.e.lbu',
 }
 
 skip_insn = {
@@ -219,9 +220,7 @@ def main():
 
     # Skip non arithmetic tests
     for test_index,test in enumerate(io_yaml):
-        if 'has_jump' in test or \
-           'has_load' in test or \
-           'has_store' in test:
+        if 'has_jump' in test:
             return
 
     with open(f'{args.out}', 'w') as f:
@@ -233,6 +232,13 @@ def main():
         vars = common.variables(y)
         var_map = common.variable_map(y)
 
+        printer.line('#include <stddef.h>')
+        printer.line('#include <stdint.h>')
+
+        if 'has_load' in test or 'has_store' in test:
+            printer.line('__attribute__((section(".mem_test_section")))')
+            printer.line('char data[4096];')
+
         printer.line(func_exit)
         printer.line(func_check)
 
@@ -243,18 +249,19 @@ def main():
         for test_index,test in enumerate(io_yaml):
             expected_result = None
 
+            # TODO(anjo): Not testing jumps in C yet
             #if 'has_jump' in test:
             #    if test['has_jump']['valid_test_jump'] == 0:
             #        continue
 
-            #if 'has_valid_test_memop' in test and test['has_valid_test_memop'] == 0:
-            #    continue
+            if 'has_valid_test_memop' in test and test['has_valid_test_memop'] == 0:
+                continue
 
-            #if 'has_load' in test:
-            #    for loadop in test['has_load']:
-            #        printer.li(loadop['address'], address_reg)
-            #        printer.li(loadop['value'], dst_reg)
-            #        printer.append('sw', 0, address_reg, dst_reg)
+            if 'has_load' in test:
+                for loadop in test['has_load']:
+                    printer.line(f'intptr_t address{tmp_index} = {loadop["address"]};')
+                    printer.line(f'*(uint32_t *)address{tmp_index} = {loadop["value"]};')
+                    tmp_index += 1
 
             out_args = []
             in_args = []
@@ -329,6 +336,12 @@ def main():
             if expected_result != None:
                 for _,o in out_args:
                     printer.line(f'check({o} == {expected_result});')
+
+            if 'has_store' in test:
+                for storeop in test['has_store']:
+                    printer.line(f'intptr_t address{tmp_index} = {storeop["address"]};')
+                    printer.line(f'check(*(uint32_t*)address{tmp_index} == {storeop['value']});')
+                    tmp_index += 1
 
         printer.line('exit(0);')
         printer.set_indent(0)
