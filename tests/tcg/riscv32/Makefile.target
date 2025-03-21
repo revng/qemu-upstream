@@ -8,14 +8,11 @@ OUT_C_BIN_DIR:=$(OUT_C_DIR)/bin
 INST_DIR=$(SRC)/Xqci
 QEMU=./qemu-riscv32
 
-IO_FILE=$(wildcard $(KLEE_IO_DIR)/*)
-C_TESTS=$(patsubst $(KLEE_IO_DIR)/%,$(OUT_C_BIN_DIR)/%,$(IO_FILE))
-
 # These tests are a bit annoying to run in a makefile since any given input yaml file
 # in $(KLEE_IO_DIR)/* can generate multiple tests
 
-.PHONY: build-xqci-tests
-build-xqci-tests:
+.PHONY: build-xqci-asm-tests
+build-xqci-asm-tests:
 	mkdir -p $(OUT_ASM_DIR)
 	@for in_io in $(KLEE_IO_DIR)/*; do \
 		instname=$$(basename $$in_io); \
@@ -24,8 +21,8 @@ build-xqci-tests:
 	done
 	chmod +x $(OUT_ASM_DIR)/*
 
-.PHONY: run-xqci-tests
-run-xqci-tests: $(OUT_ASM_DIR)/*
+.PHONY: run-xqci-asm-tests
+run-xqci-asm-tests: $(OUT_ASM_DIR)/*
 	@for exe in $(OUT_ASM_DIR)/*; do \
 		out=$$($(QEMU) -cpu rv32,zcmp=true,zcd=false,d=false,zcb=true,zilsd=true,zclsd=true,zcd=false,d=false,c=false $$exe); \
 		err=$$?; \
@@ -43,21 +40,29 @@ build-xqci-c-tests-dir:
 	mkdir -p $(OUT_C_OBJECT_DIR)
 	mkdir -p $(OUT_C_BIN_DIR)
 
-$(OUT_C_CODE_DIR)/%.c: $(KLEE_IO_DIR)/%
-	python $(SRC)/c.py --inst-dir $(INST_DIR) --inst-name $(notdir $<) --io-file $< --out $@
+.PHONY: build-xqci-c-tests-code
+build-xqci-c-tests-code: build-xqci-c-tests-dir
+	@for in_io in $(KLEE_IO_DIR)/*; do \
+		instname=$$(basename $$in_io); \
+		echo "Generating C code for" $$instname; \
+		python $(SRC)/c.py --inst-dir $(INST_DIR) --inst-name $$instname --io-file $$in_io --out $(OUT_C_CODE_DIR)/$$instname.c; \
+	done
 
-$(OUT_C_OBJECT_DIR)/%.o: $(OUT_C_CODE_DIR)/%.c
-	instname=$(notdir $<)
-	$(CC) -c --target=riscv32-unknown-linux-gnu -menable-experimental-extensions -march=rvi20u32_xqci -o $@ $<
-
-.PRECIOUS: $(OUT_C_CODE_DIR)/%.c
-.PRECIOUS: $(OUT_C_OBJECT_DIR)/%.o
-
-$(OUT_C_BIN_DIR)/%: $(OUT_C_OBJECT_DIR)/%.o
-	$(LD) -o $@ $<
+.PHONY: build-xqci-c-tests-obj
+build-xqci-c-tests-obj: build-xqci-c-tests-code
+	@for file in $(OUT_C_CODE_DIR)/*; do \
+		instname=$$(basename $$file); \
+		echo "Building obj for" $$instname; \
+		$(CC) -c --target=riscv32-unknown-linux-gnu -menable-experimental-extensions -march=rvi20u32_xqci -o $(OUT_C_OBJECT_DIR)/$$instname.o $$file; \
+	done
 
 .PHONY: build-xqci-c-tests
-build-xqci-c-tests: build-xqci-c-tests-dir $(C_TESTS)
+build-xqci-c-tests: build-xqci-c-tests-obj
+	@for file in $(OUT_C_OBJECT_DIR)/*; do \
+		instname=$$(basename $$file); \
+		echo "Linking obj for" $$instname; \
+		$(LD) -T $(SRC)/mem-test-page.ld -o $(OUT_C_BIN_DIR)/$$instname $$file; \
+	done
 
 .PHONY: run-xqci-c-tests
 run-xqci-c-tests: $(OUT_C_BIN_DIR)/*
