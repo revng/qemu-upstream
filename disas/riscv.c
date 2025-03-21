@@ -5430,6 +5430,7 @@ static GString *disasm_inst(rv_isa isa, uint64_t pc, rv_inst inst,
         const rv_opcode_data *opcode_data;
         void (*decode_func)(rv_decode *, rv_isa);
     } decoders[] = {
+        { has_xqci_p, xqci_opcode_data, decode_xqci },
         { always_true_p, rvi_opcode_data, decode_inst_opcode },
         { has_xtheadba_p, xthead_opcode_data, decode_xtheadba },
         { has_xtheadbb_p, xthead_opcode_data, decode_xtheadbb },
@@ -5443,7 +5444,6 @@ static GString *disasm_inst(rv_isa isa, uint64_t pc, rv_inst inst,
         { has_xtheadmempair_p, xthead_opcode_data, decode_xtheadmempair },
         { has_xtheadsync_p, xthead_opcode_data, decode_xtheadsync },
         { has_XVentanaCondOps_p, ventana_opcode_data, decode_xventanacondops },
-        { has_xqci_p, xqci_opcode_data, decode_xqci },
     };
 
     for (size_t i = 0; i < ARRAY_SIZE(decoders); i++) {
