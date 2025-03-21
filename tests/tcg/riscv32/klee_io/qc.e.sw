@@ -35,7 +35,7 @@
     value: 4278190080
 - variables:
   - name: "imm"
-    in: 3505
+    in: 3127
   - name: "rs2"
     in: 4278190080
   - name: "rs1"
@@ -44,5 +44,5 @@
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 7601
+  - address: 7223
     value: 4278190080
