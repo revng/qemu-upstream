@@ -1,25 +1,67 @@
 SRC=$(SRC_PATH)/tests/tcg/riscv32
 KLEE_IO_DIR=$(SRC)/klee_io
-OUT_DIR=xqci-test
+OUT_ASM_DIR=xqci-asm-tests
+OUT_C_DIR=xqci-c-tests
+OUT_C_CODE_DIR:=$(OUT_C_DIR)/code
+OUT_C_OBJECT_DIR:=$(OUT_C_DIR)/objects
+OUT_C_BIN_DIR:=$(OUT_C_DIR)/bin
 INST_DIR=$(SRC)/Xqci
 QEMU=./qemu-riscv32
+
+IO_FILE=$(wildcard $(KLEE_IO_DIR)/*)
+C_TESTS=$(patsubst $(KLEE_IO_DIR)/%,$(OUT_C_BIN_DIR)/%,$(IO_FILE))
 
 # These tests are a bit annoying to run in a makefile since any given input yaml file
 # in $(KLEE_IO_DIR)/* can generate multiple tests
 
 .PHONY: build-xqci-tests
 build-xqci-tests:
-	mkdir -p $(OUT_DIR)
+	mkdir -p $(OUT_ASM_DIR)
 	@for in_io in $(KLEE_IO_DIR)/*; do \
 		instname=$$(basename $$in_io); \
 		echo "Building tests for" $$instname; \
-		python $(SRC)/assemble.py --inst-dir $(INST_DIR) --inst-name $$instname --io-file $$in_io --out $(OUT_DIR)/$$instname; \
+		python $(SRC)/assemble.py --inst-dir $(INST_DIR) --inst-name $$instname --io-file $$in_io --out $(OUT_ASM_DIR)/$$instname; \
 	done
-	chmod +x $(OUT_DIR)/*
+	chmod +x $(OUT_ASM_DIR)/*
 
 .PHONY: run-xqci-tests
-run-xqci-tests: xqci-test/*
-	@for exe in xqci-test/*; do \
+run-xqci-tests: $(OUT_ASM_DIR)/*
+	@for exe in $(OUT_ASM_DIR)/*; do \
+		out=$$($(QEMU) -cpu rv32,zcmp=true,zcd=false,d=false,zcb=true,zilsd=true,zclsd=true,zcd=false,d=false,c=false $$exe); \
+		err=$$?; \
+		if [ $$err -eq 0 ]; then \
+			echo "PASS" $$exe; \
+		else \
+			echo "FAIL ($${err}) $${exe}"; \
+		fi; \
+	done
+
+.PHONY: build-xqci-c-tests-dir
+build-xqci-c-tests-dir:
+	mkdir -p $(OUT_C_DIR)
+	mkdir -p $(OUT_C_CODE_DIR)
+	mkdir -p $(OUT_C_OBJECT_DIR)
+	mkdir -p $(OUT_C_BIN_DIR)
+
+$(OUT_C_CODE_DIR)/%.c: $(KLEE_IO_DIR)/%
+	python $(SRC)/c.py --inst-dir $(INST_DIR) --inst-name $(notdir $<) --io-file $< --out $@
+
+$(OUT_C_OBJECT_DIR)/%.o: $(OUT_C_CODE_DIR)/%.c
+	instname=$(notdir $<)
+	$(CC) -c --target=riscv32-unknown-linux-gnu -menable-experimental-extensions -march=rvi20u32_xqci -o $@ $<
+
+.PRECIOUS: $(OUT_C_CODE_DIR)/%.c
+.PRECIOUS: $(OUT_C_OBJECT_DIR)/%.o
+
+$(OUT_C_BIN_DIR)/%: $(OUT_C_OBJECT_DIR)/%.o
+	$(LD) -o $@ $<
+
+.PHONY: build-xqci-c-tests
+build-xqci-c-tests: build-xqci-c-tests-dir $(C_TESTS)
+
+.PHONY: run-xqci-c-tests
+run-xqci-c-tests: $(OUT_C_BIN_DIR)/*
+	@for exe in $(OUT_C_BIN_DIR)/*; do \
 		out=$$($(QEMU) -cpu rv32,zcmp=true,zcd=false,d=false,zcb=true,zilsd=true,zclsd=true,zcd=false,d=false,c=false $$exe); \
 		err=$$?; \
 		if [ $$err -eq 0 ]; then \
