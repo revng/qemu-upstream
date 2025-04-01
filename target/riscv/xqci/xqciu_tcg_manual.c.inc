@@ -1,3 +1,6 @@
+#include "exec/cpu_ldst.h"
+
+#ifdef TARGET_RISCV32
 void HELPER(xqci_swm)(CPUArchState *env, target_ulong vaddr, target_ulong length, int rs3)
 {
     int mmu_idx = riscv_env_mmu_index(env, false);
@@ -270,3 +273,4 @@ static void emit_qc_c_mveqz(DisasContext *ctx, TCGv_env tcg_env, int rs1, int rd
     TCGv zero = tcg_constant_i32(0);
     tcg_gen_movcond_i32(TCG_COND_EQ, dst, dst, zero, src, dst);
 }
+#endif
