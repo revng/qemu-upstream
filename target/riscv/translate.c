@@ -1170,6 +1170,7 @@ static uint32_t opcode_at(DisasContextBase *dcbase, target_ulong pc)
 /* Include decoders for factored-out extensions */
 #include "decode-XVentanaCondOps.c.inc"
 
+#ifdef TARGET_RISCV32
 static void xqci_jump_pcrel(DisasContext *ctx, TCGv pc, int imm)
 {
     gen_goto_tb(ctx, 1, imm);
@@ -1197,6 +1198,7 @@ static void xqci_csrw_field(DisasContext *ctx, TCGv_env env, int csrno, int fiel
     TCGv_i32 ret = tcg_temp_new();
     gen_helper_csrrw(ret, env, tcg_constant_tl(csrno), value, tcg_constant_tl(field));
 }
+#endif
 
 static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
                                           int offset, int length)
@@ -1210,7 +1212,9 @@ static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
 #pragma GCC diagnostic ignored "-Wunused-function"
 #include "decode-xqciu-48.c.inc"
 #pragma GCC diagnostic pop
+#ifdef TARGET_RISCV32
 #include "xqci/xqciu_tcg.c"
+#endif
 #include "xqci/xqciu_tcg_manual.c.inc"
 #include "xqci/xqciu_trans.c.inc"
 
