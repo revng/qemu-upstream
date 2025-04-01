@@ -2,9 +2,9 @@
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 1073217408
+    in: 2046812416
   - name: "rs2"
-    in: 2172649472
+    in: 2148270080
   - name: "rd"
     in: 0
     out: 0
@@ -12,15 +12,15 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 4294442880
+  - address: 2147475712
     value: 0
 - variables:
   - name: "shamt"
     in: 6
   - name: "rs1"
-    in: 4194308224
+    in: 4026537728
   - name: "rs2"
-    in: 1572864
+    in: 4194288
   - name: "rd"
     in: 0
     out: 120
@@ -28,15 +28,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 4224
+  - address: 4864
     value: 120
 - variables:
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 4294958976
+    in: 4288667136
   - name: "rs2"
-    in: 2147483888
+    in: 2164310016
   - name: "rd"
     in: 0
     out: 0
@@ -44,15 +44,15 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 22400
+  - address: 2147474944
     value: 0
 - variables:
   - name: "shamt"
     in: 1
   - name: "rs1"
-    in: 4294967294
+    in: 4286902778
   - name: "rs2"
-    in: 255
+    in: 143722243
   - name: "rd"
     in: 0
     out: 0
@@ -60,15 +60,31 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 508
+  - address: 279379968
     value: 0
 - variables:
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 1940628224
+    in: 2142164608
   - name: "rs2"
-    in: 1092135130
+    in: 285254272
+  - name: "rd"
+    in: 0
+    out: 120
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 5760
+    value: 120
+- variables:
+  - name: "shamt"
+    in: 7
+  - name: "rs1"
+    in: 1536
+  - name: "rs2"
+    in: 536870932
   - name: "rd"
     in: 0
     out: 120
@@ -77,20 +93,4 @@
   has_valid_test_memop: 1
   has_load:
   - address: 4096
-    value: 120
-- variables:
-  - name: "shamt"
-    in: 2
-  - name: "rs1"
-    in: 3608
-  - name: "rs2"
-    in: 2147484672
-  - name: "rd"
-    in: 0
-    out: 120
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 7704
     value: 120
