@@ -332,7 +332,7 @@ def main():
 
             fmt_out = [f'"{r}"({o})'for r,o in out_args]
             fmt_in = [f'"{r}"({o})'for r,o in in_args]
-            printer.line(f'__asm__ volatile("{args.inst_name} {asm}" : {', '.join(fmt_out)} : {', '.join(fmt_in)} :);')
+            printer.line(f'__asm__ volatile("{args.inst_name} {asm}" : {", ".join(fmt_out)} : {", ".join(fmt_in)} :);')
             if expected_result != None:
                 for _,o in out_args:
                     printer.line(f'check({o} == {expected_result});')
@@ -340,7 +340,7 @@ def main():
             if 'has_store' in test:
                 for storeop in test['has_store']:
                     printer.line(f'intptr_t address{tmp_index} = {storeop["address"]};')
-                    printer.line(f'check(*(uint32_t*)address{tmp_index} == {storeop['value']});')
+                    printer.line(f'check(*(uint32_t*)address{tmp_index} == {storeop["value"]});')
                     tmp_index += 1
 
         printer.line('exit(0);')

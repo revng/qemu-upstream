@@ -1,11 +1,29 @@
 SRC=$(SRC_PATH)/tests/tcg/riscv32
-KLEE_IO_DIR=$(SRC)/klee_io
-OUT_ASM_DIR=xqci-asm-tests
-OUT_C_DIR=xqci-c-tests
-OUT_C_CODE_DIR:=$(OUT_C_DIR)/code
-OUT_C_OBJECT_DIR:=$(OUT_C_DIR)/objects
-OUT_C_BIN_DIR:=$(OUT_C_DIR)/bin
-INST_DIR=$(SRC)/Xqci
+
+XQCI_KLEE_IO_DIR=$(SRC)/klee_io/xqci
+XQCI_OUT_ASM_DIR=xqci-asm-tests
+XQCI_OUT_C_DIR=xqci-c-tests
+XQCI_OUT_C_CODE_DIR:=$(XQCI_OUT_C_DIR)/code
+XQCI_OUT_C_OBJECT_DIR:=$(XQCI_OUT_C_DIR)/objects
+XQCI_OUT_C_BIN_DIR:=$(XQCI_OUT_C_DIR)/bin
+XQCI_INST_DIR=$(SRC)/Xqci
+
+XQCCMP_KLEE_IO_DIR=$(SRC)/klee_io/xqccmp
+XQCCMP_OUT_ASM_DIR=xqccmp-asm-tests
+XQCCMP_OUT_C_DIR=xqccmp-c-tests
+XQCCMP_OUT_C_CODE_DIR:=$(XQCCMP_OUT_C_DIR)/code
+XQCCMP_OUT_C_OBJECT_DIR:=$(XQCCMP_OUT_C_DIR)/objects
+XQCCMP_OUT_C_BIN_DIR:=$(XQCCMP_OUT_C_DIR)/bin
+XQCCMP_INST_DIR=$(SRC)/Xqccmp
+
+SMRNMI_KLEE_IO_DIR=$(SRC)/klee_io/smrnmi
+SMRNMI_OUT_ASM_DIR=smrnmi-asm-tests
+SMRNMI_OUT_C_DIR=smrnmi-c-tests
+SMRNMI_OUT_C_CODE_DIR:=$(SMRNMI_OUT_C_DIR)/code
+SMRNMI_OUT_C_OBJECT_DIR:=$(SMRNMI_OUT_C_DIR)/objects
+SMRNMI_OUT_C_BIN_DIR:=$(SMRNMI_OUT_C_DIR)/bin
+SMRNMI_INST_DIR=$(SRC)/Smrnmi
+
 QEMU=./qemu-riscv32
 
 # These tests are a bit annoying to run in a makefile since any given input yaml file
@@ -13,17 +31,61 @@ QEMU=./qemu-riscv32
 
 .PHONY: build-xqci-asm-tests
 build-xqci-asm-tests:
-	mkdir -p $(OUT_ASM_DIR)
-	@for in_io in $(KLEE_IO_DIR)/*; do \
+	mkdir -p $(XQCI_OUT_ASM_DIR)
+	@for in_io in $(XQCI_KLEE_IO_DIR)/*; do \
 		instname=$$(basename $$in_io); \
 		echo "Building tests for" $$instname; \
-		python $(SRC)/assemble.py --inst-dir $(INST_DIR) --inst-name $$instname --io-file $$in_io --out $(OUT_ASM_DIR)/$$instname; \
+		python $(SRC)/assemble.py --inst-dir $(XQCI_INST_DIR) --inst-name $$instname --io-file $$in_io --out $(XQCI_OUT_ASM_DIR)/$$instname; \
 	done
-	chmod +x $(OUT_ASM_DIR)/*
+	chmod +x $(XQCI_OUT_ASM_DIR)/*
 
 .PHONY: run-xqci-asm-tests
-run-xqci-asm-tests: $(OUT_ASM_DIR)/*
-	@for exe in $(OUT_ASM_DIR)/*; do \
+run-xqci-asm-tests: $(XQCI_OUT_ASM_DIR)/*
+	@for exe in $(XQCI_OUT_ASM_DIR)/*; do \
+		out=$$($(QEMU) -cpu rv32,zcmp=true,zcd=false,d=false,zcb=true,zilsd=true,zclsd=true,zcd=false,d=false,c=false $$exe); \
+		err=$$?; \
+		if [ $$err -eq 0 ]; then \
+			echo "PASS" $$exe; \
+		else \
+			echo "FAIL ($${err}) $${exe}"; \
+		fi; \
+	done
+
+.PHONY: build-xqccmp-asm-tests
+build-xqccmp-asm-tests:
+	mkdir -p $(XQCCMP_OUT_ASM_DIR)
+	@for in_io in $(XQCCMP_KLEE_IO_DIR)/*; do \
+		instname=$$(basename $$in_io); \
+		echo "Building tests for" $$instname; \
+		python $(SRC)/assemble.py --inst-dir $(XQCCMP_INST_DIR) --inst-name $$instname --io-file $$in_io --out $(XQCCMP_OUT_ASM_DIR)/$$instname; \
+	done
+	chmod +x $(XQCCMP_OUT_ASM_DIR)/*
+
+.PHONY: run-xqccmp-asm-tests
+run-xqccmp-asm-tests: $(XQCCMP_OUT_ASM_DIR)/*
+	@for exe in $(XQCCMP_OUT_ASM_DIR)/*; do \
+		out=$$($(QEMU) -cpu rv32,zcmp=true,zcd=false,d=false,zcb=true,zilsd=true,zclsd=true,zcd=false,d=false,c=false $$exe); \
+		err=$$?; \
+		if [ $$err -eq 0 ]; then \
+			echo "PASS" $$exe; \
+		else \
+			echo "FAIL ($${err}) $${exe}"; \
+		fi; \
+	done
+
+.PHONY: build-smrnmi-asm-tests
+build-smrnmi-asm-tests:
+	mkdir -p $(SMRNMI_OUT_ASM_DIR)
+	@for in_io in $(SMRNMI_KLEE_IO_DIR)/*; do \
+		instname=$$(basename $$in_io); \
+		echo "Building tests for" $$instname; \
+		python $(SRC)/assemble.py --inst-dir $(SMRNMI_INST_DIR) --inst-name $$instname --io-file $$in_io --out $(SMRNMI_OUT_ASM_DIR)/$$instname; \
+	done
+	chmod +x $(SMRNMI_OUT_ASM_DIR)/*
+
+.PHONY: run-smrnmi-asm-tests
+run-smrnmi-asm-tests: $(SMRNMI_OUT_ASM_DIR)/*
+	@for exe in $(SMRNMI_OUT_ASM_DIR)/*; do \
 		out=$$($(QEMU) -cpu rv32,zcmp=true,zcd=false,d=false,zcb=true,zilsd=true,zclsd=true,zcd=false,d=false,c=false $$exe); \
 		err=$$?; \
 		if [ $$err -eq 0 ]; then \
