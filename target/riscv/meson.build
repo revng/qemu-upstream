@@ -8,6 +8,7 @@ gen = [
   decodetree.process('xqci/xqciu-32.decode', extra_args: ['--static-decode=decode_xqci_32', '--insnwidth=32']),
   decodetree.process('xqci/xqciu-48.decode', extra_args: ['--static-decode=decode_xqci_48', '--varinsnwidth=64']),
   decodetree.process('xqccmp/xqccmp-16.decode', extra_args: ['--static-decode=decode_xqccmp_16', '--insnwidth=16']),
+  decodetree.process('smrnmi/smrnmi-32.decode', extra_args: ['--static-decode=decode_smrnmi_32', '--insnwidth=32']),
 ]
 
 riscv_ss = ss.source_set()

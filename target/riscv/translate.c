@@ -1234,6 +1234,7 @@ static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
 #include "decode-xqciu-16.c.inc"
 #include "decode-xqciu-32.c.inc"
 #include "decode-xqccmp-16.c.inc"
+#include "decode-smrnmi-32.c.inc"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 #include "decode-xqciu-48.c.inc"
@@ -1241,10 +1242,12 @@ static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
 #ifdef TARGET_RISCV32
 #include "xqci/xqciu_tcg.c"
 #include "xqccmp/xqccmp_tcg.c"
+#include "smrnmi/smrnmi_tcg.c"
 #endif
 #include "xqci/xqciu_tcg_manual.c.inc"
 #include "xqci/xqciu_trans.c.inc"
 #include "xqccmp/xqccmp_trans.c.inc"
+#include "smrnmi/smrnmi_trans.c.inc"
 
 /* The specification allows for longer insns, but not supported by qemu. */
 #define MAX_INSN_LEN  8
@@ -1270,6 +1273,7 @@ const RISCVDecoder32 decoder_table_32[] = {
     { has_xthead_p, decode_xthead},
     { has_XVentanaCondOps_p, decode_XVentanaCodeOps},
     { has_xqci_p, decode_xqci_32},
+    { has_smrnmi_p, decode_smrnmi_32},
 };
 
 const RISCVDecoder48 decoder_table_48[] = {
