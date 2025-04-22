@@ -187,6 +187,18 @@ static bool trans_qc_c_clrint(DisasContext *ctx, arg_qc_c_clrint *arg)
     return true;
 #endif
 }
+static bool trans_qc_c_delay(DisasContext *ctx, arg_qc_c_delay *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    if (arg->imm == 0) {
+        return false;
+    }
+    emit_qc_c_delay(ctx, tcg_env, arg->imm);
+    return true;
+#endif
+}
 static bool trans_qc_c_di(DisasContext *ctx, arg_qc_c_di *arg)
 {
 #ifndef TARGET_RISCV32
@@ -271,6 +283,24 @@ static bool trans_qc_c_mileaveret(DisasContext *ctx, arg_qc_c_mileaveret *arg)
     return true;
 #endif
 }
+static bool trans_qc_c_mnret(DisasContext *ctx, arg_qc_c_mnret *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_c_mnret(ctx, tcg_env);
+    return true;
+#endif
+}
+static bool trans_qc_c_mret(DisasContext *ctx, arg_qc_c_mret *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_c_mret(ctx, tcg_env);
+    return true;
+#endif
+}
 static bool trans_qc_c_muliadd(DisasContext *ctx, arg_qc_c_muliadd *arg)
 {
 #ifndef TARGET_RISCV32
@@ -286,6 +316,15 @@ static bool trans_qc_c_mveqz(DisasContext *ctx, arg_qc_c_mveqz *arg)
     return false;
 #else
     emit_qc_c_mveqz(ctx, tcg_env, arg->rs1, arg->rd);
+    return true;
+#endif
+}
+static bool trans_qc_c_ptrace(DisasContext *ctx, arg_qc_c_ptrace *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_c_ptrace(ctx, tcg_env);
     return true;
 #endif
 }
@@ -1585,6 +1624,87 @@ static bool trans_qc_normu(DisasContext *ctx, arg_qc_normu *arg)
         return false;
     }
     emit_qc_normu(ctx, tcg_env, arg->rs1, arg->rd);
+    return true;
+#endif
+}
+static bool trans_qc_pcoredump(DisasContext *ctx, arg_qc_pcoredump *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_pcoredump(ctx, tcg_env);
+    return true;
+#endif
+}
+static bool trans_qc_pexit(DisasContext *ctx, arg_qc_pexit *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_pexit(ctx, tcg_env, arg->rs1);
+    return true;
+#endif
+}
+static bool trans_qc_ppreg(DisasContext *ctx, arg_qc_ppreg *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_ppreg(ctx, tcg_env, arg->rs1);
+    return true;
+#endif
+}
+static bool trans_qc_ppregs(DisasContext *ctx, arg_qc_ppregs *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_ppregs(ctx, tcg_env);
+    return true;
+#endif
+}
+static bool trans_qc_pputc(DisasContext *ctx, arg_qc_pputc *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_pputc(ctx, tcg_env, arg->rs1);
+    return true;
+#endif
+}
+static bool trans_qc_pputci(DisasContext *ctx, arg_qc_pputci *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_pputci(ctx, tcg_env, arg->imm);
+    return true;
+#endif
+}
+static bool trans_qc_pputs(DisasContext *ctx, arg_qc_pputs *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_pputs(ctx, tcg_env, arg->rs1);
+    return true;
+#endif
+}
+static bool trans_qc_psyscall(DisasContext *ctx, arg_qc_psyscall *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_psyscall(ctx, tcg_env, arg->rs1);
+    return true;
+#endif
+}
+static bool trans_qc_psyscalli(DisasContext *ctx, arg_qc_psyscalli *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_psyscalli(ctx, tcg_env, arg->imm);
     return true;
 #endif
 }

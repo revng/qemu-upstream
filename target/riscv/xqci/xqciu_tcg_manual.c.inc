@@ -266,11 +266,4 @@ static void emit_qc_setwmi(DisasContext *ctx, TCGv_env tcg_env, int imm, int rs1
     gen_helper_xqci_setwm(tcg_env, vaddr, tcg_constant_tl(length), value);
 }
 
-static void emit_qc_c_mveqz(DisasContext *ctx, TCGv_env tcg_env, int rs1, int rd)
-{
-    TCGv dst = dest_gpr(ctx, rd + 8);
-    TCGv src = get_gpr(ctx, rs1 + 8, EXT_NONE);
-    TCGv zero = tcg_constant_i32(0);
-    tcg_gen_movcond_i32(TCG_COND_EQ, dst, dst, zero, src, dst);
-}
 #endif
