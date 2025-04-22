@@ -164,6 +164,15 @@ static bool trans_qc_c_clrint(rv_decode *dec, arg_qc_c_clrint *arg)
     dec->op = rv_op_qc_c_clrint;
     return true;
 }
+static bool trans_qc_c_delay(rv_decode *dec, arg_qc_c_delay *arg)
+{
+    if (arg->imm == 0) {
+        return false;
+    }
+    dec->imm = arg->imm;
+    dec->op = rv_op_qc_c_delay;
+    return true;
+}
 static bool trans_qc_c_di(rv_decode *dec, arg_qc_c_di *arg)
 {
     dec->op = rv_op_qc_c_di;
@@ -220,6 +229,16 @@ static bool trans_qc_c_mileaveret(rv_decode *dec, arg_qc_c_mileaveret *arg)
     dec->op = rv_op_qc_c_mileaveret;
     return true;
 }
+static bool trans_qc_c_mnret(rv_decode *dec, arg_qc_c_mnret *arg)
+{
+    dec->op = rv_op_qc_c_mnret;
+    return true;
+}
+static bool trans_qc_c_mret(rv_decode *dec, arg_qc_c_mret *arg)
+{
+    dec->op = rv_op_qc_c_mret;
+    return true;
+}
 static bool trans_qc_c_muliadd(rv_decode *dec, arg_qc_c_muliadd *arg)
 {
     dec->uimm = arg->uimm;
@@ -233,6 +252,11 @@ static bool trans_qc_c_mveqz(rv_decode *dec, arg_qc_c_mveqz *arg)
     dec->rs1 = arg->rs1;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_c_mveqz;
+    return true;
+}
+static bool trans_qc_c_ptrace(rv_decode *dec, arg_qc_c_ptrace *arg)
+{
+    dec->op = rv_op_qc_c_ptrace;
     return true;
 }
 static bool trans_qc_c_setint(rv_decode *dec, arg_qc_c_setint *arg)
@@ -1452,6 +1476,58 @@ static bool trans_qc_normu(rv_decode *dec, arg_qc_normu *arg)
     dec->rs1 = arg->rs1;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_normu;
+    return true;
+}
+static bool trans_qc_pcoredump(rv_decode *dec, arg_qc_pcoredump *arg)
+{
+    dec->op = rv_op_qc_pcoredump;
+    return true;
+}
+static bool trans_qc_pexit(rv_decode *dec, arg_qc_pexit *arg)
+{
+    dec->rs1 = arg->rs1;
+    dec->op = rv_op_qc_pexit;
+    return true;
+}
+static bool trans_qc_ppreg(rv_decode *dec, arg_qc_ppreg *arg)
+{
+    dec->rs1 = arg->rs1;
+    dec->op = rv_op_qc_ppreg;
+    return true;
+}
+static bool trans_qc_ppregs(rv_decode *dec, arg_qc_ppregs *arg)
+{
+    dec->op = rv_op_qc_ppregs;
+    return true;
+}
+static bool trans_qc_pputc(rv_decode *dec, arg_qc_pputc *arg)
+{
+    dec->rs1 = arg->rs1;
+    dec->op = rv_op_qc_pputc;
+    return true;
+}
+static bool trans_qc_pputci(rv_decode *dec, arg_qc_pputci *arg)
+{
+    dec->imm = arg->imm;
+    dec->op = rv_op_qc_pputci;
+    return true;
+}
+static bool trans_qc_pputs(rv_decode *dec, arg_qc_pputs *arg)
+{
+    dec->rs1 = arg->rs1;
+    dec->op = rv_op_qc_pputs;
+    return true;
+}
+static bool trans_qc_psyscall(rv_decode *dec, arg_qc_psyscall *arg)
+{
+    dec->rs1 = arg->rs1;
+    dec->op = rv_op_qc_psyscall;
+    return true;
+}
+static bool trans_qc_psyscalli(rv_decode *dec, arg_qc_psyscalli *arg)
+{
+    dec->imm = arg->imm;
+    dec->op = rv_op_qc_psyscalli;
     return true;
 }
 static bool trans_qc_selecteqi(rv_decode *dec, arg_qc_selecteqi *arg)
