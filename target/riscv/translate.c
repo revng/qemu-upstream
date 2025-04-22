@@ -1198,6 +1198,31 @@ static void xqci_csrw_field(DisasContext *ctx, TCGv_env env, int csrno, int fiel
     TCGv_i32 ret = tcg_temp_new();
     gen_helper_csrrw(ret, env, tcg_constant_tl(csrno), value, tcg_constant_tl(field));
 }
+
+static void xqci_set_mode_M(DisasContext *ctx) {}
+static void xqci_set_mode_S(DisasContext *ctx) {}
+static void xqci_set_mode_U(DisasContext *ctx) {}
+
+static void xqci_syscall(DisasContext *ctx, int32_t func, TCGv arg)
+{
+    generate_exception(ctx, RISCV_EXCP_U_ECALL);
+}
+
+static TCGv get_and_validate_stack_pointer(DisasContext *ctx, TCGv ptr, int i)
+{
+    return ptr;
+}
+
+static TCGv xqci_implemented_U(DisasContext *ctx) {return tcg_constant_tl(1);}
+static TCGv xqci_implemented_S(DisasContext *ctx) {return tcg_constant_tl(1);}
+static TCGv xqci_implemented_Zcmp(DisasContext *ctx) {return tcg_constant_tl(1);}
+static TCGv xqci_implemented_Xqccmp(DisasContext *ctx) {return tcg_constant_tl(1);}
+
+static void xqci_raise_IllegalInstruction(DisasContext *ctx)
+{
+    gen_helper_raise_exception(tcg_env, tcg_constant_tl(RISCV_EXCP_ILLEGAL_INST));
+}
+
 #endif
 
 static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
@@ -1208,15 +1233,18 @@ static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
 
 #include "decode-xqciu-16.c.inc"
 #include "decode-xqciu-32.c.inc"
+#include "decode-xqccmp-16.c.inc"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 #include "decode-xqciu-48.c.inc"
 #pragma GCC diagnostic pop
 #ifdef TARGET_RISCV32
 #include "xqci/xqciu_tcg.c"
+#include "xqccmp/xqccmp_tcg.c"
 #endif
 #include "xqci/xqciu_tcg_manual.c.inc"
 #include "xqci/xqciu_trans.c.inc"
+#include "xqccmp/xqccmp_trans.c.inc"
 
 /* The specification allows for longer insns, but not supported by qemu. */
 #define MAX_INSN_LEN  8
@@ -1234,6 +1262,7 @@ static inline int insn_len(uint16_t first_word)
 
 const RISCVDecoder16 decoder_table_16[] = {
     { has_xqci_p, decode_xqci_16},
+    { has_xqccmp_p, decode_xqccmp_16},
 };
 
 const RISCVDecoder32 decoder_table_32[] = {
