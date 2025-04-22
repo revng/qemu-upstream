@@ -1588,6 +1588,7 @@ const RISCVCPUMultiExtConfig riscv_cpu_extensions[] = {
     MULTI_EXT_CFG_BOOL("zvksc", ext_zvksc, false),
     MULTI_EXT_CFG_BOOL("zvksg", ext_zvksg, false),
 
+    MULTI_EXT_CFG_BOOL("smrnmi", ext_smrnmi, true),
     MULTI_EXT_CFG_BOOL("xqccmp", ext_xqccmp, true),
     MULTI_EXT_CFG_BOOL("xqci", ext_xqci, true),
 
