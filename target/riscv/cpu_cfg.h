@@ -130,6 +130,7 @@ struct RISCVCPUConfig {
     bool ext_ssaia;
     bool ext_sscofpmf;
     bool ext_smepmp;
+    bool ext_smrnmi;
     bool rvv_ta_all_1s;
     bool rvv_ma_all_1s;
     bool rvv_vl_half_avl;
@@ -224,5 +225,6 @@ MATERIALISE_EXT_PREDICATE(xtheadsync)
 MATERIALISE_EXT_PREDICATE(XVentanaCondOps)
 MATERIALISE_EXT_PREDICATE(xqci)
 MATERIALISE_EXT_PREDICATE(xqccmp)
+MATERIALISE_EXT_PREDICATE(smrnmi)
 
 #endif
