@@ -277,7 +277,6 @@ static RISCVException any(CPURISCVState *env, int csrno)
 {
     return RISCV_EXCP_NONE;
 }
-#ifndef CONFIG_USER_ONLY
 
 static RISCVException any32(CPURISCVState *env, int csrno)
 {
@@ -288,6 +287,7 @@ static RISCVException any32(CPURISCVState *env, int csrno)
     return any(env, csrno);
 
 }
+#ifndef CONFIG_USER_ONLY
 
 static RISCVException aia_any(CPURISCVState *env, int csrno)
 {
@@ -1661,6 +1661,7 @@ static RISCVException write_mstatus(CPURISCVState *env, int csrno,
 
 #ifndef CONFIG_USER_ONLY
 
+#endif
 static RISCVException read_mstatush(CPURISCVState *env, int csrno,
                                     target_ulong *val)
 {
@@ -1678,6 +1679,7 @@ static RISCVException write_mstatush(CPURISCVState *env, int csrno,
 
     return RISCV_EXCP_NONE;
 }
+#ifndef CONFIG_USER_ONLY
 
 #endif
 static RISCVException read_mstatus_i128(CPURISCVState *env, int csrno,
@@ -5067,8 +5069,10 @@ riscv_csr_operations csr_ops[CSR_TABLE_SIZE] = {
     [CSR_MCOUNTEREN]  = { "mcounteren", umode, read_mcounteren,
                           write_mcounteren                                 },
 
+#endif
     [CSR_MSTATUSH]    = { "mstatush",   any32, read_mstatush,
                           write_mstatush                                   },
+#ifndef CONFIG_USER_ONLY
     [CSR_MEDELEGH]    = { "medelegh",   any32, read_zero, write_ignore,
                           .min_priv_ver = PRIV_VERSION_1_13_0              },
     [CSR_HEDELEGH]    = { "hedelegh",   hmode32, read_hedelegh, write_hedelegh,
