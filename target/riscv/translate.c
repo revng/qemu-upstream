@@ -37,6 +37,9 @@
 
 #include "tcg/tcg-cpu.h"
 
+#include "xqci/xqciu_csr.h"
+#include "smrnmi/smrnmi_csr.h"
+
 /* global register indices */
 static TCGv cpu_gpr[32], cpu_gprh[32], cpu_pc, cpu_vl, cpu_vstart;
 static TCGv_i64 cpu_fpr[32]; /* assume F and D extensions */
@@ -1214,9 +1217,10 @@ static TCGv get_and_validate_stack_pointer(DisasContext *ctx, TCGv ptr, int i)
 }
 
 static TCGv xqci_implemented_U(DisasContext *ctx) {return tcg_constant_tl(1);}
-static TCGv xqci_implemented_S(DisasContext *ctx) {return tcg_constant_tl(1);}
 static TCGv xqci_implemented_Zcmp(DisasContext *ctx) {return tcg_constant_tl(1);}
 static TCGv xqci_implemented_Xqccmp(DisasContext *ctx) {return tcg_constant_tl(1);}
+/* Implemented in a default rv32 QEMU machine */
+static TCGv xqci_implemented_Smdbltrp(DisasContext *ctx) {return tcg_constant_tl(1);}
 
 static void xqci_raise_IllegalInstruction(DisasContext *ctx)
 {
