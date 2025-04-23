@@ -628,7 +628,7 @@ static RISCVException write_qc_mwpstartaddr3(CPURISCVState *env, int csrno, targ
     env->qc_mwpstartaddr3 = val;
     return RISCV_EXCP_NONE;
 }
-void qc_iu_register_custom_csrs(RISCVCPU *cpu)
+void xqci_register_custom_csrs(RISCVCPU *cpu)
 {
     riscv_set_csr_ops(CSR_QC_MCAUSE, &(riscv_csr_operations){"qc_mcause", any, read_qc_mcause, write_qc_mcause});
     riscv_set_csr_ops(CSR_QC_MCLICIE0, &(riscv_csr_operations){"qc_mclicie0", any, read_qc_mclicie0, write_qc_mclicie0});

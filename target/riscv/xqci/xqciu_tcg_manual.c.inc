@@ -1,4 +1,5 @@
 #include "exec/cpu_ldst.h"
+#include "exec/address-spaces.h"
 
 #ifdef TARGET_RISCV32
 void HELPER(xqci_swm)(CPUArchState *env, target_ulong vaddr, target_ulong length, int rs3)
@@ -44,8 +45,8 @@ static void mienter_copy_cpustate(CPUArchState *env, uintptr_t ra)
     /* TODO(anjo): validate env->gpr[2] */
     target_ulong vaddr = env->gpr[2];
     target_ulong mepc;
-    //target_ulong mnepc;
-    target_ulong mcause;
+    target_ulong mnepc;
+    target_ulong qc_mcause;
     target_ulong reserved_val = 0;
     int mmu_idx = riscv_env_mmu_index(env, false);
     target_ulong mask = (1ull << 32) - 1;
@@ -56,26 +57,24 @@ static void mienter_copy_cpustate(CPUArchState *env, uintptr_t ra)
         riscv_raise_exception(env, ret, ra);
     }
 
-    // TODO(anjo): QEMU doesn't model MNEPC
-    //ret = riscv_csrr(env, CSR_MNEPC, &mnepc);
-    //if (ret != RISCV_EXCP_NONE) {
-    //    riscv_raise_exception(env, ret, ra);
-    //}
-
-    ret = riscv_csrr(env, CSR_MCAUSE, &mcause);
+    ret = riscv_csrr(env, CSR_MNEPC, &mnepc);
     if (ret != RISCV_EXCP_NONE) {
         riscv_raise_exception(env, ret, ra);
     }
 
-    // TODO(anjo): QEMU doesn't model MNSTATUS
-    //if (get_field(env->mnstatus, MNSTATUS_NMIE) == 1) {
-    //    cpu_stl_mmuidx_ra(env, vaddr - 4, mepc, mmu_idx, ra);
-    //} else {
-    //    cpu_stl_mmuidx_ra(env, vaddr - 4, mnepc, mmu_idx, ra);
-    //}
+    ret = riscv_csrr(env, CSR_QC_MCAUSE, &qc_mcause);
+    if (ret != RISCV_EXCP_NONE) {
+        riscv_raise_exception(env, ret, ra);
+    }
+
+    if (get_field(env->mnstatus, MNSTATUS_NMIE) == 1) {
+        cpu_stl_mmuidx_ra(env, vaddr - 4, mepc, mmu_idx, ra);
+    } else {
+        cpu_stl_mmuidx_ra(env, vaddr - 4, mnepc, mmu_idx, ra);
+    }
 
     cpu_stl_mmuidx_ra(env, vaddr - 8,  env->gpr[8] & mask,  mmu_idx, ra);
-    cpu_stl_mmuidx_ra(env, vaddr - 12, mcause,              mmu_idx, ra);
+    cpu_stl_mmuidx_ra(env, vaddr - 12, qc_mcause,           mmu_idx, ra);
     cpu_stl_mmuidx_ra(env, vaddr - 16, env->gpr[1] & mask,  mmu_idx, ra);
     cpu_stl_mmuidx_ra(env, vaddr - 20, reserved_val,        mmu_idx, ra);
 
@@ -114,13 +113,22 @@ void HELPER(xqci_mienter_nest)(CPUArchState *env)
     env->qc_mcause = qc_mcause_val | (1 << 26);
 }
 
+static void xqci_set_mode(CPUArchState *env, int mode)
+{
+#ifndef CONFIG_USER_ONLY
+    riscv_cpu_set_mode(env, mode, env->virt_enabled);
+#else
+    env->priv = mode;
+#endif
+}
+
 void HELPER(xqci_mileaveret)(CPUArchState *env)
 {
     /* TODO(anjo): validate env->gpr[2] */
     target_ulong vaddr = env->gpr[2] + 96;
     target_ulong prev_retpc;
     target_ulong qc_mcause_val;
-    //int nmie_val = get_field(env->mnstatus, MNSTATUS_NMIE);
+    int nmie_val = get_field(env->mnstatus, MNSTATUS_NMIE);
 
     int mmu_idx = riscv_env_mmu_index(env, false);
 
@@ -152,48 +160,65 @@ void HELPER(xqci_mileaveret)(CPUArchState *env)
 
     env->gpr[2] += 96;
 
-    // TODO(anjo): QEMU doesn't model mnstatus
-  //if (nmie_val == 1) {
-  //  target_ulong qc_mcause_val_masked = qc_mcause_val & ~(1<<26) & ~(1<<27) & ~(1<<29) & ~(0xFF<<12);
-  //  int mpie_val = (qc_mcause_val >> 27) & 1;
-  //  int mpdt_val = (qc_mcause_val >> 29) & 1;
-  //  int mpil_val = (qc_mcause_val >> 16) & 0xF;
-  //  env->mstatus = set_field(env->mstatus, MSTATUS_MIE, mpie_val);
-  //  env->mstatus = set_field(env->mstatus, MSTATUS_MPIE, 1);
-  //  env->mstatush = set_field(env->mstatush, MSTATUSH_MDT, 1);
-  //  env->qc_mcause = (qc_mcause_val_masked |
-  //                          (1<<27) | (mpie_val<<26) | (0<<29) |
-  //                          (mpil_val << 12) | (0xF << 16));
-  //  //if (mpdt_val == 1'b0) {
-  //  //  if (CSR[mstatus].MPP == 2'b00) {
-  //  //    set_mode(PrivilegeMode::U);
-  //  //  } else if (CSR[mstatus].MPP == 2'b01) {
-  //  //    set_mode(PrivilegeMode::S);
-  //  //  } else if (CSR[mstatus].MPP == 2'b11) {
-  //  //    set_mode(PrivilegeMode::M);
-  //  //  }
-  //  //  CSR[mstatus].MPP = implemented?(ExtensionName::U) ? 2'b00 : 2'b11;
-  //  //}
-  //  env->pc = env->mepc;
-  //} else {
-  //  target_ulong qc_mcause_val_masked = qc_mcause_val & ~(1<<26) & ~(1<<28) & ~(1<<30) & ~(0xF<<12) & ~(0xF<<20);
-  //  int mnpie_val = (qc_mcause_val >> 28) & 1;
-  //  int mnpil_val = (qc_mcause_val >> 20) & 0xF;
-  //  env->mstatus = set_field(env->mstatus, MSTATUS_MIE, mpie_val);
-  //  env->mstatus = set_field(env->mstatus, MSTATUS_NMIE, 1);
-  //  env->qc_mcause = (qc_mcause_val_masked |
-  //                          (1<<28) | (mnpie_val<<26) | (1<<30) |
-  //                          (mnpil_val << 12) | (0xF << 20));
-  //  //if (CSR[mnstatus].MNPP == 2'b00) {
-  //  //  set_mode(PrivilegeMode::U);
-  //  //} else if (CSR[mnstatus].MNPP == 2'b01) {
-  //  //  set_mode(PrivilegeMode::S);
-  //  //} else if (CSR[mnstatus].MNPP == 2'b11) {
-  //  //  set_mode(PrivilegeMode::M);
-  //  //}
-  //  //CSR[mnstatus].MNPP = implemented?(ExtensionName::U) ? 2'b00 : 2'b11;
-  //  env->pc = env->mnepc;
-  //}
+    if (nmie_val == 1) {
+        target_ulong qc_mcause_val_masked = qc_mcause_val & ~(1<<26) & ~(1<<27) & ~(1<<29) & ~(0xFF<<12);
+        int mpie_val = (qc_mcause_val >> 27) & 1;
+        int mpdt_val = (qc_mcause_val >> 29) & 1;
+        int mpil_val = (qc_mcause_val >> 16) & 0xF;
+        env->mstatus = set_field(env->mstatus, MSTATUS_MIE, mpie_val);
+        env->mstatus = set_field(env->mstatus, MSTATUS_MPIE, 1);
+        /* Default rv32 implements Smdbltrp */
+        /* if (implemented?(ExtensionName::Smdbltrp)) {*/
+        target_ulong mstatush;
+        riscv_csrr(env, CSR_MSTATUSH, &mstatush);
+        mstatush = set_field(mstatush, MSTATUSH_MDT, mpdt_val);
+        riscv_csrrw(env, CSR_MSTATUSH, NULL, mstatush, UINT32_MAX);
+        /* } */
+        env->qc_mcause = (qc_mcause_val_masked |
+            (1<<27) | (mpie_val<<26) | (0<<29) |
+            (mpil_val << 12) | (0xF << 16));
+        if (mpdt_val == 0) {
+            int mpp = get_field(env->mstatus, MSTATUS_MPP);
+            if (mpp != 0b11) {
+                env->mstatus = set_field(env->mstatus, MSTATUS_MPRV, 0);
+            }
+            if (mpp == 0b00) {
+                xqci_set_mode(env, PRV_U);
+            } else if (mpp == 0b01) {
+                xqci_set_mode(env, PRV_S);
+            } else if (mpp == 0b11) {
+                xqci_set_mode(env, PRV_M);
+            }
+            env->mstatus = set_field(env->mstatus, MSTATUS_MPP, (riscv_has_ext(env, RVU)) ? 0b00 : 0b11);
+        }
+        env->pc = env->mepc;
+    } else {
+        target_ulong qc_mcause_val_masked = qc_mcause_val & ~(1<<26) & ~(1<<28) & ~(1<<30) & ~(0xF<<12) & ~(0xF<<20);
+        int mnpie_val = (qc_mcause_val >> 28) & 1;
+        int mnpil_val = (qc_mcause_val >> 20) & 0xF;
+        env->mstatus = set_field(env->mstatus, MSTATUS_MIE, mnpie_val);
+        env->mnstatus = set_field(env->mnstatus, MNSTATUS_NMIE, 1);
+        env->qc_mcause = (qc_mcause_val_masked |
+            (1<<28) | (mnpie_val<<26) | (1<<30) |
+            (mnpil_val << 12) | (0xF << 20));
+        int mnpp = get_field(env->mnstatus, MNSTATUS_MNPP);
+        if (mnpp != 0b11) {
+            env->mstatus = set_field(env->mstatus, MSTATUS_MPRV, 0);
+            /* Default rv32 implements Smdbltrp */
+            /* if (implemented?(ExtensionName::Smdbltrp)) {*/
+            riscv_csrrw(env, CSR_MSTATUSH, NULL, 0, MSTATUSH_MDT);
+            /* } */
+        }
+        if (mnpp == 0b00) {
+            xqci_set_mode(env, PRV_U);
+        } else if (mnpp == 0b01) {
+            xqci_set_mode(env, PRV_S);
+        } else if (mnpp == 0b11) {
+            xqci_set_mode(env, PRV_M);
+        }
+        env->mnstatus = set_field(env->mnstatus, MNSTATUS_MNPP, (riscv_has_ext(env, RVU)) ? 0b00 : 0b11);
+        env->pc = env->mnepc;
+    }
 }
 
 static void emit_qc_c_mienter(DisasContext *ctx, TCGv_env tcg_env)
@@ -264,6 +289,129 @@ static void emit_qc_setwmi(DisasContext *ctx, TCGv_env tcg_env, int imm, int rs1
     TCGv vaddr = xqci_ea(ctx, rs1, imm);
     TCGv value = get_gpr(ctx, rs3, EXT_NONE);
     gen_helper_xqci_setwm(tcg_env, vaddr, tcg_constant_tl(length), value);
+}
+
+/*
+uint8_t sync_bitmask(int slist)
+{
+    Bits<5> bitmask;
+    if (slist == 0) {
+      bitmask = 0;
+    } else if (slist < 6) {
+      XReg shift = slist - 1;
+      bitmask = (1 << shift);
+    } else {
+      XReg shift = slist - 2;
+      bitmask = (1 << shift) - 1;
+    }
+    return 0;
+}
+*/
+
+static void emit_qc_c_sync(DisasContext *ctx, TCGv_env tcg_env, int slist)
+{
+    /* uint8_t bitmask = sync_bitmask(slist); */
+    tcg_gen_mb(TCG_MO_ALL);
+    /* sync_read_after_write_device(true,bitmask); */
+}
+
+static void emit_qc_c_syncr(DisasContext *ctx, TCGv_env tcg_env, int slist)
+{
+    /* uint8_t bitmask = sync_bitmask(slist); */
+    tcg_gen_mb(TCG_MO_ALL);
+    /* sync_read_after_write_device(false,bitmask); */
+}
+
+static void emit_qc_c_syncwf(DisasContext *ctx, TCGv_env tcg_env, int slist)
+{
+    /* uint8_t bitmask = sync_bitmask(slist); */
+    tcg_gen_mb(TCG_MO_ALL);
+    /* sync_write_after_read_device(false,bitmask); */
+}
+
+static void emit_qc_c_syncwl(DisasContext *ctx, TCGv_env tcg_env, int slist)
+{
+    /* uint8_t bitmask = sync_bitmask(slist); */
+    tcg_gen_mb(TCG_MO_ALL);
+    /* sync_write_after_read_device(true,bitmask); */
+}
+
+static void emit_qc_sync(DisasContext *ctx, TCGv_env tcg_env, int slist)
+{
+    tcg_gen_mb(TCG_MO_ALL);
+    /* sync_read_after_write_device(true,imm); */
+}
+
+static void emit_qc_syncr(DisasContext *ctx, TCGv_env tcg_env, int slist)
+{
+    tcg_gen_mb(TCG_MO_ALL);
+    /* sync_read_after_write_device(false,imm); */
+}
+
+static void emit_qc_syncwf(DisasContext *ctx, TCGv_env tcg_env, int slist)
+{
+    tcg_gen_mb(TCG_MO_ALL);
+    /* sync_write_after_read_device(false,imm); */
+}
+
+static void emit_qc_syncwl(DisasContext *ctx, TCGv_env tcg_env, int slist)
+{
+    tcg_gen_mb(TCG_MO_ALL);
+    /* sync_write_after_read_device(true,imm); */
+}
+
+static void emit_qc_csrrwr(DisasContext *ctx, TCGv_env tcg_env, int rs2, int rs1, int rd)
+{
+    TCGv csr = get_gpr(ctx, rs2, EXT_NONE);
+    if (rd != 0) {
+        gen_helper_csrr(dest_gpr(ctx, rd), tcg_env, csr);
+    }
+    gen_helper_csrw(tcg_env, csr, get_gpr(ctx, rs1, EXT_NONE));
+}
+
+static void emit_qc_csrrwri(DisasContext *ctx, TCGv_env tcg_env, int rs2, int imm, int rd)
+{
+    TCGv csr = get_gpr(ctx, rs2, EXT_NONE);
+    if (rd != 0) {
+        gen_helper_csrr(dest_gpr(ctx, rd), tcg_env, csr);
+    }
+    gen_helper_csrw(tcg_env, csr, tcg_constant_tl((uint32_t)imm));
+}
+
+void HELPER(xqci_outw)(CPUArchState *env, target_ulong address, target_ulong value)
+{
+#ifndef CONFIG_USER_ONLY
+    address_space_stl(&address_space_io, address, value,
+                      MEMTXATTRS_UNSPECIFIED, NULL);
+#endif
+}
+
+target_ulong HELPER(xqci_inw)(CPUArchState *env, target_ulong address)
+{
+#ifndef CONFIG_USER_ONLY
+    return address_space_ldl(&address_space_io, address,
+                             MEMTXATTRS_UNSPECIFIED, NULL);
+#else
+    return 0;
+#endif
+}
+
+static void emit_qc_inw(DisasContext *ctx, TCGv_env tcg_env, int imm, int rs1, int rd)
+{
+    TCGv addr = tcg_temp_new();
+    tcg_gen_addi_tl(addr, get_gpr(ctx, rs1, EXT_NONE), imm);
+    TCGv dst = dest_gpr(ctx, rd);
+    translator_io_start(&ctx->base);
+    gen_helper_xqci_inw(dst, tcg_env, addr);
+}
+
+static void emit_qc_outw(DisasContext *ctx, TCGv_env tcg_env, int imm, int rs1, int rs2)
+{
+    TCGv addr = tcg_temp_new();
+    tcg_gen_addi_tl(addr, get_gpr(ctx, rs1, EXT_NONE), imm);
+    TCGv value = get_gpr(ctx, rs2, EXT_NONE);
+    translator_io_start(&ctx->base);
+    gen_helper_xqci_outw(tcg_env, addr, value);
 }
 
 #endif

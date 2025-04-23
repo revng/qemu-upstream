@@ -340,6 +340,42 @@ static bool trans_qc_c_setint(DisasContext *ctx, arg_qc_c_setint *arg)
     return true;
 #endif
 }
+static bool trans_qc_c_sync(DisasContext *ctx, arg_qc_c_sync *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_c_sync(ctx, tcg_env, arg->slist);
+    return true;
+#endif
+}
+static bool trans_qc_c_syncr(DisasContext *ctx, arg_qc_c_syncr *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_c_syncr(ctx, tcg_env, arg->slist);
+    return true;
+#endif
+}
+static bool trans_qc_c_syncwf(DisasContext *ctx, arg_qc_c_syncwf *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_c_syncwf(ctx, tcg_env, arg->slist);
+    return true;
+#endif
+}
+static bool trans_qc_c_syncwl(DisasContext *ctx, arg_qc_c_syncwl *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_c_syncwl(ctx, tcg_env, arg->slist);
+    return true;
+#endif
+}
 static bool trans_qc_clo(DisasContext *ctx, arg_qc_clo *arg)
 {
 #ifndef TARGET_RISCV32
@@ -391,6 +427,30 @@ static bool trans_qc_compress3(DisasContext *ctx, arg_qc_compress3 *arg)
         return false;
     }
     emit_qc_compress3(ctx, tcg_env, arg->rs1, arg->rd);
+    return true;
+#endif
+}
+static bool trans_qc_csrrwr(DisasContext *ctx, arg_qc_csrrwr *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    emit_qc_csrrwr(ctx, tcg_env, arg->rs2, arg->rs1, arg->rd);
+    return true;
+#endif
+}
+static bool trans_qc_csrrwri(DisasContext *ctx, arg_qc_csrrwri *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    if (arg->rs2 == 0) {
+        return false;
+    }
+    emit_qc_csrrwri(ctx, tcg_env, arg->rs2, arg->imm, arg->rd);
     return true;
 #endif
 }
@@ -898,6 +958,9 @@ static bool trans_qc_extdur(DisasContext *ctx, arg_qc_extdur *arg)
     if (arg->rs2 == 0) {
         return false;
     }
+    if (arg->rs1 == 31) {
+        return false;
+    }
     if (arg->rd == 0) {
         return false;
     }
@@ -1028,6 +1091,16 @@ static bool trans_qc_insbri(DisasContext *ctx, arg_qc_insbri *arg)
         return false;
     }
     emit_qc_insbri(ctx, tcg_env, arg->imm, arg->rs1, arg->rd);
+    return true;
+#endif
+}
+static bool trans_qc_inw(DisasContext *ctx, arg_qc_inw *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    arg->imm <<= 2;
+    emit_qc_inw(ctx, tcg_env, arg->imm, arg->rs1, arg->rd);
     return true;
 #endif
 }
@@ -1627,6 +1700,16 @@ static bool trans_qc_normu(DisasContext *ctx, arg_qc_normu *arg)
     return true;
 #endif
 }
+static bool trans_qc_outw(DisasContext *ctx, arg_qc_outw *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    arg->imm <<= 2;
+    emit_qc_outw(ctx, tcg_env, arg->imm, arg->rs1, arg->rs2);
+    return true;
+#endif
+}
 static bool trans_qc_pcoredump(DisasContext *ctx, arg_qc_pcoredump *arg)
 {
 #ifndef TARGET_RISCV32
@@ -2027,6 +2110,42 @@ static bool trans_qc_swmi(DisasContext *ctx, arg_qc_swmi *arg)
         return false;
     }
     emit_qc_swmi(ctx, tcg_env, arg->imm, arg->rs1, arg->length, arg->rs3);
+    return true;
+#endif
+}
+static bool trans_qc_sync(DisasContext *ctx, arg_qc_sync *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_sync(ctx, tcg_env, arg->imm);
+    return true;
+#endif
+}
+static bool trans_qc_syncr(DisasContext *ctx, arg_qc_syncr *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_syncr(ctx, tcg_env, arg->imm);
+    return true;
+#endif
+}
+static bool trans_qc_syncwf(DisasContext *ctx, arg_qc_syncwf *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_syncwf(ctx, tcg_env, arg->imm);
+    return true;
+#endif
+}
+static bool trans_qc_syncwl(DisasContext *ctx, arg_qc_syncwl *arg)
+{
+#ifndef TARGET_RISCV32
+    return false;
+#else
+    emit_qc_syncwl(ctx, tcg_env, arg->imm);
     return true;
 #endif
 }

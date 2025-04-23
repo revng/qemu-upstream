@@ -859,4 +859,4 @@
 #define QC_MWPSTARTADDR1_ADDR 0xffffffff
 #define QC_MWPSTARTADDR2_ADDR 0xffffffff
 #define QC_MWPSTARTADDR3_ADDR 0xffffffff
-void qc_iu_register_custom_csrs(RISCVCPU *cpu);
+void xqci_register_custom_csrs(RISCVCPU *cpu);
