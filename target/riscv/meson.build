@@ -29,6 +29,7 @@ riscv_ss.add(files(
   'zce_helper.c',
   'vcrypto_helper.c',
   'xqci/xqciu_csr.c',
+  'smrnmi/smrnmi_csr.c',
 ))
 
 riscv_system_ss = ss.source_set()
