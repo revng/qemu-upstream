@@ -31,10 +31,16 @@ typedef enum {
     rv_op_qc_c_mveqz,
     rv_op_qc_c_ptrace,
     rv_op_qc_c_setint,
+    rv_op_qc_c_sync,
+    rv_op_qc_c_syncr,
+    rv_op_qc_c_syncwf,
+    rv_op_qc_c_syncwl,
     rv_op_qc_clo,
     rv_op_qc_clrinti,
     rv_op_qc_compress2,
     rv_op_qc_compress3,
+    rv_op_qc_csrrwr,
+    rv_op_qc_csrrwri,
     rv_op_qc_cto,
     rv_op_qc_e_addai,
     rv_op_qc_e_addi,
@@ -81,6 +87,7 @@ typedef enum {
     rv_op_qc_insbprh,
     rv_op_qc_insbr,
     rv_op_qc_insbri,
+    rv_op_qc_inw,
     rv_op_qc_li,
     rv_op_qc_lieq,
     rv_op_qc_lieqi,
@@ -117,6 +124,7 @@ typedef enum {
     rv_op_qc_norm,
     rv_op_qc_normeu,
     rv_op_qc_normu,
+    rv_op_qc_outw,
     rv_op_qc_pcoredump,
     rv_op_qc_pexit,
     rv_op_qc_ppreg,
@@ -147,6 +155,10 @@ typedef enum {
     rv_op_qc_subusat,
     rv_op_qc_swm,
     rv_op_qc_swmi,
+    rv_op_qc_sync,
+    rv_op_qc_syncr,
+    rv_op_qc_syncwf,
+    rv_op_qc_syncwl,
     rv_op_qc_wrap,
     rv_op_qc_wrapi,
 } rv_xqci_opcode;
@@ -180,10 +192,16 @@ const rv_opcode_data xqci_opcode_data[] = {
     { "qc.c.mveqz", rv_codec_skip, "O\t0,1", NULL, 0, 0, 0 },
     { "qc.c.ptrace", rv_codec_skip, "O\t", NULL, 0, 0, 0 },
     { "qc.c.setint", rv_codec_skip, "O\t1", NULL, 0, 0, 0 },
+    { "qc.c.sync", rv_codec_skip, "O\tk", NULL, 0, 0, 0 },
+    { "qc.c.syncr", rv_codec_skip, "O\tk", NULL, 0, 0, 0 },
+    { "qc.c.syncwf", rv_codec_skip, "O\tk", NULL, 0, 0, 0 },
+    { "qc.c.syncwl", rv_codec_skip, "O\tk", NULL, 0, 0, 0 },
     { "qc.clo", rv_codec_skip, "O\t0,1", NULL, 0, 0, 0 },
     { "qc.clrinti", rv_codec_skip, "O\ti", NULL, 0, 0, 0 },
     { "qc.compress2", rv_codec_skip, "O\t0,1", NULL, 0, 0, 0 },
     { "qc.compress3", rv_codec_skip, "O\t0,1", NULL, 0, 0, 0 },
+    { "qc.csrrwr", rv_codec_skip, "O\t0,1,2", NULL, 0, 0, 0 },
+    { "qc.csrrwri", rv_codec_skip, "O\t0,i,2", NULL, 0, 0, 0 },
     { "qc.cto", rv_codec_skip, "O\t0,1", NULL, 0, 0, 0 },
     { "qc.e.addai", rv_codec_skip, "O\t0,i", NULL, 0, 0, 0 },
     { "qc.e.addi", rv_codec_skip, "O\t0,1,i", NULL, 0, 0, 0 },
@@ -230,6 +248,7 @@ const rv_opcode_data xqci_opcode_data[] = {
     { "qc.insbprh", rv_codec_skip, "O\t0,1,2", NULL, 0, 0, 0 },
     { "qc.insbr", rv_codec_skip, "O\t0,1,2", NULL, 0, 0, 0 },
     { "qc.insbri", rv_codec_skip, "O\t0,1,i", NULL, 0, 0, 0 },
+    { "qc.inw", rv_codec_skip, "O\t0,1,i", NULL, 0, 0, 0 },
     { "qc.li", rv_codec_skip, "O\t0,i", NULL, 0, 0, 0 },
     { "qc.lieq", rv_codec_skip, "O\t0,i,2,1", NULL, 0, 0, 0 },
     { "qc.lieqi", rv_codec_skip, "O\t0,i,i,1", NULL, 0, 0, 0 },
@@ -266,6 +285,7 @@ const rv_opcode_data xqci_opcode_data[] = {
     { "qc.norm", rv_codec_skip, "O\t0,1", NULL, 0, 0, 0 },
     { "qc.normeu", rv_codec_skip, "O\t0,1", NULL, 0, 0, 0 },
     { "qc.normu", rv_codec_skip, "O\t0,1", NULL, 0, 0, 0 },
+    { "qc.outw", rv_codec_skip, "O\t2,1,i", NULL, 0, 0, 0 },
     { "qc.pcoredump", rv_codec_skip, "O\t", NULL, 0, 0, 0 },
     { "qc.pexit", rv_codec_skip, "O\t1", NULL, 0, 0, 0 },
     { "qc.ppreg", rv_codec_skip, "O\t1", NULL, 0, 0, 0 },
@@ -296,6 +316,10 @@ const rv_opcode_data xqci_opcode_data[] = {
     { "qc.subusat", rv_codec_skip, "O\t0,2,1", NULL, 0, 0, 0 },
     { "qc.swm", rv_codec_skip, "O\t6,2,1,i", NULL, 0, 0, 0 },
     { "qc.swmi", rv_codec_skip, "O\t6,i,1,i", NULL, 0, 0, 0 },
+    { "qc.sync", rv_codec_skip, "O\ti", NULL, 0, 0, 0 },
+    { "qc.syncr", rv_codec_skip, "O\ti", NULL, 0, 0, 0 },
+    { "qc.syncwf", rv_codec_skip, "O\ti", NULL, 0, 0, 0 },
+    { "qc.syncwl", rv_codec_skip, "O\ti", NULL, 0, 0, 0 },
     { "qc.wrap", rv_codec_skip, "O\t0,2,1", NULL, 0, 0, 0 },
     { "qc.wrapi", rv_codec_skip, "O\t0,1,i", NULL, 0, 0, 0 },
 };
@@ -323,7 +347,7 @@ void decode_xqci(rv_decode *dec, rv_isa isa) {
         decode_xqci_32_impl(dec, inst);
         break;
     case 6:
-        decode_xqci_48_impl(dec, inst << 16);
+        decode_xqci_48_impl(dec, inst);
         break;
     }
 }
