@@ -3,7 +3,7 @@
     in: 4294967294
   - name: "rd"
     in: 255
-    out: 226
+    out: 2147483874
   overflow: 1
   underflow: 0
 - variables:
@@ -11,7 +11,7 @@
     in: 255
   - name: "rd"
     in: 255
-    out: 2147483881
+    out: 2139095273
   overflow: 0
   underflow: 0
 - variables:
@@ -19,30 +19,6 @@
     in: 2147483648
   - name: "rd"
     in: 255
-    out: 0
-  overflow: 0
-  underflow: 0
-- variables:
-  - name: "rs1"
-    in: 4294967294
-  - name: "rd"
-    in: 255
-    out: 226
-  overflow: 1
-  underflow: 0
-- variables:
-  - name: "rs1"
-    in: 255
-  - name: "rd"
-    in: 255
-    out: 2147483881
-  overflow: 0
-  underflow: 0
-- variables:
-  - name: "rs1"
-    in: 2147483648
-  - name: "rd"
-    in: 255
-    out: 0
+    out: 2147483648
   overflow: 0
   underflow: 0

@@ -6,11 +6,3 @@
     out: 255
   overflow: 0
   underflow: 0
-- variables:
-  - name: "width_minus1"
-    in: 24
-  - name: "rd"
-    in: 255
-    out: 255
-  overflow: 0
-  underflow: 0

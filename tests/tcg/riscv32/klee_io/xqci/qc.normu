@@ -3,14 +3,6 @@
     in: 255
   - name: "rd"
     in: 255
-    out: 232
-  overflow: 0
-  underflow: 0
-- variables:
-  - name: "rs1"
-    in: 255
-  - name: "rd"
-    in: 255
-    out: 232
+    out: 4278190312
   overflow: 0
   underflow: 0

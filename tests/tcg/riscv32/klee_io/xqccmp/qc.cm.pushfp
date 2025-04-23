@@ -16,21 +16,3 @@
   underflow: 1
   has_valid_test_memop: 0
   has_store:
-- variables:
-  - name: "rlist"
-    in: 5
-  - name: "spimm"
-    in: 0
-  overflow: 0
-  underflow: 1
-  has_valid_test_memop: 0
-  has_store:
-- variables:
-  - name: "rlist"
-    in: 15
-  - name: "spimm"
-    in: 0
-  overflow: 0
-  underflow: 1
-  has_valid_test_memop: 0
-  has_store:

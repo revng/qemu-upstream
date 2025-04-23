@@ -14,7 +14,7 @@
     value: 0
 - variables:
   - name: "rlist"
-    in: 12
+    in: 15
   - name: "spimm"
     in: 0
   overflow: 0
@@ -42,47 +42,11 @@
     value: 0
   - address: 44
     value: 0
-- variables:
-  - name: "rlist"
-    in: 4
-  - name: "spimm"
-    in: 0
-  overflow: 0
-  underflow: 0
-  has_jump:
-    valid_test_jump: 0
-    jump_pc_offset: 0
-  has_valid_test_memop: 0
-  has_load:
-  - address: 12
+  - address: 48
     value: 0
-- variables:
-  - name: "rlist"
-    in: 12
-  - name: "spimm"
-    in: 0
-  overflow: 0
-  underflow: 0
-  has_jump:
-    valid_test_jump: 0
-    jump_pc_offset: 0
-  has_valid_test_memop: 0
-  has_load:
-  - address: 12
+  - address: 52
     value: 0
-  - address: 16
+  - address: 56
     value: 0
-  - address: 20
-    value: 0
-  - address: 24
-    value: 0
-  - address: 28
-    value: 0
-  - address: 32
-    value: 0
-  - address: 36
-    value: 0
-  - address: 40
-    value: 0
-  - address: 44
+  - address: 60
     value: 0

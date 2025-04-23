@@ -10,12 +10,23 @@ decode_only = {
     'qc.swm.yaml',
     'qc.setwmi.yaml',
     'qc.setwm.yaml',
-    'qc.shlsat.yaml',
-    'qc.shlusat.yaml',
-    'qc.c.mveqz.yaml',
+
     'qc.c.mienter.yaml',
     'qc.c.mienter.nest.yaml',
     'qc.c.mileaveret.yaml',
+
+    'qc.c.sync.yaml',
+    'qc.c.syncr.yaml',
+    'qc.c.syncwf.yaml',
+    'qc.c.syncwl.yaml',
+    'qc.sync.yaml',
+    'qc.syncr.yaml',
+    'qc.syncwf.yaml',
+    'qc.syncwl.yaml',
+    'qc.csrrwr.yaml',
+    'qc.csrrwri.yaml',
+    'qc.inw.yaml',
+    'qc.outw.yaml',
 }
 
 system_only = {
@@ -121,8 +132,15 @@ def op_to_cpp(op, csrs, for_klee = False):
     op = re.sub(r'Bits<{1\'b0, XLEN}\*2> pair = {X\[rs1 \+ 1\], X\[rs1\]};', r'uint64_t pair = ((uint64_t) X[rs1+1].value << 32) | ((uint64_t) X[rs1].value);', op)
     op = re.sub(r'{{XLEN{X\[([a-zA-Z0-9]+)\]\[xlen\(\)-1\]}}, X\[\1\]}', r'((int64_t)(int32_t)X[\1].value)', op)
     op = re.sub(r"{{XLEN-5{1'b0}}, ([a-zA-Z0-9]+)}", r'((uint32_t) \1)', op)
-
     op = re.sub(r'Bits<\{1\'b0, XLEN\}\*2>', r'int64_t', op)
+
+    op = re.sub(r'{MXLEN{1\'b0}}', r'0u', op)
+    op = re.sub(r'{MXLEN{1\'b1}}', r'~0u', op)
+    op = re.sub(r'Bits<{1\'b0, MXLEN}\*2> pair = {X\[rs1 \+ 1\], X\[rs1\]};', r'uint64_t pair = ((uint64_t) X[rs1+1].value << 32) | ((uint64_t) X[rs1].value);', op)
+    op = re.sub(r'{{MXLEN{X\[([a-zA-Z0-9]+)\]\[xlen\(\)-1\]}}, X\[\1\]}', r'((int64_t)(int32_t)X[\1].value)', op)
+    op = re.sub(r"{{MXLEN-5{1'b0}}, ([a-zA-Z0-9]+)}", r'((uint32_t) \1)', op)
+    op = re.sub(r'Bits<\{1\'b0, MXLEN\}\*2>', r'int64_t', op)
+
     op = re.sub(r"([0-9]+)'b([0-9]+)", r'XRegRange(0b\2, \1)', op)
     op = re.sub(r'\[([0-9]+):([0-9]+)\]', r'.range(\2, \1)', op)
     op = re.sub(r'([a-zA-Z0-9]+)\.range', r'XReg(\1).range', op)
