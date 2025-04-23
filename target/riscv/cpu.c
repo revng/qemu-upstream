@@ -39,6 +39,7 @@
 #include "tcg/tcg-cpu.h"
 #include "tcg/tcg.h"
 #include "xqci/xqciu_csr.h"
+#include "smrnmi/smrnmi_csr.h"
 
 /* RISC-V CPU definitions */
 static const char riscv_single_letter_exts[] = "IEMAFDQCBPVH";
@@ -457,7 +458,8 @@ static void riscv_max_cpu_init(Object *obj)
 
 /*#ifndef CONFIG_USER_ONLY*/
     /* TODO(anjo): Move to qc_iu CPU init once we've added a new cpu type */
-    qc_iu_register_custom_csrs(cpu);
+    xqci_register_custom_csrs(cpu);
+    smrnmi_register_custom_csrs(cpu);
 /*#endif*/
 
     env->priv_ver = PRIV_VERSION_LATEST;
@@ -636,7 +638,8 @@ static void rv32_base_cpu_init(Object *obj)
     RISCVCPU *cpu = RISCV_CPU(obj);
     CPURISCVState *env = &cpu->env;
 
-    qc_iu_register_custom_csrs(cpu);
+    xqci_register_custom_csrs(cpu);
+    smrnmi_register_custom_csrs(cpu);
 
     cpu->cfg.mmu = true;
     cpu->cfg.pmp = true;

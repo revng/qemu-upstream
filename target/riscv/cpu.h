@@ -316,6 +316,12 @@ struct CPUArchState {
     target_ulong qc_mwpstartaddr2;
     target_ulong qc_mwpstartaddr3;
 
+    /* CSRs for Smrnmi */
+    target_ulong mncause;
+    target_ulong mnepc;
+    target_ulong mnscratch;
+    target_ulong mnstatus;
+
 #ifndef CONFIG_USER_ONLY
     /* This contains QEMU specific information about the virt state. */
     bool virt_enabled;
