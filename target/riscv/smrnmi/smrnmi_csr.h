@@ -10,4 +10,4 @@
 #define MNSTATUS_MNPP 0x1800
 #define MNSTATUS_MNPV 0x80
 #define MNSTATUS_NMIE 0x8
-void qc_iu_register_custom_csrs(RISCVCPU *cpu);
+void smrnmi_register_custom_csrs(RISCVCPU *cpu);

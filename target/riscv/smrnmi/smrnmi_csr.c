@@ -1,7 +1,7 @@
 #include "qemu/osdep.h"
 #include "cpu.h"
 #include "cpu_vendorid.h"
-#include "xqciu_csr.h"
+#include "smrnmi_csr.h"
 
 static RISCVException any(CPURISCVState *env, int csrno)
 {
@@ -48,7 +48,7 @@ static RISCVException write_mnstatus(CPURISCVState *env, int csrno, target_ulong
     env->mnstatus = val;
     return RISCV_EXCP_NONE;
 }
-void qc_iu_register_custom_csrs(RISCVCPU *cpu)
+void smrnmi_register_custom_csrs(RISCVCPU *cpu)
 {
     riscv_set_csr_ops(CSR_MNCAUSE, &(riscv_csr_operations){"mncause", any, read_mncause, write_mncause});
     riscv_set_csr_ops(CSR_MNEPC, &(riscv_csr_operations){"mnepc", any, read_mnepc, write_mnepc});
