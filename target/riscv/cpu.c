@@ -38,7 +38,7 @@
 #include "kvm/kvm_riscv.h"
 #include "tcg/tcg-cpu.h"
 #include "tcg/tcg.h"
-#include "xqci/xqciu_csr.h"
+#include "xqci/xqci_csr.h"
 #include "smrnmi/smrnmi_csr.h"
 
 /* RISC-V CPU definitions */

@@ -37,7 +37,7 @@
 
 #include "tcg/tcg-cpu.h"
 
-#include "xqci/xqciu_csr.h"
+#include "xqci/xqci_csr.h"
 #include "smrnmi/smrnmi_csr.h"
 
 /* global register indices */

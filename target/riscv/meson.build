@@ -28,7 +28,7 @@ riscv_ss.add(files(
   'crypto_helper.c',
   'zce_helper.c',
   'vcrypto_helper.c',
-  'xqci/xqciu_csr.c',
+  'xqci/xqci_csr.c',
   'smrnmi/smrnmi_csr.c',
 ))
 
