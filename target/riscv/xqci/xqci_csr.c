@@ -1,7 +1,7 @@
 #include "qemu/osdep.h"
 #include "cpu.h"
 #include "cpu_vendorid.h"
-#include "xqciu_csr.h"
+#include "xqci_csr.h"
 
 static RISCVException any(CPURISCVState *env, int csrno)
 {
