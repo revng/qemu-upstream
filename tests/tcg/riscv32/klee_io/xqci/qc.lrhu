@@ -16,11 +16,11 @@
     value: 0
 - variables:
   - name: "shamt"
-    in: 1
+    in: 3
   - name: "rs1"
-    in: 3204454270
+    in: 2631010088
   - name: "rs2"
-    in: 545258592
+    in: 207995200
   - name: "rd"
     in: 0
     out: 22136
@@ -28,15 +28,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 4158
+  - address: 4392
     value: 22136
 - variables:
   - name: "shamt"
-    in: 4
+    in: 6
   - name: "rs1"
-    in: 2080276432
+    in: 4058682304
   - name: "rs2"
-    in: 406853891
+    in: 70800896
   - name: "rd"
     in: 0
     out: 22136
@@ -44,15 +44,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 4096
+  - address: 5056
     value: 22136
 - variables:
   - name: "shamt"
-    in: 7
+    in: 2
   - name: "rs1"
-    in: 0
+    in: 100
   - name: "rs2"
-    in: 32
+    in: 1000
   - name: "rd"
     in: 0
     out: 22136
@@ -60,15 +60,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 4096
+  - address: 4100
     value: 22136
 - variables:
   - name: "shamt"
-    in: 6
+    in: 2
   - name: "rs1"
-    in: 3904
+    in: 3916
   - name: "rs2"
-    in: 67108928
+    in: 2147484672
   - name: "rd"
     in: 0
     out: 22136
@@ -76,5 +76,5 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 8000
+  - address: 8012
     value: 22136

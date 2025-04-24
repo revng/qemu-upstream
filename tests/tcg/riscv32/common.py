@@ -51,7 +51,8 @@ def var_is_imm(op, name):
     return f'X[{name}]' not in op and \
            f'X[{name}+8]' not in op and \
            f'creg2reg({name})' not in op and \
-           f'creg2reg({name}+8)' not in op 
+           f'creg2reg({name}+8)' not in op and \
+           name != 'r1s' and name != 'r2s'
 
 def var_size_from_location(loc_str):
     sum = 0

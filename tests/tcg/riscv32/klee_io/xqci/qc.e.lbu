@@ -1,8 +1,8 @@
 - variables:
   - name: "imm"
-    in: 33558519
+    in: 10241
   - name: "rs1"
-    in: 4261412876
+    in: 4294963200
   - name: "rd"
     in: 0
     out: 120
@@ -10,7 +10,7 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 4099
+  - address: 6145
     value: 120
 - variables:
   - name: "imm"
@@ -30,7 +30,7 @@
   - name: "imm"
     in: 67108863
   - name: "rs1"
-    in: 4227870720
+    in: 4227870784
   - name: "rd"
     in: 0
     out: 0
@@ -38,13 +38,13 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 12287
+  - address: 12351
     value: 0
 - variables:
   - name: "imm"
-    in: 4103
+    in: 3199
   - name: "rs1"
-    in: 0
+    in: 904
   - name: "rd"
     in: 0
     out: 120

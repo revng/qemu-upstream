@@ -15,23 +15,23 @@
   - name: "rs2"
     in: 4294902015
   - name: "rs1"
-    in: 4294959076
+    in: 4294959088
   overflow: 1
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 4099
+  - address: 4111
     value: 255
 - variables:
   - name: "imm"
-    in: 3643
+    in: 5087
   - name: "rs2"
     in: 4294902015
   - name: "rs1"
-    in: 4096
+    in: 3072
   overflow: 0
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 7739
+  - address: 8159
     value: 255

@@ -268,6 +268,7 @@ def main():
             variable_order = []
             fmt = ''
             asm = ''
+            reg_s_index = 0
             if test_has_variables(test):
                 for i, v in enumerate(reversed(test['variables'])):
                     if not 'in' in v:
@@ -307,7 +308,11 @@ def main():
                             value = v['in']
                             in_args.append(('r', name))
 
-                        printer.line(f'unsigned int {name} = {value};')
+                        if var['name'].startswith('r') and var['name'].endswith('s'):
+                            reg_s_index += 1
+                            printer.line(f'register unsigned int {name} asm("s{reg_s_index}") = {value};')
+                        else:
+                            printer.line(f'unsigned int {name} = {value};')
                         
                         tmp_index += 1
 
@@ -325,7 +330,7 @@ def main():
 
                     if name in remap_names:
                         name = remap_names[name]
-                    elif v.startswith('r'):
+                    elif v.startswith('rs') or v == 'rd':
                         name = 'x' + v[1:]
 
                     asm = asm.replace(name, f'%{i}')
