@@ -4,7 +4,6 @@ XQCI_KLEE_IO_DIR=$(SRC)/klee_io/xqci
 XQCI_OUT_ASM_DIR=xqci-asm-tests
 XQCI_OUT_C_DIR=xqci-c-tests
 XQCI_OUT_C_CODE_DIR:=$(XQCI_OUT_C_DIR)/code
-XQCI_OUT_C_OBJECT_DIR:=$(XQCI_OUT_C_DIR)/objects
 XQCI_OUT_C_BIN_DIR:=$(XQCI_OUT_C_DIR)/bin
 XQCI_INST_DIR=$(SRC)/Xqci
 
@@ -12,7 +11,6 @@ XQCCMP_KLEE_IO_DIR=$(SRC)/klee_io/xqccmp
 XQCCMP_OUT_ASM_DIR=xqccmp-asm-tests
 XQCCMP_OUT_C_DIR=xqccmp-c-tests
 XQCCMP_OUT_C_CODE_DIR:=$(XQCCMP_OUT_C_DIR)/code
-XQCCMP_OUT_C_OBJECT_DIR:=$(XQCCMP_OUT_C_DIR)/objects
 XQCCMP_OUT_C_BIN_DIR:=$(XQCCMP_OUT_C_DIR)/bin
 XQCCMP_INST_DIR=$(SRC)/Xqccmp
 
@@ -20,9 +18,10 @@ SMRNMI_KLEE_IO_DIR=$(SRC)/klee_io/smrnmi
 SMRNMI_OUT_ASM_DIR=smrnmi-asm-tests
 SMRNMI_OUT_C_DIR=smrnmi-c-tests
 SMRNMI_OUT_C_CODE_DIR:=$(SMRNMI_OUT_C_DIR)/code
-SMRNMI_OUT_C_OBJECT_DIR:=$(SMRNMI_OUT_C_DIR)/objects
 SMRNMI_OUT_C_BIN_DIR:=$(SMRNMI_OUT_C_DIR)/bin
 SMRNMI_INST_DIR=$(SRC)/Smrnmi
+
+CFLAGS=-fuse-ld=qcld -T $(SRC)/mem-test-page.ld --target=riscv32-unknown-linux-gnu -nostdlib -static -menable-experimental-extensions
 
 QEMU=./qemu-riscv32
 
@@ -99,21 +98,18 @@ run-smrnmi-asm-tests: $(SMRNMI_OUT_ASM_DIR)/*
 build-xqci-c-tests-dir:
 	mkdir -p $(XQCI_OUT_C_DIR)
 	mkdir -p $(XQCI_OUT_C_CODE_DIR)
-	mkdir -p $(XQCI_OUT_C_OBJECT_DIR)
 	mkdir -p $(XQCI_OUT_C_BIN_DIR)
 
 .PHONY: build-xqccmp-c-tests-dir
 build-xqccmp-c-tests-dir:
 	mkdir -p $(XQCCMP_OUT_C_DIR)
 	mkdir -p $(XQCCMP_OUT_C_CODE_DIR)
-	mkdir -p $(XQCCMP_OUT_C_OBJECT_DIR)
 	mkdir -p $(XQCCMP_OUT_C_BIN_DIR)
 
 .PHONY: build-smrnmi-c-tests-dir
 build-smrnmi-c-tests-dir:
 	mkdir -p $(SMRNMI_OUT_C_DIR)
 	mkdir -p $(SMRNMI_OUT_C_CODE_DIR)
-	mkdir -p $(SMRNMI_OUT_C_OBJECT_DIR)
 	mkdir -p $(SMRNMI_OUT_C_BIN_DIR)
 
 .PHONY: build-xqci-c-tests-code
@@ -124,20 +120,12 @@ build-xqci-c-tests-code: build-xqci-c-tests-dir
 		python $(SRC)/c.py --inst-dir $(XQCI_INST_DIR) --inst-name $$instname --io-file $$in_io --out $(XQCI_OUT_C_CODE_DIR)/$$instname.c; \
 	done
 
-.PHONY: build-xqci-c-tests-obj
-build-xqci-c-tests-obj: build-xqci-c-tests-code
+.PHONY: build-xqci-c-tests
+build-xqci-c-tests: build-xqci-c-tests-code
 	@for file in $(XQCI_OUT_C_CODE_DIR)/*; do \
 		instname=$$(basename $$file); \
-		echo "Building obj for" $$instname; \
-		$(CC) -c --target=riscv32-unknown-linux-gnu -menable-experimental-extensions -march=rvi20u32_xqci -o $(XQCI_OUT_C_OBJECT_DIR)/$$instname.o $$file; \
-	done
-
-.PHONY: build-xqci-c-tests
-build-xqci-c-tests: build-xqci-c-tests-obj
-	@for file in $(XQCI_OUT_C_OBJECT_DIR)/*; do \
-		instname=$$(basename $$file); \
-		echo "Linking obj for" $$instname; \
-		$(LD) -T $(SRC)/mem-test-page.ld -o $(XQCI_OUT_C_BIN_DIR)/$$instname $$file; \
+		echo "Building test for" $$instname; \
+		$(CC) $(CFLAGS) -march=rv32imc_xqci -o $(XQCI_OUT_C_BIN_DIR)/$$instname $$file; \
 	done
 
 .PHONY: run-xqci-c-tests
@@ -165,20 +153,12 @@ build-xqccmp-c-tests-code: build-xqccmp-c-tests-dir
 		python $(SRC)/c.py --inst-dir $(XQCCMP_INST_DIR) --inst-name $$instname --io-file $$in_io --out $(XQCCMP_OUT_C_CODE_DIR)/$$instname.c; \
 	done
 
-.PHONY: build-xqccmp-c-tests-obj
-build-xqccmp-c-tests-obj: build-xqccmp-c-tests-code
+.PHONY: build-xqccmp-c-tests
+build-xqccmp-c-tests: build-xqccmp-c-tests-code
 	@for file in $(XQCCMP_OUT_C_CODE_DIR)/*; do \
 		instname=$$(basename $$file); \
-		echo "Building obj for" $$instname; \
-		$(CC) -c --target=riscv32-unknown-linux-gnu -menable-experimental-extensions -march=rvi20u32_xqccmp0p1 -o $(XQCCMP_OUT_C_OBJECT_DIR)/$$instname.o $$file; \
-	done
-
-.PHONY: build-xqccmp-c-tests
-build-xqccmp-c-tests: build-xqccmp-c-tests-obj
-	@for file in $(XQCCMP_OUT_C_OBJECT_DIR)/*; do \
-		instname=$$(basename $$file); \
-		echo "Linking obj for" $$instname; \
-		$(LD) -T $(SRC)/mem-test-page.ld -o $(XQCCMP_OUT_C_BIN_DIR)/$$instname $$file; \
+		echo "Building test for" $$instname; \
+		$(CC) $(CFLAGS) -march=rv32imc_xqccmp0p1 -o $(XQCCMP_OUT_C_BIN_DIR)/$$instname $$file; \
 	done
 
 .PHONY: run-xqccmp-c-tests
@@ -205,20 +185,12 @@ build-smrnmi-c-tests-code: build-smrnmi-c-tests-dir
 		python $(SRC)/c.py --inst-dir $(SMRNMI_INST_DIR) --inst-name $$instname --io-file $$in_io --out $(SMRNMI_OUT_C_CODE_DIR)/$$instname.c; \
 	done
 
-.PHONY: build-smrnmi-c-tests-obj
-build-smrnmi-c-tests-obj: build-smrnmi-c-tests-code
+.PHONY: build-smrnmi-c-tests
+build-smrnmi-c-tests: build-smrnmi-c-tests-code
 	@for file in $(SMRNMI_OUT_C_CODE_DIR)/*; do \
 		instname=$$(basename $$file); \
-		echo "Building obj for" $$instname; \
-		$(CC) -c --target=riscv32-unknown-linux-gnu -menable-experimental-extensions -march=rvi20u32_smrnmi -o $(SMRNMI_OUT_C_OBJECT_DIR)/$$instname.o $$file; \
-	done
-
-.PHONY: build-smrnmi-c-tests
-build-smrnmi-c-tests: build-smrnmi-c-tests-obj
-	@for file in $(SMRNMI_OUT_C_OBJECT_DIR)/*; do \
-		instname=$$(basename $$file); \
-		echo "Linking obj for" $$instname; \
-		$(LD) -T $(SRC)/mem-test-page.ld -o $(SMRNMI_OUT_C_BIN_DIR)/$$instname $$file; \
+		echo "Building test for" $$instname; \
+		$(CC) $(CFLAGS) -march=rv32imc_smrnmi -o $(SMRNMI_OUT_C_BIN_DIR)/$$instname $$file; \
 	done
 
 .PHONY: run-smrnmi-c-tests
