@@ -1192,6 +1192,14 @@ static TCGv xqci_csrr(DisasContext *ctx, TCGv_env env, int csrno)
     return ret;
 }
 
+static TCGv xqci_csrr_field(DisasContext *ctx, TCGv_env env, int csrno, int field)
+{
+    TCGv ret = tcg_temp_new();
+    gen_helper_csrr(ret, env, tcg_constant_tl(csrno));
+    tcg_gen_andi_tl(ret, ret, field);
+    return ret;
+}
+
 static void xqci_csrw(DisasContext *ctx, TCGv_env env, int csrno, TCGv value)
 {
     gen_helper_csrw(env, tcg_constant_tl(csrno), value);
