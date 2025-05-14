@@ -1691,6 +1691,7 @@ static RISCVException read_mstatus_i128(CPURISCVState *env, int csrno,
 }
 #ifndef CONFIG_USER_ONLY
 
+#endif
 static RISCVException read_misa_i128(CPURISCVState *env, int csrno,
                                      Int128 *val)
 {
@@ -1776,6 +1777,7 @@ static RISCVException write_misa(CPURISCVState *env, int csrno,
     env->xl = riscv_cpu_mxl(env);
     return RISCV_EXCP_NONE;
 }
+#if !defined(CONFIG_USER_ONLY)
 
 static RISCVException read_medeleg(CPURISCVState *env, int csrno,
                                    target_ulong *val)
@@ -5060,8 +5062,10 @@ riscv_csr_operations csr_ops[CSR_TABLE_SIZE] = {
     [CSR_MCONFIGPTR]  = { "mconfigptr", any,   read_zero,
                           .min_priv_ver = PRIV_VERSION_1_12_0 },
     /* Machine Trap Setup */
+#endif
     [CSR_MISA]        = { "misa",       any,   read_misa,    write_misa,
                           NULL,                read_misa_i128              },
+#if !defined(CONFIG_USER_ONLY)
     [CSR_MIDELEG]     = { "mideleg",    any,   NULL, NULL,   rmw_mideleg   },
     [CSR_MEDELEG]     = { "medeleg",    any,   read_medeleg, write_medeleg },
     [CSR_MIE]         = { "mie",        any,   NULL, NULL,   rmw_mie       },
