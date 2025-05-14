@@ -9,7 +9,7 @@
 
 // void _ZN12CPUArchState5mnretEv
 static void emit_mnret(DisasContext *ctx, TCGv_env env) {
-TCGv_i32 temp23 = xqci_csrr(ctx, env, 1860);
+TCGv_i32 temp23 = xqci_csrr_field(ctx, env, 1860, 6144);
 TCGLabel * label24 = gen_new_label();
 TCGLabel * label25 = gen_new_label();
 tcg_gen_brcondi_i32(TCG_COND_EQ, temp23, 3, label24);
@@ -24,17 +24,17 @@ xqci_csrw_field(ctx, env, 784, 1024, tcg_constant_i32(0));
 tcg_gen_br(label24);
 gen_set_label(label24);
 xqci_csrw_field(ctx, env, 1860, 8, tcg_constant_i32(1));
-TCGv_i32 temp16 = xqci_csrr(ctx, env, 1860);
+TCGv_i32 temp16 = xqci_csrr_field(ctx, env, 1860, 6144);
 TCGLabel * label28 = gen_new_label();
 TCGLabel * label29 = gen_new_label();
 tcg_gen_brcondi_i32(TCG_COND_EQ, temp16, 0, label28);
 gen_set_label(label29);
-TCGv_i32 temp14 = xqci_csrr(ctx, env, 1860);
+TCGv_i32 temp14 = xqci_csrr_field(ctx, env, 1860, 6144);
 TCGLabel * label30 = gen_new_label();
 TCGLabel * label31 = gen_new_label();
 tcg_gen_brcondi_i32(TCG_COND_EQ, temp14, 1, label30);
 gen_set_label(label31);
-TCGv_i32 temp12 = xqci_csrr(ctx, env, 1860);
+TCGv_i32 temp12 = xqci_csrr_field(ctx, env, 1860, 6144);
 TCGLabel * label32 = gen_new_label();
 TCGLabel * label33 = gen_new_label();
 tcg_gen_brcondi_i32(TCG_COND_NE, temp12, 3, label32);
