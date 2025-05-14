@@ -16,7 +16,7 @@
   - name: "imm"
     in: 67108863
   - name: "rs1"
-    in: 4227870736
+    in: 4232380416
   - name: "rd"
     in: 0
     out: 0
@@ -24,7 +24,7 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 12303
+  - address: 4521983
     value: 0
 - variables:
   - name: "imm"
@@ -42,7 +42,7 @@
     value: 0
 - variables:
   - name: "imm"
-    in: 5247
+    in: 4475
   - name: "rs1"
     in: 0
   - name: "rd"
@@ -52,5 +52,5 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 5247
+  - address: 4475
     value: 120

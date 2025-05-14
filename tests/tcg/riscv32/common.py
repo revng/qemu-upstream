@@ -91,6 +91,11 @@ def sub_to_csr_read(match):
     str = match.group(1)
     return f'xqci_csrr_xreg(this, {str})'
 
+def sub_to_csr_read_field(match):
+    csr = match.group(1)
+    field = match.group(2)
+    return f'xqci_csrr_field_xreg(this, {csr}, {csr.upper()}_{field})'
+
 def sub_to_csr_write(match):
     str = match.group(1)
     value = match.group(2)
@@ -157,8 +162,8 @@ def op_to_cpp(op, csrs, for_klee = False):
     op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.sw_read\(\)', sub_to_csr_read, op)
     op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.sw_write\((.*)\)', sub_to_csr_write, op)
 
-    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.([A-Z]*) = (.*);', sub_to_csr_write_field , op)
-    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.([A-Z]*)', sub_to_csr_read , op)
+    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.([A-Z]*) = (.*);', sub_to_csr_write_field, op)
+    op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.([A-Z]*)', sub_to_csr_read_field, op)
     op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]', sub_to_csr_read, op)
 
     op = re.sub(r'\$bits\((.*)\)', r'XReg(\1)', op)

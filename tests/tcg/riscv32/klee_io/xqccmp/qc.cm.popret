@@ -8,10 +8,10 @@
   has_jump:
     valid_test_jump: 0
     jump_pc_offset: 0
-  has_valid_test_memop: 0
+  has_valid_test_memop: 1
   has_load:
-  - address: 12
-    value: 0
+  - address: 6156
+    value: 305419896
 - variables:
   - name: "rlist"
     in: 15
@@ -22,31 +22,31 @@
   has_jump:
     valid_test_jump: 0
     jump_pc_offset: 0
-  has_valid_test_memop: 0
+  has_valid_test_memop: 1
   has_load:
-  - address: 12
-    value: 0
-  - address: 16
-    value: 0
-  - address: 20
-    value: 0
-  - address: 24
-    value: 0
-  - address: 28
-    value: 0
-  - address: 32
-    value: 0
-  - address: 36
-    value: 0
-  - address: 40
-    value: 0
-  - address: 44
-    value: 0
-  - address: 48
-    value: 0
-  - address: 52
-    value: 0
-  - address: 56
-    value: 0
-  - address: 60
-    value: 0
+  - address: 6156
+    value: 3970458648
+  - address: 6160
+    value: 3665038752
+  - address: 6164
+    value: 3359618856
+  - address: 6168
+    value: 3054198960
+  - address: 6172
+    value: 2748779064
+  - address: 6176
+    value: 2443359168
+  - address: 6180
+    value: 2137939272
+  - address: 6184
+    value: 1832519376
+  - address: 6188
+    value: 1527099480
+  - address: 6192
+    value: 1221679584
+  - address: 6196
+    value: 916259688
+  - address: 6200
+    value: 610839792
+  - address: 6204
+    value: 305419896
