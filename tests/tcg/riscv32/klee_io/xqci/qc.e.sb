@@ -26,23 +26,23 @@
   - name: "rs2"
     in: 4294967295
   - name: "rs1"
-    in: 3020
+    in: 3017
   overflow: 0
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 4099
+  - address: 4096
     value: 255
 - variables:
   - name: "imm"
-    in: 33566727
+    in: 33558205
   - name: "rs2"
     in: 4294967295
   - name: "rs1"
-    in: 4261404668
+    in: 4261416960
   overflow: 1
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 4099
+  - address: 7869
     value: 255
