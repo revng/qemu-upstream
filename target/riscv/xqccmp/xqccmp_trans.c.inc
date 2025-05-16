@@ -24,6 +24,7 @@ static bool trans_qc_cm_pop(DisasContext *ctx, arg_qc_cm_pop *arg)
     if (arg->rlist == 0 || arg->rlist == 1 || arg->rlist == 2 || arg->rlist == 3) {
         return false;
     }
+    arg->spimm <<= 4;
     emit_qc_cm_pop(ctx, tcg_env, arg->rlist, arg->spimm);
     return true;
 #endif
