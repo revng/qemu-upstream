@@ -37,6 +37,7 @@ static bool trans_qc_cm_popret(DisasContext *ctx, arg_qc_cm_popret *arg)
     if (arg->rlist == 0 || arg->rlist == 1 || arg->rlist == 2 || arg->rlist == 3) {
         return false;
     }
+    arg->spimm <<= 4;
     emit_qc_cm_popret(ctx, tcg_env, arg->rlist, arg->spimm);
     return true;
 #endif
@@ -49,6 +50,7 @@ static bool trans_qc_cm_popretz(DisasContext *ctx, arg_qc_cm_popretz *arg)
     if (arg->rlist == 0 || arg->rlist == 1 || arg->rlist == 2 || arg->rlist == 3) {
         return false;
     }
+    arg->spimm <<= 4;
     emit_qc_cm_popretz(ctx, tcg_env, arg->rlist, arg->spimm);
     return true;
 #endif
@@ -74,6 +76,7 @@ static bool trans_qc_cm_pushfp(DisasContext *ctx, arg_qc_cm_pushfp *arg)
     if (arg->rlist == 0 || arg->rlist == 1 || arg->rlist == 2 || arg->rlist == 3 || arg->rlist == 4) {
         return false;
     }
+    arg->spimm <<= 4;
     emit_qc_cm_pushfp(ctx, tcg_env, arg->rlist, arg->spimm);
     return true;
 #endif
