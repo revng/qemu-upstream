@@ -28,6 +28,7 @@ static bool trans_qc_cm_popret(rv_decode *dec, arg_qc_cm_popret *arg)
     if (arg->rlist == 0 || arg->rlist == 1 || arg->rlist == 2 || arg->rlist == 3) {
         return false;
     }
+    arg->spimm <<= 4;
     dec->uimm = arg->rlist;
     dec->imm = arg->spimm;
     dec->op = rv_op_qc_cm_popret;
@@ -38,6 +39,7 @@ static bool trans_qc_cm_popretz(rv_decode *dec, arg_qc_cm_popretz *arg)
     if (arg->rlist == 0 || arg->rlist == 1 || arg->rlist == 2 || arg->rlist == 3) {
         return false;
     }
+    arg->spimm <<= 4;
     dec->uimm = arg->rlist;
     dec->imm = arg->spimm;
     dec->op = rv_op_qc_cm_popretz;
@@ -59,6 +61,7 @@ static bool trans_qc_cm_pushfp(rv_decode *dec, arg_qc_cm_pushfp *arg)
     if (arg->rlist == 0 || arg->rlist == 1 || arg->rlist == 2 || arg->rlist == 3 || arg->rlist == 4) {
         return false;
     }
+    arg->spimm <<= 4;
     dec->uimm = arg->rlist;
     dec->imm = arg->spimm;
     dec->op = rv_op_qc_cm_pushfp;
