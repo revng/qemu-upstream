@@ -1,18 +1,10 @@
 - variables:
   - name: "rs1"
-    in: 4294967294
+    in: 4294922764
   - name: "rd"
     in: 255
-    out: 2147483874
+    out: 2835742961
   overflow: 1
-  underflow: 0
-- variables:
-  - name: "rs1"
-    in: 255
-  - name: "rd"
-    in: 255
-    out: 2139095273
-  overflow: 0
   underflow: 0
 - variables:
   - name: "rs1"
@@ -20,5 +12,13 @@
   - name: "rd"
     in: 255
     out: 2147483648
+  overflow: 0
+  underflow: 0
+- variables:
+  - name: "rs1"
+    in: 255
+  - name: "rd"
+    in: 255
+    out: 2139095273
   overflow: 0
   underflow: 0

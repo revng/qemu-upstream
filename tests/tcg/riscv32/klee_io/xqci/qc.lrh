@@ -1,5 +1,37 @@
 - variables:
   - name: "shamt"
+    in: 7
+  - name: "rs1"
+    in: 1073217408
+  - name: "rs2"
+    in: 2172649472
+  - name: "rd"
+    in: 0
+    out: 0
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 0
+  has_load:
+  - address: 4294442880
+    value: 0
+- variables:
+  - name: "shamt"
+    in: 2
+  - name: "rs1"
+    in: 5884
+  - name: "rs2"
+    in: 1073741824
+  - name: "rd"
+    in: 0
+    out: 22136
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 5884
+    value: 22136
+- variables:
+  - name: "shamt"
     in: 0
   - name: "rs1"
     in: 0
@@ -16,41 +48,9 @@
     value: 0
 - variables:
   - name: "shamt"
-    in: 6
+    in: 5
   - name: "rs1"
-    in: 3208372032
-  - name: "rs2"
-    in: 16978176
-  - name: "rd"
     in: 0
-    out: 22136
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 8000
-    value: 22136
-- variables:
-  - name: "shamt"
-    in: 4
-  - name: "rs1"
-    in: 4294963184
-  - name: "rs2"
-    in: 268436224
-  - name: "rd"
-    in: 0
-    out: 22136
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 8176
-    value: 22136
-- variables:
-  - name: "shamt"
-    in: 0
-  - name: "rs1"
-    in: 6131
   - name: "rs2"
     in: 255
   - name: "rd"
@@ -60,15 +60,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 6386
+  - address: 8160
     value: 22136
 - variables:
   - name: "shamt"
-    in: 5
+    in: 3
   - name: "rs1"
-    in: 5760
+    in: 4294963144
   - name: "rs2"
-    in: 2147483648
+    in: 536872448
   - name: "rd"
     in: 0
     out: 22136
@@ -76,5 +76,21 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 5760
+  - address: 8136
+    value: 22136
+- variables:
+  - name: "shamt"
+    in: 6
+  - name: "rs1"
+    in: 2223248768
+  - name: "rs2"
+    in: 32370688
+  - name: "rd"
+    in: 0
+    out: 22136
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 5504
     value: 22136

@@ -1,5 +1,37 @@
 - variables:
   - name: "shamt"
+    in: 7
+  - name: "rs1"
+    in: 3968
+  - name: "rs2"
+    in: 67108896
+  - name: "rd"
+    in: 0
+    out: 120
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 8064
+    value: 120
+- variables:
+  - name: "shamt"
+    in: 7
+  - name: "rs1"
+    in: 2013192576
+  - name: "rs2"
+    in: 2147483676
+  - name: "rd"
+    in: 0
+    out: 0
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 0
+  has_load:
+  - address: 2013196160
+    value: 0
+- variables:
+  - name: "shamt"
     in: 0
   - name: "rs1"
     in: 0
@@ -16,43 +48,27 @@
     value: 0
 - variables:
   - name: "shamt"
+    in: 5
+  - name: "rs1"
+    in: 2583561056
+  - name: "rs2"
+    in: 1127223397
+  - name: "rd"
+    in: 0
+    out: 120
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 4096
+    value: 120
+- variables:
+  - name: "shamt"
     in: 3
   - name: "rs1"
-    in: 3262509048
+    in: 5352
   - name: "rs2"
-    in: 129058304
-  - name: "rd"
-    in: 0
-    out: 120
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 8184
-    value: 120
-- variables:
-  - name: "shamt"
-    in: 1
-  - name: "rs1"
-    in: 3614176988
-  - name: "rs2"
-    in: 2487881728
-  - name: "rd"
-    in: 0
-    out: 120
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 5852
-    value: 120
-- variables:
-  - name: "shamt"
-    in: 7
-  - name: "rs1"
-    in: 4480
-  - name: "rs2"
-    in: 1
+    in: 255
   - name: "rd"
     in: 0
     out: 120
@@ -60,15 +76,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 4608
+  - address: 7392
     value: 120
 - variables:
   - name: "shamt"
-    in: 3
+    in: 6
   - name: "rs1"
-    in: 6120
+    in: 4294610624
   - name: "rs2"
-    in: 2147483648
+    in: 5696
   - name: "rd"
     in: 0
     out: 120
@@ -76,5 +92,5 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 6120
+  - address: 7872
     value: 120

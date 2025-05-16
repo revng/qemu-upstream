@@ -1,6 +1,6 @@
 - variables:
   - name: "rs1"
-    in: 8192
+    in: 255
   - name: "simm1"
     in: 0
   - name: "simm2"
@@ -12,7 +12,7 @@
   underflow: 0
 - variables:
   - name: "rs1"
-    in: 255
+    in: 8192
   - name: "simm1"
     in: 0
   - name: "simm2"

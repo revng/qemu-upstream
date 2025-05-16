@@ -1,5 +1,37 @@
 - variables:
   - name: "shamt"
+    in: 7
+  - name: "rs1"
+    in: 1073217408
+  - name: "rs2"
+    in: 2172649472
+  - name: "rd"
+    in: 0
+    out: 0
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 0
+  has_load:
+  - address: 4294442880
+    value: 0
+- variables:
+  - name: "shamt"
+    in: 2
+  - name: "rs1"
+    in: 5548
+  - name: "rs2"
+    in: 1073741824
+  - name: "rd"
+    in: 0
+    out: 120
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 5548
+    value: 120
+- variables:
+  - name: "shamt"
     in: 0
   - name: "rs1"
     in: 0
@@ -16,43 +48,11 @@
     value: 0
 - variables:
   - name: "shamt"
-    in: 6
+    in: 5
   - name: "rs1"
-    in: 1806046784
-  - name: "rs2"
-    in: 38889472
-  - name: "rd"
     in: 0
-    out: 120
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 5696
-    value: 120
-- variables:
-  - name: "shamt"
-    in: 4
-  - name: "rs1"
-    in: 1593836352
   - name: "rs2"
-    in: 2316304640
-  - name: "rd"
-    in: 0
-    out: 120
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 4928
-    value: 120
-- variables:
-  - name: "shamt"
-    in: 0
-  - name: "rs1"
-    in: 2702
-  - name: "rs2"
-    in: 4096
+    in: 255
   - name: "rd"
     in: 0
     out: 120
@@ -60,15 +60,15 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 6798
+  - address: 8160
     value: 120
 - variables:
   - name: "shamt"
     in: 5
   - name: "rs1"
-    in: 4288
+    in: 3610492864
   - name: "rs2"
-    in: 2147483648
+    in: 1095131808
   - name: "rd"
     in: 0
     out: 120
@@ -76,5 +76,21 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 4288
+  - address: 5056
+    value: 120
+- variables:
+  - name: "shamt"
+    in: 4
+  - name: "rs1"
+    in: 4294840304
+  - name: "rs2"
+    in: 8448
+  - name: "rd"
+    in: 0
+    out: 120
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 8176
     value: 120

@@ -5,8 +5,12 @@
     in: 0
   overflow: 0
   underflow: 0
-  has_valid_test_memop: 0
+  has_valid_test_memop: 1
   has_store:
+  - address: 6136
+    value: 8
+  - address: 6140
+    value: 1
 - variables:
   - name: "rlist"
     in: 15
@@ -14,5 +18,31 @@
     in: 0
   overflow: 0
   underflow: 0
-  has_valid_test_memop: 0
+  has_valid_test_memop: 1
   has_store:
+  - address: 6092
+    value: 27
+  - address: 6096
+    value: 26
+  - address: 6100
+    value: 25
+  - address: 6104
+    value: 24
+  - address: 6108
+    value: 23
+  - address: 6112
+    value: 22
+  - address: 6116
+    value: 21
+  - address: 6120
+    value: 20
+  - address: 6124
+    value: 19
+  - address: 6128
+    value: 18
+  - address: 6132
+    value: 9
+  - address: 6136
+    value: 8
+  - address: 6140
+    value: 1
