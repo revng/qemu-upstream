@@ -1174,6 +1174,15 @@ static uint32_t opcode_at(DisasContextBase *dcbase, target_ulong pc)
 #include "decode-XVentanaCondOps.c.inc"
 
 #ifdef TARGET_RISCV32
+static void xqci_jump(DisasContext *ctx, TCGv pc, int imm)
+{
+    TCGv target_pc = tcg_temp_new();
+    tcg_gen_addi_tl(target_pc, pc, imm);
+    tcg_gen_mov_tl(cpu_pc, target_pc);
+    lookup_and_goto_ptr(ctx);
+    ctx->base.is_jmp = DISAS_NORETURN;
+}
+
 static void xqci_jump_pcrel(DisasContext *ctx, TCGv pc, int imm)
 {
     gen_goto_tb(ctx, 1, imm);
