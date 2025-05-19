@@ -63,7 +63,7 @@ build-xqccmp-asm-tests:
 .PHONY: run-xqccmp-asm-tests
 run-xqccmp-asm-tests: $(XQCCMP_OUT_ASM_DIR)/*
 	@for exe in $(XQCCMP_OUT_ASM_DIR)/*; do \
-		out=$$($(QEMU) -cpu rv32,zcmp=true,zcd=false,d=false,zcb=true,zilsd=true,zclsd=true,zcd=false,d=false,c=false $$exe); \
+		out=$$($(QEMU) -cpu rv32,zcd=false,d=false,zcb=true,zcmp=false,zilsd=true,zclsd=true,f=false,zfa=false,xqci=true,smrnmi=true,xqccmp=true $$exe); \
 		err=$$?; \
 		if [ $$err -eq 0 ]; then \
 			echo "PASS" $$exe; \
