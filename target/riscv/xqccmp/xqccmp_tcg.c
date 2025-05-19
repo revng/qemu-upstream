@@ -280,7 +280,7 @@ tcg_gen_br(label86);
 gen_set_label(label86);
 tcg_gen_mov_i32(cpu_gpr[2ull], temp0);
 temp0 = xqci_get_gpr(ctx, 1);
-xqci_jump_pcrel(ctx, temp0, 0);
+xqci_jump(ctx, temp0, 0);
 }
 
 // void _ZN12CPUArchState13qc_cm_popretzEhh
@@ -399,7 +399,7 @@ gen_set_label(label87);
 tcg_gen_mov_i32(cpu_gpr[2ull], temp0);
 tcg_gen_movi_i32(cpu_gpr[10ull], 0);
 temp0 = xqci_get_gpr(ctx, 1);
-xqci_jump_pcrel(ctx, temp0, 0);
+xqci_jump(ctx, temp0, 0);
 }
 
 // void _ZN12CPUArchState10qc_cm_pushEhh
