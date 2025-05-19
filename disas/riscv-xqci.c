@@ -347,6 +347,7 @@ void decode_xqci(rv_decode *dec, rv_isa isa) {
         decode_xqci_32_impl(dec, inst);
         break;
     case 6:
+        inst <<= (64-48);
         decode_xqci_48_impl(dec, inst);
         break;
     }
