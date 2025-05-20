@@ -20,7 +20,7 @@
   underflow: 0
 - variables:
   - name: "imm"
-    in: 1918
+    in: 1790
   - name: "rs1"
     in: 2162719
   - name: "rd"
@@ -30,9 +30,9 @@
   underflow: 0
 - variables:
   - name: "imm"
-    in: 1792
+    in: 1536
   - name: "rs1"
-    in: 196638
+    in: 655385
   - name: "rd"
     in: 255
     out: 255

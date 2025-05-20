@@ -4,7 +4,7 @@
   - name: "shamt"
     in: 28
   - name: "rs1"
-    in: 16777216
+    in: 65536
   - name: "rd"
     in: 255
     out: 255

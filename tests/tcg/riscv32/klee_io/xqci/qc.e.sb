@@ -1,48 +1,37 @@
 - variables:
   - name: "imm"
-    in: 0
-  - name: "rs2"
-    in: 4294967295
-  - name: "rs1"
-    in: 0
-  overflow: 0
-  underflow: 0
-  has_valid_test_memop: 0
-  has_store:
-- variables:
-  - name: "imm"
     in: 67108863
   - name: "rs2"
     in: 4294967295
   - name: "rs1"
-    in: 4227870728
+    in: 4227871744
   overflow: 1
   underflow: 0
   has_valid_test_memop: 0
   has_store:
 - variables:
   - name: "imm"
-    in: 1079
+    in: 1146
   - name: "rs2"
     in: 4294967295
   - name: "rs1"
-    in: 3020
+    in: 2950
   overflow: 0
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 4099
+  - address: 4096
     value: 255
 - variables:
   - name: "imm"
-    in: 33566727
+    in: 4395573
   - name: "rs2"
     in: 4294967295
   - name: "rs1"
-    in: 4261404665
+    in: 4290576395
   overflow: 1
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 4096
+  - address: 4672
     value: 255
