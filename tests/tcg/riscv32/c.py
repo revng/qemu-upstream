@@ -345,7 +345,8 @@ def main():
             if 'has_store' in test:
                 for storeop in test['has_store']:
                     printer.line(f'intptr_t address{tmp_index} = {storeop["address"]};')
-                    printer.line(f'check(*(uint32_t*)address{tmp_index} == {storeop["value"]});')
+                    fs = "F"*int(2*int(storeop["size"])/8)
+                    printer.line(f'check((*(uint32_t*)address{tmp_index} & 0x{fs}) == {storeop["value"]});')
                     tmp_index += 1
 
         printer.line('exit(0);')

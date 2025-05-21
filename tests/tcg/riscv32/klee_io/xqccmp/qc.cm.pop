@@ -9,6 +9,7 @@
   has_load:
   - address: 6156
     value: 305419896
+    size: 32
 - variables:
   - name: "rlist"
     in: 15
@@ -20,27 +21,40 @@
   has_load:
   - address: 6156
     value: 3970458648
+    size: 32
   - address: 6160
     value: 3665038752
+    size: 32
   - address: 6164
     value: 3359618856
+    size: 32
   - address: 6168
     value: 3054198960
+    size: 32
   - address: 6172
     value: 2748779064
+    size: 32
   - address: 6176
     value: 2443359168
+    size: 32
   - address: 6180
     value: 2137939272
+    size: 32
   - address: 6184
     value: 1832519376
+    size: 32
   - address: 6188
     value: 1527099480
+    size: 32
   - address: 6192
     value: 1221679584
+    size: 32
   - address: 6196
     value: 916259688
+    size: 32
   - address: 6200
     value: 610839792
+    size: 32
   - address: 6204
     value: 305419896
+    size: 32

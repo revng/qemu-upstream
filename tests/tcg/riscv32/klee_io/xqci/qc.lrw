@@ -2,23 +2,7 @@
   - name: "shamt"
     in: 7
   - name: "rs1"
-    in: 6016
-  - name: "rs2"
-    in: 2147483648
-  - name: "rd"
-    in: 0
-    out: 305419896
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 6016
-    value: 305419896
-- variables:
-  - name: "shamt"
-    in: 7
-  - name: "rs1"
-    in: 536346496
+    in: 1073217408
   - name: "rs2"
     in: 2147487856
   - name: "rd"
@@ -28,8 +12,26 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 536885120
+  - address: 1073756032
     value: 0
+    size: 0
+- variables:
+  - name: "shamt"
+    in: 7
+  - name: "rs1"
+    in: 4096
+  - name: "rs2"
+    in: 268435456
+  - name: "rd"
+    in: 0
+    out: 305419896
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 4096
+    value: 305419896
+    size: 32
 - variables:
   - name: "shamt"
     in: 0
@@ -46,29 +48,14 @@
   has_load:
   - address: 255
     value: 0
+    size: 0
 - variables:
   - name: "shamt"
-    in: 4
+    in: 1
   - name: "rs1"
-    in: 4277211024
+    in: 2134
   - name: "rs2"
-    in: 1074852096
-  - name: "rd"
-    in: 0
-    out: 305419896
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 8080
-    value: 305419896
-- variables:
-  - name: "shamt"
-    in: 7
-  - name: "rs1"
-    in: 4864
-  - name: "rs2"
-    in: 16
+    in: 2048
   - name: "rd"
     in: 0
     out: 305419896
@@ -76,15 +63,16 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 6912
+  - address: 6230
     value: 305419896
+    size: 32
 - variables:
   - name: "shamt"
-    in: 4
+    in: 6
   - name: "rs1"
-    in: 4227854304
+    in: 2560561344
   - name: "rs2"
-    in: 4195072
+    in: 94209022
   - name: "rd"
     in: 0
     out: 305419896
@@ -92,5 +80,23 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 8160
+  - address: 4160
     value: 305419896
+    size: 32
+- variables:
+  - name: "shamt"
+    in: 6
+  - name: "rs1"
+    in: 4294963136
+  - name: "rs2"
+    in: 192
+  - name: "rd"
+    in: 0
+    out: 305419896
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 8128
+    value: 305419896
+    size: 32

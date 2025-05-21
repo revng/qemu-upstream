@@ -22,6 +22,7 @@
   has_store:
   - address: 4096
     value: 255
+    size: 8
 - variables:
   - name: "imm"
     in: 4395573
@@ -35,3 +36,4 @@
   has_store:
   - address: 4672
     value: 255
+    size: 8

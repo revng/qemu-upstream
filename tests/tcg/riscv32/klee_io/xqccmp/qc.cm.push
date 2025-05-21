@@ -9,6 +9,7 @@
   has_store:
   - address: 6140
     value: 1
+    size: 32
 - variables:
   - name: "rlist"
     in: 15
@@ -20,27 +21,40 @@
   has_store:
   - address: 6092
     value: 27
+    size: 32
   - address: 6096
     value: 26
+    size: 32
   - address: 6100
     value: 25
+    size: 32
   - address: 6104
     value: 24
+    size: 32
   - address: 6108
     value: 23
+    size: 32
   - address: 6112
     value: 22
+    size: 32
   - address: 6116
     value: 21
+    size: 32
   - address: 6120
     value: 20
+    size: 32
   - address: 6124
     value: 19
+    size: 32
   - address: 6128
     value: 18
+    size: 32
   - address: 6132
     value: 9
+    size: 32
   - address: 6136
     value: 8
+    size: 32
   - address: 6140
     value: 1
+    size: 32
