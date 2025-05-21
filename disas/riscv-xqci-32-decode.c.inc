@@ -167,22 +167,22 @@ typedef arg_decode_xqci_32_impl0 arg_qc_extdupr;
 static bool trans_qc_extdupr(rv_decode *dec, arg_qc_extdupr *a);
 typedef arg_decode_xqci_32_impl1 arg_qc_brev32;
 static bool trans_qc_brev32(rv_decode *dec, arg_qc_brev32 *a);
-typedef arg_decode_xqci_32_impl1 arg_qc_clo;
-static bool trans_qc_clo(rv_decode *dec, arg_qc_clo *a);
 typedef arg_decode_xqci_32_impl0 arg_qc_extdur;
 static bool trans_qc_extdur(rv_decode *dec, arg_qc_extdur *a);
-typedef arg_decode_xqci_32_impl0 arg_qc_insbr;
-static bool trans_qc_insbr(rv_decode *dec, arg_qc_insbr *a);
+typedef arg_decode_xqci_32_impl1 arg_qc_clo;
+static bool trans_qc_clo(rv_decode *dec, arg_qc_clo *a);
 typedef arg_decode_xqci_32_impl1 arg_qc_compress2;
 static bool trans_qc_compress2(rv_decode *dec, arg_qc_compress2 *a);
-typedef arg_decode_xqci_32_impl1 arg_qc_compress3;
-static bool trans_qc_compress3(rv_decode *dec, arg_qc_compress3 *a);
+typedef arg_decode_xqci_32_impl0 arg_qc_insbr;
+static bool trans_qc_insbr(rv_decode *dec, arg_qc_insbr *a);
 typedef arg_decode_xqci_32_impl0 arg_qc_insbhr;
 static bool trans_qc_insbhr(rv_decode *dec, arg_qc_insbhr *a);
-typedef arg_decode_xqci_32_impl0 arg_qc_extdr;
-static bool trans_qc_extdr(rv_decode *dec, arg_qc_extdr *a);
+typedef arg_decode_xqci_32_impl1 arg_qc_compress3;
+static bool trans_qc_compress3(rv_decode *dec, arg_qc_compress3 *a);
 typedef arg_decode_xqci_32_impl1 arg_qc_cto;
 static bool trans_qc_cto(rv_decode *dec, arg_qc_cto *a);
+typedef arg_decode_xqci_32_impl0 arg_qc_extdr;
+static bool trans_qc_extdr(rv_decode *dec, arg_qc_extdr *a);
 typedef arg_decode_xqci_32_impl0 arg_qc_insbpr;
 static bool trans_qc_insbpr(rv_decode *dec, arg_qc_insbpr *a);
 typedef arg_decode_xqci_32_impl1 arg_qc_expand2;
@@ -191,14 +191,14 @@ typedef arg_decode_xqci_32_impl0 arg_qc_insbprh;
 static bool trans_qc_insbprh(rv_decode *dec, arg_qc_insbprh *a);
 typedef arg_decode_xqci_32_impl1 arg_qc_expand3;
 static bool trans_qc_expand3(rv_decode *dec, arg_qc_expand3 *a);
-typedef arg_decode_xqci_32_impl1 arg_qc_normu;
-static bool trans_qc_normu(rv_decode *dec, arg_qc_normu *a);
 typedef arg_decode_xqci_32_impl0 arg_qc_extdpr;
 static bool trans_qc_extdpr(rv_decode *dec, arg_qc_extdpr *a);
-typedef arg_decode_xqci_32_impl0 arg_qc_extdprh;
-static bool trans_qc_extdprh(rv_decode *dec, arg_qc_extdprh *a);
+typedef arg_decode_xqci_32_impl1 arg_qc_normu;
+static bool trans_qc_normu(rv_decode *dec, arg_qc_normu *a);
 typedef arg_decode_xqci_32_impl1 arg_qc_normeu;
 static bool trans_qc_normeu(rv_decode *dec, arg_qc_normeu *a);
+typedef arg_decode_xqci_32_impl0 arg_qc_extdprh;
+static bool trans_qc_extdprh(rv_decode *dec, arg_qc_extdprh *a);
 typedef arg_decode_xqci_32_impl1 arg_qc_norm;
 static bool trans_qc_norm(rv_decode *dec, arg_qc_norm *a);
 typedef arg_decode_xqci_32_impl0 arg_qc_extduprh;
@@ -387,77 +387,77 @@ static bool trans_qc_wrapi(rv_decode *dec, arg_qc_wrapi *a);
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(rv_decode *dec, arg_decode_xqci_32_impl0 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 20, 5);
-    a->rs1 = extract32(insn, 15, 5);
     a->rd = extract32(insn, 7, 5);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_1(rv_decode *dec, arg_decode_xqci_32_impl1 *a, uint32_t insn)
 {
-    a->rs1 = extract32(insn, 15, 5);
     a->rd = extract32(insn, 7, 5);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_10(rv_decode *dec, arg_decode_xqci_32_impl9 *a, uint32_t insn)
 {
-    a->simm = extract32(insn, 27, 5);
     a->rs2 = extract32(insn, 20, 5);
-    a->rs1 = extract32(insn, 15, 5);
     a->rd = extract32(insn, 7, 5);
+    a->rs1 = extract32(insn, 15, 5);
+    a->simm = extract32(insn, 27, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_11(rv_decode *dec, arg_decode_xqci_32_impl10 *a, uint32_t insn)
 {
-    a->simm = extract32(insn, 27, 5);
+    a->rd = extract32(insn, 7, 5);
     a->imm = extract32(insn, 20, 5);
     a->rs1 = extract32(insn, 15, 5);
-    a->rd = extract32(insn, 7, 5);
+    a->simm = extract32(insn, 27, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_12(rv_decode *dec, arg_decode_xqci_32_impl11 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 20, 5);
-    a->rs1 = extract32(insn, 15, 5);
-    a->shamt = extract32(insn, 25, 3);
     a->rd = extract32(insn, 7, 5);
+    a->shamt = extract32(insn, 25, 3);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_13(rv_decode *dec, arg_decode_xqci_32_impl12 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 20, 5);
-    a->rs1 = extract32(insn, 15, 5);
-    a->imm = extract32(insn, 25, 5);
     a->rd = extract32(insn, 7, 5);
+    a->imm = extract32(insn, 25, 5);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_14(rv_decode *dec, arg_decode_xqci_32_impl13 *a, uint32_t insn)
 {
-    a->rs1 = extract32(insn, 15, 5);
     a->length = extract32(insn, 20, 5);
-    a->imm = extract32(insn, 25, 5);
     a->rd = extract32(insn, 7, 5);
+    a->imm = extract32(insn, 25, 5);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_15(rv_decode *dec, arg_decode_xqci_32_impl14 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 20, 5);
     a->rd = extract32(insn, 7, 5);
-    a->rs1 = extract32(insn, 15, 5);
     a->rs3 = extract32(insn, 27, 5);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_16(rv_decode *dec, arg_decode_xqci_32_impl15 *a, uint32_t insn)
 {
-    a->imm = extract32(insn, 20, 5);
-    a->rd = extract32(insn, 7, 5);
-    a->rs1 = extract32(insn, 15, 5);
     a->rs3 = extract32(insn, 27, 5);
+    a->rd = extract32(insn, 7, 5);
+    a->imm = extract32(insn, 20, 5);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_17(rv_decode *dec, arg_decode_xqci_32_impl16 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 7, 5);
-    a->rs1 = extract32(insn, 15, 5);
     a->imm = extract32(insn, 20, 12);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_18(rv_decode *dec, arg_decode_xqci_32_impl17 *a, uint32_t insn)
@@ -497,57 +497,57 @@ static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_22(rv_decode *de
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_23(rv_decode *dec, arg_decode_xqci_32_impl20 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 20, 5);
+    a->rd = extract32(insn, 7, 5);
     a->simm2 = extract32(insn, 27, 5);
     a->rs1 = extract32(insn, 15, 5);
-    a->rd = extract32(insn, 7, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_24(rv_decode *dec, arg_decode_xqci_32_impl21 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 20, 5);
-    a->simm2 = extract32(insn, 27, 5);
-    a->imm = extract32(insn, 15, 5);
     a->rd = extract32(insn, 7, 5);
+    a->imm = extract32(insn, 15, 5);
+    a->simm2 = extract32(insn, 27, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_25(rv_decode *dec, arg_decode_xqci_32_impl22 *a, uint32_t insn)
 {
-    a->simm2 = extract32(insn, 27, 5);
-    a->simm1 = extract32(insn, 20, 5);
-    a->rs1 = extract32(insn, 15, 5);
     a->rd = extract32(insn, 7, 5);
+    a->simm1 = extract32(insn, 20, 5);
+    a->simm2 = extract32(insn, 27, 5);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_26(rv_decode *dec, arg_decode_xqci_32_impl23 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 20, 5);
-    a->rs1 = extract32(insn, 15, 5);
-    a->imm = extract32(insn, 25, 5);
     a->rs3 = extract32(insn, 7, 5);
+    a->imm = extract32(insn, 25, 5);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_27(rv_decode *dec, arg_decode_xqci_32_impl24 *a, uint32_t insn)
 {
-    a->rs1 = extract32(insn, 15, 5);
     a->length = extract32(insn, 20, 5);
-    a->imm = extract32(insn, 25, 5);
     a->rs3 = extract32(insn, 7, 5);
+    a->imm = extract32(insn, 25, 5);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_28(rv_decode *dec, arg_decode_xqci_32_impl11 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 20, 5);
-    a->rs1 = extract32(insn, 15, 5);
-    a->shamt = extract32(insn, 25, 5);
     a->rd = extract32(insn, 7, 5);
+    a->shamt = extract32(insn, 25, 5);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_29(rv_decode *dec, arg_decode_xqci_32_impl25 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 20, 5);
-    a->rs1 = extract32(insn, 15, 5);
-    a->shamt = extract32(insn, 25, 3);
     a->rs3 = extract32(insn, 7, 5);
+    a->shamt = extract32(insn, 25, 3);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_3(rv_decode *dec, arg_decode_xqci_32_impl3 *a, uint32_t insn)
@@ -563,44 +563,44 @@ static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_30(rv_decode *de
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_4(rv_decode *dec, arg_decode_xqci_32_impl4 *a, uint32_t insn)
 {
     a->rs2 = extract32(insn, 20, 5);
-    a->imm = extract32(insn, 15, 5);
     a->rd = extract32(insn, 7, 5);
+    a->imm = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_5(rv_decode *dec, arg_decode_xqci_32_impl5 *a, uint32_t insn)
 {
-    a->width_minus1 = extract32(insn, 25, 5);
     a->rs1 = extract32(insn, 15, 5);
     a->shamt = extract32(insn, 20, 5);
+    a->width_minus1 = extract32(insn, 25, 5);
     a->rd = extract32(insn, 7, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_6(rv_decode *dec, arg_decode_xqci_32_impl6 *a, uint32_t insn)
 {
-    a->width_minus1 = extract32(insn, 25, 5);
-    a->imm = extract32(insn, 15, 5);
-    a->shamt = extract32(insn, 20, 5);
     a->rd = extract32(insn, 7, 5);
+    a->shamt = extract32(insn, 20, 5);
+    a->imm = extract32(insn, 15, 5);
+    a->width_minus1 = extract32(insn, 25, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_7(rv_decode *dec, arg_decode_xqci_32_impl7 *a, uint32_t insn)
 {
-    a->rs1 = extract32(insn, 15, 5);
-    a->imm = extract32(insn, 20, 11);
     a->rd = extract32(insn, 7, 5);
+    a->imm = extract32(insn, 20, 11);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_8(rv_decode *dec, arg_decode_xqci_32_impl7 *a, uint32_t insn)
 {
-    a->rs1 = extract32(insn, 15, 5);
-    a->imm = extract32(insn, 20, 12);
     a->rd = extract32(insn, 7, 5);
+    a->imm = extract32(insn, 20, 12);
+    a->rs1 = extract32(insn, 15, 5);
 }
 
 static void decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_9(rv_decode *dec, arg_decode_xqci_32_impl8 *a, uint32_t insn)
 {
-    a->imm = deposit32(deposit32(extract32(insn, 16, 15), 15, 17, extract32(insn, 12, 4)), 19, 13, extract32(insn, 31, 1));
     a->rd = extract32(insn, 7, 5);
+    a->imm = deposit32(deposit32(extract32(insn, 16, 15), 15, 17, extract32(insn, 12, 4)), 19, 13, extract32(insn, 31, 1));
 }
 
 static bool decode_xqci_32_impl(rv_decode *dec, uint32_t insn)
@@ -711,27 +711,27 @@ static bool decode_xqci_32_impl(rv_decode *dec, uint32_t insn)
                 switch ((insn >> 25) & 0x1f) {
                 case 0x0:
                     /* 0000000. ........ .011.... .0001011 */
-                    /* build/xqciu-32.decode:34 */
-                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
-                    if (trans_qc_insbr(dec, &u.f_decode_xqci_32_impl0)) return true;
                     if ((insn & 0x01f00000) == 0x00000000) {
                         /* 00000000 0000.... .011.... .0001011 */
-                        /* build/xqciu-32.decode:35 */
+                        /* build/xqciu-32.decode:34 */
                         decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_1(dec, &u.f_decode_xqci_32_impl1, insn);
                         if (trans_qc_compress2(dec, &u.f_decode_xqci_32_impl1)) return true;
                     }
+                    /* build/xqciu-32.decode:35 */
+                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
+                    if (trans_qc_insbr(dec, &u.f_decode_xqci_32_impl0)) return true;
                     break;
                 case 0x1:
                     /* 0000001. ........ .011.... .0001011 */
+                    /* build/xqciu-32.decode:38 */
+                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
+                    if (trans_qc_insbhr(dec, &u.f_decode_xqci_32_impl0)) return true;
                     if ((insn & 0x01f00000) == 0x00000000) {
                         /* 00000010 0000.... .011.... .0001011 */
-                        /* build/xqciu-32.decode:38 */
+                        /* build/xqciu-32.decode:39 */
                         decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_1(dec, &u.f_decode_xqci_32_impl1, insn);
                         if (trans_qc_compress3(dec, &u.f_decode_xqci_32_impl1)) return true;
                     }
-                    /* build/xqciu-32.decode:39 */
-                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
-                    if (trans_qc_insbhr(dec, &u.f_decode_xqci_32_impl0)) return true;
                     break;
                 case 0x2:
                     /* 0000010. ........ .011.... .0001011 */
@@ -759,27 +759,27 @@ static bool decode_xqci_32_impl(rv_decode *dec, uint32_t insn)
                     break;
                 case 0x4:
                     /* 0000100. ........ .011.... .0001011 */
+                    /* build/xqciu-32.decode:30 */
+                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
+                    if (trans_qc_extdur(dec, &u.f_decode_xqci_32_impl0)) return true;
                     if ((insn & 0x01f00000) == 0x00000000) {
                         /* 00001000 0000.... .011.... .0001011 */
-                        /* build/xqciu-32.decode:30 */
+                        /* build/xqciu-32.decode:31 */
                         decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_1(dec, &u.f_decode_xqci_32_impl1, insn);
                         if (trans_qc_clo(dec, &u.f_decode_xqci_32_impl1)) return true;
                     }
-                    /* build/xqciu-32.decode:31 */
-                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
-                    if (trans_qc_extdur(dec, &u.f_decode_xqci_32_impl0)) return true;
                     break;
                 case 0x5:
                     /* 0000101. ........ .011.... .0001011 */
-                    /* build/xqciu-32.decode:42 */
-                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
-                    if (trans_qc_extdr(dec, &u.f_decode_xqci_32_impl0)) return true;
                     if ((insn & 0x01f00000) == 0x00000000) {
                         /* 00001010 0000.... .011.... .0001011 */
-                        /* build/xqciu-32.decode:43 */
+                        /* build/xqciu-32.decode:42 */
                         decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_1(dec, &u.f_decode_xqci_32_impl1, insn);
                         if (trans_qc_cto(dec, &u.f_decode_xqci_32_impl1)) return true;
                     }
+                    /* build/xqciu-32.decode:43 */
+                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
+                    if (trans_qc_extdr(dec, &u.f_decode_xqci_32_impl0)) return true;
                     break;
                 case 0x6:
                     /* 0000110. ........ .011.... .0001011 */
@@ -807,27 +807,27 @@ static bool decode_xqci_32_impl(rv_decode *dec, uint32_t insn)
                     break;
                 case 0x8:
                     /* 0001000. ........ .011.... .0001011 */
+                    /* build/xqciu-32.decode:54 */
+                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
+                    if (trans_qc_extdpr(dec, &u.f_decode_xqci_32_impl0)) return true;
                     if ((insn & 0x01f00000) == 0x00000000) {
                         /* 00010000 0000.... .011.... .0001011 */
-                        /* build/xqciu-32.decode:54 */
+                        /* build/xqciu-32.decode:55 */
                         decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_1(dec, &u.f_decode_xqci_32_impl1, insn);
                         if (trans_qc_normu(dec, &u.f_decode_xqci_32_impl1)) return true;
                     }
-                    /* build/xqciu-32.decode:55 */
-                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
-                    if (trans_qc_extdpr(dec, &u.f_decode_xqci_32_impl0)) return true;
                     break;
                 case 0x9:
                     /* 0001001. ........ .011.... .0001011 */
-                    /* build/xqciu-32.decode:58 */
-                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
-                    if (trans_qc_extdprh(dec, &u.f_decode_xqci_32_impl0)) return true;
                     if ((insn & 0x01f00000) == 0x00000000) {
                         /* 00010010 0000.... .011.... .0001011 */
-                        /* build/xqciu-32.decode:59 */
+                        /* build/xqciu-32.decode:58 */
                         decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_1(dec, &u.f_decode_xqci_32_impl1, insn);
                         if (trans_qc_normeu(dec, &u.f_decode_xqci_32_impl1)) return true;
                     }
+                    /* build/xqciu-32.decode:59 */
+                    decode_xqci_32_impl_extract_decode_xqci_32_impl_Fmt_0(dec, &u.f_decode_xqci_32_impl0, insn);
+                    if (trans_qc_extdprh(dec, &u.f_decode_xqci_32_impl0)) return true;
                     break;
                 case 0xa:
                     /* 0001010. ........ .011.... .0001011 */
