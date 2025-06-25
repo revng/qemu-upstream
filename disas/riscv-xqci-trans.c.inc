@@ -209,7 +209,7 @@ static bool trans_qc_c_extu(rv_decode *dec, arg_qc_c_extu *arg)
     if (arg->rd == 0) {
         return false;
     }
-    dec->imm = arg->width_minus1;
+    dec->imm1 = arg->width_minus1;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_c_extu;
     return true;
@@ -680,7 +680,7 @@ static bool trans_qc_ext(rv_decode *dec, arg_qc_ext *arg)
     if (arg->rd == 0) {
         return false;
     }
-    dec->imm = arg->width_minus1;
+    dec->imm1 = arg->width_minus1;
     dec->uimm = arg->shamt;
     dec->rs1 = arg->rs1;
     dec->rd = arg->rd;
@@ -695,7 +695,7 @@ static bool trans_qc_extd(rv_decode *dec, arg_qc_extd *arg)
     if (arg->rd == 0) {
         return false;
     }
-    dec->imm = arg->width_minus1;
+    dec->imm1 = arg->width_minus1;
     dec->uimm = arg->shamt;
     dec->rs1 = arg->rs1;
     dec->rd = arg->rd;
@@ -761,7 +761,7 @@ static bool trans_qc_extdu(rv_decode *dec, arg_qc_extdu *arg)
     if (arg->rd == 0) {
         return false;
     }
-    dec->imm = arg->width_minus1;
+    dec->imm1 = arg->width_minus1;
     dec->uimm = arg->shamt;
     dec->rs1 = arg->rs1;
     dec->rd = arg->rd;
@@ -827,7 +827,7 @@ static bool trans_qc_extu(rv_decode *dec, arg_qc_extu *arg)
     if (arg->rd == 0) {
         return false;
     }
-    dec->imm = arg->width_minus1;
+    dec->imm1 = arg->width_minus1;
     dec->uimm = arg->shamt;
     dec->rs1 = arg->rs1;
     dec->rd = arg->rd;
@@ -839,7 +839,7 @@ static bool trans_qc_insb(rv_decode *dec, arg_qc_insb *arg)
     if (arg->rd == 0) {
         return false;
     }
-    dec->imm = arg->width_minus1;
+    dec->imm1 = arg->width_minus1;
     dec->uimm = arg->shamt;
     dec->rs1 = arg->rs1;
     dec->rd = arg->rd;
@@ -851,7 +851,7 @@ static bool trans_qc_insbh(rv_decode *dec, arg_qc_insbh *arg)
     if (arg->rd == 0) {
         return false;
     }
-    dec->imm = arg->width_minus1;
+    dec->imm1 = arg->width_minus1;
     dec->uimm = arg->shamt;
     dec->rs1 = arg->rs1;
     dec->rd = arg->rd;
@@ -877,7 +877,7 @@ static bool trans_qc_insbi(rv_decode *dec, arg_qc_insbi *arg)
     if (arg->rd == 0) {
         return false;
     }
-    dec->imm = arg->width_minus1;
+    dec->imm1 = arg->width_minus1;
     dec->uimm = arg->shamt;
     dec->imm = arg->imm;
     dec->rd = arg->rd;
@@ -972,7 +972,7 @@ static bool trans_qc_lieq(rv_decode *dec, arg_qc_lieq *arg)
     }
     dec->rs1 = arg->rs1;
     dec->rs2 = arg->rs2;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_lieq;
     return true;
@@ -987,7 +987,7 @@ static bool trans_qc_lieqi(rv_decode *dec, arg_qc_lieqi *arg)
     }
     dec->rs1 = arg->rs1;
     dec->imm = arg->imm;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_lieqi;
     return true;
@@ -1005,7 +1005,7 @@ static bool trans_qc_lige(rv_decode *dec, arg_qc_lige *arg)
     }
     dec->rs1 = arg->rs1;
     dec->rs2 = arg->rs2;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_lige;
     return true;
@@ -1020,7 +1020,7 @@ static bool trans_qc_ligei(rv_decode *dec, arg_qc_ligei *arg)
     }
     dec->rs1 = arg->rs1;
     dec->imm = arg->imm;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_ligei;
     return true;
@@ -1038,7 +1038,7 @@ static bool trans_qc_ligeu(rv_decode *dec, arg_qc_ligeu *arg)
     }
     dec->rs1 = arg->rs1;
     dec->rs2 = arg->rs2;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_ligeu;
     return true;
@@ -1053,7 +1053,7 @@ static bool trans_qc_ligeui(rv_decode *dec, arg_qc_ligeui *arg)
     }
     dec->rs1 = arg->rs1;
     dec->imm = arg->imm;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_ligeui;
     return true;
@@ -1071,7 +1071,7 @@ static bool trans_qc_lilt(rv_decode *dec, arg_qc_lilt *arg)
     }
     dec->rs1 = arg->rs1;
     dec->rs2 = arg->rs2;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_lilt;
     return true;
@@ -1086,7 +1086,7 @@ static bool trans_qc_lilti(rv_decode *dec, arg_qc_lilti *arg)
     }
     dec->rs1 = arg->rs1;
     dec->imm = arg->imm;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_lilti;
     return true;
@@ -1104,7 +1104,7 @@ static bool trans_qc_liltu(rv_decode *dec, arg_qc_liltu *arg)
     }
     dec->rs1 = arg->rs1;
     dec->rs2 = arg->rs2;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_liltu;
     return true;
@@ -1119,7 +1119,7 @@ static bool trans_qc_liltui(rv_decode *dec, arg_qc_liltui *arg)
     }
     dec->rs1 = arg->rs1;
     dec->imm = arg->imm;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_liltui;
     return true;
@@ -1137,7 +1137,7 @@ static bool trans_qc_line(rv_decode *dec, arg_qc_line *arg)
     }
     dec->rs1 = arg->rs1;
     dec->rs2 = arg->rs2;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_line;
     return true;
@@ -1152,7 +1152,7 @@ static bool trans_qc_linei(rv_decode *dec, arg_qc_linei *arg)
     }
     dec->rs1 = arg->rs1;
     dec->imm = arg->imm;
-    dec->imm = arg->simm;
+    dec->imm1 = arg->simm;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_linei;
     return true;
@@ -1244,7 +1244,7 @@ static bool trans_qc_lwmi(rv_decode *dec, arg_qc_lwmi *arg)
     }
     dec->imm = arg->imm;
     dec->rs1 = arg->rs1;
-    dec->imm = arg->length;
+    dec->imm1 = arg->length;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_lwmi;
     return true;
@@ -1628,7 +1628,7 @@ static bool trans_qc_selectieq(rv_decode *dec, arg_qc_selectieq *arg)
     }
     dec->rs1 = arg->rs1;
     dec->rs2 = arg->rs2;
-    dec->imm = arg->simm2;
+    dec->imm1 = arg->simm2;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_selectieq;
     return true;
@@ -1643,7 +1643,7 @@ static bool trans_qc_selectieqi(rv_decode *dec, arg_qc_selectieqi *arg)
     }
     dec->imm = arg->imm;
     dec->rs2 = arg->rs2;
-    dec->imm = arg->simm2;
+    dec->imm1 = arg->simm2;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_selectieqi;
     return true;
@@ -1658,7 +1658,7 @@ static bool trans_qc_selectiieq(rv_decode *dec, arg_qc_selectiieq *arg)
     }
     dec->rs1 = arg->rs1;
     dec->imm = arg->simm1;
-    dec->imm = arg->simm2;
+    dec->imm1 = arg->simm2;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_selectiieq;
     return true;
@@ -1673,7 +1673,7 @@ static bool trans_qc_selectiine(rv_decode *dec, arg_qc_selectiine *arg)
     }
     dec->rs1 = arg->rs1;
     dec->imm = arg->simm1;
-    dec->imm = arg->simm2;
+    dec->imm1 = arg->simm2;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_selectiine;
     return true;
@@ -1691,7 +1691,7 @@ static bool trans_qc_selectine(rv_decode *dec, arg_qc_selectine *arg)
     }
     dec->rs1 = arg->rs1;
     dec->rs2 = arg->rs2;
-    dec->imm = arg->simm2;
+    dec->imm1 = arg->simm2;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_selectine;
     return true;
@@ -1706,7 +1706,7 @@ static bool trans_qc_selectinei(rv_decode *dec, arg_qc_selectinei *arg)
     }
     dec->imm = arg->imm;
     dec->rs2 = arg->rs2;
-    dec->imm = arg->simm2;
+    dec->imm1 = arg->simm2;
     dec->rd = arg->rd;
     dec->op = rv_op_qc_selectinei;
     return true;
@@ -1756,7 +1756,7 @@ static bool trans_qc_setwmi(rv_decode *dec, arg_qc_setwmi *arg)
     }
     dec->imm = arg->imm;
     dec->rs1 = arg->rs1;
-    dec->imm = arg->length;
+    dec->imm1 = arg->length;
     dec->rs3 = arg->rs3;
     dec->op = rv_op_qc_setwmi;
     return true;
@@ -1892,6 +1892,9 @@ static bool trans_qc_swm(rv_decode *dec, arg_qc_swm *arg)
     if (arg->rs2 == 0) {
         return false;
     }
+    if (arg->rs3 == 0) {
+        return false;
+    }
     dec->imm = arg->imm;
     dec->rs1 = arg->rs1;
     dec->rs2 = arg->rs2;
@@ -1905,9 +1908,12 @@ static bool trans_qc_swmi(rv_decode *dec, arg_qc_swmi *arg)
     if (arg->length == 0) {
         return false;
     }
+    if (arg->rs3 == 0) {
+        return false;
+    }
     dec->imm = arg->imm;
     dec->rs1 = arg->rs1;
-    dec->imm = arg->length;
+    dec->imm1 = arg->length;
     dec->rs3 = arg->rs3;
     dec->op = rv_op_qc_swmi;
     return true;
