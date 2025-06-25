@@ -2096,6 +2096,9 @@ static bool trans_qc_swm(DisasContext *ctx, arg_qc_swm *arg)
     if (arg->rs2 == 0) {
         return false;
     }
+    if (arg->rs3 == 0) {
+        return false;
+    }
     emit_qc_swm(ctx, tcg_env, arg->imm, arg->rs1, arg->rs2, arg->rs3);
     return true;
 #endif
@@ -2107,6 +2110,9 @@ static bool trans_qc_swmi(DisasContext *ctx, arg_qc_swmi *arg)
 #else
     arg->imm <<= 2;
     if (arg->length == 0) {
+        return false;
+    }
+    if (arg->rs3 == 0) {
         return false;
     }
     emit_qc_swmi(ctx, tcg_env, arg->imm, arg->rs1, arg->length, arg->rs3);
