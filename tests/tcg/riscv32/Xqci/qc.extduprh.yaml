@@ -1,3 +1,6 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
 # yaml-language-server: $schema=../../../../../schemas/inst_schema.json
 
 $schema: inst_schema.json#
@@ -40,7 +43,7 @@ operation(): |
   XReg width = (width_bits > 32) ? 32 : width_bits;
   XReg shamt = X[rs2][21:16];
   if (width > 0) {
-    X[rd] = (pair >> shamt) & ((1 << width) - 1);
+    X[rd] = (pair >> shamt) & ((33'b1 << width) - 1);
   } else {
     X[rd] = 0;
   }

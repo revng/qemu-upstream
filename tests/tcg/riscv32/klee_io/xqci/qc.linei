@@ -1,8 +1,8 @@
 - variables:
   - name: "rs1"
-    in: 31
+    in: 1
   - name: "imm"
-    in: 31
+    in: 1
   - name: "simm"
     in: 0
   - name: "rd"

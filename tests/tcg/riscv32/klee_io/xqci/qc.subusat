@@ -2,7 +2,7 @@
   - name: "rs1"
     in: 32768
   - name: "rs2"
-    in: 32896
+    in: 49152
   - name: "rd"
     in: 4278190080
     out: 0

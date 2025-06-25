@@ -12,7 +12,7 @@
   underflow: 0
 - variables:
   - name: "rs1"
-    in: 2147483648
+    in: 2147500030
   - name: "imm"
     in: 0
   - name: "simm"

@@ -1,48 +1,48 @@
 - variables:
   - name: "shamt"
-    in: 22
+    in: 24
   - name: "rs2"
-    in: 4290772992
+    in: 50331648
   - name: "rs1"
+    in: 1
+  - name: "rd"
     in: 255
-  - name: "rd"
-    in: 4278190080
-    out: 1065353216
-  overflow: 1
-  underflow: 0
-- variables:
-  - name: "shamt"
-    in: 14
-  - name: "rs2"
-    in: 245760
-  - name: "rs1"
-    in: 2147483648
-  - name: "rd"
-    in: 4278190080
-    out: 245760
-  overflow: 1
-  underflow: 0
-- variables:
-  - name: "shamt"
-    in: 30
-  - name: "rs2"
-    in: 1073741824
-  - name: "rs1"
-    in: 2
-  - name: "rd"
-    in: 4278190080
-    out: 3221225472
+    out: 67108864
   overflow: 0
   underflow: 0
 - variables:
   - name: "shamt"
-    in: 14
+    in: 13
   - name: "rs2"
-    in: 4294950912
+    in: 4294926336
   - name: "rs1"
-    in: 2147483776
+    in: 255
   - name: "rd"
-    in: 4278190080
-    out: 2080768
+    in: 255
+    out: 2048000
+  overflow: 1
+  underflow: 0
+- variables:
+  - name: "shamt"
+    in: 31
+  - name: "rs2"
+    in: 2147483648
+  - name: "rs1"
+    in: 8388608
+  - name: "rd"
+    in: 255
+    out: 2147483648
+  overflow: 1
+  underflow: 0
+- variables:
+  - name: "shamt"
+    in: 4
+  - name: "rs2"
+    in: 4294967280
+  - name: "rs1"
+    in: 2147516416
+  - name: "rd"
+    in: 255
+    out: 524272
   overflow: 1
   underflow: 0

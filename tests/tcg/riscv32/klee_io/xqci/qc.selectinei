@@ -12,13 +12,13 @@
   underflow: 0
 - variables:
   - name: "imm"
-    in: 31
+    in: 1
   - name: "rs2"
     in: 255
   - name: "simm2"
     in: 0
   - name: "rd"
-    in: 31
+    in: 1
     out: 0
   overflow: 0
   underflow: 0

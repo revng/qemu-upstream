@@ -1,10 +1,10 @@
 - variables:
   - name: "shamt"
-    in: 7
+    in: 3
   - name: "rs1"
-    in: 1073217408
+    in: 4294926392
   - name: "rs2"
-    in: 2147487856
+    in: 5116
   - name: "rd"
     in: 0
     out: 0
@@ -12,20 +12,54 @@
   underflow: 0
   has_valid_test_memop: 0
   has_load:
-  - address: 1073756032
+  - address: 24
     value: 0
     size: 0
 - variables:
   - name: "shamt"
-    in: 7
+    in: 2
   - name: "rs1"
-    in: 4096
+    in: 3194903292
   - name: "rs2"
-    in: 268435456
+    in: 275017088
   - name: "rd"
     in: 0
     out: 305419896
   overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_load:
+  - address: 4348
+    value: 305419896
+    size: 32
+- variables:
+  - name: "shamt"
+    in: 3
+  - name: "rs1"
+    in: 4294967288
+  - name: "rs2"
+    in: 1540
+  - name: "rd"
+    in: 0
+    out: 0
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 0
+  has_load:
+  - address: 12312
+    value: 0
+    size: 0
+- variables:
+  - name: "shamt"
+    in: 6
+  - name: "rs1"
+    in: 1856
+  - name: "rs2"
+    in: 35
+  - name: "rd"
+    in: 0
+    out: 305419896
+  overflow: 0
   underflow: 0
   has_valid_test_memop: 1
   has_load:
@@ -34,62 +68,11 @@
     size: 32
 - variables:
   - name: "shamt"
-    in: 0
+    in: 4
   - name: "rs1"
-    in: 0
+    in: 1610616768
   - name: "rs2"
-    in: 255
-  - name: "rd"
-    in: 0
-    out: 0
-  overflow: 0
-  underflow: 0
-  has_valid_test_memop: 0
-  has_load:
-  - address: 255
-    value: 0
-    size: 0
-- variables:
-  - name: "shamt"
-    in: 1
-  - name: "rs1"
-    in: 2134
-  - name: "rs2"
-    in: 2048
-  - name: "rd"
-    in: 0
-    out: 305419896
-  overflow: 0
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 6230
-    value: 305419896
-    size: 32
-- variables:
-  - name: "shamt"
-    in: 6
-  - name: "rs1"
-    in: 2560561344
-  - name: "rs2"
-    in: 94209022
-  - name: "rd"
-    in: 0
-    out: 305419896
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_load:
-  - address: 4160
-    value: 305419896
-    size: 32
-- variables:
-  - name: "shamt"
-    in: 6
-  - name: "rs1"
-    in: 4294963136
-  - name: "rs2"
-    in: 192
+    in: 704643328
   - name: "rd"
     in: 0
     out: 305419896

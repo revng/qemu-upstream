@@ -1,3 +1,6 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
 # yaml-language-server: $schema=../../../../../schemas/inst_schema.json
 
 $schema: inst_schema.json#
@@ -26,6 +29,7 @@ encoding:
       not: 0
     - name: rs3
       location: 11-7
+      not: 0
 assembly: " xs3, length, imm(xs1)"
 access:
   s: always

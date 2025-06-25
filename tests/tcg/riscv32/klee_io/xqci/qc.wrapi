@@ -10,21 +10,31 @@
   underflow: 0
 - variables:
   - name: "imm"
-    in: 1025
+    in: 128
   - name: "rs1"
-    in: 255
+    in: 8
   - name: "rd"
     in: 255
-    out: 255
+    out: 8
   overflow: 0
   underflow: 0
 - variables:
   - name: "imm"
-    in: 1
+    in: 0
   - name: "rs1"
     in: 2147483648
   - name: "rd"
     in: 255
-    out: 2147483649
+    out: 2147483648
+  overflow: 0
+  underflow: 1
+- variables:
+  - name: "imm"
+    in: 2017
+  - name: "rs1"
+    in: 4294965279
+  - name: "rd"
+    in: 255
+    out: 0
   overflow: 0
   underflow: 0

@@ -131,31 +131,30 @@ def op_to_cpp(op, csrs, for_klee = False):
 
     op = re.sub(r'for \(', r'#pragma unroll\nfor (', op)
 
-    op = re.sub(r'\(1 << ([a-zA-Z0-9]+)\)', r'(1ul << \1.value)', op)
+    #op = re.sub(r'\(1 << ([a-zA-Z0-9]+)\)', r'(1ul << \1.value())', op)
 
-    op = re.sub(r'{XLEN{1\'b0}}', r'0u', op)
-    op = re.sub(r'{XLEN{1\'b1}}', r'~0u', op)
-    op = re.sub(r'Bits<{1\'b0, XLEN}\*2> pair = {X\[rs1 \+ 1\], X\[rs1\]};', r'uint64_t pair = ((uint64_t) X[rs1+1].value << 32) | ((uint64_t) X[rs1].value);', op)
-    op = re.sub(r'{{XLEN{X\[([a-zA-Z0-9]+)\]\[xlen\(\)-1\]}}, X\[\1\]}', r'((int64_t)(int32_t)X[\1].value)', op)
-    op = re.sub(r"{{XLEN-5{1'b0}}, ([a-zA-Z0-9]+)}", r'((uint32_t) \1)', op)
-    op = re.sub(r'Bits<\{1\'b0, XLEN\}\*2>', r'int64_t', op)
+    op = re.sub(r'Bits<{1\'b0, XLEN}\*2> pair = {X\[rs1 \+ 1\], X\[rs1\]};', r'uint64_t pair = ((uint64_t) X[rs1+1].value() << 32) | ((uint64_t) X[rs1].value());', op)
+    op = re.sub(r'Bits<{1\'b0, MXLEN}\*2> pair = {X\[rs1 \+ 1\], X\[rs1\]};', r'uint64_t pair = ((uint64_t) X[rs1+1].value() << 32) | ((uint64_t) X[rs1].value());', op)
+    #op = re.sub(r'{{XLEN{X\[([a-zA-Z0-9]+)\]\[xlen\(\)-1\]}}, X\[\1\]}', r'((int64_t)(int32_t)X[\1].value)', op)
+    #op = re.sub(r"{{XLEN-5{1'b0}}, ([a-zA-Z0-9]+)}", r'((uint32_t) \1)', op)
 
-    op = re.sub(r'{MXLEN{1\'b0}}', r'0u', op)
-    op = re.sub(r'{MXLEN{1\'b1}}', r'~0u', op)
-    op = re.sub(r'Bits<{1\'b0, MXLEN}\*2> pair = {X\[rs1 \+ 1\], X\[rs1\]};', r'uint64_t pair = ((uint64_t) X[rs1+1].value << 32) | ((uint64_t) X[rs1].value);', op)
-    op = re.sub(r'{{MXLEN{X\[([a-zA-Z0-9]+)\]\[xlen\(\)-1\]}}, X\[\1\]}', r'((int64_t)(int32_t)X[\1].value)', op)
-    op = re.sub(r"{{MXLEN-5{1'b0}}, ([a-zA-Z0-9]+)}", r'((uint32_t) \1)', op)
-    op = re.sub(r'Bits<\{1\'b0, MXLEN\}\*2>', r'int64_t', op)
+    op = re.sub(r"([A-Za-z0-9]+)'b([0-9]+)", r'Bits<\1>(0b\2)', op)
+    op = re.sub(r"([A-Za-z0-9]+)'h([0-9A-Fa-f]+)", r'Bits<\1>(0x\2)', op)
 
-    op = re.sub(r"([0-9]+)'b([0-9]+)", r'XRegRange(0b\2, \1)', op)
-    op = re.sub(r'\[([0-9]+):([0-9]+)\]', r'.range(\2, \1)', op)
-    op = re.sub(r'([a-zA-Z0-9]+)\.range', r'XReg(\1).range', op)
-    op = re.sub(r'XReg(.*)=(.*)\? {(.*)} : {(.*)};', r'XReg\1=\2? XReg({\3}) : XReg({\4});', op)
+    op = re.sub(r'\[([A-Za-z0-9\(\)\+\-\*/ ]+):([A-Za-z0-9\(\)\+\-\*/ ]+)\]', r'.range<\2,\1>()', op)
+    op = re.sub(r'([_a-zA-Z0-9]+)\.range', r'XReg(\1).range', op)
+    op = re.sub(r'XReg(.*)=(.*)\? {(.*)} : {(.*)};', r'XReg\1=\2? XReg(\3) : XReg(\4);', op)
     op = re.sub(r'implemented\?\(ExtensionName::([a-zA-Z]*)\)', r'xqci_implemented_\1()', op)
     op = re.sub(r'raise\(ExceptionCode::([a-zA-Z]*)\,.*\);', r'xqci_raise_\1();', op)
     op = re.sub(r'set_mode\(PrivilegeMode::([a-zA-Z]*)\);', r'xqci_set_mode_\1();', op)
     op = re.sub(r'\$pc', r'pc', op)
-    op = re.sub(r'jump_halfword\(([a-z_A-Z]+)[ ]+\+[ ]+([a-z_A-Z\(\)]+)\)', r'xqci_jump_pcrel(\1, \2)', op)
+
+    op = re.sub(r'{([A-Za-z0-9\(\)\+\-\*/ ]+){([A-Za-z0-9\(\)\[\]<>\+\-\*/, ]+)}}', r'repeat<\1>(\2)', op)
+
+    op = re.sub(r'csr_sw_write\(', r'csr_sw_write(this, ', op)
+    op = re.sub(r'csr_sw_read\(', r'csr_sw_read(this, ', op)
+
+    op = re.sub(r'jump_halfword\(([a-z_A-Z]+)[ ]+\+[ ]+([a-z_A-Z\(\)]+)\)', r'xqci_jump_pcrel_bits(\1, \2)', op)
     op = re.sub(r'jump\(([a-z_A-Z0-9\[\]]+)\)', r'xqci_jump(\1, 0)', op)
 
     op = re.sub(r'CSR\[([a-zA-z0-9]+)\]\.address\(\)', sub_to_csr_address, op)
@@ -165,6 +164,11 @@ def op_to_cpp(op, csrs, for_klee = False):
     op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.([A-Z]*) = (.*);', sub_to_csr_write_field, op)
     op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]\.([A-Z]*)', sub_to_csr_read_field, op)
     op = re.sub(r'CSR\[([a-zA-z0-9 \+\*\/]+)\]', sub_to_csr_read, op)
+
+    op = re.sub(r'Bits<xlen\(\)`\*2>', 'Bits<xlen()*2>', op)
+    op = re.sub(r'(.*) = (.*) `\+ (.*);', r'\1 = wide_add(\2, \3);', op)
+    op = re.sub(r'(.*) = (.*) `\- (.*);', r'\1 = wide_sub(\2, \3);', op)
+    op = re.sub(r'\(([A-Za-z0-9_ ]+)`<<([A-Za-z0-9_ ]+)\)', r'wide_shl<\2>(\1)', op)
 
     op = re.sub(r'\$bits\((.*)\)', r'XReg(\1)', op)
 

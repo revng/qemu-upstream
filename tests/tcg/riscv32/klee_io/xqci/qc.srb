@@ -1,10 +1,10 @@
 - variables:
   - name: "shamt"
-    in: 7
+    in: 3
   - name: "rs1"
-    in: 4294967168
+    in: 1073733624
   - name: "rs2"
-    in: 2164260864
+    in: 402654720
   - name: "rs3"
     in: 0
   overflow: 1
@@ -13,11 +13,11 @@
   has_store:
 - variables:
   - name: "shamt"
-    in: 7
+    in: 3
   - name: "rs1"
-    in: 1073708928
+    in: 4294836216
   - name: "rs2"
-    in: 2172649472
+    in: 17921
   - name: "rs3"
     in: 0
   overflow: 1
@@ -26,59 +26,40 @@
   has_store:
 - variables:
   - name: "shamt"
-    in: 7
+    in: 2
   - name: "rs1"
-    in: 4352
+    in: 4152309644
   - name: "rs2"
-    in: 2147483648
+    in: 35665437
   - name: "rs3"
-    in: 4294967295
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_store:
-  - address: 4352
-    value: 255
-    size: 8
-- variables:
-  - name: "shamt"
-    in: 7
-  - name: "rs1"
-    in: 2038435712
-  - name: "rs2"
-    in: 2165112864
-  - name: "rs3"
-    in: 4294967295
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_store:
-  - address: 8064
-    value: 255
-    size: 8
-- variables:
-  - name: "shamt"
     in: 0
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 0
+  has_store:
+- variables:
+  - name: "shamt"
+    in: 2
   - name: "rs1"
-    in: 942
+    in: 2044
   - name: "rs2"
-    in: 3154
+    in: 520
   - name: "rs3"
     in: 4294967295
   overflow: 0
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 4096
+  - address: 4124
     value: 255
     size: 8
 - variables:
   - name: "shamt"
-    in: 3
+    in: 2
   - name: "rs1"
-    in: 2237119304
+    in: 4152309644
   - name: "rs2"
-    in: 257231511
+    in: 35665437
   - name: "rs3"
     in: 4294967295
   overflow: 1
@@ -86,5 +67,21 @@
   has_valid_test_memop: 1
   has_store:
   - address: 4096
+    value: 255
+    size: 8
+- variables:
+  - name: "shamt"
+    in: 6
+  - name: "rs1"
+    in: 889197760
+  - name: "rs2"
+    in: 321650688
+  - name: "rs3"
+    in: 4294967295
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_store:
+  - address: 5312
     value: 255
     size: 8

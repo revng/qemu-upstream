@@ -12,9 +12,9 @@
   underflow: 0
 - variables:
   - name: "width_minus1"
-    in: 19
+    in: 21
   - name: "shamt"
-    in: 28
+    in: 26
   - name: "rs1"
     in: 0
   - name: "rd"

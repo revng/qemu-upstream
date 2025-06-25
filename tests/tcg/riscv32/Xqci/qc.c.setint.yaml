@@ -1,3 +1,6 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
 # yaml-language-server: $schema=../../../schemas/inst_schema.json
 
 $schema: inst_schema.json#
@@ -29,5 +32,5 @@ operation(): |
 
   XReg idx = rs1 / 32;
   XReg bit = rs1 % 32;
-  XReg pre_csr = CSR[MCLICIP0_ADDR + idx].sw_read();
-  CSR[MCLICIP0_ADDR + idx].sw_write(pre_csr | (1 << bit));
+  Csr pre_csr = direct_csr_lookup(MCLICIP0_ADDR + idx);
+  csr_sw_write(pre_csr, csr_sw_read(pre_csr) | (32'b1 << bit));

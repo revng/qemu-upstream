@@ -1,3 +1,6 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
 # yaml-language-server: $schema=../../../schemas/inst_schema.json
 
 $schema: inst_schema.json#
@@ -30,4 +33,4 @@ access:
 operation(): |
   XReg index = shamt & (xlen() - 1);
   XReg reg = creg2reg(rd);
-  X[reg] = X[reg] | (1 << index);
+  X[reg] = X[reg] | (MXLEN'b1 << index);

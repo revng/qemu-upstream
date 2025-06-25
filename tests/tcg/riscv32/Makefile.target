@@ -41,7 +41,7 @@ build-xqci-asm-tests:
 .PHONY: run-xqci-asm-tests
 run-xqci-asm-tests: $(XQCI_OUT_ASM_DIR)/*
 	@for exe in $(XQCI_OUT_ASM_DIR)/*; do \
-		out=$$($(QEMU) -cpu rv32,zcmp=true,zcd=false,d=false,zcb=true,zilsd=true,zclsd=true,zcd=false,d=false,c=false $$exe); \
+		out=$$(timeout 5s $(QEMU) -cpu rv32,zcmp=true,zcd=false,d=false,zcb=true,zilsd=true,zclsd=true,zcd=false,d=false,c=false $$exe); \
 		err=$$?; \
 		if [ $$err -eq 0 ]; then \
 			echo "PASS" $$exe; \
