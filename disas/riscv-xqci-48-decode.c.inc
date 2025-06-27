@@ -87,8 +87,8 @@ static void decode_xqci_48_impl_extract_decode_xqci_48_impl_Fmt_0(rv_decode *dec
 static void decode_xqci_48_impl_extract_decode_xqci_48_impl_Fmt_1(rv_decode *dec, arg_decode_xqci_48_impl1 *a, uint64_t insn)
 {
     a->imm = deposit64(extract64(insn, 36, 10), 10, 54, extract64(insn, 48, 16));
-    a->rs1 = extract64(insn, 31, 5);
     a->rd = extract64(insn, 23, 5);
+    a->rs1 = extract64(insn, 31, 5);
 }
 
 static void decode_xqci_48_impl_extract_decode_xqci_48_impl_Fmt_2(rv_decode *dec, arg_decode_xqci_48_impl2 *a, uint64_t insn)
@@ -113,14 +113,14 @@ static void decode_xqci_48_impl_extract_decode_xqci_48_impl_Fmt_4(rv_decode *dec
 static void decode_xqci_48_impl_extract_decode_xqci_48_impl_Fmt_5(rv_decode *dec, arg_decode_xqci_48_impl1 *a, uint64_t insn)
 {
     a->imm = deposit64(extract64(insn, 36, 10), 10, 54, sextract64(insn, 48, 16));
-    a->rs1 = extract64(insn, 31, 5);
     a->rd = extract64(insn, 23, 5);
+    a->rs1 = extract64(insn, 31, 5);
 }
 
 static void decode_xqci_48_impl_extract_decode_xqci_48_impl_Fmt_6(rv_decode *dec, arg_decode_xqci_48_impl4 *a, uint64_t insn)
 {
-    a->rs2 = extract64(insn, 36, 5);
     a->imm = deposit64(deposit64(extract64(insn, 23, 5), 5, 59, extract64(insn, 41, 5)), 10, 54, sextract64(insn, 48, 16));
+    a->rs2 = extract64(insn, 36, 5);
     a->rs1 = extract64(insn, 31, 5);
 }
 

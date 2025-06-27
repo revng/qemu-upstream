@@ -27,8 +27,8 @@ static bool trans_qc_cm_pushfp(rv_decode *dec, arg_qc_cm_pushfp *a);
 
 static void decode_xqccmp_16_impl_extract_decode_xqccmp_16_impl_Fmt_0(rv_decode *dec, arg_decode_xqccmp_16_impl0 *a, uint16_t insn)
 {
-    a->r1s = extract32(insn, 7, 3);
     a->r2s = extract32(insn, 2, 3);
+    a->r1s = extract32(insn, 7, 3);
 }
 
 static void decode_xqccmp_16_impl_extract_decode_xqccmp_16_impl_Fmt_1(rv_decode *dec, arg_decode_xqccmp_16_impl1 *a, uint16_t insn)
