@@ -68,6 +68,7 @@ should_sext = {
 skip_insn = {
     'qc.c.clrint',
     'qc.c.setint',
+    'qc.c.delay',
     'qc.e.beqi',
     'qc.e.bgei',
     'qc.e.bgeui',
@@ -76,6 +77,10 @@ skip_insn = {
     'qc.e.bnei',
     'qc.e.j',
     'qc.e.jal',
+    'qc.cm.push',
+    'qc.cm.pushfp',
+    'qc.cm.pop',
+    'qc.cm.popfp',
 }
 
 def ashr32(x, n):
@@ -237,7 +242,7 @@ def main():
 
         if 'has_load' in test or 'has_store' in test:
             printer.line('__attribute__((section(".mem_test_section")))')
-            printer.line('char data[4096];')
+            printer.line('char data[2*0x1000];')
 
         printer.line(func_exit)
         printer.line(func_check)

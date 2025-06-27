@@ -1,10 +1,10 @@
 - variables:
   - name: "shamt"
-    in: 3
+    in: 6
   - name: "rs1"
-    in: 4294967288
+    in: 4290774592
   - name: "rs2"
-    in: 1537
+    in: 65511
   - name: "rs3"
     in: 0
   overflow: 1
@@ -15,22 +15,9 @@
   - name: "shamt"
     in: 3
   - name: "rs1"
-    in: 4294836472
+    in: 3221231740
   - name: "rs2"
-    in: 16384
-  - name: "rs3"
-    in: 0
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 0
-  has_store:
-- variables:
-  - name: "shamt"
-    in: 2
-  - name: "rs1"
-    in: 1862274012
-  - name: "rs2"
-    in: 608174348
+    in: 268436208
   - name: "rs3"
     in: 0
   overflow: 1
@@ -41,47 +28,60 @@
   - name: "shamt"
     in: 2
   - name: "rs1"
-    in: 1862274012
+    in: 4294434748
   - name: "rs2"
-    in: 608174348
+    in: 136196
   - name: "rs3"
-    in: 16711680
+    in: 0
   overflow: 1
   underflow: 0
-  has_valid_test_memop: 1
+  has_valid_test_memop: 0
   has_store:
-  - address: 4108
-    value: 16711680
-    size: 32
-- variables:
-  - name: "shamt"
-    in: 3
-  - name: "rs1"
-    in: 3045786544
-  - name: "rs2"
-    in: 2303631756
-  - name: "rs3"
-    in: 16711680
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_store:
-  - address: 4112
-    value: 16711680
-    size: 32
 - variables:
   - name: "shamt"
     in: 0
   - name: "rs1"
-    in: 3031
+    in: 10237
   - name: "rs2"
-    in: 4096
+    in: 255
   - name: "rs3"
-    in: 16711680
+    in: 4278190080
   overflow: 0
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 7127
-    value: 16711680
+  - address: 10492
+    value: 4278190080
+    size: 32
+- variables:
+  - name: "shamt"
+    in: 2
+  - name: "rs1"
+    in: 4294434748
+  - name: "rs2"
+    in: 136196
+  - name: "rs3"
+    in: 4278190080
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_store:
+  - address: 12236
+    value: 4278190080
+    size: 32
+- variables:
+  - name: "shamt"
+    in: 6
+  - name: "rs1"
+    in: 4277931392
+  - name: "rs2"
+    in: 537137232
+  - name: "rs3"
+    in: 4278190080
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_store:
+  - address: 8576
+    value: 4278190080
     size: 32

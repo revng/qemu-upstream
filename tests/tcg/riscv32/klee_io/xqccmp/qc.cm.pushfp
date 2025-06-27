@@ -7,10 +7,10 @@
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 6136
+  - address: 10232
     value: 8
     size: 32
-  - address: 6140
+  - address: 10236
     value: 1
     size: 32
 - variables:
@@ -22,43 +22,43 @@
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 6092
+  - address: 10188
     value: 27
     size: 32
-  - address: 6096
+  - address: 10192
     value: 26
     size: 32
-  - address: 6100
+  - address: 10196
     value: 25
     size: 32
-  - address: 6104
+  - address: 10200
     value: 24
     size: 32
-  - address: 6108
+  - address: 10204
     value: 23
     size: 32
-  - address: 6112
+  - address: 10208
     value: 22
     size: 32
-  - address: 6116
+  - address: 10212
     value: 21
     size: 32
-  - address: 6120
+  - address: 10216
     value: 20
     size: 32
-  - address: 6124
+  - address: 10220
     value: 19
     size: 32
-  - address: 6128
+  - address: 10224
     value: 18
     size: 32
-  - address: 6132
+  - address: 10228
     value: 9
     size: 32
-  - address: 6136
+  - address: 10232
     value: 8
     size: 32
-  - address: 6140
+  - address: 10236
     value: 1
     size: 32
 - variables:
@@ -70,36 +70,36 @@
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 6100
+  - address: 10196
     value: 25
     size: 32
-  - address: 6104
+  - address: 10200
     value: 24
     size: 32
-  - address: 6108
+  - address: 10204
     value: 23
     size: 32
-  - address: 6112
+  - address: 10208
     value: 22
     size: 32
-  - address: 6116
+  - address: 10212
     value: 21
     size: 32
-  - address: 6120
+  - address: 10216
     value: 20
     size: 32
-  - address: 6124
+  - address: 10220
     value: 19
     size: 32
-  - address: 6128
+  - address: 10224
     value: 18
     size: 32
-  - address: 6132
+  - address: 10228
     value: 9
     size: 32
-  - address: 6136
+  - address: 10232
     value: 8
     size: 32
-  - address: 6140
+  - address: 10236
     value: 1
     size: 32

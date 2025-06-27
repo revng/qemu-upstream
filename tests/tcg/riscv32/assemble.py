@@ -192,7 +192,7 @@ def output_elf(f, text_bytes):
     # Size of the segment in the file
     f.write(struct.pack('<I', 0))
     # Size of the segment in memory
-    f.write(struct.pack('<I', 0x1000))
+    f.write(struct.pack('<I', 0x2000))
     f.write(struct.pack('<I', 6))                  # R (read) and E (execute)
     f.write(struct.pack('<I', 0x1000))             # Alignment
 
@@ -254,6 +254,10 @@ def main():
         if 'has_valid_test_memop' in test and test['has_valid_test_memop'] == 0:
             continue
 
+        for i in range(0,32):
+            printer.li(i, i)
+        printer.li(0x2800, 2)
+
         if 'has_load' in test:
             for loadop in test['has_load']:
                 printer.li(loadop['address'], address_reg)
@@ -280,7 +284,11 @@ def main():
                     if common.var_is_compressed(op, v['name']):
                         reg -= 8
                     inst_args.append(reg)
-
+        if 'has_jump' in test:
+            jump_offset = int(test['has_jump']['jump_pc_offset'])
+            if (jump_offset & (1 << 31)) != 0:
+                printer.bytes += bytes.fromhex('6f008000')  # j 8
+                printer.bytes += bytes.fromhex('6f00c000')  # j 12
         printer.append(args.inst_name, *inst_args)
 
         if 'has_jump' in test:

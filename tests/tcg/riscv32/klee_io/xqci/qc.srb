@@ -2,9 +2,9 @@
   - name: "shamt"
     in: 3
   - name: "rs1"
-    in: 1073733624
+    in: 4294956121
   - name: "rs2"
-    in: 402654720
+    in: 5492
   - name: "rs3"
     in: 0
   overflow: 1
@@ -13,24 +13,11 @@
   has_store:
 - variables:
   - name: "shamt"
-    in: 3
+    in: 6
   - name: "rs1"
-    in: 4294836216
+    in: 4290774592
   - name: "rs2"
-    in: 17921
-  - name: "rs3"
-    in: 0
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 0
-  has_store:
-- variables:
-  - name: "shamt"
-    in: 2
-  - name: "rs1"
-    in: 4152309644
-  - name: "rs2"
-    in: 35665437
+    in: 65511
   - name: "rs3"
     in: 0
   overflow: 1
@@ -41,47 +28,60 @@
   - name: "shamt"
     in: 2
   - name: "rs1"
-    in: 2044
+    in: 4293924860
   - name: "rs2"
-    in: 520
+    in: 262024
+  - name: "rs3"
+    in: 0
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 0
+  has_store:
+- variables:
+  - name: "shamt"
+    in: 2
+  - name: "rs1"
+    in: 4293924860
+  - name: "rs2"
+    in: 262024
+  - name: "rs3"
+    in: 4294967295
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_store:
+  - address: 5660
+    value: 255
+    size: 8
+- variables:
+  - name: "shamt"
+    in: 2
+  - name: "rs1"
+    in: 1341132284
+  - name: "rs2"
+    in: 1812201616
+  - name: "rs3"
+    in: 4294967295
+  overflow: 1
+  underflow: 0
+  has_valid_test_memop: 1
+  has_store:
+  - address: 4156
+    value: 255
+    size: 8
+- variables:
+  - name: "shamt"
+    in: 4
+  - name: "rs1"
+    in: 6128
+  - name: "rs2"
+    in: 255
   - name: "rs3"
     in: 4294967295
   overflow: 0
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 4124
-    value: 255
-    size: 8
-- variables:
-  - name: "shamt"
-    in: 2
-  - name: "rs1"
-    in: 4152309644
-  - name: "rs2"
-    in: 35665437
-  - name: "rs3"
-    in: 4294967295
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_store:
-  - address: 4096
-    value: 255
-    size: 8
-- variables:
-  - name: "shamt"
-    in: 6
-  - name: "rs1"
-    in: 889197760
-  - name: "rs2"
-    in: 321650688
-  - name: "rs3"
-    in: 4294967295
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 1
-  has_store:
-  - address: 5312
+  - address: 10208
     value: 255
     size: 8

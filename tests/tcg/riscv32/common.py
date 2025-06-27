@@ -154,7 +154,7 @@ def op_to_cpp(op, csrs, for_klee = False):
     op = re.sub(r'csr_sw_write\(', r'csr_sw_write(this, ', op)
     op = re.sub(r'csr_sw_read\(', r'csr_sw_read(this, ', op)
 
-    op = re.sub(r'jump_halfword\(([a-z_A-Z]+)[ ]+\+[ ]+([a-z_A-Z\(\)]+)\)', r'xqci_jump_pcrel_bits(\1, \2)', op)
+    op = re.sub(r'jump_halfword\(([a-z_A-Z]+)[ ]+\+[ ]+([a-z_A-Z\(\)]+)\)', r'xqci_jump_pcrel_bits(\1, maybe_sext_xreg(\2))', op)
     op = re.sub(r'jump\(([a-z_A-Z0-9\[\]]+)\)', r'xqci_jump(\1, 0)', op)
 
     op = re.sub(r'CSR\[([a-zA-z0-9]+)\]\.address\(\)', sub_to_csr_address, op)

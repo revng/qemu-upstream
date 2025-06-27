@@ -9,6 +9,18 @@
   underflow: 0
 - variables:
   - name: "offset"
+    in: 4092
+  - name: "imm"
+    in: 31
+  - name: "rs1"
+    in: 255
+  overflow: 0
+  underflow: 0
+  has_jump:
+    valid_test_jump: 1
+    jump_pc_offset: 4294967292
+- variables:
+  - name: "offset"
     in: 0
   - name: "imm"
     in: 31
