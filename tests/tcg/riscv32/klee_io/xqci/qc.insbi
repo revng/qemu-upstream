@@ -2,9 +2,21 @@
   - name: "width_minus1"
     in: 31
   - name: "shamt"
-    in: 16
+    in: 0
   - name: "imm"
-    in: 1
+    in: 0
+  - name: "rd"
+    in: 255
+    out: 0
+  overflow: 1
+  underflow: 1
+- variables:
+  - name: "width_minus1"
+    in: 22
+  - name: "shamt"
+    in: 18
+  - name: "imm"
+    in: 0
   - name: "rd"
     in: 255
     out: 255
@@ -14,23 +26,35 @@
   - name: "width_minus1"
     in: 30
   - name: "shamt"
-    in: 27
+    in: 2
   - name: "imm"
     in: 0
   - name: "rd"
     in: 255
-    out: 255
+    out: 3
   overflow: 1
   underflow: 0
 - variables:
   - name: "width_minus1"
-    in: 0
+    in: 30
   - name: "shamt"
-    in: 16
+    in: 3
   - name: "imm"
-    in: 1
+    in: 16
   - name: "rd"
     in: 255
-    out: 255
+    out: 7
+  overflow: 1
+  underflow: 0
+- variables:
+  - name: "width_minus1"
+    in: 6
+  - name: "shamt"
+    in: 2
+  - name: "imm"
+    in: 16
+  - name: "rd"
+    in: 255
+    out: 3
   overflow: 1
   underflow: 0

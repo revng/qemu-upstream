@@ -1,5 +1,17 @@
 - variables:
   - name: "width_minus1"
+    in: 31
+  - name: "shamt"
+    in: 0
+  - name: "rs1"
+    in: 224
+  - name: "rd"
+    in: 255
+    out: 224
+  overflow: 1
+  underflow: 1
+- variables:
+  - name: "width_minus1"
     in: 0
   - name: "shamt"
     in: 0

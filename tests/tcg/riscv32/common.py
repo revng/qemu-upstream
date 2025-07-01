@@ -54,11 +54,12 @@ def var_is_imm(op, name):
            f'creg2reg({name}+8)' not in op and \
            name != 'r1s' and name != 'r2s'
 
-def var_size_from_location(loc_str):
+def var_size(var):
     sum = 0
-    for _,length in ranges_in_location(loc_str):
+    for _,length in ranges_in_location(var['location']):
         sum += length
-    return sum
+    shift_amt = int(var['left_shift']) if 'left_shift' in var else 0
+    return sum + shift_amt
 
 def inst_is_compressed(y):
     return '.c.' in y['name']

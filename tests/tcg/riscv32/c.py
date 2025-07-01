@@ -285,7 +285,7 @@ def main():
                     if common.var_is_imm(y['operation()'], v['name']):
                         imm = v['in']
                         if args.inst_name in should_sext:
-                            imm = sext(int(v['in']), common.var_size_from_location(var["location"]))
+                            imm = sext(int(v['in']), common.var_size(var))
 
                         if var['name'] == 'width_minus1':
                             imm += 1

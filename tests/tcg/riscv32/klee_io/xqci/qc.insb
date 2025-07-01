@@ -1,10 +1,22 @@
 - variables:
   - name: "width_minus1"
-    in: 29
+    in: 31
   - name: "shamt"
-    in: 23
+    in: 0
   - name: "rs1"
-    in: 4096
+    in: 0
+  - name: "rd"
+    in: 255
+    out: 0
+  overflow: 1
+  underflow: 1
+- variables:
+  - name: "width_minus1"
+    in: 2
+  - name: "shamt"
+    in: 31
+  - name: "rs1"
+    in: 1048576
   - name: "rd"
     in: 255
     out: 255
@@ -12,9 +24,9 @@
   underflow: 0
 - variables:
   - name: "width_minus1"
-    in: 30
+    in: 12
   - name: "shamt"
-    in: 30
+    in: 21
   - name: "rs1"
     in: 0
   - name: "rd"
@@ -26,23 +38,11 @@
   - name: "width_minus1"
     in: 1
   - name: "shamt"
-    in: 19
+    in: 26
   - name: "rs1"
-    in: 131072
+    in: 2097152
   - name: "rd"
     in: 255
     out: 255
   overflow: 1
-  underflow: 0
-- variables:
-  - name: "width_minus1"
-    in: 0
-  - name: "shamt"
-    in: 0
-  - name: "rs1"
-    in: 0
-  - name: "rd"
-    in: 255
-    out: 254
-  overflow: 0
   underflow: 0

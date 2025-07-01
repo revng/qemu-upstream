@@ -1,50 +1,50 @@
 - variables:
   - name: "imm"
-    in: 3325
+    in: 4091
   - name: "rs1"
-    in: 3584731817
+    in: 3872181451
   - name: "rd"
     in: 255
-    out: 2130707972
+    out: 2113929480
   overflow: 0
   underflow: 1
 - variables:
   - name: "imm"
-    in: 2731
+    in: 2985
   - name: "rs1"
-    in: 2667442140
+    in: 2972844150
   - name: "rd"
-    in: 3221225472
-    out: 4084
+    in: 255
+    out: 229
   overflow: 1
   underflow: 1
 - variables:
   - name: "imm"
-    in: 4095
+    in: 2080
   - name: "rs1"
-    in: 721759275
+    in: 805302205
   - name: "rd"
     in: 255
-    out: 3573208276
+    out: 8392863
   overflow: 1
   underflow: 0
 - variables:
   - name: "imm"
-    in: 3963
+    in: 2367
   - name: "rs1"
-    in: 2147483648
+    in: 2021513758
   - name: "rd"
-    in: 2147483648
+    in: 3388875934
     out: 0
   overflow: 1
   underflow: 0
 - variables:
   - name: "imm"
-    in: 673
+    in: 2045
   - name: "rs1"
-    in: 6190960
+    in: 788539
   - name: "rd"
-    in: 128451264
-    out: 48
+    in: 2684354560
+    out: 1949519
   overflow: 1
   underflow: 0

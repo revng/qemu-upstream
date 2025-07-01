@@ -9,9 +9,9 @@
   underflow: 0
 - variables:
   - name: "offset"
-    in: 4092
+    in: 8188
   - name: "imm"
-    in: 255
+    in: 65280
   - name: "rs1"
     in: 255
   overflow: 0
@@ -23,7 +23,7 @@
   - name: "offset"
     in: 0
   - name: "imm"
-    in: 255
+    in: 65280
   - name: "rs1"
     in: 255
   overflow: 0
@@ -35,7 +35,7 @@
   - name: "offset"
     in: 10
   - name: "imm"
-    in: 255
+    in: 65280
   - name: "rs1"
     in: 255
   overflow: 0
