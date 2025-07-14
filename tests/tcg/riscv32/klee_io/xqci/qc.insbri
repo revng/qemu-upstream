@@ -22,17 +22,17 @@
   - name: "imm"
     in: 1024
   - name: "rs1"
-    in: 1310744
+    in: 1179664
   - name: "rd"
     in: 255
-    out: 255
+    out: 4227858687
   overflow: 1
   underflow: 0
 - variables:
   - name: "imm"
-    in: 0
+    in: 192
   - name: "rs1"
-    in: 1179664
+    in: 393241
   - name: "rd"
     in: 255
     out: 255

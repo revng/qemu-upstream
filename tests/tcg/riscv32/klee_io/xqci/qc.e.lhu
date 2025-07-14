@@ -62,7 +62,7 @@
   - name: "imm"
     in: 33554692
   - name: "rs1"
-    in: 33560068
+    in: 33563140
   - name: "rd"
     in: 0
     out: 22136
@@ -70,6 +70,6 @@
   underflow: 0
   has_valid_test_memop: 1
   has_load:
-  - address: 5896
+  - address: 8968
     value: 22136
     size: 16
