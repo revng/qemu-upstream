@@ -66,7 +66,7 @@ static void emit_qc_extu(DisasContext *ctx, TCGv_env env, uint8_t vi_19, uint8_t
 static void emit_qc_insb(DisasContext *ctx, TCGv_env env, uint8_t vi_21, uint8_t vi_16, uint8_t vi_11, uint8_t vi_4);
 static void emit_qc_insbh(DisasContext *ctx, TCGv_env env, uint8_t vi_25, uint8_t vi_21, uint8_t vi_13, uint8_t vi_4);
 static void emit_qc_insbhr(DisasContext *ctx, TCGv_env env, uint8_t vi_25, uint8_t vi_12, uint8_t vi_4);
-static void emit_qc_insbi(DisasContext *ctx, TCGv_env env, uint8_t vi_24, uint8_t vi_19, uint8_t vi_14, uint8_t vi_4);
+static void emit_qc_insbi(DisasContext *ctx, TCGv_env env, uint8_t vi_21, uint8_t vi_17, uint8_t vi_13, uint8_t vi_4);
 static void emit_qc_insbpr(DisasContext *ctx, TCGv_env env, uint8_t vi_26, uint8_t vi_10, uint8_t vi_4);
 static void emit_qc_insbprh(DisasContext *ctx, TCGv_env env, uint8_t vi_27, uint8_t vi_10, uint8_t vi_4);
 static void emit_qc_insbr(DisasContext *ctx, TCGv_env env, uint8_t vi_26, uint8_t vi_10, uint8_t vi_4);
