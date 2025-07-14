@@ -12,9 +12,9 @@
   underflow: 0
 - variables:
   - name: "rs1"
-    in: 16
+    in: 1
   - name: "imm"
-    in: 17
+    in: 30
   - name: "rs3"
     in: 255
   - name: "rd"

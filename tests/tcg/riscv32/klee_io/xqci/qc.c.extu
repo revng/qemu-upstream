@@ -8,7 +8,7 @@
   underflow: 1
 - variables:
   - name: "width_minus1"
-    in: 19
+    in: 20
   - name: "rd"
     in: 4278190080
     out: 0

@@ -12,17 +12,17 @@
   - name: "rs1"
     in: 1
   - name: "rs2"
-    in: 2147483652
+    in: 2147484674
   - name: "rd"
     in: 4278190080
-    out: 2147483645
+    out: 2147482623
   overflow: 1
   underflow: 0
 - variables:
   - name: "rs1"
     in: 32768
   - name: "rs2"
-    in: 2147485696
+    in: 2147483650
   - name: "rd"
     in: 4278190080
     out: 2147483647

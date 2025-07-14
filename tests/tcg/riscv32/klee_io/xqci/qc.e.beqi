@@ -2,23 +2,11 @@
   - name: "offset"
     in: 0
   - name: "imm"
-    in: 65280
-  - name: "rs1"
     in: 255
-  overflow: 0
-  underflow: 0
-- variables:
-  - name: "offset"
-    in: 8188
-  - name: "imm"
-    in: 32512
   - name: "rs1"
-    in: 32512
+    in: 128
   overflow: 0
   underflow: 0
-  has_jump:
-    valid_test_jump: 1
-    jump_pc_offset: 4294967292
 - variables:
   - name: "offset"
     in: 0
@@ -43,3 +31,15 @@
   has_jump:
     valid_test_jump: 1
     jump_pc_offset: 10
+- variables:
+  - name: "offset"
+    in: 8188
+  - name: "imm"
+    in: 32512
+  - name: "rs1"
+    in: 32512
+  overflow: 0
+  underflow: 0
+  has_jump:
+    valid_test_jump: 1
+    jump_pc_offset: 4294967292

@@ -12,11 +12,11 @@
   underflow: 1
 - variables:
   - name: "width_minus1"
-    in: 2
+    in: 30
   - name: "shamt"
     in: 31
   - name: "rs1"
-    in: 1048576
+    in: 2147483648
   - name: "rd"
     in: 255
     out: 255
@@ -24,9 +24,9 @@
   underflow: 0
 - variables:
   - name: "width_minus1"
-    in: 12
+    in: 30
   - name: "shamt"
-    in: 21
+    in: 19
   - name: "rs1"
     in: 0
   - name: "rd"
@@ -38,11 +38,11 @@
   - name: "width_minus1"
     in: 1
   - name: "shamt"
-    in: 26
+    in: 1
   - name: "rs1"
-    in: 2097152
+    in: 2147483648
   - name: "rd"
     in: 255
-    out: 255
+    out: 249
   overflow: 1
   underflow: 0

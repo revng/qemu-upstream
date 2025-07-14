@@ -1,34 +1,8 @@
 - variables:
   - name: "shamt"
-    in: 4
+    in: 3
   - name: "rs1"
-    in: 2147383964
-  - name: "rs2"
-    in: 2147501142
-  - name: "rs3"
-    in: 0
-  overflow: 1
-  underflow: 0
-  has_valid_test_memop: 0
-  has_store:
-- variables:
-  - name: "shamt"
-    in: 0
-  - name: "rs1"
-    in: 0
-  - name: "rs2"
-    in: 255
-  - name: "rs3"
-    in: 0
-  overflow: 0
-  underflow: 0
-  has_valid_test_memop: 0
-  has_store:
-- variables:
-  - name: "shamt"
-    in: 7
-  - name: "rs1"
-    in: 1408
+    in: 2040
   - name: "rs2"
     in: 2147483648
   - name: "rs3"
@@ -39,11 +13,11 @@
   has_store:
 - variables:
   - name: "shamt"
-    in: 7
+    in: 1
   - name: "rs1"
-    in: 4294963328
+    in: 7160
   - name: "rs2"
-    in: 2147483679
+    in: 2147484161
   - name: "rs3"
     in: 0
   overflow: 1
@@ -54,9 +28,9 @@
   - name: "shamt"
     in: 2
   - name: "rs1"
-    in: 4294757372
+    in: 2147346248
   - name: "rs2"
-    in: 1073796912
+    in: 1111495172
   - name: "rs3"
     in: 0
   overflow: 1
@@ -65,11 +39,11 @@
   has_store:
 - variables:
   - name: "shamt"
-    in: 7
+    in: 2
   - name: "rs1"
-    in: 4286569468
+    in: 4294967292
   - name: "rs2"
-    in: 2147746088
+    in: 255
   - name: "rs3"
     in: 0
   overflow: 1
@@ -80,63 +54,47 @@
   - name: "shamt"
     in: 1
   - name: "rs1"
-    in: 4090
+    in: 7160
   - name: "rs2"
-    in: 255
-  - name: "rs3"
-    in: 4294967295
-  overflow: 0
-  underflow: 0
-  has_valid_test_memop: 1
-  has_store:
-  - address: 4600
-    value: 255
-    size: 8
-- variables:
-  - name: "shamt"
-    in: 2
-  - name: "rs1"
-    in: 4294757372
-  - name: "rs2"
-    in: 1073796912
+    in: 2147484161
   - name: "rs3"
     in: 4294967295
   overflow: 1
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 10428
+  - address: 8186
     value: 255
     size: 8
 - variables:
   - name: "shamt"
-    in: 4
+    in: 7
   - name: "rs1"
-    in: 4080
+    in: 4294962944
   - name: "rs2"
-    in: 2147483904
+    in: 2147483776
   - name: "rs3"
     in: 4294967295
   overflow: 1
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 8176
+  - address: 12032
     value: 255
     size: 8
 - variables:
   - name: "shamt"
     in: 6
   - name: "rs1"
-    in: 4290281408
+    in: 1621830528
   - name: "rs2"
-    in: 73344
+    in: 41767936
   - name: "rs3"
     in: 4294967295
   overflow: 1
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 8128
+  - address: 11136
     value: 255
     size: 8
