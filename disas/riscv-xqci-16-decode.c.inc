@@ -10,18 +10,18 @@ typedef struct {
 } arg_decode_xqci_16_impl1;
 
 typedef struct {
-    int rs1;
 } arg_decode_xqci_16_impl2;
 
 typedef struct {
+    int rs1;
 } arg_decode_xqci_16_impl3;
 
 typedef struct {
-    int width_minus1;
     int rd;
 } arg_decode_xqci_16_impl4;
 
 typedef struct {
+    int width_minus1;
     int rd;
 } arg_decode_xqci_16_impl5;
 
@@ -48,31 +48,31 @@ typedef arg_decode_xqci_16_impl1 arg_qc_c_bseti;
 static bool trans_qc_c_bseti(rv_decode *dec, arg_qc_c_bseti *a);
 typedef arg_decode_xqci_16_impl0 arg_qc_c_syncwl;
 static bool trans_qc_c_syncwl(rv_decode *dec, arg_qc_c_syncwl *a);
-typedef arg_decode_xqci_16_impl2 arg_qc_c_setint;
-static bool trans_qc_c_setint(rv_decode *dec, arg_qc_c_setint *a);
-typedef arg_decode_xqci_16_impl3 arg_qc_c_mienter_nest;
-static bool trans_qc_c_mienter_nest(rv_decode *dec, arg_qc_c_mienter_nest *a);
-typedef arg_decode_xqci_16_impl3 arg_qc_c_di;
-static bool trans_qc_c_di(rv_decode *dec, arg_qc_c_di *a);
-typedef arg_decode_xqci_16_impl2 arg_qc_c_eir;
-static bool trans_qc_c_eir(rv_decode *dec, arg_qc_c_eir *a);
-typedef arg_decode_xqci_16_impl3 arg_qc_c_mret;
-static bool trans_qc_c_mret(rv_decode *dec, arg_qc_c_mret *a);
-typedef arg_decode_xqci_16_impl2 arg_qc_c_clrint;
-static bool trans_qc_c_clrint(rv_decode *dec, arg_qc_c_clrint *a);
-typedef arg_decode_xqci_16_impl4 arg_qc_c_extu;
-static bool trans_qc_c_extu(rv_decode *dec, arg_qc_c_extu *a);
-typedef arg_decode_xqci_16_impl5 arg_qc_c_dir;
-static bool trans_qc_c_dir(rv_decode *dec, arg_qc_c_dir *a);
-typedef arg_decode_xqci_16_impl3 arg_qc_c_mienter;
-static bool trans_qc_c_mienter(rv_decode *dec, arg_qc_c_mienter *a);
-typedef arg_decode_xqci_16_impl3 arg_qc_c_mnret;
+typedef arg_decode_xqci_16_impl2 arg_qc_c_mnret;
 static bool trans_qc_c_mnret(rv_decode *dec, arg_qc_c_mnret *a);
-typedef arg_decode_xqci_16_impl3 arg_qc_c_ei;
+typedef arg_decode_xqci_16_impl3 arg_qc_c_clrint;
+static bool trans_qc_c_clrint(rv_decode *dec, arg_qc_c_clrint *a);
+typedef arg_decode_xqci_16_impl2 arg_qc_c_mienter_nest;
+static bool trans_qc_c_mienter_nest(rv_decode *dec, arg_qc_c_mienter_nest *a);
+typedef arg_decode_xqci_16_impl2 arg_qc_c_ei;
 static bool trans_qc_c_ei(rv_decode *dec, arg_qc_c_ei *a);
-typedef arg_decode_xqci_16_impl3 arg_qc_c_mileaveret;
+typedef arg_decode_xqci_16_impl2 arg_qc_c_mret;
+static bool trans_qc_c_mret(rv_decode *dec, arg_qc_c_mret *a);
+typedef arg_decode_xqci_16_impl2 arg_qc_c_di;
+static bool trans_qc_c_di(rv_decode *dec, arg_qc_c_di *a);
+typedef arg_decode_xqci_16_impl3 arg_qc_c_eir;
+static bool trans_qc_c_eir(rv_decode *dec, arg_qc_c_eir *a);
+typedef arg_decode_xqci_16_impl2 arg_qc_c_mienter;
+static bool trans_qc_c_mienter(rv_decode *dec, arg_qc_c_mienter *a);
+typedef arg_decode_xqci_16_impl2 arg_qc_c_mileaveret;
 static bool trans_qc_c_mileaveret(rv_decode *dec, arg_qc_c_mileaveret *a);
-typedef arg_decode_xqci_16_impl3 arg_qc_c_ptrace;
+typedef arg_decode_xqci_16_impl4 arg_qc_c_dir;
+static bool trans_qc_c_dir(rv_decode *dec, arg_qc_c_dir *a);
+typedef arg_decode_xqci_16_impl5 arg_qc_c_extu;
+static bool trans_qc_c_extu(rv_decode *dec, arg_qc_c_extu *a);
+typedef arg_decode_xqci_16_impl3 arg_qc_c_setint;
+static bool trans_qc_c_setint(rv_decode *dec, arg_qc_c_setint *a);
+typedef arg_decode_xqci_16_impl2 arg_qc_c_ptrace;
 static bool trans_qc_c_ptrace(rv_decode *dec, arg_qc_c_ptrace *a);
 typedef arg_decode_xqci_16_impl6 arg_qc_c_delay;
 static bool trans_qc_c_delay(rv_decode *dec, arg_qc_c_delay *a);
@@ -92,28 +92,28 @@ static void decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_0(rv_decode *dec
 
 static void decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_1(rv_decode *dec, arg_decode_xqci_16_impl1 *a, uint16_t insn)
 {
-    a->rd = extract32(insn, 7, 3);
     a->shamt = extract32(insn, 2, 5);
+    a->rd = extract32(insn, 7, 3);
 }
 
 static void decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_2(rv_decode *dec, arg_decode_xqci_16_impl2 *a, uint16_t insn)
 {
-    a->rs1 = extract32(insn, 7, 5);
 }
 
 static void decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(rv_decode *dec, arg_decode_xqci_16_impl3 *a, uint16_t insn)
 {
+    a->rs1 = extract32(insn, 7, 5);
 }
 
 static void decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_4(rv_decode *dec, arg_decode_xqci_16_impl4 *a, uint16_t insn)
 {
     a->rd = extract32(insn, 7, 5);
-    a->width_minus1 = extract32(insn, 2, 5);
 }
 
 static void decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_5(rv_decode *dec, arg_decode_xqci_16_impl5 *a, uint16_t insn)
 {
     a->rd = extract32(insn, 7, 5);
+    a->width_minus1 = extract32(insn, 2, 5);
 }
 
 static void decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_6(rv_decode *dec, arg_decode_xqci_16_impl6 *a, uint16_t insn)
@@ -160,8 +160,8 @@ static bool decode_xqci_16_impl(rv_decode *dec, uint16_t insn)
                 if ((insn & 0x007c) == 0x0000) {
                     /* 00000000 00000010 */
                     /* build/xqciu-16.decode:34 */
-                    decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(dec, &u.f_decode_xqci_16_impl3, insn);
-                    if (trans_qc_c_ptrace(dec, &u.f_decode_xqci_16_impl3)) return true;
+                    decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_2(dec, &u.f_decode_xqci_16_impl2, insn);
+                    if (trans_qc_c_ptrace(dec, &u.f_decode_xqci_16_impl2)) return true;
                 }
                 /* build/xqciu-16.decode:35 */
                 decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_6(dec, &u.f_decode_xqci_16_impl6, insn);
@@ -171,74 +171,74 @@ static bool decode_xqci_16_impl(rv_decode *dec, uint16_t insn)
             break;
         case 0x1:
             /* 0001.... ......10 */
-            if ((insn & 0x007c) == 0x0008) {
-                /* 0001.... .0001010 */
+            if ((insn & 0x0ffc) == 0x0990) {
+                /* 00011001 10010010 */
                 /* build/xqciu-16.decode:20 */
                 decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_2(dec, &u.f_decode_xqci_16_impl2, insn);
-                if (trans_qc_c_setint(dec, &u.f_decode_xqci_16_impl2)) return true;
+                if (trans_qc_c_mnret(dec, &u.f_decode_xqci_16_impl2)) return true;
+            }
+            if ((insn & 0x007c) == 0x000c) {
+                /* 0001.... .0001110 */
+                /* build/xqciu-16.decode:21 */
+                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(dec, &u.f_decode_xqci_16_impl3, insn);
+                if (trans_qc_c_clrint(dec, &u.f_decode_xqci_16_impl3)) return true;
             }
             if ((insn & 0x0ffc) == 0x0890) {
                 /* 00011000 10010010 */
-                /* build/xqciu-16.decode:21 */
-                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(dec, &u.f_decode_xqci_16_impl3, insn);
-                if (trans_qc_c_mienter_nest(dec, &u.f_decode_xqci_16_impl3)) return true;
-            }
-            if ((insn & 0x0ffc) == 0x0b10) {
-                /* 00011011 00010010 */
                 /* build/xqciu-16.decode:22 */
-                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(dec, &u.f_decode_xqci_16_impl3, insn);
-                if (trans_qc_c_di(dec, &u.f_decode_xqci_16_impl3)) return true;
+                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_2(dec, &u.f_decode_xqci_16_impl2, insn);
+                if (trans_qc_c_mienter_nest(dec, &u.f_decode_xqci_16_impl2)) return true;
             }
-            if ((insn & 0x007c) == 0x0004) {
-                /* 0001.... .0000110 */
+            if ((insn & 0x0ffc) == 0x0b90) {
+                /* 00011011 10010010 */
                 /* build/xqciu-16.decode:23 */
                 decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_2(dec, &u.f_decode_xqci_16_impl2, insn);
-                if (trans_qc_c_eir(dec, &u.f_decode_xqci_16_impl2)) return true;
+                if (trans_qc_c_ei(dec, &u.f_decode_xqci_16_impl2)) return true;
             }
             if ((insn & 0x0ffc) == 0x0910) {
                 /* 00011001 00010010 */
                 /* build/xqciu-16.decode:24 */
-                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(dec, &u.f_decode_xqci_16_impl3, insn);
-                if (trans_qc_c_mret(dec, &u.f_decode_xqci_16_impl3)) return true;
+                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_2(dec, &u.f_decode_xqci_16_impl2, insn);
+                if (trans_qc_c_mret(dec, &u.f_decode_xqci_16_impl2)) return true;
             }
-            if ((insn & 0x007c) == 0x000c) {
-                /* 0001.... .0001110 */
+            if ((insn & 0x0ffc) == 0x0b10) {
+                /* 00011011 00010010 */
                 /* build/xqciu-16.decode:25 */
                 decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_2(dec, &u.f_decode_xqci_16_impl2, insn);
-                if (trans_qc_c_clrint(dec, &u.f_decode_xqci_16_impl2)) return true;
+                if (trans_qc_c_di(dec, &u.f_decode_xqci_16_impl2)) return true;
             }
-            /* build/xqciu-16.decode:26 */
-            decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_4(dec, &u.f_decode_xqci_16_impl4, insn);
-            if (trans_qc_c_extu(dec, &u.f_decode_xqci_16_impl4)) return true;
-            if ((insn & 0x007c) == 0x0000) {
-                /* 0001.... .0000010 */
-                /* build/xqciu-16.decode:27 */
-                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_5(dec, &u.f_decode_xqci_16_impl5, insn);
-                if (trans_qc_c_dir(dec, &u.f_decode_xqci_16_impl5)) return true;
+            if ((insn & 0x007c) == 0x0004) {
+                /* 0001.... .0000110 */
+                /* build/xqciu-16.decode:26 */
+                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(dec, &u.f_decode_xqci_16_impl3, insn);
+                if (trans_qc_c_eir(dec, &u.f_decode_xqci_16_impl3)) return true;
             }
             if ((insn & 0x0ffc) == 0x0810) {
                 /* 00011000 00010010 */
-                /* build/xqciu-16.decode:28 */
-                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(dec, &u.f_decode_xqci_16_impl3, insn);
-                if (trans_qc_c_mienter(dec, &u.f_decode_xqci_16_impl3)) return true;
-            }
-            if ((insn & 0x0ffc) == 0x0990) {
-                /* 00011001 10010010 */
-                /* build/xqciu-16.decode:29 */
-                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(dec, &u.f_decode_xqci_16_impl3, insn);
-                if (trans_qc_c_mnret(dec, &u.f_decode_xqci_16_impl3)) return true;
-            }
-            if ((insn & 0x0ffc) == 0x0b90) {
-                /* 00011011 10010010 */
-                /* build/xqciu-16.decode:30 */
-                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(dec, &u.f_decode_xqci_16_impl3, insn);
-                if (trans_qc_c_ei(dec, &u.f_decode_xqci_16_impl3)) return true;
+                /* build/xqciu-16.decode:27 */
+                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_2(dec, &u.f_decode_xqci_16_impl2, insn);
+                if (trans_qc_c_mienter(dec, &u.f_decode_xqci_16_impl2)) return true;
             }
             if ((insn & 0x0ffc) == 0x0a10) {
                 /* 00011010 00010010 */
+                /* build/xqciu-16.decode:28 */
+                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_2(dec, &u.f_decode_xqci_16_impl2, insn);
+                if (trans_qc_c_mileaveret(dec, &u.f_decode_xqci_16_impl2)) return true;
+            }
+            if ((insn & 0x007c) == 0x0000) {
+                /* 0001.... .0000010 */
+                /* build/xqciu-16.decode:29 */
+                decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_4(dec, &u.f_decode_xqci_16_impl4, insn);
+                if (trans_qc_c_dir(dec, &u.f_decode_xqci_16_impl4)) return true;
+            }
+            /* build/xqciu-16.decode:30 */
+            decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_5(dec, &u.f_decode_xqci_16_impl5, insn);
+            if (trans_qc_c_extu(dec, &u.f_decode_xqci_16_impl5)) return true;
+            if ((insn & 0x007c) == 0x0008) {
+                /* 0001.... .0001010 */
                 /* build/xqciu-16.decode:31 */
                 decode_xqci_16_impl_extract_decode_xqci_16_impl_Fmt_3(dec, &u.f_decode_xqci_16_impl3, insn);
-                if (trans_qc_c_mileaveret(dec, &u.f_decode_xqci_16_impl3)) return true;
+                if (trans_qc_c_setint(dec, &u.f_decode_xqci_16_impl3)) return true;
             }
             break;
         }

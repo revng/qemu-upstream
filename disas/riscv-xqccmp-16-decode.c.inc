@@ -27,14 +27,14 @@ static bool trans_qc_cm_pushfp(rv_decode *dec, arg_qc_cm_pushfp *a);
 
 static void decode_xqccmp_16_impl_extract_decode_xqccmp_16_impl_Fmt_0(rv_decode *dec, arg_decode_xqccmp_16_impl0 *a, uint16_t insn)
 {
-    a->r2s = extract32(insn, 2, 3);
     a->r1s = extract32(insn, 7, 3);
+    a->r2s = extract32(insn, 2, 3);
 }
 
 static void decode_xqccmp_16_impl_extract_decode_xqccmp_16_impl_Fmt_1(rv_decode *dec, arg_decode_xqccmp_16_impl1 *a, uint16_t insn)
 {
-    a->spimm = extract32(insn, 2, 2);
     a->rlist = extract32(insn, 4, 4);
+    a->spimm = extract32(insn, 2, 2);
 }
 
 static bool decode_xqccmp_16_impl(rv_decode *dec, uint16_t insn)
