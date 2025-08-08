@@ -20,12 +20,12 @@
   underflow: 0
 - variables:
   - name: "rs2"
-    in: 3604
+    in: 7938
   - name: "rs1"
-    in: 2147483648
+    in: 1073741824
   - name: "rd"
     in: 16711680
-    out: 983040
+    out: 0
   overflow: 1
   underflow: 0
 - variables:
@@ -40,11 +40,11 @@
   underflow: 0
 - variables:
   - name: "rs2"
-    in: 3594
+    in: 4610
   - name: "rs1"
-    in: 2147483648
+    in: 1073741824
   - name: "rd"
     in: 16711680
-    out: 0
+    out: 15728640
   overflow: 1
   underflow: 0

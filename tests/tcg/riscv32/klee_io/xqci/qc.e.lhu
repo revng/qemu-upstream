@@ -1,20 +1,5 @@
 - variables:
   - name: "imm"
-    in: 0
-  - name: "rs1"
-    in: 0
-  - name: "rd"
-    in: 0
-    out: 0
-  overflow: 0
-  underflow: 0
-  has_valid_test_memop: 0
-  has_load:
-  - address: 0
-    value: 0
-    size: 0
-- variables:
-  - name: "imm"
     in: 4095
   - name: "rs1"
     in: 4294965248

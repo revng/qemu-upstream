@@ -51,11 +51,11 @@
   - name: "rs2"
     in: 4294967295
   - name: "rs1"
-    in: 33563140
+    in: 33560068
   overflow: 0
   underflow: 0
   has_valid_test_memop: 1
   has_store:
-  - address: 8968
+  - address: 5896
     value: 255
     size: 8

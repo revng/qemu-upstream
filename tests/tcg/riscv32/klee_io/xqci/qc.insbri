@@ -28,13 +28,3 @@
     out: 4227858687
   overflow: 1
   underflow: 0
-- variables:
-  - name: "imm"
-    in: 192
-  - name: "rs1"
-    in: 393241
-  - name: "rd"
-    in: 255
-    out: 255
-  overflow: 1
-  underflow: 0

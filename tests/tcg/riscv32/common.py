@@ -148,14 +148,15 @@ def op_to_cpp(op, csrs, for_klee = False):
     op = re.sub(r'implemented\?\(ExtensionName::([a-zA-Z]*)\)', r'xqci_implemented_\1()', op)
     op = re.sub(r'raise\(ExceptionCode::([a-zA-Z]*)\,.*\);', r'xqci_raise_\1();', op)
     op = re.sub(r'set_mode\(PrivilegeMode::([a-zA-Z]*)\);', r'xqci_set_mode_\1();', op)
-    op = re.sub(r'\$pc', r'pc', op)
+    op = re.sub(r'\$pc =', r'pc =', op)
+    op = re.sub(r'\$pc', r'xqci_current_pc()', op)
 
     op = re.sub(r'{([A-Za-z0-9\(\)\+\-\*/ ]+){([A-Za-z0-9\(\)\[\]<>\+\-\*/, ]+)}}', r'repeat<\1>(\2)', op)
 
     op = re.sub(r'csr_sw_write\(', r'csr_sw_write(this, ', op)
     op = re.sub(r'csr_sw_read\(', r'csr_sw_read(this, ', op)
 
-    op = re.sub(r'jump_halfword\(([a-z_A-Z]+)[ ]+\+[ ]+([a-z_A-Z\(\)]+)\)', r'xqci_jump_pcrel_bits(\1, maybe_sext_xreg(\2))', op)
+    op = re.sub(r'jump_halfword\(xqci_current_pc\(\)[ ]+\+[ ]+([a-z_A-Z\(\)]+)\)', r'xqci_jump_pcrel_bits(maybe_sext_xreg(\1))', op)
     op = re.sub(r'jump\(([a-z_A-Z0-9\[\]]+)\)', r'xqci_jump(\1, 0)', op)
 
     op = re.sub(r'CSR\[([a-zA-z0-9]+)\]\.address\(\)', sub_to_csr_address, op)

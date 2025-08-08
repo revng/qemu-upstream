@@ -158,7 +158,7 @@ build-xqccmp-c-tests: build-xqccmp-c-tests-code
 	@for file in $(XQCCMP_OUT_C_CODE_DIR)/*; do \
 		instname=$$(basename $$file); \
 		echo "Building test for" $$instname; \
-		$(CC) $(CFLAGS) -march=rv32imc_xqccmp0p1 -o $(XQCCMP_OUT_C_BIN_DIR)/$$instname $$file; \
+		$(CC) $(CFLAGS) -march=rv32imc_xqccmp0p3 -o $(XQCCMP_OUT_C_BIN_DIR)/$$instname $$file; \
 	done
 
 .PHONY: run-xqccmp-c-tests
