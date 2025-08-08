@@ -1183,7 +1183,12 @@ static void xqci_jump(DisasContext *ctx, TCGv pc, int imm)
     ctx->base.is_jmp = DISAS_NORETURN;
 }
 
-static void xqci_jump_pcrel(DisasContext *ctx, TCGv pc, int imm)
+static vaddr xqci_current_pc(DisasContext *ctx)
+{
+    return ctx->base.pc_next;
+}
+
+static void xqci_jump_pcrel(DisasContext *ctx, int imm)
 {
     gen_goto_tb(ctx, 1, imm);
     ctx->base.is_jmp = DISAS_NORETURN;
