@@ -165,8 +165,27 @@ struct RISCVCPUConfig {
     bool ext_xtheadmempair;
     bool ext_xtheadsync;
     bool ext_XVentanaCondOps;
+
     bool ext_xqccmp;
     bool ext_xqci;
+    bool ext_xqcia;
+    bool ext_xqciac;
+    bool ext_xqcibi;
+    bool ext_xqcibm;
+    bool ext_xqcicli;
+    bool ext_xqcicm;
+    bool ext_xqcics;
+    bool ext_xqcicsr;
+    bool ext_xqciint;
+    bool ext_xqciio;
+    bool ext_xqcilb;
+    bool ext_xqcili;
+    bool ext_xqcilia;
+    bool ext_xqcilo;
+    bool ext_xqcilsm;
+    bool ext_xqcisim;
+    bool ext_xqcisls;
+    bool ext_xqcisync;
 
     uint32_t pmu_mask;
     uint16_t vlenb;
