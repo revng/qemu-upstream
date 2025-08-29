@@ -36,3 +36,5 @@ extern llvm::cl::opt<std::string> OutputHeaderFile;
 extern llvm::cl::opt<std::string> OutputEnabledFile;
 extern llvm::cl::opt<std::string> OutputLogFile;
 extern llvm::cl::opt<bool> ErrorOnTranslationFailure;
+extern llvm::cl::opt<bool> StaticOutput;
+extern llvm::cl::opt<bool> OutputDispatcher;
