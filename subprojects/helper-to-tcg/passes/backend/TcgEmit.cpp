@@ -62,7 +62,7 @@ const std::string getType(const TcgV &Value)
         if (Value.LlvmSize == 1) {
             return "bool";
         } else {
-            return Twine("int")
+            return Twine("uint")
                 .concat(Twine((int)Value.LlvmSize))
                 .concat("_t")
                 .str();
@@ -927,11 +927,11 @@ static std::string mapBinOp(const Instruction::BinaryOps &Opcode,
         Op = "&";
         break;
     case Instruction::AShr:
-        CastSrc0 = CastUnsigned;
+        CastSrc0 = CastSigned;
         Op = ">>";
         break;
     case Instruction::LShr:
-        CastSrc0 = CastSigned;
+        CastSrc0 = CastUnsigned;
         Op = ">>";
         break;
     case Instruction::Shl:
@@ -1053,7 +1053,7 @@ TcgV sext(const TcgV &V, uint32_t LlvmSize, uint32_t TcgSize)
     assert(V.Kind == IrImmediate);
     std::string Expr = "";
     llvm::raw_string_ostream ExprStream(Expr);
-    ExprStream << "((int" << (int)LlvmSize << "_t) (int" << (int)V.TcgSize
+    ExprStream << "((int" << (int)LlvmSize << "_t) (int" << (int)V.LlvmSize
                << "_t) " << V << ")";
     ExprStream.flush();
     return TcgV::makeImmediate(Expr, TcgSize, LlvmSize);
