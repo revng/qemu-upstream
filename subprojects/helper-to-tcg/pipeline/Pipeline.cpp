@@ -15,6 +15,7 @@
 //  along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+#include "CmdLineOptions.h"
 #include <llvm/ADT/Triple.h>
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Analysis/CGSCCPassManager.h>
@@ -106,6 +107,16 @@ cl::opt<bool>
     ErrorOnTranslationFailure("error-on-translation-failure",
                               cl::desc("Abort translation on first failure"),
                               cl::init(false), cl::cat(Cat));
+
+cl::opt<bool>
+    StaticOutput("static-output",
+                cl::desc("Statically define output functions"),
+                cl::init(false), cl::cat(Cat));
+
+cl::opt<bool>
+    OutputDispatcher("output-dispatcher",
+                cl::desc("Outputs a dispatcher mapping helper calls to generated code"),
+                cl::init(false), cl::cat(Cat));
 
 // Define a TargetTransformInfo (TTI) subclass, this allows for overriding
 // common per-llvm-target information expected by other LLVM passes, such
@@ -251,9 +262,9 @@ int main(int argc, char **argv)
 
     // Optimization passes
     MPM.addPass(PB.buildModuleSimplificationPipeline(
-        compat::OptimizationLevel::O3, compat::LTOPhase));
+        compat::OptimizationLevel::Oz, compat::LTOPhase));
     MPM.addPass(
-        PB.buildModuleOptimizationPipeline(compat::OptimizationLevel::O3));
+        PB.buildModuleOptimizationPipeline(compat::OptimizationLevel::Oz));
 
     //
     // Next, we run our final transformations, including removing phis and our
