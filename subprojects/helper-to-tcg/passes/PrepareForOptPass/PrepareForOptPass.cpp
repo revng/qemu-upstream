@@ -26,6 +26,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Intrinsics.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Mangler.h>
 #include <llvm/Transforms/Utils/Local.h>
 
 #include <queue>
@@ -48,6 +49,10 @@ static Expected<Annotation> parseAnnotationStr(StringRef Str,
         Ann.Kind = AnnotationKind::Immediate;
     } else if (Str.consume_front("ptr-to-offset")) {
         Ann.Kind = AnnotationKind::PtrToOffset;
+    } else if (Str.consume_front("returns-immediate")) {
+        Ann.Kind = AnnotationKind::ReturnsImmediate;
+        // Early return, no additional info to parse from annotation string
+        return Ann;
     } else {
         return mkError("Unknown annotation");
     }
@@ -109,6 +114,24 @@ static void collectAnnotations(Module &M, AnnotationMapTy &ResultAnnotations)
                    << "\" for function " << F->getName() << "\n";
             continue;
         }
+
+        // TODO(anjo):
+        std::string FuncName = getDemangleFunctionName(F->getName());
+        StringRef FuncNameRef(FuncName);
+        errs() << "Mapping annotation " << FuncNameRef << "\n";
+        if (FuncNameRef.consume_front("ann_")) {
+            errs() << "Remapping " << FuncNameRef << "\n";
+            
+            for (auto &MapF : M) {
+                auto NewFuncName = getDemangleFunctionName(MapF.getName());
+                if (NewFuncName == FuncNameRef) {
+                    F = &MapF;
+                    break;
+                }
+            }
+
+        }
+
         ResultAnnotations[F].push_back(*Ann);
     }
 }
