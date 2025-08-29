@@ -206,18 +206,18 @@ static bool transformGEP(Module &M, const TcgGlobalMap &TcgGlobals,
         if (Index.IsArrayAccess) {
             LastArrayAccess = Index.V;
             ++NumArrayAccesses;
-        } else {
-            auto *Const = dyn_cast<ConstantInt>(Index.V);
-            if (Const) {
-                BaseOffset += Const->getZExtValue() * Index.Size;
-            }
+        } else if (auto *Const = dyn_cast<ConstantInt>(Index.V)) {
+            BaseOffset += Const->getZExtValue() * Index.Size;
         }
     }
 
     if (PtrOpIsEnv) {
         auto It = TcgGlobals.find(BaseOffset);
         if (It != TcgGlobals.end()) {
-            if (LastArrayAccess && NumArrayAccesses > 1) {
+            // Only handle a single levels of array accesses for GEPs into
+            // env.
+            // TODO: Return a llvm::error for better error reporting
+            if (NumArrayAccesses > 1) {
                 return false;
             }
             replaceGEPWithGlobalAccess(M, ParentInst, Gep, BaseOffset,
