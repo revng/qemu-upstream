@@ -36,6 +36,8 @@ enum class AnnotationKind : uint8_t {
     // Declares a list of arguments as vectors, represented by offsets into
     // the CPU state
     PtrToOffset,
+    // Return value of function is an immediate
+    ReturnsImmediate,
 };
 
 // Annotation data which may be attached to a function
