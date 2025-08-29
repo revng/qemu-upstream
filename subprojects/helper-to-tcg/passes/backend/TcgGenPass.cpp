@@ -25,6 +25,7 @@
 #include "TcgTempAllocationPass.h"
 #include "TcgType.h"
 #include "llvm-compat.h"
+#include "llvm/IR/IntrinsicInst.h"
 
 #include <llvm/ADT/Optional.h>
 #include <llvm/ADT/PostOrderIterator.h>
@@ -1786,45 +1787,49 @@ PreservedAnalyses TcgGenPass::run(Module &M, ModuleAnalysisManager &MAM) {
     // Emit extern definitions for all global TCGv_* that are mapped
     // to the CPUState.
     for (auto &P : TcgGlobals) {
-        const TcgGlobal &Global = P.second;
-        const uint32_t Size = llvmToTcgSize(Global.Size);
-        OutSource << "extern " << "TCGv_i" << Size << " " << Global.Code;
-        if (Global.NumElements > 1) {
-            OutSource << "[" << Global.NumElements << "]";
-        }
-        OutSource << ";\n";
+      const TcgGlobal &Global = P.second;
+      const uint32_t Size = llvmToTcgSize(Global.Size);
+      OutSource << "extern " << "TCGv_i" << Size << " " << Global.Code;
+      if (Global.NumElements > 1) {
+        OutSource << "[" << Global.NumElements << "]";
+      }
+      OutSource << ";\n";
     }
+  }
 
-    c::emitVectorPreamble(OutSource);
+  // TODO(anjo): Only emit if we need vectors
+  //c::emitVectorPreamble(OutSource);
 
-    // Emit translated functions
-    for (auto &TF : TranslatedFunctions) {
-        OutSource << TF.Code << '\n';
-        OutHeader << TF.Decl << '\n';
-        OutEnabled << TF.Name << '\n';
-    }
+  // Emit translated functions
+  for (auto &TF : TranslatedFunctions) {
+    OutSource << TF.Code << '\n';
+    OutHeader << TF.Decl << '\n';
+    OutEnabled << TF.Name << '\n';
+  }
 
-    // Emit a dispatched to go from helper function address to our
-    // emitted code, if we succeeded.
-    OutHeader << "int helper_to_tcg_dispatcher(void *func, TCGTemp *ret_temp, "
-                 "int nargs, TCGTemp **args);\n";
+  // Emit a dispatched to go from helper function address to our
+  // emitted code, if we succeeded.
+  OutHeader << "int helper_to_tcg_dispatcher(void *func, TCGTemp *ret_temp, "
+               "int nargs, TCGTemp **args);\n";
 
+  if (OutputDispatcher) {
     OutSource << "\n";
     OutSource << "#include \"exec/helper-proto.h\"\n";
     OutSource << "int helper_to_tcg_dispatcher(void *func, TCGTemp *ret_temp, "
-                 "int nargs, TCGTemp **args) {\n";
+      "int nargs, TCGTemp **args) {\n";
     for (auto &TF : TranslatedFunctions) {
-        if (!TF.IsHelper or TF.DispatchCode.empty()) {
-            continue;
-        }
-        OutSource << "    if ((uintptr_t) func == (uintptr_t) helper_"
-                  << TF.Name << ") {\n";
-        OutSource << TF.DispatchCode;
-        OutSource << "        return 1;\n";
-        OutSource << "    }\n";
+      if (!TF.IsHelper or TF.DispatchCode.empty()) {
+        continue;
+      }
+      OutSource << "    if ((uintptr_t) func == (uintptr_t) helper_" << TF.Name
+        << ") {\n";
+      OutSource << TF.DispatchCode;
+      OutSource << "        return 1;\n";
+      OutSource << "    }\n";
     }
     OutSource << "    return 0;\n";
     OutSource << "}\n";
+  }
 
-    return PreservedAnalyses::all();
+  return PreservedAnalyses::all();
 }
