@@ -633,6 +633,13 @@ void genByteswap(raw_ostream &Out, const TcgV &Dst, const TcgV &Src)
         << "(" << Dst << ", " << Src << ");\n";
 }
 
+void genUnsignedSatSub(raw_ostream &Out, const TcgV &Dst,
+                       const TcgV &Src0, const TcgV &Src1)
+{
+    Out << "tcg_gen_ussub" << "_i" << (int)Dst.TcgSize
+        << "(" << Dst << ", " << Src0 << ", " << Src1 << ");\n";
+}
+
 static void genVecBinOpStr(raw_ostream &Out, StringRef Op, const TcgV &Dst,
                            const TcgV &Src0, const TcgV &Src1)
 {
@@ -662,6 +669,13 @@ void genVecSignedSatSub(raw_ostream &Out, const TcgV &Dst, const TcgV &Src0,
 {
     assert(Dst.Kind == IrPtrToOffset);
     genVecBinOpStr(Out, "sssub", Dst, Src0, Src1);
+}
+
+void genVecUnsignedSatSub(raw_ostream &Out, const TcgV &Dst,
+                                const TcgV &Src0, const TcgV &Src1)
+{
+    assert(Dst.Kind == IrPtrToOffset);
+    genVecBinOpStr(Out, "ussub", Dst, Src0, Src1);
 }
 
 void genVecSignedMax(raw_ostream &Out, const TcgV &Dst, const TcgV &Src0,

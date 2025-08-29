@@ -237,6 +237,8 @@ void genCountLeadingZeros(raw_ostream &Out, const TcgV &Dst, const TcgV &Src);
 void genCountTrailingZeros(raw_ostream &Out, const TcgV &Dst, const TcgV &Src);
 void genCountOnes(raw_ostream &Out, const TcgV &Dst, const TcgV &Src);
 void genByteswap(raw_ostream &Out, const TcgV &Dst, const TcgV &Src);
+void genUnsignedSatSub(raw_ostream &Out, const TcgV &Dst,
+                       const TcgV &Src0, const TcgV &Src1);
 
 // Vector ops.
 void genVecBinOp(raw_ostream &Out, const Instruction::BinaryOps Opcode,
@@ -245,6 +247,8 @@ void genVecSignedSatAdd(raw_ostream &Out, const TcgV &Dst, const TcgV &Src0,
                         const TcgV &Src1);
 void genVecSignedSatSub(raw_ostream &Out, const TcgV &Dst, const TcgV &Src0,
                         const TcgV &Src1);
+void genVecUnsignedSatSub(raw_ostream &Out, const TcgV &Dst,
+                                const TcgV &Src0, const TcgV &Src1);
 void genVecSignedMax(raw_ostream &Out, const TcgV &Dst, const TcgV &Src0,
                      const TcgV &Src1);
 void genVecUnsignedMax(raw_ostream &Out, const TcgV &Dst, const TcgV &Src0,
