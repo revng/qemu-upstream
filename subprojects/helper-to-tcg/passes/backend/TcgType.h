@@ -34,6 +34,8 @@ enum TcgVKind : uint8_t {
     IrLabel,
 };
 
+#include <llvm/IR/Module.h>
+
 // Counter incremented for every TcgV created, also used in the creation of
 // unique names (e.g. varr_10 for an array).
 extern uint32_t VarIndex;
@@ -72,6 +74,8 @@ struct TcgV {
                                        uint32_t TcgWidth, uint32_t LlvmWidth,
                                        TcgVKind Kind)
     {
+        llvm::errs() << TcgWidth << "\n";
+        llvm::errs() << LlvmWidth << "\n";
         TcgV Tcg(Expression.str(), TcgWidth, LlvmWidth, 1, Kind);
         Tcg.ConstantExpression = true;
         return Tcg;
