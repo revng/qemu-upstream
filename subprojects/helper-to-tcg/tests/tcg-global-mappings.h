@@ -30,7 +30,8 @@
  * @tcg_var_name: String name of the TCGv to use as destination of the mapping.
  * @tcg_var_base_address: Address of the above TCGv.
  * @cpu_var_names: Array of printable names of TCGvs, used when calling
- *                 tcg_global_mem_new from init_cpu_tcg_mappings.
+ *                 tcg_global_mem_new from init_cpu_tcg_mappings.  Contains
+ *                 @number_of_elements strings.
  * @cpu_var_base_offset: Base offset of field in the source struct.
  * @cpu_var_size: Size of field in the source struct, if the field is an array,
  *                this holds the size of the element type.
