@@ -20,6 +20,7 @@
 #include "PseudoInst.h"
 #include "backend/TcgEmit.h"
 #include "llvm-compat.h"
+#include "llvm/IR/DerivedTypes.h"
 #include <CmdLineOptions.h>
 #include <Error.h>
 #include <FunctionAnnotation.h>
@@ -95,10 +96,34 @@ static std::string constantIntToStr(const ConstantInt *C)
     return Twine(ResultStr).concat(SuffixStr).str();
 }
 
+enum MapValueFlags {
+    ForceNewValue = 1,
+};
+
+static bool isCallWithAnnotation(const AnnotationMapTy &Annotations,
+                                 const Value *V, AnnotationKind Kind)
+{
+    auto *Call = dyn_cast<CallInst>(V);
+    if (Call) {
+        auto It = Annotations.find(Call->getCalledFunction());
+        if (It != Annotations.end()) {
+            for (const Annotation &Ann : It->second) {
+                if (Ann.Kind == Kind) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 // Given an integer LLVM value assign it to a TcgV, either by creating a new
 // one or finding a suitable one on the FreeList
 static Expected<TcgV> mapInteger(TempAllocationData &TAD,
-                                 FreeListVector &FreeList, const Value *V)
+                                 const AnnotationMapTy &Annotations,
+                                 FreeListVector &FreeList,
+                                 const Value *V,
+                                 uint32_t flags)
 {
     auto *Ty = cast<IntegerType>(V->getType());
 
@@ -112,7 +137,12 @@ static Expected<TcgV> mapInteger(TempAllocationData &TAD,
         auto Tcg = TcgV::makeImmediate(constantIntToStr(cast<ConstantInt>(V)),
                                        llvmToTcgSize(LlvmSize), LlvmSize);
         return TAD.map(V, Tcg);
-    } else if (isa<Argument>(V)) {
+    } else if (isCallWithAnnotation(Annotations, V,
+                                    AnnotationKind::ReturnsImmediate)) {
+        auto Tcg = TcgV::makeImmediate(tcg::mkName("i"),
+                                       llvmToTcgSize(LlvmSize), LlvmSize);
+        return TAD.map(V, Tcg);
+    } else if (isa<Argument>(V) or (flags & ForceNewValue) != 0) {
         // Argument
         uint32_t TcgSize = llvmToTcgSize(LlvmSize);
         auto ArgInfoIt = TAD.Args.ArgInfoMap.find(V);
@@ -145,6 +175,8 @@ static Expected<TcgV> mapInteger(TempAllocationData &TAD,
         }
 
         Optional<TcgV> Tcg = findFreeTcgV(FreeList, TcgSize, IrValue);
+        // TODO(anjo): make option
+        // if (false and Tcg) {
         if (Tcg) {
             // Found a TcgV of the corresponding TcgSize, update LlvmSize
             Tcg->LlvmSize = LlvmSize;
@@ -161,8 +193,11 @@ static Expected<TcgV> mapInteger(TempAllocationData &TAD,
 // one or finding a suitable one on the FreeList.  Special care is taken to
 // map individual elements of constant vectors.
 static Expected<TcgV> mapVector(TempAllocationData &TAD,
-                                FreeListVector &FreeList, const Value *V,
-                                VectorType *VecTy)
+                                const AnnotationMapTy &Annotations,
+                                FreeListVector &FreeList,
+                                const Value *V,
+                                VectorType *VecTy,
+                                uint32_t flags)
 {
     auto *IntTy = dyn_cast<IntegerType>(VecTy->getElementType());
     if (!IntTy) {
@@ -203,13 +238,13 @@ static Expected<TcgV> mapVector(TempAllocationData &TAD,
             //   <32 x i32> <i32 255, i32 255, ..., i32 255>
             // or,
             //   <32 x i32> <i32 %1, i32 %1, ..., i32 %1>
-            assert(mapInteger(TAD, FreeList, Splat));
+            assert(mapInteger(TAD, Annotations, FreeList, Splat, flags));
         } else {
             // Map constant elements of vector where elements differ
             //   <32 x i32> <i32 1, i32 %5, ..., i32 16>
             for (unsigned I = 0; I < Tcg->VectorElementCount; ++I) {
                 Value *V = Const->getAggregateElement(I);
-                assert(mapInteger(TAD, FreeList, V));
+                assert(mapInteger(TAD, Annotations, FreeList, V, flags));
             }
         }
     }
@@ -221,7 +256,10 @@ static Expected<TcgV> mapVector(TempAllocationData &TAD,
 // one or finding a suitable one on the FreeList.  NOTE: Pointers may be mapped
 // to env via comparison with TempAllocationData::EnvPtr.
 static Expected<TcgV> mapPointer(TempAllocationData &TAD,
-                                 FreeListVector &FreeList, const Value *V)
+                                 const AnnotationMapTy &Annotations,
+                                 FreeListVector &FreeList,
+                                 const Value *V,
+                                 uint32_t flags)
 {
     auto *Ty = cast<PointerType>(V->getType());
     auto *ElTy = Ty->getPointerElementType();
@@ -260,7 +298,8 @@ static Expected<TcgV> mapPointer(TempAllocationData &TAD,
             return TAD.map(V, Tcg);
         }
     } else if (isa<VectorType>(ElTy)) {
-        return mapVector(TAD, FreeList, V, cast<VectorType>(ElTy));
+        return mapVector(TAD, Annotations, FreeList,
+                         V, cast<VectorType>(ElTy), flags);
     } else {
         // Otherwise, find or create a new IrPtr of the target pointer size
         Optional<TcgV> Tcg = findFreeTcgV(FreeList, GuestPtrSize, IrPtr);
@@ -278,7 +317,10 @@ static Expected<TcgV> mapPointer(TempAllocationData &TAD,
 // Given a LLVM value, assigns a TcgV by type (integer, pointer, vector).  If
 // the given value has already been mapped to a TcgV, return it.
 static Expected<TcgV> mapValue(TempAllocationData &Data,
-                               FreeListVector &FreeList, const Value *V)
+                               const AnnotationMapTy &Annotations,
+                               FreeListVector &FreeList,
+                               const Value *V,
+                               uint32_t flags = 0)
 {
     // Return previously mapped value
     auto It = Data.Map.find(V);
@@ -288,11 +330,12 @@ static Expected<TcgV> mapValue(TempAllocationData &Data,
 
     Type *Ty = V->getType();
     if (isa<IntegerType>(Ty)) {
-        return mapInteger(Data, FreeList, V);
+        return mapInteger(Data, Annotations, FreeList, V, flags);
     } else if (isa<PointerType>(Ty)) {
-        return mapPointer(Data, FreeList, V);
+        return mapPointer(Data, Annotations, FreeList, V, flags);
     } else if (isa<VectorType>(Ty)) {
-        return mapVector(Data, FreeList, V, cast<VectorType>(Ty));
+        return mapVector(Data, Annotations, FreeList,
+                         V, cast<VectorType>(Ty), flags);
     }
 
     return mkError("Unable to map value ", V);
@@ -316,7 +359,7 @@ static bool shouldSkipInstruction(const Instruction *const I,
     }
     std::string Name = getDemangleFunctionName(F->getName());
     return (Name == "__assert_fail" or Name == "g_assertion_message_expr" or
-            isa<DbgValueInst>(I) or isa<DbgLabelInst>(I));
+            isa<DbgValueInst>(I) or isa<DbgLabelInst>(I) or isa<DbgDeclareInst>(I));
 }
 
 static bool shouldSkipValue(const Value *const V)
@@ -373,6 +416,63 @@ static bool isRetMapValid(Arguments &Args,
     } while (BbIt != BbEnd);
 
     return false;
+}
+
+static bool valueIsReference(const Value *V)
+{
+    if (auto *Call = dyn_cast<CallInst>(V)) {
+        auto *F = Call->getCalledFunction();
+        bool AllowCallToDecl = true;
+        if (AllowCallToDecl && F->isDeclaration()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool instructionClobbersArguments(const Instruction *I)
+{
+    if (auto *Call = dyn_cast<CallInst>(I)) {
+        auto *F = Call->getCalledFunction();
+        bool AllowCallToDecl = true;
+        if (AllowCallToDecl && F->isDeclaration() and !F->getName().startswith("helper")) {
+            return true;
+        } else if (F->isIntrinsic()) {
+            switch (F->getIntrinsicID()) {
+            case Intrinsic::usub_sat:
+                // Maps to tcg_gen_ussub_*() which clobbers
+                // arguments.
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static void removeDefinedVariable(TempAllocationData &Data,
+                                  FreeListVector &FreeList,
+                                  const Instruction *I)
+{
+    bool IsArg = Data.Args.ArgInfoMap.find(cast<Value>(I)) !=
+        Data.Args.ArgInfoMap.end();
+    auto It = Data.Map.find(cast<Value>(I));
+    if (!IsArg and It != Data.Map.end() and
+        !cast<Value>(I)->getType()->isVoidTy()) {
+        TcgV &Tcg = It->second;
+        switch (Tcg.Kind) {
+            case IrValue:
+            case IrPtr:
+            case IrPtrToOffset:
+                FreeList.push_back(Tcg);
+                break;
+            case IrConst:
+            case IrEnv:
+            case IrImmediate:
+                break;
+            default:
+                abort();
+        }
+    }
 }
 
 Expected<TempAllocationData>
@@ -502,14 +602,23 @@ allocateTemporaries(const Function &F, const AnnotationMapTy &Annotations)
                 PseudoInst Inst = getPseudoInstFromCall(Call);
                 if (Inst == IdentityMap) {
                     Value *Arg = Call->getArgOperand(0);
-                    Expected<TcgV> Tcg = mapValue(Data, FreeList, Arg);
-                    assert(Tcg);
-
                     auto It = Data.Map.find(cast<Value>(&I));
                     assert(It != Data.Map.end());
-                    uint8_t LlvmSize = It->second.LlvmSize;
-                    It->second = Tcg.get();
-                    It->second.LlvmSize = LlvmSize;
+                    if (isa<Argument>(Arg) or Data.Map.find(Arg) != Data.Map.end()) {
+                        // Propagate forward
+                        Expected<TcgV> Tcg = mapValue(Data, Annotations,
+                                                      FreeList, Arg);
+                        assert(Tcg);
+
+                        uint8_t LlvmSize = It->second.LlvmSize;
+                        It->second = Tcg.get();
+                        It->second.LlvmSize = LlvmSize;
+                    } else {
+                        // Propagate back
+                        TcgV Propagated = It->second;
+                        Propagated.LlvmSize = cast<IntegerType>(Arg->getType())->getBitWidth();
+                        Data.map(Arg, It->second);
+                    }
                     continue;
                 }
             }
@@ -524,25 +633,9 @@ allocateTemporaries(const Function &F, const AnnotationMapTy &Annotations)
 
             // Free up variables as they are defined, iteration is in post order
             // meaning uses of vars always occur before definitions.
-            bool IsArg = Data.Args.ArgInfoMap.find(cast<Value>(&I)) !=
-                         Data.Args.ArgInfoMap.end();
-            auto It = Data.Map.find(cast<Value>(&I));
-            if (!IsArg and It != Data.Map.end() and
-                !cast<Value>(&I)->getType()->isVoidTy()) {
-                TcgV &Tcg = It->second;
-                switch (Tcg.Kind) {
-                case IrValue:
-                case IrPtr:
-                case IrPtrToOffset:
-                    FreeList.push_back(Tcg);
-                    break;
-                case IrConst:
-                case IrEnv:
-                case IrImmediate:
-                    break;
-                default:
-                    abort();
-                }
+            bool AllowDestReuse = !instructionClobbersArguments(&I);
+            if (AllowDestReuse) {
+                removeDefinedVariable(Data, FreeList, &I);
             }
 
             // Loop over operands and assign TcgV's. On first encounter of a
@@ -553,7 +646,13 @@ allocateTemporaries(const Function &F, const AnnotationMapTy &Annotations)
                     continue;
                 }
 
-                Expected<TcgV> Tcg = mapValue(Data, FreeList, V);
+                uint32_t Flags = 0;
+                if (valueIsReference(V)) {
+                    Flags |= ForceNewValue;
+                }
+
+                Expected<TcgV> Tcg = mapValue(Data, Annotations,
+                                              FreeList, V, Flags);
                 if (!Tcg) {
                     return Tcg.takeError();
                 }
@@ -573,19 +672,28 @@ allocateTemporaries(const Function &F, const AnnotationMapTy &Annotations)
 
                     // The mapping was not valid, erase it and assign a new one
                     Data.Map.erase(V);
-                    Expected<TcgV> Tcg = mapValue(Data, FreeList, V);
+                    Expected<TcgV> Tcg = mapValue(Data, Annotations,
+                                                  FreeList, V, Flags);
                     if (!Tcg) {
                         return Tcg.takeError();
                     }
                 }
             }
+
+            // Free up variables as they are defined, iteration is in post order
+            // meaning uses of vars always occur before definitions.
+            if (!AllowDestReuse) {
+                removeDefinedVariable(Data, FreeList, &I);
+            }
+
         }
     }
 
     // The above only maps arguments that are actually used, make a final pass
     // over the arguments to map unused and immediate arguments.
     for (auto V : Data.Args.Args) {
-        Expected<TcgV> Arg = mapValue(Data, FreeList, V);
+        Expected<TcgV> Arg = mapValue(Data, Annotations,
+                                      FreeList, V);
         if (!Arg) {
             return Arg.takeError();
         }

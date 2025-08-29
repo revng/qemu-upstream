@@ -65,6 +65,7 @@ struct TempAllocationData {
     // Whether or not the final mov in an instruction can safely
     // be ignored or not.
     bool SkipReturnMov = false;
+    bool ReturnsImmediate = false;
     llvm::Optional<TcgV> ReturnValue;
     Arguments Args;
 
