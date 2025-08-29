@@ -87,6 +87,10 @@ static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call,
                                              UsageCountMap &UsageMap);
 static void convertExceptionCallsToPseudoInst(Module &M, CallInst *Call);
 static void convertReturnAddrToPseudoInst(Module &M, CallInst *Call);
+static void convertImmediateSelectAccessGlobal(EraseInstVec &InstToErase,
+                                               Module &M, CallInst *Call);
+static void convertImmediateDeclCall(EraseInstVec &InstToErase,
+                                     Module &M, CallInst *Call);
 static void convertVecStoreBitcastToPseudoInst(EraseInstVec &InstToErase,
                                                Module &M, StoreInst *Store);
 static void convertICmpBrToPseudInst(LLVMContext &Context,
@@ -133,6 +137,8 @@ void canonicalizeIR(Module &M)
                 convertQemuLoadStoreToPseudoInst(M, Call, InstToErase, UsageMap);
                 convertExceptionCallsToPseudoInst(M, Call);
                 convertReturnAddrToPseudoInst(M, Call);
+                convertImmediateSelectAccessGlobal(InstToErase, M, Call);
+                convertImmediateDeclCall(InstToErase, M, Call);
             }
 
             // Depends on other vector conversions performed above, needs to
@@ -684,6 +690,161 @@ static void convertReturnAddrToPseudoInst(Module &M, CallInst *Call)
     PtrToInt->replaceAllUsesWith(NewCall);
 }
 
+// Convert QEMU exception calls
+//
+//   %0 = call @llvm.returnaddr(...),
+//   %1 = ptrtoint %0
+//   ...
+//
+// to a pseudo instruction
+//
+//   %0 = call @getpc(...);
+//
+static void convertImmediateSelectAccessGlobal(EraseInstVec &InstToErase,
+                                               Module &M, CallInst *Call)
+{
+    PseudoInst PI = getPseudoInstFromCall(Call);
+    if (PI != AccessGlobalArray) {
+        return;
+    }
+
+    if (!Call->hasOneUser()) {
+        return;
+    }
+
+    auto *Load = dyn_cast<LoadInst>(*Call->user_begin());
+    if (!Load) {
+        return;
+    }
+
+    auto *Zext = dyn_cast<ZExtInst>(Call->getArgOperand(1));
+    if (!Zext) {
+        return;
+    }
+
+    auto *Select = dyn_cast<SelectInst>(Zext->getOperand(0));
+    if (!Select) {
+        return;
+    }
+
+    if (!Zext->hasOneUse() or !Select->hasOneUse()) {
+        return;
+    }
+
+    Value *Cond = Select->getCondition();
+    Value *Arg1 = Select->getTrueValue();
+    Value *Arg2 = Select->getFalseValue();
+
+    if (!isa<Argument>(Arg1) or !isa<Argument>(Arg2)) {
+        return;
+    }
+
+    IRBuilder<> Builder(Select);
+    Function *AccessGlobalFn = Call->getCalledFunction();
+    Value *Offset = Call->getArgOperand(0);
+    Value *Arg1Zext = Builder.CreateZExt(Arg1, Zext->getType());
+    Value *Arg2Zext = Builder.CreateZExt(Arg2, Zext->getType());
+    CallInst *Access1 = Builder.CreateCall(AccessGlobalFn, {Offset, Arg1Zext});
+    CallInst *Access2 = Builder.CreateCall(AccessGlobalFn, {Offset, Arg2Zext});
+    LoadInst *Load1 = Builder.CreateLoad(Load->getType(), Access1);
+    LoadInst *Load2 = Builder.CreateLoad(Load->getType(), Access2);
+    Value *NewSelect = Builder.CreateSelect(Cond, Load1, Load2);
+
+    InstToErase.push_back(Load);
+    InstToErase.push_back(Call);
+
+    Load->replaceAllUsesWith(NewSelect);
+}
+
+struct DeclReplaceInfo {
+    bool Valid = false;
+    Value *Zext = nullptr;
+    Value *Select = nullptr;
+    Value *Cond = nullptr;
+    Value *Arg1 = nullptr;
+    Value *Arg2 = nullptr;
+};
+
+static DeclReplaceInfo isReplaceableDeclCall(Value *A)
+{
+    auto *Zext = dyn_cast<ZExtInst>(A);
+    if (!Zext) {
+        return {};
+    }
+
+    auto *Select = dyn_cast<SelectInst>(Zext->getOperand(0));
+    if (!Select) {
+        return {};
+    }
+
+    if (!Zext->hasOneUse() or !Select->hasOneUse()) {
+        return {};
+    }
+
+    Value *Cond = Select->getCondition();
+    Value *Arg1 = Select->getTrueValue();
+    Value *Arg2 = Select->getFalseValue();
+
+    if (!isa<Argument>(Arg1) or !isa<Argument>(Arg2)) {
+        return {};
+    }
+
+    return {true, Zext, Select, Cond, Arg1, Arg2};
+}
+
+static void convertImmediateDeclCall(EraseInstVec &InstToErase,
+                                     Module &M, CallInst *Call)
+{
+    if (!Call->getCalledFunction()->isDeclaration()) {
+        return;
+    }
+
+    if (!Call->hasOneUser()) {
+        return;
+    }
+
+    SmallVector<Value *, 8> Args1;
+    SmallVector<Value *, 8> Args2;
+    DeclReplaceInfo Info{};
+    IRBuilder<> Builder(Call);
+    for (auto &A : Call->args()) {
+        if (!Info.Valid) {
+            Info = isReplaceableDeclCall(A);
+            if (Info.Valid) {
+                Value *Arg1Zext = Builder.CreateZExt(Info.Arg1, Info.Zext->getType());
+                Value *Arg2Zext = Builder.CreateZExt(Info.Arg2, Info.Zext->getType());
+                Args1.push_back(Arg1Zext);
+                Args2.push_back(Arg2Zext);
+                continue;
+            }
+        }
+
+        Args1.push_back(A);
+        Args2.push_back(A);
+    }
+
+    if (!Info.Valid) {
+        return;
+    }
+
+
+    Function *F = Call->getCalledFunction();
+    CallInst *Access1 = Builder.CreateCall(F, Args1);
+    CallInst *Access2 = Builder.CreateCall(F, Args2);
+    Value *NewSelect = Builder.CreateSelect(Info.Cond, Access1, Access2);
+    Access1->setDebugLoc(Call->getDebugLoc());
+    Access2->setDebugLoc(Call->getDebugLoc());
+
+    //InstToErase.push_back(Load);
+    InstToErase.push_back(Call);
+    InstToErase.push_back(cast<Instruction>(Info.Zext));
+
+    Call->replaceAllUsesWith(NewSelect);
+
+    errs() << "WW" << *Call << "\n";
+    errs() << "WW" << *(Call->getParent()->getParent()) << "\n";
+}
+
 //
 // Following functions help with converting between different types of
 // instructions to pseudo instructions, particularly ones that write
@@ -1027,6 +1188,8 @@ static void convertICmpBrToPseudInst(LLVMContext &Context,
         //
         // Note also: LLVM expectects the BB to end in a single
         // branch.
+        //
+        // TODO: Get rid of metadata in favour of ConstantInt(1)
         //
         BranchInst *DeadBranch =
             Builder.CreateCondBr(ConstantInt::getFalse(Context), True, False);
