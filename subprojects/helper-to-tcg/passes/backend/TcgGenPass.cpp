@@ -846,8 +846,7 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
     CArgs.push_back(MaybeMapped.get());
   }
 
-  bool EmitDisasContext = true;
-  if (EmitDisasContext) {
+  if (ForwardContext) {
     HeaderWriter << "DisasContext *ctx";
     if (!CArgs.empty()) {
       HeaderWriter << ", ";
@@ -998,6 +997,7 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
           return mkError("Couldn't map value ", SExt->getOperand(0));
         }
         if (SrcVal.get().Kind == IrImmediate) {
+            errs() << "SEXT\n";
           auto ResLlvmSize = SExt->getDestTy()->getIntegerBitWidth();
           Mapper.mapExplicitly(&I, c::sext(SrcVal.get(), ResLlvmSize,
                                            llvmToTcgSize(ResLlvmSize)));
@@ -1261,6 +1261,8 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
 
         PseudoInst PInst = getPseudoInstFromCall(Call);
 
+          errs() << "CALL INST: " << I << "\n";
+
         if (F->isIntrinsic()) {
           if (!translateIntrinsicCall(Out, Call, F, Args, Mapper)) {
             return mkError("Unable to map intrinsic: ", Call);
@@ -1314,8 +1316,7 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
           }
           tcg::genCallHelper(Out, Name, IArgs.begin(), IArgs.end());
         } else {
-          bool AllowCallToDeclaration = true;
-          if (!AllowCallToDeclaration and F->isDeclaration()) {
+          if (!AllowDeclCall and F->isDeclaration()) {
             return mkError("call to declaration: ", Call);
           }
 
@@ -1336,8 +1337,7 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
             Out << "emit_";
             Out << getDemangleFunctionName(Name) << "(";
 
-            bool EmitDisasContext = true;
-            if (EmitDisasContext) {
+            if (ForwardContext) {
               Out << "ctx";
               if (MaybeRes or !Args.empty()) {
                 Out << ", ";
@@ -1370,8 +1370,7 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
             }
             Out << getDemangleFunctionName(Name) << "(";
 
-            bool EmitDisasContext = true;
-            if (EmitDisasContext) {
+            if (ForwardContext) {
               Out << "ctx";
               if (!Args.empty()) {
                 Out << ", ";
@@ -1407,6 +1406,7 @@ translateFunction(const Function *F, const TcgGlobalMap &TcgGlobals,
           }
         }
 
+        errs() << "ENDCALL\n";
       } break;
       case Instruction::ICmp: {
         auto *ICmp = cast<ICmpInst>(&I);
