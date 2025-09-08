@@ -118,6 +118,16 @@ cl::opt<bool>
                 cl::desc("Outputs a dispatcher mapping helper calls to generated code"),
                 cl::init(false), cl::cat(Cat));
 
+cl::opt<bool>
+    AllowDeclCall("allow-decl-call",
+                cl::desc("Forward calls to declared functions to output"),
+                cl::init(false), cl::cat(Cat));
+
+cl::opt<bool>
+    ForwardContext("forward-context",
+                cl::desc("Pass a DisasContext struct to all translated functions and calls"),
+                cl::init(false), cl::cat(Cat));
+
 // Define a TargetTransformInfo (TTI) subclass, this allows for overriding
 // common per-llvm-target information expected by other LLVM passes, such
 // as the width of the largest scalar/vector registers.  Needed for consistent
