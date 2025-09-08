@@ -38,3 +38,5 @@ extern llvm::cl::opt<std::string> OutputLogFile;
 extern llvm::cl::opt<bool> ErrorOnTranslationFailure;
 extern llvm::cl::opt<bool> StaticOutput;
 extern llvm::cl::opt<bool> OutputDispatcher;
+extern llvm::cl::opt<bool> AllowDeclCall;
+extern llvm::cl::opt<bool> ForwardContext;
