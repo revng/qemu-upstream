@@ -840,9 +840,6 @@ static void convertImmediateDeclCall(EraseInstVec &InstToErase,
     InstToErase.push_back(cast<Instruction>(Info.Zext));
 
     Call->replaceAllUsesWith(NewSelect);
-
-    errs() << "WW" << *Call << "\n";
-    errs() << "WW" << *(Call->getParent()->getParent()) << "\n";
 }
 
 //
@@ -1040,23 +1037,38 @@ static void convertVecStoreBitcastToPseudoInst(EraseInstVec &InstToErase,
                 pseudoInstFunction(M, NewInst, Builder.getVoidTy(), ArgTys);
             Builder.CreateCall(Fn, Args);
         } else {
-            dbgs() << "Uhandled vector + bitcast + store op. " << *ValueOp
+            dbgs() << "Unhandled vector + bitcast + store op. " << *ValueOp
                    << "\n";
             abort();
         }
+    } else if (auto *Load = dyn_cast<LoadInst>(ValueOp)) {
+        auto *PtrTy = Load->getPointerOperand()->getType();
+        auto *VecTy = cast<VectorType>(PtrTy->getPointerElementType());
+        auto *IntTy = cast<IntegerType>(VecTy->getElementType());
+        uint32_t LlvmSize = IntTy->getBitWidth();
+        uint32_t VectorElements = compat::getVectorElementCount(VecTy);
+        IRBuilder<> Builder(Store);
+        auto *Size = Builder.getInt64(LlvmSize * VectorElements);
+        //Function *Fn = Intrinsic::getDeclaration(&M, Intrinsic::memcpy);
+        Builder.CreateMemCpy(Store->getPointerOperand(), 
+                             Store->getPointerAlignment(M.getDataLayout()),
+                             Load->getPointerOperand(),
+                             Load->getPointerAlignment(M.getDataLayout()),
+                             Size);
     } else {
         Instruction *Inst = cast<Instruction>(ValueOp);
+
         PseudoInst NewInst = instructionToStorePseudoInst(Inst->getOpcode());
-        const unsigned ArgCount = pseudoInstArgCount(NewInst);
+        const uint8_t ArgCount = pseudoInstArgCount(NewInst);
         // Add one to account for extra store pointer
         // argument of Vec*Store pseudo instructions.
-        assert(ArgCount > 0 and ArgCount - 1 <= Inst->getNumOperands());
+        assert(ArgCount > 0 and ArgCount - 1 <= (uint8_t) Inst->getNumOperands());
         IRBuilder<> Builder(Store);
         SmallVector<Type *, 8> ArgTys;
         SmallVector<Value *, 8> Args;
         ArgTys.push_back(PtrTy);
         Args.push_back(PtrOp);
-        for (unsigned I = 0; I < ArgCount - 1; ++I) {
+        for (uint8_t I = 0; I < ArgCount - 1; ++I) {
             Value *Op = Inst->getOperand(I);
             ArgTys.push_back(Op->getType());
             Args.push_back(Op);
@@ -1070,7 +1082,9 @@ static void convertVecStoreBitcastToPseudoInst(EraseInstVec &InstToErase,
     // can cleanup the rest, we also remove ValueOp
     // here since it's a call and won't get cleaned
     // by DCE.
-    InstToErase.push_back(cast<Instruction>(ValueOp));
+    if (!isa<LoadInst>(ValueOp)) {
+        InstToErase.push_back(cast<Instruction>(ValueOp));
+    }
     InstToErase.push_back(Store);
 }
 
