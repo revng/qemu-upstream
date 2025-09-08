@@ -5,7 +5,6 @@ sources = [
     'cpustate.c',
 ]
 
-
 foreach s : sources
     name = s.split('.')[0]
     name_ll = name + '.ll'
