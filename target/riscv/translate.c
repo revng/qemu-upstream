@@ -37,8 +37,8 @@
 
 #include "tcg/tcg-cpu.h"
 
-#include "xqci/xqci_csr.h"
-#include "smrnmi/smrnmi_csr.h"
+#include "xqci/xqci-csr.h"
+#include "smrnmi/smrnmi-csr.h"
 
 /* global register indices */
 static TCGv cpu_gpr[32], cpu_gprh[32], cpu_pc, cpu_vl, cpu_vstart;
@@ -1257,23 +1257,23 @@ static uint64_t decode_xqci_48_load_bytes(DisasContext *ctx, uint64_t insn,
     return 0;
 }
 
-#include "decode-xqciu-16.c.inc"
-#include "decode-xqciu-32.c.inc"
+#include "decode-xqci-16.c.inc"
+#include "decode-xqci-32.c.inc"
 #include "decode-xqccmp-16.c.inc"
 #include "decode-smrnmi-32.c.inc"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
-#include "decode-xqciu-48.c.inc"
+#include "decode-xqci-48.c.inc"
 #pragma GCC diagnostic pop
 #ifdef TARGET_RISCV32
-#include "xqci/xqciu_tcg.c"
-#include "xqccmp/xqccmp_tcg.c"
-#include "smrnmi/smrnmi_tcg.c"
+#include "xqci/xqci-tcg.c"
+#include "xqccmp/xqccmp-tcg.c"
+#include "smrnmi/smrnmi-tcg.c"
 #endif
-#include "xqci/xqciu_tcg_manual.c.inc"
-#include "xqci/xqciu_trans.c.inc"
-#include "xqccmp/xqccmp_trans.c.inc"
-#include "smrnmi/smrnmi_trans.c.inc"
+#include "xqci/xqci-tcg-manual.c.inc"
+#include "xqci/xqci-trans-decode.c.inc"
+#include "xqccmp/xqccmp-trans-decode.c.inc"
+#include "smrnmi/smrnmi-trans-decode.c.inc"
 
 /* The specification allows for longer insns, but not supported by qemu. */
 #define MAX_INSN_LEN  8
