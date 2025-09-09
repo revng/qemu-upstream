@@ -753,6 +753,29 @@ static void rv32e_bare_cpu_init(Object *obj)
     CPURISCVState *env = &RISCV_CPU(obj)->env;
     riscv_cpu_set_misa_ext(env, RVE);
 }
+
+static void rv32_qc_iu_cpu_init(Object *obj)
+{
+    CPURISCVState *env = &RISCV_CPU(obj)->env;
+    RISCVCPU *cpu = RISCV_CPU(obj);
+
+    riscv_cpu_set_misa_ext(env, RVI | RVU | RVC | RVA);
+    env->priv_ver = PRIV_VERSION_1_12_0;
+
+    cpu->cfg.ext_zca = true;
+    cpu->cfg.ext_xqci = true;
+    cpu->cfg.ext_xqccmp = true;
+    cpu->cfg.ext_smrnmi = true;
+
+    // cpu->cfg.mvendorid = ...;
+#ifndef CONFIG_USER_ONLY
+    xqci_register_custom_csrs(cpu);
+    smrnmi_register_custom_csrs(cpu);
+#endif
+
+    /* inherited from parent obj via riscv_cpu_init() */
+    cpu->cfg.pmp = true;
+}
 #endif
 
 static ObjectClass *riscv_cpu_class_by_name(const char *cpu_model)
@@ -3055,6 +3078,7 @@ static const TypeInfo riscv_cpu_type_infos[] = {
     DEFINE_VENDOR_CPU(TYPE_RISCV_CPU_SIFIVE_U34, MXL_RV32,  rv32_sifive_u_cpu_init),
     DEFINE_BARE_CPU(TYPE_RISCV_CPU_RV32I,        MXL_RV32,  rv32i_bare_cpu_init),
     DEFINE_BARE_CPU(TYPE_RISCV_CPU_RV32E,        MXL_RV32,  rv32e_bare_cpu_init),
+    DEFINE_BARE_CPU(TYPE_RISCV_CPU_QC_IU,        MXL_RV32,  rv32_qc_iu_cpu_init),
 #endif
 
 #if (defined(TARGET_RISCV64) && !defined(CONFIG_USER_ONLY))
