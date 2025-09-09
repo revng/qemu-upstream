@@ -4,9 +4,9 @@ gen = [
   decodetree.process('insn32.decode', extra_args: '--static-decode=decode_insn32'),
   decodetree.process('xthead.decode', extra_args: '--static-decode=decode_xthead'),
   decodetree.process('XVentanaCondOps.decode', extra_args: '--static-decode=decode_XVentanaCodeOps'),
-  decodetree.process('xqci/xqciu-16.decode', extra_args: ['--static-decode=decode_xqci_16', '--insnwidth=16']),
-  decodetree.process('xqci/xqciu-32.decode', extra_args: ['--static-decode=decode_xqci_32', '--insnwidth=32']),
-  decodetree.process('xqci/xqciu-48.decode', extra_args: ['--static-decode=decode_xqci_48', '--varinsnwidth=64']),
+  decodetree.process('xqci/xqci-16.decode', extra_args: ['--static-decode=decode_xqci_16', '--insnwidth=16']),
+  decodetree.process('xqci/xqci-32.decode', extra_args: ['--static-decode=decode_xqci_32', '--insnwidth=32']),
+  decodetree.process('xqci/xqci-48.decode', extra_args: ['--static-decode=decode_xqci_48', '--varinsnwidth=64']),
   decodetree.process('xqccmp/xqccmp-16.decode', extra_args: ['--static-decode=decode_xqccmp_16', '--insnwidth=16']),
   decodetree.process('smrnmi/smrnmi-32.decode', extra_args: ['--static-decode=decode_smrnmi_32', '--insnwidth=32']),
 ]
@@ -28,8 +28,8 @@ riscv_ss.add(files(
   'crypto_helper.c',
   'zce_helper.c',
   'vcrypto_helper.c',
-  'xqci/xqci_csr.c',
-  'smrnmi/smrnmi_csr.c',
+  'xqci/xqci-csr.c',
+  'smrnmi/smrnmi-csr.c',
 ))
 
 riscv_system_ss = ss.source_set()
