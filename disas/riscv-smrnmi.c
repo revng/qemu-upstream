@@ -13,7 +13,7 @@ const rv_opcode_data smrnmi_opcode_data[] = {
 };
 
 #include "riscv-smrnmi-32-decode.c.inc"
-#include "riscv-smrnmi-trans.c.inc"
+#include "riscv-smrnmi-trans-disas.c.inc"
 
 void decode_smrnmi(rv_decode *dec, rv_isa isa) {
     rv_inst inst = dec->inst;

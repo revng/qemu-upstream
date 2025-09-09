@@ -334,7 +334,7 @@ static uint64_t decode_xqci_48_impl_load_bytes(rv_decode *dec, uint64_t insn, in
 #pragma GCC diagnostic ignored "-Wunused-function"
 #include "riscv-xqci-48-decode.c.inc"
 #pragma GCC diagnostic pop
-#include "riscv-xqci-trans.c.inc"
+#include "riscv-xqci-trans-disas.c.inc"
 
 void decode_xqci(rv_decode *dec, rv_isa isa) {
     rv_inst inst = dec->inst;

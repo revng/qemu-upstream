@@ -25,7 +25,7 @@ const rv_opcode_data xqccmp_opcode_data[] = {
 };
 
 #include "riscv-xqccmp-16-decode.c.inc"
-#include "riscv-xqccmp-trans.c.inc"
+#include "riscv-xqccmp-trans-disas.c.inc"
 
 void decode_xqccmp(rv_decode *dec, rv_isa isa) {
     rv_inst inst = dec->inst;
