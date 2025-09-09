@@ -24,11 +24,23 @@
   underflow: 0
 - variables:
   - name: "shamt"
+    in: 5
+  - name: "rs2"
+    in: 32
+  - name: "rs1"
+    in: 1073741824
+  - name: "rd"
+    in: 16711680
+    out: 32
+  overflow: 1
+  underflow: 0
+- variables:
+  - name: "shamt"
     in: 4
   - name: "rs2"
-    in: 4294967184
+    in: 4294967216
   - name: "rs1"
-    in: 2147483655
+    in: 2147483653
   - name: "rd"
     in: 16711680
     out: 0

@@ -1,6 +1,6 @@
 - variables:
   - name: "imm"
-    in: 1025
+    in: 0
   - name: "rs1"
     in: 255
   - name: "rd"
@@ -10,7 +10,7 @@
   underflow: 0
 - variables:
   - name: "imm"
-    in: 0
+    in: 1025
   - name: "rs1"
     in: 255
   - name: "rd"

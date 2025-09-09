@@ -1,6 +1,7 @@
 import yaml
 import sys
 import re
+import math
 
 decode_only = {
     'qc.brev32.yaml',
@@ -35,6 +36,15 @@ system_only = {
     #'qc.c.mileaveret',
 }
 
+
+def round_to_power_of_two(x):
+    return int(2**math.ceil(math.log2(x)))
+
+
+def bit_to_c_size(x):
+    return min(max(round_to_power_of_two(x), 8), 64)
+
+
 def ranges_in_location(loc_str):
     for r in loc_str.split('|'):
         if '-' in r:
@@ -42,6 +52,7 @@ def ranges_in_location(loc_str):
             yield (offsets[1], offsets[0] - offsets[1] + 1)
         else:
             yield (int(r), 1)
+
 
 def var_is_compressed(op, name):
     return f'X[{name}+8]' in op or \
@@ -80,6 +91,27 @@ def load_yaml_or_exit(path):
         except yaml.YAMLError as e:
             print(f'Failed to load yaml file {path}: {e}', file=sys.stderr)
             exit(1)
+
+def get_anyof_extensions_from_yaml(y):
+    extensions = []
+    if 'anyOf' in y['definedBy']:
+        for e in y['definedBy']['anyOf']:
+            extensions.append(e)
+    else:
+        extensions.append(y['definedBy'])
+
+    extension_names = []
+    for e in extensions:
+        if 'name' in e:
+            extension_names.append(e['name'])
+        else:
+            extension_names.append(e)
+
+    return extension_names
+
+
+################################################################################
+# IDL substitutions to get valid C++
 
 def sub_to_csr_address(match):
     str = match.group(1)

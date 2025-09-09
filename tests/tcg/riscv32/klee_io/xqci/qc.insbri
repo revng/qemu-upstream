@@ -20,11 +20,21 @@
   underflow: 0
 - variables:
   - name: "imm"
-    in: 1024
+    in: 1536
   - name: "rs1"
     in: 1179664
   - name: "rd"
     in: 255
-    out: 4227858687
+    out: 4261413119
+  overflow: 1
+  underflow: 0
+- variables:
+  - name: "imm"
+    in: 1024
+  - name: "rs1"
+    in: 1441802
+  - name: "rd"
+    in: 255
+    out: 4293918975
   overflow: 1
   underflow: 0

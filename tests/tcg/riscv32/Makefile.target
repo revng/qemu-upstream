@@ -23,7 +23,13 @@ SMRNMI_INST_DIR=$(SRC)/Smrnmi
 
 CFLAGS=-fuse-ld=qcld -T $(SRC)/mem-test-page.ld --target=riscv32-unknown-linux-gnu -nostdlib -static -menable-experimental-extensions
 
+QEMU_FLAGS=-cpu rv32,zcd=false,d=false,zcb=true,zcmp=false,zilsd=true,zclsd=true,f=false,zfa=false,xqci=true,smrnmi=true,xqccmp=true
+QEMU_EXE=
 QEMU=./qemu-riscv32
+
+#QEMU_FLAGS=-cpu rv32,zcd=false,d=false,zcb=true,zcmp=false,zilsd=true,zclsd=true,f=false,zfa=false,xqci=true,smrnmi=true,xqccmp=true,pmp=false -machine virt -display none -semihosting
+#QEMU_EXE=-device loader,file=
+#QEMU=./qemu-system-riscv32
 
 # These tests are a bit annoying to run in a makefile since any given input yaml file
 # in $(KLEE_IO_DIR)/* can generate multiple tests
@@ -41,7 +47,7 @@ build-xqci-asm-tests:
 .PHONY: run-xqci-asm-tests
 run-xqci-asm-tests: $(XQCI_OUT_ASM_DIR)/*
 	@for exe in $(XQCI_OUT_ASM_DIR)/*; do \
-		out=$$(timeout 5s $(QEMU) -cpu rv32,zcd=false,d=false,zcb=true,zcmp=false,zilsd=true,zclsd=true,f=false,zfa=false,xqci=true,smrnmi=true,xqccmp=true $$exe); \
+		out=$$(timeout 5s $(QEMU) $(QEMU_FLAGS) $(QEMU_EXE)$$exe); \
 		err=$$?; \
 		if [ $$err -eq 0 ]; then \
 			echo "PASS" $$exe; \
@@ -63,7 +69,7 @@ build-xqccmp-asm-tests:
 .PHONY: run-xqccmp-asm-tests
 run-xqccmp-asm-tests: $(XQCCMP_OUT_ASM_DIR)/*
 	@for exe in $(XQCCMP_OUT_ASM_DIR)/*; do \
-		out=$$(timeout 5s $(QEMU) -cpu rv32,zcd=false,d=false,zcb=true,zcmp=false,zilsd=true,zclsd=true,f=false,zfa=false,xqci=true,smrnmi=true,xqccmp=true $$exe); \
+		out=$$(timeout 5s $(QEMU) $(QEMU_FLAGS) $(QEMU_EXE)$$exe); \
 		err=$$?; \
 		if [ $$err -eq 0 ]; then \
 			echo "PASS" $$exe; \
@@ -85,7 +91,7 @@ build-smrnmi-asm-tests:
 .PHONY: run-smrnmi-asm-tests
 run-smrnmi-asm-tests: $(SMRNMI_OUT_ASM_DIR)/*
 	@for exe in $(SMRNMI_OUT_ASM_DIR)/*; do \
-		out=$$(timeout 5s $(QEMU) -cpu rv32,zcd=false,d=false,zcb=true,zcmp=false,zilsd=true,zclsd=true,f=false,zfa=false,xqci=true,smrnmi=true,xqccmp=true $$exe); \
+		out=$$(timeout 5s $(QEMU) $(QEMU_FLAGS) $(QEMU_EXE)$$exe); \
 		err=$$?; \
 		if [ $$err -eq 0 ]; then \
 			echo "PASS" $$exe; \
@@ -131,7 +137,7 @@ build-xqci-c-tests: build-xqci-c-tests-code
 .PHONY: run-xqci-c-tests
 run-xqci-c-tests: $(XQCI_OUT_C_BIN_DIR)/*
 	@for exe in $(XQCI_OUT_C_BIN_DIR)/*; do \
-		out=$$(timeout 5s $(QEMU) -cpu rv32,zcd=false,d=false,zcb=true,zcmp=false,zilsd=true,zclsd=true,f=false,zfa=false,xqci=true,smrnmi=true,xqccmp=true $$exe); \
+		out=$$(timeout 5s $(QEMU) $(QEMU_FLAGS) $(QEMU_EXE)$$exe); \
 		err=$$?; \
 		if [ $$err -eq 0 ]; then \
 			echo "PASS" $$exe; \
@@ -164,7 +170,7 @@ build-xqccmp-c-tests: build-xqccmp-c-tests-code
 .PHONY: run-xqccmp-c-tests
 run-xqccmp-c-tests: $(XQCCMP_OUT_C_BIN_DIR)/*
 	@for exe in $(XQCCMP_OUT_C_BIN_DIR)/*; do \
-		out=$$(timeout 5s $(QEMU) -cpu rv32,zcd=false,d=false,zcb=true,zcmp=false,zilsd=true,zclsd=true,f=false,zfa=false,xqci=true,smrnmi=true,xqccmp=true $$exe); \
+		out=$$(timeout 5s $(QEMU) $(QEMU_FLAGS) $(QEMU_EXE)$$exe); \
 		err=$$?; \
 		if [ $$err -eq 0 ]; then \
 			echo "PASS" $$exe; \
@@ -196,7 +202,7 @@ build-smrnmi-c-tests: build-smrnmi-c-tests-code
 .PHONY: run-smrnmi-c-tests
 run-smrnmi-c-tests: $(SMRNMI_OUT_C_BIN_DIR)/*
 	@for exe in $(SMRNMI_OUT_C_BIN_DIR)/*; do \
-		out=$$(timeout 5s $(QEMU) -cpu rv32,zcd=false,d=false,zcb=true,zcmp=false,zilsd=true,zclsd=true,f=false,zfa=false,xqci=true,smrnmi=true,xqccmp=true $$exe); \
+		out=$$(timeout 5s $(QEMU) $(QEMU_FLAGS) $(QEMU_EXE)$$exe); \
 		err=$$?; \
 		if [ $$err -eq 0 ]; then \
 			echo "PASS" $$exe; \

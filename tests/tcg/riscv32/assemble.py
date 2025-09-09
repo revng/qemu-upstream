@@ -25,10 +25,11 @@ def ashl32(x, n):
 
 
 class InstPrinter:
-    def __init__(self, inst_dir):
+    def __init__(self, inst_dir, system_mode):
         self.yamls = {}
         self.inst_dir = inst_dir
         self.bytes = bytes()
+        self.system_mode = system_mode
 
         # Manually add encoding for two riscv32 instructions which need to be
         # emitted with different operands in tests.
@@ -135,15 +136,32 @@ class InstPrinter:
         num_bytes = ceil(enc_len/8)
         self.bytes += struct.pack('<Q', enc)[0:num_bytes]
 
+    def exit(self):
+        if self.system_mode:
+            self.bytes += bytes.fromhex('97052000')     # auipc   a1, 0x200
+            self.bytes += bytes.fromhex('938525f8')     # addi    a1, a1, -0x7e
+            self.bytes += bytes.fromhex('37030200')     # lui     t1, 0x20
+            self.bytes += bytes.fromhex('13036302')     # addi    t1, t1, 0x26
+            self.bytes += bytes.fromhex('23b06500')     # sd      t1, 0x0(a1)
+            self.bytes += bytes.fromhex('23b2a500')     # sd      a0, 0x4(a1)
+            self.bytes += bytes.fromhex('13050002')     # li      a0, 0x20
+            self.bytes += bytes.fromhex('13000000')     # nop
+            self.bytes += bytes.fromhex('0100')         # nop
+            self.bytes += bytes.fromhex('1310f001')     # slli    zero, zero, 0x1f
+            self.bytes += bytes.fromhex('73001000')     # ebreak
+            self.bytes += bytes.fromhex('13507040')     # srai    zero, zero, 0x7
+            self.bytes += bytes.fromhex('6f000000')     # j       0x800000ac <_exit+0x32>
+        else:
+            self.bytes += bytes.fromhex('9308d005')  # li a7 93
+            self.bytes += bytes.fromhex('73000000')  # ecall
+
     def exit_success(self):
         self.bytes += bytes.fromhex('13050000')  # li a0, 0
-        self.bytes += bytes.fromhex('9308d005')  # li a7 93
-        self.bytes += bytes.fromhex('73000000')  # ecall
+        self.exit()
 
     def exit_failure(self):
         self.bytes += bytes.fromhex('1305f00f')  # li a0,255
-        self.bytes += bytes.fromhex('9308d005')  # li a7 93
-        self.bytes += bytes.fromhex('73000000')  # ecall
+        self.exit()
 
     def check_result(self, expected_result):
         self.li(expected_result, expected_reg) # 8 bytes in size
@@ -173,6 +191,7 @@ def output_elf(f, text_bytes):
     f.write(struct.pack('<I', 1))                  # Version
     # Entry point (dummy address)
     f.write(struct.pack('<I', 0x10000+52+2*32))
+    #f.write(struct.pack('<I', 0x80000000))             # Virtual address
     f.write(struct.pack('<I', 52))                 # Program header offset
     f.write(struct.pack('<I', 0))                  # Section header offset
     f.write(struct.pack('<I', 0))                  # Flags
@@ -189,6 +208,8 @@ def output_elf(f, text_bytes):
     f.write(struct.pack('<I', 0))                  # Offset in the file
     f.write(struct.pack('<I', 0x1000))             # Virtual address
     f.write(struct.pack('<I', 0x1000))             # Physical address
+    #f.write(struct.pack('<I', 0x80000000))             # Virtual address
+    #f.write(struct.pack('<I', 0x80000000))             # Physical address
     # Size of the segment in the file
     f.write(struct.pack('<I', 0))
     # Size of the segment in memory
@@ -224,10 +245,11 @@ def main():
     parser.add_argument('--inst-dir', required=True)
     parser.add_argument('--io-file', required=True)
     parser.add_argument('--inst-name', required=True)
+    parser.add_argument('--system-mode', default=False)
     parser.add_argument('--out', required=True)
     args = parser.parse_args()
 
-    printer = InstPrinter(args.inst_dir)
+    printer = InstPrinter(args.inst_dir, args.system_mode)
     io_yaml = common.load_yaml_or_exit(args.io_file)
     io_var_map = {}
     for test in io_yaml:
@@ -254,8 +276,8 @@ def main():
         if 'has_valid_test_memop' in test and test['has_valid_test_memop'] == 0:
             continue
 
-        for i in range(0,32):
-            printer.li(i, i)
+        #for i in range(0,32):
+        #    printer.li(i, i)
         printer.li(0x2800, 2)
 
         if 'has_load' in test:
@@ -308,11 +330,6 @@ def main():
 
         printer.exit_success()
                 
-        #printer.li(69, 6)
-        #printer.li(0x1234, 7)
-        #printer.append('sw', 0, 7, 6)
-        #printer.append('lw', 0, 5, 7)
-
         with open(f'{args.out}-{test_index}', 'wb') as f:
             output_elf(f, printer.bytes)
 
