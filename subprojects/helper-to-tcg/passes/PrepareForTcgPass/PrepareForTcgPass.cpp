@@ -20,6 +20,7 @@
 #include "IdentityMap.h"
 #include <PrepareForTcgPass.h>
 #include "TransformGEPs.h"
+#include "llvm/IR/Dominators.h"
 #include <llvm/ADT/SCCIterator.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/InstIterator.h>
@@ -129,7 +130,7 @@ PreservedAnalyses PrepareForTcgPass::run(Module &M, ModuleAnalysisManager &MAM)
     for (Function &F : M) {
         transformGEPs(M, F, ResultTcgGlobalMap);
     }
-    canonicalizeIR(M);
+    canonicalizeIR(M, MAM);
     for (Function &F : M) {
         identityMap(M, F);
     }
