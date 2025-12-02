@@ -75,3 +75,6 @@ PSEUDO_INST_DEF(Extract,              ArgInt, PSEUDO_INST_ARGVEC(ArgInt, ArgInt,
 
 PSEUDO_INST_DEF(Exception,            ArgVoid, PSEUDO_INST_ARGVEC(ArgPtr, ArgInt)),
 PSEUDO_INST_DEF(GetPC,                ArgInt,  PSEUDO_INST_ARGVEC(ArgVoid)),
+
+PSEUDO_INST_DEF(JumpPCRelConditional, ArgVoid,  PSEUDO_INST_ARGVEC(ArgInt)),
+PSEUDO_INST_DEF(JumpPCRelFallthrough, ArgVoid,  PSEUDO_INST_ARGVEC(ArgInt)),
