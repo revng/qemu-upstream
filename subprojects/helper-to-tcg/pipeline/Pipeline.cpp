@@ -228,6 +228,7 @@ int main(int argc, char **argv)
     LAM.registerPass([&] { return LoopAccessAnalysis(); });
     // We need to specifically add the aliasing pipeline for LLVM <= 13
     FAM.registerPass([&] { return PB.buildDefaultAAPipeline(); });
+    FAM.registerPass([&] { return DominatorTreeAnalysis(); });
 
     // Register other default LLVM Analyses
     PB.registerFunctionAnalyses(FAM);
