@@ -19,6 +19,7 @@
 #include "Demangle.h"
 #include "PseudoInst.h"
 #include "llvm-compat.h"
+#include "llvm/IR/PassManager.h"
 
 #include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/ADT/SmallSet.h>
@@ -53,8 +54,7 @@ using UsageCountMap = DenseMap<Value *, uint16_t>;
 // or without having to iterate over all uses everytime we wish to remove an
 // instruction.
 static void addToEraseVectorIfUnused(EraseInstVec &InstToErase,
-                                     UsageCountMap &UsageMap, Value *V)
-{
+                                     UsageCountMap &UsageMap, Value *V) {
     auto *I = dyn_cast<Instruction>(V);
     if (!I) {
         return;
@@ -89,16 +89,17 @@ static void convertExceptionCallsToPseudoInst(Module &M, CallInst *Call);
 static void convertReturnAddrToPseudoInst(Module &M, CallInst *Call);
 static void convertImmediateSelectAccessGlobal(EraseInstVec &InstToErase,
                                                Module &M, CallInst *Call);
-static void convertImmediateDeclCall(EraseInstVec &InstToErase,
-                                     Module &M, CallInst *Call);
+static void convertImmediateDeclCall(EraseInstVec &InstToErase, Module &M,
+                                     CallInst *Call);
 static void convertVecStoreBitcastToPseudoInst(EraseInstVec &InstToErase,
                                                Module &M, StoreInst *Store);
 static void convertICmpBrToPseudInst(LLVMContext &Context,
                                      EraseInstVec &InstToErase, Module &M,
                                      Instruction *I, BasicBlock *NextBb);
 
-void canonicalizeIR(Module &M)
-{
+void canonicalizeIR(Module &M, ModuleAnalysisManager &MAM) {
+    auto &FAM =
+        MAM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
     for (Function &F : M) {
         if (F.isDeclaration()) {
             continue;
@@ -107,6 +108,14 @@ void canonicalizeIR(Module &M)
         EraseInstVec InstToErase;
         UsageCountMap UsageMap;
         LLVMContext &Context = F.getContext();
+        SmallSet<BasicBlock *, 2> Exits;
+        auto &DT = FAM.getResult<DominatorTreeAnalysis>(F);
+
+        for (auto &Bb : F) {
+            if (isa<ReturnInst>(Bb.getTerminator())) {
+                Exits.insert(&Bb);
+            }
+        }
 
         // Perform a first pass over all instructions in the function and apply
         // IR transformations sequentially.  NOTE: order matters here.
@@ -134,11 +143,47 @@ void canonicalizeIR(Module &M)
 
             // Independent of above, can run at any point
             if (auto *Call = dyn_cast<CallInst>(&I)) {
-                convertQemuLoadStoreToPseudoInst(M, Call, InstToErase, UsageMap);
+                convertQemuLoadStoreToPseudoInst(M, Call, InstToErase,
+                                                 UsageMap);
                 convertExceptionCallsToPseudoInst(M, Call);
                 convertReturnAddrToPseudoInst(M, Call);
                 convertImmediateSelectAccessGlobal(InstToErase, M, Call);
                 convertImmediateDeclCall(InstToErase, M, Call);
+                {
+
+                    std::string Name = getDemangleFunctionName(
+                        Call->getCalledFunction()->getName());
+                    if (Name == "xqci_jump_pcrel") {
+                        BasicBlock *Bb = Call->getParent();
+                        bool DominatesAllExits = true;
+                        for (BasicBlock *E : Exits) {
+                            if (!DT.dominates(Bb, E)) {
+                                DominatesAllExits = false;
+                            }
+                        }
+                        if (!DominatesAllExits) {
+                            for (BasicBlock *E : Exits) {
+                                IRBuilder<> Builder(E->getTerminator());
+                                FunctionCallee Fn =
+                                    pseudoInstFunction(M, JumpPCRelFallthrough,
+                                                       Builder.getVoidTy(), {});
+                                auto *F = cast<Function>(Fn.getCallee());
+                                Builder.CreateCall(F, {});
+                            }
+                            {
+                                IRBuilder<> Builder(Call);
+                                assert(Call->getNumOperands() == 2);
+                                FunctionCallee Fn = pseudoInstFunction(
+                                    M, JumpPCRelConditional,
+                                    Builder.getVoidTy(), {Call->getArgOperand(0)->getType()});
+                                auto *F = cast<Function>(Fn.getCallee());
+                                auto *NewCall = Builder.CreateCall(F, {Call->getArgOperand(0)});
+                                Call->replaceAllUsesWith(NewCall);
+                                InstToErase.push_back(Call);
+                            }
+                        }
+                    }
+                }
             }
 
             // Depends on other vector conversions performed above, needs to
@@ -172,8 +217,8 @@ void canonicalizeIR(Module &M)
     }
 }
 
-static Value *upcastInt(IRBuilder<> &Builder, IntegerType *FinalIntTy, Value *V)
-{
+static Value *upcastInt(IRBuilder<> &Builder, IntegerType *FinalIntTy,
+                        Value *V) {
     if (auto *ConstInt = dyn_cast<ConstantInt>(V)) {
         return ConstantInt::get(FinalIntTy, ConstInt->getZExtValue());
     } else {
@@ -191,8 +236,7 @@ static Value *upcastInt(IRBuilder<> &Builder, IntegerType *FinalIntTy, Value *V)
 //   %3 = zext i[8|16] %2 to i32
 //   %2 = ashr i32 %2, %3
 //
-static void upcastAshr(Instruction *I)
-{
+static void upcastAshr(Instruction *I) {
     // Only care about scalar shifts < on less than 32-bit integers
     auto *IntTy = dyn_cast<IntegerType>(I->getType());
     if (!IntTy or IntTy->getBitWidth() >= 32) {
@@ -221,8 +265,7 @@ static void upcastAshr(Instruction *I)
 //
 //   %0 = call @VecSplat.*
 //
-static void convertInsertShuffleToSplat(Module &M, Instruction *I)
-{
+static void convertInsertShuffleToSplat(Module &M, Instruction *I) {
     Value *SplatV;
     if (match(I, compat_m_Shuffle(compat_m_InsertElt(m_Value(), m_Value(SplatV),
                                                      m_ZeroInt()),
@@ -250,8 +293,7 @@ static void convertInsertShuffleToSplat(Module &M, Instruction *I)
 // which more closely matches TCG gvec operations.
 static void simplifyVecBinOpWithSplat(EraseInstVec &InstToErase,
                                       UsageCountMap &UsageMap, Module &M,
-                                      BinaryOperator *BinOp)
-{
+                                      BinaryOperator *BinOp) {
     Value *Lhs = BinOp->getOperand(0);
     Value *Rhs = BinOp->getOperand(1);
     if (!Lhs->getType()->isVectorTy() or !Rhs->getType()->isVectorTy()) {
@@ -354,8 +396,7 @@ static void simplifyVecBinOpWithSplat(EraseInstVec &InstToErase,
 static bool convertSelectICmpToMinMax(Module &M, SelectInst *Select,
                                       ICmpInst *ICmp, ICmpInst::Predicate &Pred,
                                       Value *ICmpOp0, Value *ICmpOp1,
-                                      Value *SelectOp0, Value *SelectOp1)
-{
+                                      Value *SelectOp0, Value *SelectOp1) {
 #if LLVM_VERSION_MAJOR > 11
     if (ICmpOp0 != SelectOp0 or ICmpOp1 != SelectOp1) {
         return false;
@@ -403,8 +444,7 @@ static bool convertSelectICmpToVecBitsel(Module &M, SelectInst *Select,
                                          ICmpInst *ICmp,
                                          ICmpInst::Predicate &Pred,
                                          Value *ICmpOp0, Value *ICmpOp1,
-                                         Value *SelectOp0, Value *SelectOp1)
-{
+                                         Value *SelectOp0, Value *SelectOp1) {
     auto *ICmpVecTy = dyn_cast<VectorType>(ICmpOp0->getType());
     auto *SelectVecTy = dyn_cast<VectorType>(Select->getType());
     if (!ICmpVecTy or !SelectVecTy) {
@@ -469,8 +509,7 @@ static bool convertSelectICmpToMovcond(Module &M, SelectInst *Select,
                                        ICmpInst *ICmp,
                                        ICmpInst::Predicate &Pred,
                                        Value *ICmpOp0, Value *ICmpOp1,
-                                       Value *SelectOp0, Value *SelectOp1)
-{
+                                       Value *SelectOp0, Value *SelectOp1) {
     // We only handle integers, we have no movcond equivalent in gvec
     auto *IntTy = dyn_cast<IntegerType>(Select->getType());
     if (!IntTy) {
@@ -513,8 +552,7 @@ static bool convertSelectICmpToMovcond(Module &M, SelectInst *Select,
 //
 // to either maximum/minimum, vector operations matching TCG, or a conditional
 // move that also matches TCG in sematics.
-static void convertSelectICmp(Module &M, SelectInst *Select, ICmpInst *ICmp)
-{
+static void convertSelectICmp(Module &M, SelectInst *Select, ICmpInst *ICmp) {
     // Given
     //   %2 = icmp [sgt|ugt|slt|ult] %0, %1
     //   %5 = select %2, %3, %4
@@ -558,8 +596,7 @@ static void convertSelectICmp(Module &M, SelectInst *Select, ICmpInst *ICmp)
 // represent loads and stores.
 static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call,
                                              EraseInstVec &InstToErase,
-                                             UsageCountMap &UsageMap)
-{
+                                             UsageCountMap &UsageMap) {
     Function *F = Call->getCalledFunction();
     std::string Name = getDemangleFunctionName(F->getName());
     StringRef NameRef(Name);
@@ -641,8 +678,7 @@ static void convertQemuLoadStoreToPseudoInst(Module &M, CallInst *Call,
 //
 // Makes the backend agnostic to what instructions or calls are used to
 // represent exceptions, and the list of sources can be expanded here.
-static void convertExceptionCallsToPseudoInst(Module &M, CallInst *Call)
-{
+static void convertExceptionCallsToPseudoInst(Module &M, CallInst *Call) {
     Function *F = Call->getCalledFunction();
     std::string Name = getDemangleFunctionName(F->getName());
     // NOTE: expand as needed
@@ -668,8 +704,7 @@ static void convertExceptionCallsToPseudoInst(Module &M, CallInst *Call)
 //
 //   %0 = call @getpc(...);
 //
-static void convertReturnAddrToPseudoInst(Module &M, CallInst *Call)
-{
+static void convertReturnAddrToPseudoInst(Module &M, CallInst *Call) {
     Function *F = Call->getCalledFunction();
     if (!F->isIntrinsic() or F->getIntrinsicID() != Intrinsic::returnaddress) {
         return;
@@ -684,8 +719,7 @@ static void convertReturnAddrToPseudoInst(Module &M, CallInst *Call)
     }
 
     IRBuilder<> Builder(PtrToInt);
-    FunctionCallee Fn =
-        pseudoInstFunction(M, GetPC, PtrToInt->getType(), {});
+    FunctionCallee Fn = pseudoInstFunction(M, GetPC, PtrToInt->getType(), {});
     CallInst *NewCall = Builder.CreateCall(Fn, {});
     PtrToInt->replaceAllUsesWith(NewCall);
 }
@@ -701,8 +735,7 @@ static void convertReturnAddrToPseudoInst(Module &M, CallInst *Call)
 //   %0 = call @getpc(...);
 //
 static void convertImmediateSelectAccessGlobal(EraseInstVec &InstToErase,
-                                               Module &M, CallInst *Call)
-{
+                                               Module &M, CallInst *Call) {
     PseudoInst PI = getPseudoInstFromCall(Call);
     if (PI != AccessGlobalArray) {
         return;
@@ -765,8 +798,7 @@ struct DeclReplaceInfo {
     Value *Arg2 = nullptr;
 };
 
-static DeclReplaceInfo isReplaceableDeclCall(Value *A)
-{
+static DeclReplaceInfo isReplaceableDeclCall(Value *A) {
     auto *Zext = dyn_cast<ZExtInst>(A);
     if (!Zext) {
         return {};
@@ -792,9 +824,8 @@ static DeclReplaceInfo isReplaceableDeclCall(Value *A)
     return {true, Zext, Select, Cond, Arg1, Arg2};
 }
 
-static void convertImmediateDeclCall(EraseInstVec &InstToErase,
-                                     Module &M, CallInst *Call)
-{
+static void convertImmediateDeclCall(EraseInstVec &InstToErase, Module &M,
+                                     CallInst *Call) {
     if (!Call->getCalledFunction()->isDeclaration()) {
         return;
     }
@@ -811,8 +842,10 @@ static void convertImmediateDeclCall(EraseInstVec &InstToErase,
         if (!Info.Valid) {
             Info = isReplaceableDeclCall(A);
             if (Info.Valid) {
-                Value *Arg1Zext = Builder.CreateZExt(Info.Arg1, Info.Zext->getType());
-                Value *Arg2Zext = Builder.CreateZExt(Info.Arg2, Info.Zext->getType());
+                Value *Arg1Zext =
+                    Builder.CreateZExt(Info.Arg1, Info.Zext->getType());
+                Value *Arg2Zext =
+                    Builder.CreateZExt(Info.Arg2, Info.Zext->getType());
                 Args1.push_back(Arg1Zext);
                 Args2.push_back(Arg2Zext);
                 continue;
@@ -827,7 +860,6 @@ static void convertImmediateDeclCall(EraseInstVec &InstToErase,
         return;
     }
 
-
     Function *F = Call->getCalledFunction();
     CallInst *Access1 = Builder.CreateCall(F, Args1);
     CallInst *Access2 = Builder.CreateCall(F, Args2);
@@ -835,7 +867,7 @@ static void convertImmediateDeclCall(EraseInstVec &InstToErase,
     Access1->setDebugLoc(Call->getDebugLoc());
     Access2->setDebugLoc(Call->getDebugLoc());
 
-    //InstToErase.push_back(Load);
+    // InstToErase.push_back(Load);
     InstToErase.push_back(Call);
     InstToErase.push_back(cast<Instruction>(Info.Zext));
 
@@ -848,8 +880,7 @@ static void convertImmediateDeclCall(EraseInstVec &InstToErase,
 // to a pointer, aka the Vec*Store pseudo instructions
 //
 
-static PseudoInst instructionToStorePseudoInst(unsigned Opcode)
-{
+static PseudoInst instructionToStorePseudoInst(unsigned Opcode) {
     switch (Opcode) {
     case Instruction::Trunc:
         return VecTruncStore;
@@ -882,8 +913,7 @@ static PseudoInst instructionToStorePseudoInst(unsigned Opcode)
     }
 }
 
-static PseudoInst pseudoInstToStorePseudoInst(PseudoInst Inst)
-{
+static PseudoInst pseudoInstToStorePseudoInst(PseudoInst Inst) {
     switch (Inst) {
     case VecNot:
         return VecNotStore;
@@ -912,8 +942,7 @@ static PseudoInst pseudoInstToStorePseudoInst(PseudoInst Inst)
     }
 }
 
-static PseudoInst intrinsicToStorePseudoInst(unsigned IntrinsicID)
-{
+static PseudoInst intrinsicToStorePseudoInst(unsigned IntrinsicID) {
     switch (IntrinsicID) {
     case Intrinsic::sadd_sat:
         return VecSignedSatAddStore;
@@ -960,8 +989,7 @@ static PseudoInst intrinsicToStorePseudoInst(unsigned IntrinsicID)
 // side to propagate "vector"-ness from %3 to %4 via the store,
 // no longer!
 static void convertVecStoreBitcastToPseudoInst(EraseInstVec &InstToErase,
-                                               Module &M, StoreInst *Store)
-{
+                                               Module &M, StoreInst *Store) {
     Value *ValueOp = Store->getValueOperand();
     Type *ValueTy = ValueOp->getType();
     if (!ValueTy->isVectorTy()) {
@@ -1049,8 +1077,8 @@ static void convertVecStoreBitcastToPseudoInst(EraseInstVec &InstToErase,
         uint32_t VectorElements = compat::getVectorElementCount(VecTy);
         IRBuilder<> Builder(Store);
         auto *Size = Builder.getInt64(LlvmSize * VectorElements);
-        //Function *Fn = Intrinsic::getDeclaration(&M, Intrinsic::memcpy);
-        Builder.CreateMemCpy(Store->getPointerOperand(), 
+        // Function *Fn = Intrinsic::getDeclaration(&M, Intrinsic::memcpy);
+        Builder.CreateMemCpy(Store->getPointerOperand(),
                              Store->getPointerAlignment(M.getDataLayout()),
                              Load->getPointerOperand(),
                              Load->getPointerAlignment(M.getDataLayout()),
@@ -1062,7 +1090,8 @@ static void convertVecStoreBitcastToPseudoInst(EraseInstVec &InstToErase,
         const uint8_t ArgCount = pseudoInstArgCount(NewInst);
         // Add one to account for extra store pointer
         // argument of Vec*Store pseudo instructions.
-        assert(ArgCount > 0 and ArgCount - 1 <= (uint8_t) Inst->getNumOperands());
+        assert(ArgCount > 0 and
+               ArgCount - 1 <= (uint8_t)Inst->getNumOperands());
         IRBuilder<> Builder(Store);
         SmallVector<Type *, 8> ArgTys;
         SmallVector<Value *, 8> Args;
@@ -1112,8 +1141,7 @@ static void convertVecStoreBitcastToPseudoInst(EraseInstVec &InstToErase,
 // optimization passes, but this could be a source of future headache.
 static void convertICmpBrToPseudInst(LLVMContext &Context,
                                      EraseInstVec &InstToErase, Module &M,
-                                     Instruction *I, BasicBlock *NextBb)
-{
+                                     Instruction *I, BasicBlock *NextBb) {
     auto *ICmp = dyn_cast<ICmpInst>(I);
     if (!ICmp) {
         return;

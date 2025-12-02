@@ -17,9 +17,6 @@
 
 #pragma once
 
-namespace llvm
-{
-class Module;
-}
+#include "llvm/IR/PassManager.h"
 
-void canonicalizeIR(llvm::Module &M);
+void canonicalizeIR(llvm::Module &M, llvm::ModuleAnalysisManager &MAM);
