@@ -52,6 +52,7 @@ sources = [
     'src/TcgGenPass/MapArguments.cpp',
     'src/TcgGenPass/MapConstantExpressions.cpp',
     'src/TcgGenPass/MapTemporaries.cpp',
+    'src/TcgGenPass/MapTcgOperations.cpp',
 ]
 
 clang = bindir / 'clang'
